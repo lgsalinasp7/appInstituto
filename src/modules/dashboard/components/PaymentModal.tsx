@@ -239,7 +239,7 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
                   $
                 </span>
                 <input
-                  {...register("amount", { valueAsNumber: true })}
+                  {...register("amount")}
                   type="number"
                   placeholder="0"
                   className="w-full pl-10 pr-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-bold text-[#1e3a5f] transition-all"
