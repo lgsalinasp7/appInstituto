@@ -113,10 +113,10 @@ async function main() {
 
     console.log("Creando estudiantes y pagos...");
     const studentsRaw = [
-        { name: "Laura Sofía Pérez Gómez", document: "1098765432", phone: "3023315972", email: "laura.perez@email.com", programIdx: 0, advisorIdx: 0, enrollmentDate: "2024-08-15" },
-        { name: "Juan David López Torres", document: "1087654321", phone: "3023315972", email: "juan.lopez@email.com", programIdx: 1, advisorIdx: 1, enrollmentDate: "2024-09-01" },
-        { name: "Valentina Ramírez Díaz", document: "1076543210", phone: "3023315972", email: "valentina.ramirez@email.com", programIdx: 2, advisorIdx: 2, enrollmentDate: "2024-10-10" },
-        { name: "Camila Andrea García Ruiz", document: "1054321098", phone: "3045678901", email: "camila.garcia@email.com", programIdx: 4, advisorIdx: 0, enrollmentDate: "2024-08-25" },
+        { name: "Laura Sofía Pérez Gómez", document: "1098765432", phone: "3023315972", email: "laura.perez@email.com", programIdx: 0, advisorIdx: 0, enrollmentDate: "2024-08-15", commitmentDateOffset: 0 }, // Hoy
+        { name: "Juan David López Torres", document: "1087654321", phone: "3023315972", email: "juan.lopez@email.com", programIdx: 1, advisorIdx: 1, enrollmentDate: "2024-09-01", commitmentDateOffset: 3 }, // Esta semana
+        { name: "Valentina Ramírez Díaz", document: "1076543210", phone: "3023315972", email: "valentina.ramirez@email.com", programIdx: 2, advisorIdx: 2, enrollmentDate: "2024-10-10", commitmentDateOffset: 15 }, // Este mes
+        { name: "Camila Andrea García Ruiz", document: "1054321098", phone: "3045678901", email: "camila.garcia@email.com", programIdx: 4, advisorIdx: 0, enrollmentDate: "2024-08-25", commitmentDateOffset: 45 }, // Futuro
     ];
 
     for (const std of studentsRaw) {
@@ -155,35 +155,20 @@ async function main() {
         });
 
         // Crear compromisos
+        const today = new Date();
         for (let i = 1; i <= program.modulesCount; i++) {
-            const scheduledDate = new Date(student.enrollmentDate);
-            scheduledDate.setMonth(scheduledDate.getMonth() + i);
+            const scheduledDate = new Date(today);
+            scheduledDate.setDate(today.getDate() + (std.commitmentDateOffset + (i - 1) * 30));
 
             await prisma.paymentCommitment.create({
                 data: {
                     scheduledDate: scheduledDate,
                     amount: valorModulo,
-                    status: i === 1 ? "PAGADO" : scheduledDate < new Date() ? "PENDIENTE" : "PENDIENTE",
+                    status: "PENDIENTE",
                     moduleNumber: i,
                     studentId: student.id,
                 }
             });
-
-            if (i === 1) {
-                // Registrar pago del modulo 1
-                await prisma.payment.create({
-                    data: {
-                        amount: valorModulo,
-                        paymentDate: new Date(student.enrollmentDate),
-                        method: "NEQUI",
-                        receiptNumber: `REC-M1-${std.document}`,
-                        paymentType: "MODULO",
-                        moduleNumber: 1,
-                        studentId: student.id,
-                        registeredById: advisor.id,
-                    }
-                });
-            }
         }
     }
 
