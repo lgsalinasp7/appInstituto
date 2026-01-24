@@ -1,7 +1,4 @@
-/**
- * Admin Users Page
- * User management for administrators
- */
+"use client";
 
 import { UserCard, type User } from "@/modules/users";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

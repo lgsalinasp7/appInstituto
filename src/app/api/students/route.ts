@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { StudentService } from "@/modules/students";
 import { createStudentSchema } from "@/modules/students/schemas";
-import type { StudentStatus } from "@prisma/client";
+import type { StudentStatus } from "@/modules/students";
 
 export async function GET(request: NextRequest) {
   try {

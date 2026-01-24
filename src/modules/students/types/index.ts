@@ -1,6 +1,4 @@
-import type { StudentStatus } from "@prisma/client";
-
-export type { StudentStatus };
+export type StudentStatus = "MATRICULADO" | "EN_OTRA_INSTITUCION" | "PENDIENTE";
 
 export interface StudentFilters {
   search?: string;

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PaymentService } from "@/modules/payments";
 import { createPaymentSchema } from "@/modules/payments/schemas";
-import type { PaymentMethod } from "@prisma/client";
+import type { PaymentMethod } from "@/modules/payments";
 
 export async function GET(request: NextRequest) {
   try {

@@ -7,8 +7,9 @@ import type {
   CarteraSummary,
   StudentDebt,
   PaymentCommitmentData,
+  CommitmentStatus,
 } from "../types";
-import { Prisma, CommitmentStatus } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 export class CarteraService {
   static async getCommitments(filters: CarteraFilters) {

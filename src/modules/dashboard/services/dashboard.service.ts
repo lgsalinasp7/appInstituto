@@ -58,7 +58,7 @@ export class DashboardService {
    * Log an action to audit log
    * Note: No-op when using mock client
    */
-  static async logAction(_params: {
+  static async logAction(params: {
     action: string;
     entity: string;
     entityId?: string;
@@ -68,9 +68,19 @@ export class DashboardService {
     userAgent?: string;
   }): Promise<void> {
     try {
-      await prisma.auditLog.create();
+      await prisma.auditLog.create({
+        data: {
+          action: params.action,
+          entity: params.entity,
+          entityId: params.entityId,
+          userId: params.userId,
+          metadata: params.metadata,
+          ipAddress: params.ipAddress,
+          userAgent: params.userAgent,
+        },
+      });
     } catch {
-      console.warn("Audit logging not available (mock client)");
+      console.warn("Audit logging not available");
     }
   }
 }

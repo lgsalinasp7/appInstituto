@@ -1,6 +1,4 @@
-import type { CommitmentStatus } from "@prisma/client";
-
-export type { CommitmentStatus };
+export type CommitmentStatus = "PAGADO" | "PENDIENTE" | "EN_COMPROMISO";
 
 export interface PaymentCommitmentData {
   id: string;

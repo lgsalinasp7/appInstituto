@@ -1,7 +1,4 @@
-/**
- * Admin Roles Page
- * Role management for administrators
- */
+"use client";
 
 import { RolesList, type Role, PERMISSIONS } from "@/modules/admin";
 import { Button } from "@/components/ui/button";

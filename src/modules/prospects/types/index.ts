@@ -1,6 +1,4 @@
-import type { ProspectStatus } from "@prisma/client";
-
-export type { ProspectStatus };
+export type ProspectStatus = "CONTACTADO" | "EN_SEGUIMIENTO" | "CERRADO" | "PERDIDO";
 
 export interface ProspectFilters {
   search?: string;
@@ -27,7 +25,7 @@ export interface UpdateProspectData {
   email?: string;
   status?: ProspectStatus;
   observations?: string;
-  programId?: string;
+  programId?: string | null;
 }
 
 export interface ProspectWithRelations {

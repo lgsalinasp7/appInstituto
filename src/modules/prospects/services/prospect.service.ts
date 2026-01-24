@@ -6,8 +6,9 @@ import type {
   ProspectWithRelations,
   ProspectsListResponse,
   ProspectStats,
+  ProspectStatus,
 } from "../types";
-import { Prisma, ProspectStatus } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 export class ProspectService {
   static async getProspects(filters: ProspectFilters): Promise<ProspectsListResponse> {

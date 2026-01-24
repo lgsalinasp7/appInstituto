@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CarteraService } from "@/modules/cartera";
-import type { CommitmentStatus } from "@prisma/client";
+import type { CommitmentStatus } from "@/modules/cartera";
 
 export async function GET(request: NextRequest) {
   try {

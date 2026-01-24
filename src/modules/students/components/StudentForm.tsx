@@ -39,7 +39,7 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId }: Stude
     setValue,
     formState: { errors },
   } = useForm<CreateStudentInput>({
-    resolver: zodResolver(createStudentSchema),
+    resolver: zodResolver(createStudentSchema) as never,
     defaultValues: {
       documentType: "CC",
       status: "MATRICULADO",

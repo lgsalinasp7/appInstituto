@@ -5,8 +5,9 @@ import type {
   PaymentWithRelations,
   PaymentsListResponse,
   PaymentStats,
+  PaymentMethod,
 } from "../types";
-import { Prisma, PaymentMethod } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 export class PaymentService {
   static async generateReceiptNumber(): Promise<string> {

@@ -8,13 +8,18 @@ import { z } from "zod";
 import { sendReceiptViaWhatsApp } from "../utils/whatsapp";
 
 const paymentSchema = z.object({
-  amount: z.coerce.number().positive("El monto debe ser mayor a 0"),
+  amount: z.number().positive("El monto debe ser mayor a 0"),
   method: z.enum(["BANCOLOMBIA", "NEQUI", "DAVIPLATA", "EFECTIVO", "OTRO"]),
   reference: z.string().optional(),
   comments: z.string().optional(),
 });
 
-type PaymentFormData = z.infer<typeof paymentSchema>;
+type PaymentFormData = {
+  amount: number;
+  method: "BANCOLOMBIA" | "NEQUI" | "DAVIPLATA" | "EFECTIVO" | "OTRO";
+  reference?: string;
+  comments?: string;
+};
 
 interface Student {
   id: string;

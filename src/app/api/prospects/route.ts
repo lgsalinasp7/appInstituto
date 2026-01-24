@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ProspectService } from "@/modules/prospects";
 import { createProspectSchema } from "@/modules/prospects/schemas";
-import type { ProspectStatus } from "@prisma/client";
+import type { ProspectStatus } from "@/modules/prospects";
 
 export async function GET(request: NextRequest) {
   try {
