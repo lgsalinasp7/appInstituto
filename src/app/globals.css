@@ -1,0 +1,365 @@
+@import "tailwindcss";
+
+/* ============================================
+   SISTEMA DE DISEÑO - APP INSTITUTO
+   Basado en identidad visual: Educamos con Valores
+   ============================================ */
+
+:root {
+  /* Colores Primarios - Extraídos del logo */
+  --primary: #1e3a5f;           /* Azul marino - mano principal */
+  --primary-light: #2d4a6f;
+  --primary-dark: #0f2847;
+  --primary-foreground: #ffffff;
+
+  /* Colores Secundarios */
+  --secondary: #64748b;         /* Gris - mano pequeña */
+  --secondary-light: #94a3b8;
+  --secondary-dark: #475569;
+  --secondary-foreground: #ffffff;
+
+  /* Colores de Acento */
+  --accent: #3b82f6;            /* Azul brillante para CTAs */
+  --accent-light: #60a5fa;
+  --accent-dark: #2563eb;
+  --accent-foreground: #ffffff;
+
+  /* Colores de Estado */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
+
+  /* Escala de Grises */
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
+
+  /* Tema Claro */
+  --background: #ffffff;
+  --foreground: #1e293b;
+  --card: #ffffff;
+  --card-foreground: #1e293b;
+  --popover: #ffffff;
+  --popover-foreground: #1e293b;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #1e3a5f;
+
+  /* Radios y Espaciado */
+  --radius: 0.625rem;
+  --radius-sm: 0.375rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f172a;
+    --foreground: #f1f5f9;
+    --card: #1e293b;
+    --card-foreground: #f1f5f9;
+    --popover: #1e293b;
+    --popover-foreground: #f1f5f9;
+    --muted: #334155;
+    --muted-foreground: #94a3b8;
+    --border: #334155;
+    --input: #334155;
+    --ring: #3b82f6;
+    
+    --primary: #3b82f6;
+    --primary-foreground: #ffffff;
+    --secondary: #475569;
+    --secondary-foreground: #f1f5f9;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+}
+
+/* ============================================
+   ESTILOS BASE
+   ============================================ */
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================
+   UTILIDADES PERSONALIZADAS
+   ============================================ */
+
+/* Gradiente institucional */
+.bg-gradient-instituto {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+}
+
+/* Gradiente suave para fondos */
+.bg-gradient-subtle {
+  background: linear-gradient(180deg, var(--gray-50) 0%, var(--background) 100%);
+}
+
+/* Sombras personalizadas */
+.shadow-instituto {
+  box-shadow: 
+    0 1px 3px 0 rgb(30 58 95 / 0.1),
+    0 1px 2px -1px rgb(30 58 95 / 0.1);
+}
+
+.shadow-instituto-md {
+  box-shadow: 
+    0 4px 6px -1px rgb(30 58 95 / 0.1),
+    0 2px 4px -2px rgb(30 58 95 / 0.1);
+}
+
+.shadow-instituto-lg {
+  box-shadow: 
+    0 10px 15px -3px rgb(30 58 95 / 0.1),
+    0 4px 6px -4px rgb(30 58 95 / 0.1);
+}
+
+/* Efecto hover para cards */
+.card-hover {
+  transition: all 0.2s ease-in-out;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 10px 15px -3px rgb(30 58 95 / 0.1),
+    0 4px 6px -4px rgb(30 58 95 / 0.1);
+}
+
+/* Animación de entrada suave */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out forwards;
+}
+
+/* Delay para animaciones escalonadas */
+.animation-delay-100 { animation-delay: 100ms; }
+.animation-delay-200 { animation-delay: 200ms; }
+.animation-delay-300 { animation-delay: 300ms; }
+.animation-delay-400 { animation-delay: 400ms; }
+
+/* ============================================
+   COMPONENTES INSTITUCIONALES
+   ============================================ */
+
+/* Botón primario institucional */
+.btn-instituto {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radius);
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-instituto:hover {
+  background: var(--primary-light);
+}
+
+.btn-instituto:active {
+  background: var(--primary-dark);
+}
+
+/* Input institucional */
+.input-instituto {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.625rem 0.875rem;
+  transition: all 0.2s ease-in-out;
+  background: var(--background);
+}
+
+.input-instituto:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgb(30 58 95 / 0.1);
+}
+
+/* Badge institucional */
+.badge-instituto {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-instituto-outline {
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* ============================================
+   RESPONSIVE UTILITIES
+   ============================================ */
+
+/* Safe area padding for mobile devices with notches */
+.safe-area-inset {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Touch-friendly tap highlight */
+.tap-highlight-transparent {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Smooth scroll on mobile */
+.smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent body scroll when mobile menu is open */
+body.menu-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+/* ============================================
+   MOBILE MENU ANIMATIONS
+   ============================================ */
+
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-out-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.3s ease-out forwards;
+}
+
+.animate-slide-out-left {
+  animation: slide-out-left 0.3s ease-in forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out forwards;
+}
+
+.animate-fade-out {
+  animation: fade-out 0.2s ease-in forwards;
+}
+
+/* ============================================
+   TOUCH FEEDBACK
+   ============================================ */
+
+/* Active state for touch devices */
+@media (hover: none) {
+  .touch-active:active {
+    background-color: rgba(30, 58, 95, 0.1);
+    transform: scale(0.98);
+  }
+}
+
+/* Disable hover effects on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .card-hover:hover {
+    transform: none;
+    box-shadow: 0 1px 3px 0 rgb(30 58 95 / 0.1), 0 1px 2px -1px rgb(30 58 95 / 0.1);
+  }
+}

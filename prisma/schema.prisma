@@ -1,0 +1,279 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String?
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  role     Role      @relation(fields: [roleId], references: [id])
+  roleId   String
+  profile  Profile?
+  sessions Session[]
+
+  students           Student[]
+  registeredPayments Payment[]
+  prospects          Prospect[]
+
+  @@index([email])
+  @@index([roleId])
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  permissions String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users User[]
+
+  @@index([name])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Profile {
+  id          String    @id @default(cuid())
+  bio         String?
+  phone       String?
+  address     String?
+  dateOfBirth DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  entity    String
+  entityId  String?
+  userId    String?
+  metadata  Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([action])
+  @@index([entity])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Program {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  totalValue  Decimal  @db.Decimal(10, 2)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  students         Student[]
+  prospects        Prospect[]
+  academicContents AcademicContent[]
+
+  @@index([name])
+  @@index([isActive])
+}
+
+model Student {
+  id             String        @id @default(cuid())
+  fullName       String
+  documentType   String        @default("CC")
+  documentNumber String        @unique
+  email          String?
+  phone          String
+  address        String?
+
+  guardianName  String?
+  guardianPhone String?
+  guardianEmail String?
+
+  enrollmentDate    DateTime
+  initialPayment    Decimal       @db.Decimal(10, 2)
+  totalProgramValue Decimal       @db.Decimal(10, 2)
+  status            StudentStatus @default(MATRICULADO)
+
+  program   Program @relation(fields: [programId], references: [id])
+  programId String
+  advisor   User    @relation(fields: [advisorId], references: [id])
+  advisorId String
+
+  payments          Payment[]
+  commitments       PaymentCommitment[]
+  contentDeliveries ContentDelivery[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([documentNumber])
+  @@index([status])
+  @@index([programId])
+  @@index([advisorId])
+  @@index([enrollmentDate])
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  amount        Decimal       @db.Decimal(10, 2)
+  paymentDate   DateTime
+  method        PaymentMethod
+  reference     String?
+  receiptNumber String        @unique
+  comments      String?
+
+  student        Student @relation(fields: [studentId], references: [id])
+  studentId      String
+  registeredBy   User    @relation(fields: [registeredById], references: [id])
+  registeredById String
+
+  receipt Receipt?
+
+  createdAt DateTime @default(now())
+
+  @@index([studentId])
+  @@index([registeredById])
+  @@index([paymentDate])
+  @@index([receiptNumber])
+}
+
+model Receipt {
+  id            String    @id @default(cuid())
+  receiptNumber String    @unique
+  generatedAt   DateTime  @default(now())
+  sentVia       String?
+  sentAt        DateTime?
+  pdfUrl        String?
+
+  payment   Payment @relation(fields: [paymentId], references: [id])
+  paymentId String  @unique
+
+  @@index([receiptNumber])
+}
+
+model PaymentCommitment {
+  id              String           @id @default(cuid())
+  scheduledDate   DateTime
+  amount          Decimal          @db.Decimal(10, 2)
+  status          CommitmentStatus @default(PENDIENTE)
+  rescheduledDate DateTime?
+  comments        String?
+
+  student   Student @relation(fields: [studentId], references: [id])
+  studentId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([status])
+  @@index([scheduledDate])
+}
+
+model Prospect {
+  id           String         @id @default(cuid())
+  name         String
+  phone        String
+  email        String?
+  status       ProspectStatus @default(CONTACTADO)
+  observations String?
+
+  program   Program? @relation(fields: [programId], references: [id])
+  programId String?
+  advisor   User     @relation(fields: [advisorId], references: [id])
+  advisorId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([advisorId])
+  @@index([programId])
+}
+
+model AcademicContent {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  orderIndex  Int
+
+  program   Program @relation(fields: [programId], references: [id])
+  programId String
+
+  deliveries ContentDelivery[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([programId])
+  @@index([orderIndex])
+}
+
+model ContentDelivery {
+  id          String   @id @default(cuid())
+  deliveredAt DateTime @default(now())
+  method      String
+
+  student   Student         @relation(fields: [studentId], references: [id])
+  studentId String
+  content   AcademicContent @relation(fields: [contentId], references: [id])
+  contentId String
+
+  @@index([studentId])
+  @@index([contentId])
+}
+
+enum StudentStatus {
+  MATRICULADO
+  EN_OTRA_INSTITUCION
+  PENDIENTE
+}
+
+enum PaymentMethod {
+  BANCOLOMBIA
+  NEQUI
+  DAVIPLATA
+  EFECTIVO
+  OTRO
+}
+
+enum CommitmentStatus {
+  PAGADO
+  PENDIENTE
+  EN_COMPROMISO
+}
+
+enum ProspectStatus {
+  CONTACTADO
+  EN_SEGUIMIENTO
+  CERRADO
+  PERDIDO
+}
