@@ -7,7 +7,6 @@ import type {
   CarteraSummary,
   StudentDebt,
   PaymentCommitmentData,
-  CommitmentStatus,
 } from "../types";
 import { Prisma } from "@prisma/client";
 

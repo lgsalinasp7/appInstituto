@@ -44,7 +44,7 @@ interface CarteraViewProps {
   advisorId?: string;
 }
 
-export function CarteraView({ advisorId }: CarteraViewProps) {
+export function CarteraView({ advisorId: _advisorId }: CarteraViewProps) {
   const [alerts] = useState<Alert[]>(DEMO_CARTERA_ALERTS);
   const [summary] = useState<CarteraSummary>(DEMO_CARTERA_SUMMARY);
   const [debts] = useState<StudentDebt[]>(DEMO_STUDENT_DEBTS);
@@ -426,6 +426,12 @@ export function CarteraView({ advisorId }: CarteraViewProps) {
   );
 }
 
+function getDefaultDate(daysAhead: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + daysAhead);
+  return date.toISOString().split("T")[0];
+}
+
 function CommitmentModal({
   student,
   onClose,
@@ -436,7 +442,7 @@ function CommitmentModal({
   onSubmit: (studentId: string, amount: number, date: Date, comments: string) => void;
 }) {
   const [amount, setAmount] = useState(Math.min(student.remainingBalance, 350000));
-  const [date, setDate] = useState(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
+  const [date, setDate] = useState(() => getDefaultDate(7));
   const [comments, setComments] = useState("");
 
   return (
@@ -524,7 +530,7 @@ function AbonoModal({
   const [method, setMethod] = useState("BANCOLOMBIA");
   const [reference, setReference] = useState("");
   const [createCommitment, setCreateCommitment] = useState(false);
-  const [commitmentDate, setCommitmentDate] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
+  const [commitmentDate, setCommitmentDate] = useState(() => getDefaultDate(30));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const newBalance = student.remainingBalance - amount;

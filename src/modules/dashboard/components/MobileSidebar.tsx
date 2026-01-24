@@ -21,7 +21,7 @@ const navItems: { id: DashboardTab; label: string; icon: typeof TrendingUp }[] =
   { id: "enrollments", label: "Matrículas", icon: Users },
   { id: "payments", label: "Pagos & Recibos", icon: CreditCard },
   { id: "cartera", label: "Control de Cartera", icon: Wallet },
-  { id: "prospects", label: "Prospectos", icon: UserPlus },
+  // { id: "prospects", label: "Prospectos", icon: UserPlus },
   { id: "reports", label: "Reportes", icon: FileText },
 ];
 
@@ -35,17 +35,15 @@ export function MobileSidebar({ isOpen, onClose, activeTab, onTabChange }: Mobil
     <>
       {/* Overlay */}
       <div
-        className={`lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300 ${
-          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+        className={`lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
         onClick={onClose}
       />
 
       {/* Sidebar */}
       <aside
-        className={`lg:hidden fixed top-0 left-0 bottom-0 w-[280px] bg-white z-50 shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`lg:hidden fixed top-0 left-0 bottom-0 w-[280px] bg-white z-50 shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${isOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
@@ -84,11 +82,10 @@ export function MobileSidebar({ isOpen, onClose, activeTab, onTabChange }: Mobil
               <button
                 key={item.id}
                 onClick={() => handleTabChange(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium text-sm ${
-                  isActive
+                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium text-sm ${isActive
                     ? "bg-gradient-instituto text-white shadow-lg shadow-[#1e3a5f]/20"
                     : "text-[#64748b] hover:bg-gray-50 hover:text-[#1e3a5f] active:bg-gray-100"
-                }`}
+                  }`}
               >
                 <Icon size={20} strokeWidth={2} />
                 <span>{item.label}</span>

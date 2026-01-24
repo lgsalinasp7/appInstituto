@@ -48,7 +48,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const messagePayload: any = {
+    interface WhatsAppMessagePayload {
+      messaging_product: string;
+      to: string;
+      type?: string;
+      image?: { id: string; caption: string };
+      text?: { body: string };
+    }
+
+    const messagePayload: WhatsAppMessagePayload = {
       messaging_product: "whatsapp",
       to: recipientNumber,
     };

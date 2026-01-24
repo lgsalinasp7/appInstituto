@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint)",
+      "Bash(npm run build:*)",
+      "mcp__Neon__list_projects",
+      "mcp__Neon__get_database_tables",
+      "mcp__vercel-instituto__list_teams",
+      "mcp__vercel-instituto__list_projects",
+      "mcp__vercel-instituto__list_deployments",
+      "Bash(npx prisma db push:*)",
+      "mcp__Neon__get_connection_string",
+      "mcp__Neon__describe_project",
+      "mcp__Neon__list_branch_computes",
+      "mcp__Neon__run_sql",
+      "mcp__vercel-instituto__get_project",
+      "Bash(npx prisma db seed)",
+      "Bash(npx tsx:*)",
+      "Bash(node -e:*)"
+    ]
+  }
+}

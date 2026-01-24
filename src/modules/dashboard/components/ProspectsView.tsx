@@ -1,9 +1,15 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { UserPlus, Search, Phone, Mail, MessageCircle, Edit2, Trash2, ArrowRight, X, Clock, PhoneCall, Send, Calendar, CheckCircle2, XCircle } from "lucide-react";
+import { UserPlus, Search, Phone, Mail, MessageCircle, Edit2, Trash2, ArrowRight, X, Clock, PhoneCall, Send, Calendar, CheckCircle2 } from "lucide-react";
 import { Pagination } from "./Pagination";
 import { DEMO_PROSPECTS, DEMO_PROGRAMS, DEMO_PROSPECT_SEGUIMIENTOS } from "../data/demo-data";
+
+function getDefaultDate(daysAhead: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + daysAhead);
+  return date.toISOString().split("T")[0];
+}
 
 interface Prospect {
   id: string;
@@ -40,7 +46,7 @@ interface ProspectsViewProps {
   currentUserId: string;
 }
 
-export function ProspectsView({ advisorId, currentUserId }: ProspectsViewProps) {
+export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUserId }: ProspectsViewProps) {
   const [prospects] = useState<Prospect[]>(DEMO_PROSPECTS);
   const [programs] = useState<Program[]>(DEMO_PROGRAMS);
   const [searchTerm, setSearchTerm] = useState("");
@@ -611,7 +617,7 @@ function SeguimientoModal({
   const [result, setResult] = useState("Interesado");
   const [notes, setNotes] = useState("");
   const [nextAction, setNextAction] = useState("Llamar");
-  const [nextActionDate, setNextActionDate] = useState(new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
+  const [nextActionDate, setNextActionDate] = useState(() => getDefaultDate(3));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = () => {

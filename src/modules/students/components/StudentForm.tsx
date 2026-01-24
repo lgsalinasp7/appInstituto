@@ -5,11 +5,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X, User, Phone, Mail, MapPin, GraduationCap, Calendar, DollarSign, UserCheck } from "lucide-react";
 import { createStudentSchema, type CreateStudentInput } from "../schemas";
+import type { StudentWithRelations } from "../types";
 
 interface Program {
   id: string;
   name: string;
   totalValue: number;
+  matriculaValue: number;
+  modulesCount: number;
 }
 
 interface Advisor {
@@ -23,13 +26,16 @@ interface StudentFormProps {
   onClose: () => void;
   onSuccess: () => void;
   currentUserId: string;
+  student?: StudentWithRelations | null;
 }
 
-export function StudentForm({ isOpen, onClose, onSuccess, currentUserId }: StudentFormProps) {
+export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student }: StudentFormProps) {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isEditing = !!student;
 
   const {
     register,
@@ -47,59 +53,95 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId }: Stude
       advisorId: currentUserId,
       initialPayment: 0,
       totalProgramValue: 0,
+      paymentFrequency: "MENSUAL",
+      firstCommitmentDate: new Date(new Date().setDate(new Date().getDate() + 30)),
     },
   });
 
   const selectedProgramId = watch("programId");
 
+  // Efecto para Resetear el formulario cuando cambia el estudiante o se abre/cierra
   useEffect(() => {
+    if (isOpen) {
+      if (student) {
+        // Modo Edición: Cargar datos
+        reset({
+          fullName: student.fullName,
+          documentType: student.documentType,
+          documentNumber: student.documentNumber,
+          email: student.email || "",
+          phone: student.phone,
+          address: student.address || "",
+          guardianName: student.guardianName || "",
+          guardianPhone: student.guardianPhone || "",
+          guardianEmail: student.guardianEmail || "",
+          enrollmentDate: new Date(student.enrollmentDate),
+          initialPayment: student.initialPayment,
+          totalProgramValue: student.totalProgramValue,
+          status: student.status as any,
+          programId: student.programId,
+          advisorId: student.advisorId,
+          paymentFrequency: student.paymentFrequency as any,
+          firstCommitmentDate: student.firstCommitmentDate ? new Date(student.firstCommitmentDate) : new Date(),
+        });
+      } else {
+        // Modo Creación: Limpiar/Default
+        reset({
+          documentType: "CC",
+          status: "MATRICULADO",
+          enrollmentDate: new Date(),
+          advisorId: currentUserId,
+          initialPayment: 0,
+          totalProgramValue: 0,
+          paymentFrequency: "MENSUAL",
+          firstCommitmentDate: new Date(new Date().setDate(new Date().getDate() + 30)),
+        });
+      }
+    }
+  }, [isOpen, student, reset, currentUserId]);
+
+  useEffect(() => {
+    const fetchPrograms = async () => {
+      try {
+        const response = await fetch("/api/programs");
+        const data = await response.json();
+        if (data.success) {
+          setPrograms(data.data.programs);
+        }
+      } catch (err) {
+        console.error("Error fetching programs:", err);
+      }
+    };
+
+    const fetchAdvisors = async () => {
+      try {
+        const response = await fetch("/api/users?role=advisor");
+        const data = await response.json();
+        if (data.success) {
+          setAdvisors(data.data.users || []);
+        }
+      } catch (err) {
+        console.error("Error fetching advisors:", err);
+        setAdvisors([{ id: currentUserId, name: "Usuario Actual", email: "" }]);
+      }
+    };
+
     if (isOpen) {
       fetchPrograms();
       fetchAdvisors();
     }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (selectedProgramId && programs.length > 0) {
-      const selectedProgram = programs.find((p) => p.id === selectedProgramId);
-      if (selectedProgram) {
-        setValue("totalProgramValue", selectedProgram.totalValue);
-      }
-    }
-  }, [selectedProgramId, programs, setValue]);
-
-  const fetchPrograms = async () => {
-    try {
-      const response = await fetch("/api/programs");
-      const data = await response.json();
-      if (data.success) {
-        setPrograms(data.data.programs);
-      }
-    } catch (err) {
-      console.error("Error fetching programs:", err);
-    }
-  };
-
-  const fetchAdvisors = async () => {
-    try {
-      const response = await fetch("/api/users?role=advisor");
-      const data = await response.json();
-      if (data.success) {
-        setAdvisors(data.data.users || []);
-      }
-    } catch (err) {
-      console.error("Error fetching advisors:", err);
-      setAdvisors([{ id: currentUserId, name: "Usuario Actual", email: "" }]);
-    }
-  };
+  }, [isOpen, currentUserId]);
 
   const onSubmit = async (data: CreateStudentInput) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch("/api/students", {
-        method: "POST",
+      const url = isEditing ? `/api/students/${student.id}` : "/api/students";
+      const method = isEditing ? "PATCH" : "POST";
+
+      const response = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
@@ -107,7 +149,7 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId }: Stude
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Error al registrar estudiante");
+        throw new Error(result.error || `Error al ${isEditing ? 'actualizar' : 'registrar'} estudiante`);
       }
 
       reset();
@@ -132,8 +174,12 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId }: Stude
           >
             <X size={26} strokeWidth={2.5} />
           </button>
-          <h2 className="text-2xl font-bold mb-1">Registrar Nuevo Estudiante</h2>
-          <p className="text-blue-100 text-sm">Complete todos los campos requeridos</p>
+          <h2 className="text-2xl font-bold mb-1">
+            {isEditing ? "Editar Matrícula" : "Registrar Nuevo Estudiante"}
+          </h2>
+          <p className="text-blue-100 text-sm">
+            {isEditing ? `Actualizando datos de ${student.fullName}` : "Complete todos los campos requeridos"}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
@@ -185,7 +231,8 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId }: Stude
                 </label>
                 <input
                   {...register("documentNumber")}
-                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-medium transition-all"
+                  disabled={isEditing} // Generalmente no se cambia el documento si ya existe
+                  className={`w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-medium transition-all ${isEditing ? 'opacity-70 cursor-not-allowed' : ''}`}
                   placeholder="Número de documento"
                 />
                 {errors.documentNumber && (
@@ -307,7 +354,7 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId }: Stude
                   <option value="">Seleccione un programa</option>
                   {programs.map((program) => (
                     <option key={program.id} value={program.id}>
-                      {program.name} - ${program.totalValue.toLocaleString()}
+                      {program.name} - ${Number(program.totalValue).toLocaleString()}
                     </option>
                   ))}
                 </select>
@@ -410,6 +457,61 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId }: Stude
                 )}
               </div>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider">
+                  Frecuencia de Pago *
+                </label>
+                <select
+                  {...register("paymentFrequency")}
+                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-medium"
+                >
+                  <option value="MENSUAL">Mensual (30 días)</option>
+                  <option value="QUINCENAL">Quincenal (15 días)</option>
+                </select>
+                {errors.paymentFrequency && (
+                  <p className="text-red-500 text-xs mt-1">{errors.paymentFrequency.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider flex items-center gap-1">
+                  <Calendar size={12} />
+                  Fecha Primer Pago (Módulo 1) *
+                </label>
+                <input
+                  {...register("firstCommitmentDate")}
+                  type="date"
+                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-medium transition-all"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">Fecha límite para pagar el primer módulo</p>
+                {errors.firstCommitmentDate && (
+                  <p className="text-red-500 text-xs mt-1">{errors.firstCommitmentDate.message}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Resumen Calculado */}
+            {selectedProgramId && programs.find(p => p.id === selectedProgramId) && (
+              <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                <h4 className="text-xs font-bold text-[#1e3a5f] uppercase mb-2">Resumen de Pagos</h4>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-600">Valor total:</span>
+                  <span className="font-bold">${Number(programs.find(p => p.id === selectedProgramId)?.totalValue).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-600">Matrícula (inicial):</span>
+                  <span className="font-bold">${Number(programs.find(p => p.id === selectedProgramId)?.matriculaValue || 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm pt-2 border-t border-blue-200">
+                  <span className="text-gray-600">Valor por Módulo ({(programs.find(p => p.id === selectedProgramId)?.modulesCount || 6)} cuotas):</span>
+                  <span className="font-bold text-blue-700">
+                    ${Math.round((Number(programs.find(p => p.id === selectedProgramId)?.totalValue || 0) - Number(programs.find(p => p.id === selectedProgramId)?.matriculaValue || 0)) / (programs.find(p => p.id === selectedProgramId)?.modulesCount || 1)).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-4 pt-4 border-t border-gray-100">
@@ -425,7 +527,7 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId }: Stude
               disabled={isLoading}
               className="flex-[2] py-3.5 bg-gradient-instituto hover:opacity-90 text-white font-bold rounded-xl transition-all shadow-lg shadow-[#1e3a5f]/20 disabled:opacity-50"
             >
-              {isLoading ? "Guardando..." : "Registrar Estudiante"}
+              {isLoading ? "Guardando..." : (isEditing ? "Guardar Cambios" : "Registrar Estudiante")}
             </button>
           </div>
         </form>

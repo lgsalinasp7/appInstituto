@@ -1,4 +1,6 @@
-export type PaymentMethod = "BANCOLOMBIA" | "NEQUI" | "DAVIPLATA" | "EFECTIVO" | "OTRO";
+import { PaymentMethod, PaymentType } from "@prisma/client";
+
+export type { PaymentMethod };
 
 export interface PaymentFilters {
   studentId?: string;
@@ -41,6 +43,8 @@ export interface PaymentWithRelations {
     name: string | null;
     email: string;
   };
+  paymentType: PaymentType;
+  moduleNumber: number | null;
 }
 
 export interface PaymentsListResponse {

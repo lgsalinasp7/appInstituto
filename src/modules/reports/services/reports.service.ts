@@ -6,6 +6,8 @@ import type {
   ProgramReport,
   DashboardStats,
   RevenueChartData,
+  PortfolioAgingReport,
+  AgingBracket,
 } from "../types";
 import { Prisma } from "@prisma/client";
 
@@ -62,7 +64,7 @@ export class ReportsService {
     }));
 
     return {
-      period: startDate && endDate 
+      period: startDate && endDate
         ? `${startDate.toLocaleDateString("es-CO")} - ${endDate.toLocaleDateString("es-CO")}`
         : "Todo el tiempo",
       totalRevenue: Number(payments._sum.amount) || 0,
@@ -78,7 +80,7 @@ export class ReportsService {
     };
   }
 
-  static async getAdvisorReports(filters?: ReportFilters): Promise<AdvisorReport[]> {
+  static async getAdvisorReports(_filters?: ReportFilters): Promise<AdvisorReport[]> {
     const advisors = await prisma.user.findMany({
       where: {
         role: {
@@ -124,8 +126,8 @@ export class ReportsService {
         return sum + (Number(s.totalProgramValue) - paid);
       }, 0);
 
-      const collectionRate = totalSales > 0 
-        ? (totalCollected / totalSales) * 100 
+      const collectionRate = totalSales > 0
+        ? (totalCollected / totalSales) * 100
         : 0;
 
       const studentsThisMonth = advisor.students.filter(
@@ -204,83 +206,91 @@ export class ReportsService {
 
   static async getDashboardStats(advisorId?: string): Promise<DashboardStats> {
     const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
-    const studentWhere: Prisma.StudentWhereInput = advisorId 
-      ? { advisorId } 
+    const studentWhere: Prisma.StudentWhereInput = advisorId
+      ? { advisorId }
       : {};
 
-    const paymentWhere: Prisma.PaymentWhereInput = advisorId 
-      ? { registeredById: advisorId } 
+    const paymentWhere: Prisma.PaymentWhereInput = advisorId
+      ? { registeredById: advisorId }
       : {};
 
     const [
-      currentRevenue,
-      lastMonthRevenue,
+      todayRevenueAggregate,
+      currentMonthRevenueAggregate,
+      lastMonthRevenueAggregate,
       activeStudents,
       lastMonthStudents,
-      pendingCommitments,
+      totalPendingCommitments,
+      overdueCommitmentsAggregate,
       lastMonthPending,
       totalProspects,
       closedProspects,
     ] = await Promise.all([
+      // 1. Recaudo HOY
       prisma.payment.aggregate({
+        where: { ...paymentWhere, paymentDate: { gte: today, lt: tomorrow } },
+        _sum: { amount: true },
+      }),
+      // 2. Recaudo MES ACTUAL
+      prisma.payment.aggregate({
+        where: { ...paymentWhere, paymentDate: { gte: startOfMonth } },
+        _sum: { amount: true },
+      }),
+      // 3. Recaudo MES PASADO
+      prisma.payment.aggregate({
+        where: { ...paymentWhere, paymentDate: { gte: startOfLastMonth, lte: endOfLastMonth } },
+        _sum: { amount: true },
+      }),
+      // 4. Estudiantes Activos
+      prisma.student.count({
+        where: { ...studentWhere, status: "MATRICULADO" },
+      }),
+      // 5. Estudiantes Activos Mes Pasado
+      prisma.student.count({
+        where: { ...studentWhere, status: "MATRICULADO", enrollmentDate: { lte: endOfLastMonth } },
+      }),
+      // 6. Conteo compromisos pendientes
+      prisma.paymentCommitment.count({
+        where: { status: "PENDIENTE", ...(advisorId && { student: { advisorId } }) },
+      }),
+      // 7. Monto Cartera en Mora (Vencida)
+      prisma.paymentCommitment.aggregate({
         where: {
-          ...paymentWhere,
-          paymentDate: { gte: startOfMonth },
+          status: "PENDIENTE",
+          scheduledDate: { lt: today },
+          ...(advisorId && { student: { advisorId } })
         },
         _sum: { amount: true },
       }),
-      prisma.payment.aggregate({
-        where: {
-          ...paymentWhere,
-          paymentDate: { gte: startOfLastMonth, lte: endOfLastMonth },
-        },
-        _sum: { amount: true },
-      }),
-      prisma.student.count({
-        where: {
-          ...studentWhere,
-          status: "MATRICULADO",
-        },
-      }),
-      prisma.student.count({
-        where: {
-          ...studentWhere,
-          status: "MATRICULADO",
-          enrollmentDate: { lte: endOfLastMonth },
-        },
-      }),
+      // 8. Pendientes mes pasado
       prisma.paymentCommitment.count({
-        where: {
-          status: { not: "PAGADO" },
-          ...(advisorId && { student: { advisorId } }),
-        },
+        where: { status: "PENDIENTE", createdAt: { lte: endOfLastMonth }, ...(advisorId && { student: { advisorId } }) },
       }),
-      prisma.paymentCommitment.count({
-        where: {
-          status: { not: "PAGADO" },
-          createdAt: { lte: endOfLastMonth },
-          ...(advisorId && { student: { advisorId } }),
-        },
-      }),
+      // 9. Prospectos
       prisma.prospect.count({
         where: advisorId ? { advisorId } : {},
       }),
+      // 10. Cerrados
       prisma.prospect.count({
-        where: {
-          status: "CERRADO",
-          ...(advisorId && { advisorId }),
-        },
+        where: { status: "CERRADO", ...(advisorId && { advisorId }) },
       }),
     ]);
 
-    const currentRevenueAmount = Number(currentRevenue._sum.amount) || 0;
-    const lastMonthRevenueAmount = Number(lastMonthRevenue._sum.amount) || 0;
+    const todayRevenue = Number(todayRevenueAggregate._sum.amount) || 0;
+    const monthlyRevenue = Number(currentMonthRevenueAggregate._sum.amount) || 0;
+    const lastMonthRevenueAmount = Number(lastMonthRevenueAggregate._sum.amount) || 0;
+    const overdueAmount = Number(overdueCommitmentsAggregate._sum.amount) || 0;
+
     const revenueChange = lastMonthRevenueAmount > 0
-      ? ((currentRevenueAmount - lastMonthRevenueAmount) / lastMonthRevenueAmount) * 100
+      ? ((monthlyRevenue - lastMonthRevenueAmount) / lastMonthRevenueAmount) * 100
       : 0;
 
     const studentsChange = lastMonthStudents > 0
@@ -288,7 +298,7 @@ export class ReportsService {
       : 0;
 
     const pendingChange = lastMonthPending > 0
-      ? ((pendingCommitments - lastMonthPending) / lastMonthPending) * 100
+      ? ((totalPendingCommitments - lastMonthPending) / lastMonthPending) * 100
       : 0;
 
     const conversionRate = totalProspects > 0
@@ -296,14 +306,15 @@ export class ReportsService {
       : 0;
 
     return {
-      totalRevenue: currentRevenueAmount,
+      todayRevenue,
+      monthlyRevenue,
       revenueChange: Math.round(revenueChange * 100) / 100,
       activeStudents,
       studentsChange: Math.round(studentsChange * 100) / 100,
-      pendingPayments: pendingCommitments,
+      pendingPaymentsCount: totalPendingCommitments,
+      overdueAmount,
       pendingChange: Math.round(pendingChange * 100) / 100,
       conversionRate: Math.round(conversionRate * 100) / 100,
-      conversionChange: 0,
     };
   }
 
@@ -342,7 +353,7 @@ export class ReportsService {
 
     if (groupFormat === "day") {
       const dailyTotals: Record<string, number> = {};
-      
+
       for (let i = 0; i < 7; i++) {
         const date = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
         const key = date.toLocaleDateString("es-CO", { weekday: "short" });
@@ -372,5 +383,59 @@ export class ReportsService {
 
       return Object.entries(weeklyTotals).map(([name, total]) => ({ name, total }));
     }
+  }
+
+  static async getPortfolioAging(): Promise<PortfolioAgingReport> {
+    const now = new Date();
+
+    // Traer todos los compromisos pendientes vencidos
+    const overdueCommitments = await prisma.paymentCommitment.findMany({
+      where: {
+        status: "PENDIENTE",
+        scheduledDate: {
+          lt: now
+        }
+      },
+      select: {
+        amount: true,
+        scheduledDate: true
+      }
+    });
+
+    const brackets: AgingBracket[] = [
+      { label: "0-30 días", amount: 0, count: 0 },
+      { label: "31-60 días", amount: 0, count: 0 },
+      { label: "61-90 días", amount: 0, count: 0 },
+      { label: "90+ días", amount: 0, count: 0 }
+    ];
+
+    let totalOverdue = 0;
+
+    overdueCommitments.forEach(c => {
+      const amount = Number(c.amount);
+      totalOverdue += amount;
+
+      const diffTime = Math.abs(now.getTime() - c.scheduledDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays <= 30) {
+        brackets[0].amount += amount;
+        brackets[0].count++;
+      } else if (diffDays <= 60) {
+        brackets[1].amount += amount;
+        brackets[1].count++;
+      } else if (diffDays <= 90) {
+        brackets[2].amount += amount;
+        brackets[2].count++;
+      } else {
+        brackets[3].amount += amount;
+        brackets[3].count++;
+      }
+    });
+
+    return {
+      brackets,
+      totalOverdue
+    };
   }
 }

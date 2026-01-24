@@ -34,20 +34,21 @@ export function StatCard({
         </div>
         {trend && trendValue && (
           <span
-            className={`flex items-center text-xs font-bold px-2.5 py-1 rounded-lg ${
-              trend === "up"
-                ? "bg-emerald-50 text-emerald-600"
-                : "bg-red-50 text-red-600"
-            }`}
+            className={`flex items-center text-xs font-bold px-2.5 py-1 rounded-lg ${trend === "up"
+              ? "bg-emerald-50 text-emerald-600"
+              : "bg-red-50 text-red-600"
+              }`}
           >
             {trend === "up" ? "↑" : "↓"} {trendValue}
           </span>
         )}
       </div>
-      <h3 className="text-[#64748b] text-xs font-semibold uppercase tracking-wider">
+      <h3 className="text-[#64748b] text-[10px] font-bold uppercase tracking-wider">
         {title}
       </h3>
-      <p className="text-3xl font-bold text-[#1e3a5f] mt-2">{value}</p>
+      <p className="text-2xl font-bold text-[#1e3a5f] mt-1 tracking-tight truncate" title={String(value)}>
+        {value}
+      </p>
     </div>
   );
 }

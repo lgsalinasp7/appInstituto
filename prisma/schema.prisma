@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -88,13 +89,15 @@ model AuditLog {
 }
 
 model Program {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  description String?
-  totalValue  Decimal  @db.Decimal(10, 2)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(cuid())
+  name           String   @unique
+  description    String?
+  totalValue     Decimal  @db.Decimal(10, 2)
+  matriculaValue Decimal  @db.Decimal(10, 2) @default(60000)
+  modulesCount   Int      @default(6)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   students         Student[]
   prospects        Prospect[]
@@ -122,6 +125,12 @@ model Student {
   totalProgramValue Decimal       @db.Decimal(10, 2)
   status            StudentStatus @default(MATRICULADO)
 
+  // Campos nuevos para lógica de negocio
+  paymentFrequency    PaymentFrequency @default(MENSUAL)
+  firstCommitmentDate DateTime?
+  currentModule       Int              @default(0)
+  matriculaPaid       Boolean          @default(false)
+
   program   Program @relation(fields: [programId], references: [id])
   programId String
   advisor   User    @relation(fields: [advisorId], references: [id])
@@ -139,6 +148,8 @@ model Student {
   @@index([programId])
   @@index([advisorId])
   @@index([enrollmentDate])
+  @@index([matriculaPaid])
+  @@index([currentModule])
 }
 
 model Payment {
@@ -149,6 +160,10 @@ model Payment {
   reference     String?
   receiptNumber String        @unique
   comments      String?
+
+  // Campos nuevos para lógica de negocio
+  paymentType  PaymentType @default(MODULO)
+  moduleNumber Int?
 
   student        Student @relation(fields: [studentId], references: [id])
   studentId      String
@@ -163,6 +178,7 @@ model Payment {
   @@index([registeredById])
   @@index([paymentDate])
   @@index([receiptNumber])
+  @@index([paymentType])
 }
 
 model Receipt {
@@ -187,6 +203,10 @@ model PaymentCommitment {
   rescheduledDate DateTime?
   comments        String?
 
+  // Campos nuevos para lógica de negocio
+  moduleNumber       Int    @default(1)
+  notificationsSent  Json?  // { "7dias": false, "3dias": false, "1dia": false }
+
   student   Student @relation(fields: [studentId], references: [id])
   studentId String
 
@@ -196,6 +216,7 @@ model PaymentCommitment {
   @@index([studentId])
   @@index([status])
   @@index([scheduledDate])
+  @@index([moduleNumber])
 }
 
 model Prospect {
@@ -253,8 +274,21 @@ model ContentDelivery {
 
 enum StudentStatus {
   MATRICULADO
+  ACTIVO
+  INACTIVO
+  GRADUADO
   EN_OTRA_INSTITUCION
   PENDIENTE
+}
+
+enum PaymentFrequency {
+  MENSUAL
+  QUINCENAL
+}
+
+enum PaymentType {
+  MATRICULA
+  MODULO
 }
 
 enum PaymentMethod {
@@ -276,4 +310,15 @@ enum ProspectStatus {
   EN_SEGUIMIENTO
   CERRADO
   PERDIDO
+}
+
+// Configuración del sistema
+model SystemConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
 }

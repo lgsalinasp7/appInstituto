@@ -86,6 +86,10 @@ export class StudentService {
         advisor: student.advisor,
         totalPaid,
         remainingBalance,
+        paymentFrequency: student.paymentFrequency,
+        firstCommitmentDate: student.firstCommitmentDate,
+        currentModule: student.currentModule,
+        matriculaPaid: student.matriculaPaid,
       };
     });
 
@@ -145,6 +149,10 @@ export class StudentService {
       advisor: student.advisor,
       totalPaid,
       remainingBalance,
+      paymentFrequency: student.paymentFrequency,
+      firstCommitmentDate: student.firstCommitmentDate,
+      currentModule: student.currentModule,
+      matriculaPaid: student.matriculaPaid,
     };
   }
 
@@ -174,6 +182,10 @@ export class StudentService {
         status: data.status || "MATRICULADO",
         programId: data.programId,
         advisorId: data.advisorId,
+        paymentFrequency: data.paymentFrequency,
+        firstCommitmentDate: data.firstCommitmentDate,
+        currentModule: 0,
+        matriculaPaid: false,
       },
       include: {
         program: {
@@ -185,7 +197,11 @@ export class StudentService {
       },
     });
 
-    return student;
+    return {
+      ...student,
+      initialPayment: Number(student.initialPayment),
+      totalProgramValue: Number(student.totalProgramValue),
+    };
   }
 
   static async updateStudent(id: string, data: UpdateStudentData) {
@@ -210,8 +226,40 @@ export class StudentService {
   }
 
   static async deleteStudent(id: string) {
-    await prisma.student.delete({
-      where: { id },
+    await prisma.$transaction(async (tx) => {
+      // 1. Obtener todos los pagos del estudiante para borrar sus recibos
+      const payments = await tx.payment.findMany({
+        where: { studentId: id },
+        select: { id: true },
+      });
+      const paymentIds = payments.map((p) => p.id);
+
+      // 2. Eliminar recibos asociados a esos pagos
+      if (paymentIds.length > 0) {
+        await tx.receipt.deleteMany({
+          where: { paymentId: { in: paymentIds } },
+        });
+      }
+
+      // 3. Eliminar pagos
+      await tx.payment.deleteMany({
+        where: { studentId: id },
+      });
+
+      // 4. Eliminar compromisos (cuotas)
+      await tx.paymentCommitment.deleteMany({
+        where: { studentId: id },
+      });
+
+      // 5. Eliminar entregas de contenido
+      await tx.contentDelivery.deleteMany({
+        where: { studentId: id },
+      });
+
+      // 6. Finalmente, eliminar al estudiante
+      await tx.student.delete({
+        where: { id },
+      });
     });
   }
 

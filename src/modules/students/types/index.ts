@@ -1,4 +1,6 @@
-export type StudentStatus = "MATRICULADO" | "EN_OTRA_INSTITUCION" | "PENDIENTE";
+import { StudentStatus, PaymentFrequency } from "@prisma/client";
+
+export type { StudentStatus }; // Re-export if needed or just use it
 
 export interface StudentFilters {
   search?: string;
@@ -20,6 +22,9 @@ export interface CreateStudentData {
   guardianPhone?: string;
   guardianEmail?: string;
   enrollmentDate: Date;
+  // New fields
+  paymentFrequency: PaymentFrequency;
+  firstCommitmentDate: Date;
   initialPayment: number;
   totalProgramValue: number;
   status?: StudentStatus;
@@ -38,6 +43,9 @@ export interface UpdateStudentData {
   guardianEmail?: string;
   status?: StudentStatus;
   programId?: string;
+  // New fields
+  paymentFrequency?: PaymentFrequency;
+  firstCommitmentDate?: Date;
 }
 
 export interface StudentWithRelations {
@@ -59,6 +67,11 @@ export interface StudentWithRelations {
   advisorId: string;
   createdAt: Date;
   updatedAt: Date;
+  // New fields
+  paymentFrequency: PaymentFrequency;
+  firstCommitmentDate: Date | null;
+  currentModule: number;
+  matriculaPaid: boolean;
   program: {
     id: string;
     name: string;

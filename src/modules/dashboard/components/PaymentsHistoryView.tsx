@@ -31,7 +31,7 @@ interface PaymentsHistoryViewProps {
   advisorId?: string;
 }
 
-export function PaymentsHistoryView({ advisorId }: PaymentsHistoryViewProps) {
+export function PaymentsHistoryView({ advisorId: _advisorId }: PaymentsHistoryViewProps) {
   const [payments] = useState<Payment[]>(DEMO_PAYMENTS);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFilter, setDateFilter] = useState<"today" | "week" | "month" | "all">("all");

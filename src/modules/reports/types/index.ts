@@ -53,14 +53,26 @@ export interface ProgramReport {
 }
 
 export interface DashboardStats {
-  totalRevenue: number;
-  revenueChange: number;
+  todayRevenue: number;
+  monthlyRevenue: number;
+  revenueChange: number; // Porcentaje comparado con mes anterior
   activeStudents: number;
   studentsChange: number;
-  pendingPayments: number;
+  pendingPaymentsCount: number; // Cantidad de compromisos pendientes
+  overdueAmount: number; // Monto total en mora
   pendingChange: number;
   conversionRate: number;
-  conversionChange: number;
+}
+
+export interface AgingBracket {
+  label: string;
+  amount: number;
+  count: number;
+}
+
+export interface PortfolioAgingReport {
+  brackets: AgingBracket[];
+  totalOverdue: number;
 }
 
 export interface RevenueChartData {

@@ -24,15 +24,16 @@ export function StatsCard({ card }: StatsCardProps) {
         )}
       </CardHeader>
       <CardContent>
-        <div className="text-3xl font-bold text-[#1e3a5f]">{card.value}</div>
+        <div className="text-2xl font-bold text-[#1e3a5f] tracking-tight truncate" title={String(card.value)}>
+          {card.value}
+        </div>
         {card.description && (
           <p className="text-xs text-[#94a3b8] mt-1">{card.description}</p>
         )}
         {card.trend && (
           <p
-            className={`text-xs mt-2 flex items-center gap-1 ${
-              card.trend.isPositive ? "text-green-600" : "text-red-600"
-            }`}
+            className={`text-xs mt-2 flex items-center gap-1 ${card.trend.isPositive ? "text-green-600" : "text-red-600"
+              }`}
           >
             <span>{card.trend.isPositive ? "↑" : "↓"}</span>
             {Math.abs(card.trend.value)}% desde el mes pasado

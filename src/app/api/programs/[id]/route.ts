@@ -8,8 +8,10 @@ interface Params {
 
 const updateProgramSchema = z.object({
   name: z.string().min(2).optional(),
-  description: z.string().optional(),
-  totalValue: z.coerce.number().positive().optional(),
+  description: z.string().nullable().optional(),
+  totalValue: z.coerce.number().min(0).optional(),
+  matriculaValue: z.coerce.number().min(0).optional(),
+  modulesCount: z.coerce.number().int().min(1).optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -38,7 +40,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: Params) {
+export async function PUT(request: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
     const body = await request.json();

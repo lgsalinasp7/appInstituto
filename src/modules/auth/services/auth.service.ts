@@ -4,7 +4,7 @@
  */
 
 import prisma from "@/lib/prisma";
-import type { LoginCredentials, RegisterData, AuthUser } from "../types";
+import type { RegisterData, AuthUser } from "../types";
 
 export class AuthService {
   /**

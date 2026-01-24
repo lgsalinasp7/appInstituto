@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Calendar, CreditCard, MoreHorizontal, Filter, Search, Eye, X, Phone, Mail, MessageCircle, FileText, Clock } from "lucide-react";
+import { Calendar, CreditCard, Search, Eye, X, MessageCircle, Clock } from "lucide-react";
 import { Pagination } from "./Pagination";
 import type { Student } from "../types";
 

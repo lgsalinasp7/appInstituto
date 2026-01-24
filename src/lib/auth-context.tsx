@@ -24,21 +24,23 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem("auth_user");
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch {
-        localStorage.removeItem("auth_user");
-      }
+function getStoredUser(): AuthUser | null {
+  if (typeof window === "undefined") return null;
+  const storedUser = localStorage.getItem("auth_user");
+  if (storedUser) {
+    try {
+      return JSON.parse(storedUser);
+    } catch {
+      localStorage.removeItem("auth_user");
     }
-    setIsLoading(false);
-  }, []);
+  }
+  return null;
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<AuthUser | null>(() => getStoredUser());
+  // isLoading es false en el cliente ya que el usuario se carga síncronamente desde localStorage
+  const isLoading = typeof window === "undefined";
 
   useEffect(() => {
     if (user) {

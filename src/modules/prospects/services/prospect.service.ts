@@ -6,7 +6,6 @@ import type {
   ProspectWithRelations,
   ProspectsListResponse,
   ProspectStats,
-  ProspectStatus,
 } from "../types";
 import { Prisma } from "@prisma/client";
 

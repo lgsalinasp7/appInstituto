@@ -3,6 +3,8 @@ export interface Program {
   name: string;
   description: string | null;
   totalValue: number;
+  matriculaValue: number;
+  modulesCount: number;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -14,15 +16,19 @@ export interface Program {
 
 export interface CreateProgramData {
   name: string;
-  description?: string;
+  description?: string | null;
   totalValue: number;
+  matriculaValue: number;
+  modulesCount: number;
   isActive?: boolean;
 }
 
 export interface UpdateProgramData {
   name?: string;
-  description?: string;
+  description?: string | null;
   totalValue?: number;
+  matriculaValue?: number;
+  modulesCount?: number;
   isActive?: boolean;
 }
 

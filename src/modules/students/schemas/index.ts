@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { StudentStatus, PaymentFrequency } from "@prisma/client";
 
 export const createStudentSchema = z.object({
   fullName: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
@@ -13,9 +14,11 @@ export const createStudentSchema = z.object({
   enrollmentDate: z.coerce.date(),
   initialPayment: z.coerce.number().min(0, "El pago inicial no puede ser negativo"),
   totalProgramValue: z.coerce.number().min(0, "El valor total no puede ser negativo"),
-  status: z.enum(["MATRICULADO", "EN_OTRA_INSTITUCION", "PENDIENTE"]).default("MATRICULADO"),
+  status: z.nativeEnum(StudentStatus).default(StudentStatus.MATRICULADO),
   programId: z.string().min(1, "Debe seleccionar un programa"),
   advisorId: z.string().min(1, "Debe asignar un asesor"),
+  paymentFrequency: z.nativeEnum(PaymentFrequency),
+  firstCommitmentDate: z.coerce.date(),
 });
 
 export const updateStudentSchema = z.object({
@@ -27,8 +30,14 @@ export const updateStudentSchema = z.object({
   guardianName: z.string().optional(),
   guardianPhone: z.string().optional(),
   guardianEmail: z.string().email().optional().or(z.literal("")),
-  status: z.enum(["MATRICULADO", "EN_OTRA_INSTITUCION", "PENDIENTE"]).optional(),
+  status: z.nativeEnum(StudentStatus).optional(),
   programId: z.string().optional(),
+  advisorId: z.string().optional(),
+  enrollmentDate: z.coerce.date().optional(),
+  initialPayment: z.coerce.number().min(0).optional(),
+  totalProgramValue: z.coerce.number().min(0).optional(),
+  paymentFrequency: z.nativeEnum(PaymentFrequency).optional(),
+  firstCommitmentDate: z.coerce.date().optional(),
 });
 
 export type CreateStudentInput = z.infer<typeof createStudentSchema>;

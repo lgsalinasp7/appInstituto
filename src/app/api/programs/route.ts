@@ -4,8 +4,10 @@ import { z } from "zod";
 
 const createProgramSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-  description: z.string().optional(),
-  totalValue: z.coerce.number().positive("El valor debe ser mayor a 0"),
+  description: z.string().nullable().optional(),
+  totalValue: z.coerce.number().min(0, "El valor total no puede ser negativo"),
+  matriculaValue: z.coerce.number().min(0, "El valor de matrícula no puede ser negativo"),
+  modulesCount: z.coerce.number().int().min(1, "La cantidad de módulos debe ser al menos 1"),
   isActive: z.boolean().optional(),
 });
 

@@ -1,42 +1,30 @@
-import { NextRequest, NextResponse } from "next/server";
-import { CarteraService } from "@/modules/cartera";
-import { z } from "zod";
+import { NextResponse } from "next/server";
+import { CommitmentService } from "@/modules/commitments/services/commitment.service";
+import { CommitmentStatus } from "@prisma/client";
 
-const createCommitmentSchema = z.object({
-  scheduledDate: z.coerce.date(),
-  amount: z.coerce.number().positive("El monto debe ser mayor a 0"),
-  comments: z.string().optional(),
-  studentId: z.string().min(1, "Debe seleccionar un estudiante"),
-});
-
-export async function POST(request: NextRequest) {
+export async function GET(request: Request) {
   try {
-    const body = await request.json();
+    const { searchParams } = new URL(request.url);
+    const statusParam = searchParams.get("status");
+    const status = statusParam as CommitmentStatus | undefined;
+    const studentId = searchParams.get("studentId") || undefined;
 
-    const validationResult = createCommitmentSchema.safeParse(body);
+    // Filtros de fecha (opcional)
+    const startDate = searchParams.get("startDate") ? new Date(searchParams.get("startDate")!) : undefined;
+    const endDate = searchParams.get("endDate") ? new Date(searchParams.get("endDate")!) : undefined;
 
-    if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Datos inválidos",
-          details: validationResult.error.flatten().fieldErrors,
-        },
-        { status: 400 }
-      );
-    }
+    const data = await CommitmentService.getCommitments({
+      status,
+      studentId,
+      startDate,
+      endDate
+    });
 
-    const commitment = await CarteraService.createCommitment(validationResult.data);
-
-    return NextResponse.json({
-      success: true,
-      data: commitment,
-      message: "Compromiso de pago registrado exitosamente",
-    }, { status: 201 });
+    return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error("Error creating commitment:", error);
+    console.error("Error fetching commitments:", error);
     return NextResponse.json(
-      { success: false, error: "Error al registrar compromiso" },
+      { success: false, error: "Error al obtener compromisos" },
       { status: 500 }
     );
   }

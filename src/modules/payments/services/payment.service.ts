@@ -14,7 +14,7 @@ export class PaymentService {
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, "0");
-    
+
     const lastPayment = await prisma.payment.findFirst({
       where: {
         receiptNumber: {
@@ -93,6 +93,8 @@ export class PaymentService {
       createdAt: payment.createdAt,
       student: payment.student,
       registeredBy: payment.registeredBy,
+      paymentType: payment.paymentType,
+      moduleNumber: payment.moduleNumber,
     }));
 
     return {
@@ -132,65 +134,162 @@ export class PaymentService {
       createdAt: payment.createdAt,
       student: payment.student,
       registeredBy: payment.registeredBy,
+      paymentType: payment.paymentType,
+      moduleNumber: payment.moduleNumber,
     };
   }
 
   static async createPayment(data: CreatePaymentData) {
     const receiptNumber = await this.generateReceiptNumber();
 
-    const payment = await prisma.payment.create({
-      data: {
-        amount: data.amount,
-        paymentDate: data.paymentDate,
-        method: data.method,
-        reference: data.reference || null,
-        receiptNumber,
-        comments: data.comments || null,
-        studentId: data.studentId,
-        registeredById: data.registeredById,
-      },
-      include: {
-        student: {
-          select: { 
-            id: true, 
-            fullName: true, 
-            documentNumber: true,
-            email: true,
-            phone: true,
-            totalProgramValue: true,
+    // 1. Obtener estudiante y programa
+    const student = await prisma.student.findUnique({
+      where: { id: data.studentId },
+      include: { program: true },
+    });
+
+    if (!student) throw new Error("Estudiante no encontrado");
+
+    const program = student.program;
+
+    // Calcular valor por módulo
+    // Formula: (Total - Matrícula) / Cantidad Módulos
+    const moduleValue = (Number(program.totalValue) - Number(program.matriculaValue)) / program.modulesCount;
+
+    // Iniciar transacción
+    return await prisma.$transaction(async (tx) => {
+      let paymentType: "MATRICULA" | "MODULO" = "MODULO";
+      let moduleNumber: number | null = null;
+      let nextModuleNumber: number | null = null;
+
+      // 2. Determinar tipo de pago y validaciones
+      if (!student.matriculaPaid) {
+        // --- LOGICA MATRÍCULA ---
+        paymentType = "MATRICULA";
+
+        // Validar monto exacto
+        if (Number(data.amount) !== Number(program.matriculaValue)) {
+          throw new Error(`El valor de la matrícula debe ser $${Number(program.matriculaValue).toLocaleString()}`);
+        }
+
+        // Acciones:
+        // a. Marcar matrícula como pagada
+        await tx.student.update({
+          where: { id: student.id },
+          data: { matriculaPaid: true },
+        });
+
+        // b. Crear PRIMER compromiso (Módulo 1)
+        // Usar firstCommitmentDate del estudiante o hoy + 30 días por defecto
+        const firstDate = student.firstCommitmentDate || new Date(new Date().setDate(new Date().getDate() + 30));
+
+        await tx.paymentCommitment.create({
+          data: {
+            studentId: student.id,
+            amount: moduleValue,
+            scheduledDate: firstDate,
+            moduleNumber: 1,
+            status: "PENDIENTE",
+          }
+        });
+
+      } else {
+        // --- LOGICA MÓDULO (PAGO MENSUAL) ---
+        paymentType = "MODULO";
+        moduleNumber = student.currentModule + 1; // El módulo que está PAGANDO
+        nextModuleNumber = moduleNumber + 1;      // El SIGUIENTE módulo
+
+        // Validar monto exacto (sin decimales extremos, permitir margen mínimo si es necesario, pero regla dice EXACTO)
+        // Usaremos math.abs < 100 pesos por si acaso errores de float, o strict equality
+        if (Math.abs(Number(data.amount) - moduleValue) > 100) {
+          throw new Error(`El valor del módulo debe ser $${moduleValue.toLocaleString()}`);
+        }
+
+        // Acciones:
+        // a. Actualizar módulo actual del estudiante
+        await tx.student.update({
+          where: { id: student.id },
+          data: { currentModule: moduleNumber },
+        });
+
+        // b. Buscar y marcar como PAGADO el compromiso de ESTE módulo
+        // Buscamos compromiso pendiente más antiguo o por número de módulo
+        const currentCommitment = await tx.paymentCommitment.findFirst({
+          where: {
+            studentId: student.id,
+            moduleNumber: moduleNumber,
+            status: "PENDIENTE"
+          }
+        });
+
+        if (currentCommitment) {
+          await tx.paymentCommitment.update({
+            where: { id: currentCommitment.id },
+            data: { status: "PAGADO" }
+          });
+        }
+
+        // c. Crear SIGUIENTE compromiso (si no es el último módulo)
+        if (nextModuleNumber <= program.modulesCount) {
+          // Calcular fecha según frecuencia
+          const daysToAdd = student.paymentFrequency === "QUINCENAL" ? 15 : 30;
+          const nextDate = new Date();
+          nextDate.setDate(nextDate.getDate() + daysToAdd);
+
+          await tx.paymentCommitment.create({
+            data: {
+              studentId: student.id,
+              amount: moduleValue,
+              scheduledDate: nextDate,
+              moduleNumber: nextModuleNumber,
+              status: "PENDIENTE"
+            }
+          });
+        }
+
+        // d. Registrar ENTREGA de contenido (Opcional, si existiera tabla de entregas vinculada)
+        // ...
+      }
+
+      // 3. Crear el Registro de Pago
+      const payment = await tx.payment.create({
+        data: {
+          amount: data.amount,
+          paymentDate: data.paymentDate,
+          method: data.method,
+          reference: data.reference || null,
+          receiptNumber,
+          comments: data.comments || null,
+          studentId: data.studentId,
+          registeredById: data.registeredById,
+          paymentType,
+          moduleNumber,
+        },
+        include: {
+          student: {
+            select: {
+              id: true,
+              fullName: true,
+              documentNumber: true,
+              email: true,
+              phone: true,
+              totalProgramValue: true
+            },
           },
+          registeredBy: {
+            select: { id: true, name: true, email: true }
+          }
         },
-        registeredBy: {
-          select: { id: true, name: true, email: true },
-        },
-      },
+      });
+
+      return payment;
     });
-
-    const studentPayments = await prisma.payment.aggregate({
-      where: { studentId: data.studentId },
-      _sum: { amount: true },
-    });
-
-    const totalPaid = Number(studentPayments._sum.amount) || 0;
-    const remainingBalance = Number(payment.student.totalProgramValue) - totalPaid;
-
-    return {
-      payment: {
-        ...payment,
-        amount: Number(payment.amount),
-      },
-      studentBalance: {
-        totalPaid,
-        remainingBalance,
-        totalProgramValue: Number(payment.student.totalProgramValue),
-      },
-    };
   }
 
-  static async getPaymentStats(filters: { 
-    advisorId?: string; 
-    startDate?: Date; 
-    endDate?: Date 
+  static async getPaymentStats(filters: {
+    advisorId?: string;
+    startDate?: Date;
+    endDate?: Date
   }): Promise<PaymentStats> {
     const where: Prisma.PaymentWhereInput = {};
 
@@ -245,7 +344,7 @@ export class PaymentService {
   static async getTodayPayments() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 

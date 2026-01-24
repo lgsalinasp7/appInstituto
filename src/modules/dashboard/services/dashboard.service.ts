@@ -1,86 +1,82 @@
-/**
- * Dashboard Service
- * Handles all dashboard business logic and statistics
- * Note: Currently uses mock Prisma client. Connect to real DB for production.
- */
-
 import prisma from "@/lib/prisma";
-import type { LegacyDashboardStats, RecentActivity } from "../types";
-import type { Prisma } from "@prisma/client";
+
+export interface DashboardStats {
+  todayRevenue: number;
+  monthlyRevenue: number;
+  monthlyGoal: number;
+  overdueAmount: number;
+  activeStudents: number;
+  revenueTrend: number; // Porcentaje comparado con mes anterior o ayer
+}
 
 export class DashboardService {
-  /**
-   * Get dashboard statistics (legacy - for old dashboard components)
-   */
-  static async getStats(): Promise<LegacyDashboardStats> {
-    try {
-      const now = new Date();
-      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  static async getDashboardStats(): Promise<DashboardStats> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-      const [totalUsers, activeUsers, newUsersToday, newUsersThisMonth] = await Promise.all([
-        prisma.user.count(),
-        prisma.user.count(),
-        prisma.user.count(),
-        prisma.user.count(),
-      ]);
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
 
-      return {
-        totalUsers,
-        activeUsers,
-        newUsersToday,
-        newUsersThisMonth,
-      };
-    } catch {
-      return {
-        totalUsers: 0,
-        activeUsers: 0,
-        newUsersToday: 0,
-        newUsersThisMonth: 0,
-      };
-    }
-  }
-
-  /**
-   * Get recent activity from audit logs
-   * Note: Returns empty array when using mock client
-   */
-  static async getRecentActivity(_limit: number = 10): Promise<RecentActivity[]> {
-    try {
-      const logs = await prisma.auditLog.findMany();
-      return logs as unknown as RecentActivity[];
-    } catch {
-      return [];
-    }
-  }
-
-  /**
-   * Log an action to audit log
-   * Note: No-op when using mock client
-   */
-  static async logAction(params: {
-    action: string;
-    entity: string;
-    entityId?: string;
-    userId?: string;
-    metadata?: Prisma.InputJsonValue;
-    ipAddress?: string;
-    userAgent?: string;
-  }): Promise<void> {
-    try {
-      await prisma.auditLog.create({
-        data: {
-          action: params.action,
-          entity: params.entity,
-          entityId: params.entityId,
-          userId: params.userId,
-          metadata: params.metadata,
-          ipAddress: params.ipAddress,
-          userAgent: params.userAgent,
+    // Consultas en paralelo
+    const [
+      todayPayments,
+      monthlyPayments,
+      overdueCommitments,
+      activeStudentsCount,
+      configGoal
+    ] = await Promise.all([
+      // 1. Recaudo de hoy
+      prisma.payment.aggregate({
+        where: {
+          paymentDate: {
+            gte: today,
+            lt: tomorrow,
+          }
         },
-      });
-    } catch {
-      console.warn("Audit logging not available");
-    }
+        _sum: { amount: true }
+      }),
+      // 2. Recaudo del mes
+      prisma.payment.aggregate({
+        where: {
+          paymentDate: {
+            gte: startOfMonth,
+          }
+        },
+        _sum: { amount: true }
+      }),
+      // 3. Cartera en mora (Compromisos vencidos)
+      prisma.paymentCommitment.aggregate({
+        where: {
+          status: "PENDIENTE",
+          scheduledDate: {
+            lt: today
+          }
+        },
+        _sum: { amount: true }
+      }),
+      // 4. Estudiantes activos
+      prisma.student.count({
+        where: { status: "MATRICULADO" }
+      }),
+      // 5. Meta mensual de SystemConfig
+      prisma.systemConfig.findUnique({
+        where: { key: "MONTHLY_GOAL" }
+      })
+    ]);
+
+    const todayRevenue = Number(todayPayments._sum.amount) || 0;
+    const monthlyRevenue = Number(monthlyPayments._sum.amount) || 0;
+    const overdueAmount = Number(overdueCommitments._sum.amount) || 0;
+    const monthlyGoal = configGoal ? Number(configGoal.value) : 10000000; // 10M por defecto
+
+    return {
+      todayRevenue,
+      monthlyRevenue,
+      monthlyGoal,
+      overdueAmount,
+      activeStudents: activeStudentsCount,
+      revenueTrend: 15.5, // Placeholder por ahora
+    };
   }
 }

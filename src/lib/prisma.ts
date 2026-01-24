@@ -1,12 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
-import { neonConfig, Pool } from "@neondatabase/serverless";
-import { PrismaNeon } from "@prisma/adapter-neon";
-
-neonConfig.wsProxy = (host) => `${host}:5433/v1`;
-neonConfig.useSecureWebSocket = false;
-neonConfig.pipelineTLS = false;
-neonConfig.pipelineConnect = false;
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -16,25 +9,37 @@ function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
-    throw new Error("DATABASE_URL environment variable is not set. Please configure your database connection.");
+    console.warn("⚠️ DATABASE_URL no encontrada en el entorno. Prisma podría fallar.");
   }
 
-  const pool = new Pool({ connectionString });
-  const adapter = new PrismaNeon(pool as any);
+  console.log("🛠️ Inicializando Prisma Client 6 (Estandar)...");
 
-  return new PrismaClient({ adapter });
+  return new PrismaClient({
+    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+  });
 }
 
-let prismaInstance: PrismaClient | undefined;
+// Singleton de Prisma
+export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
-try {
-  prismaInstance = globalForPrisma.prisma ?? createPrismaClient();
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = prismaInstance;
-  }
-} catch {
-  console.error("Failed to initialize Prisma client. Database operations will not work.");
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
 }
 
-export const prisma = prismaInstance as PrismaClient;
+// Manejo de señales para cierres limpios
+if (typeof window === "undefined") {
+  const shutdownHandler = async () => {
+    console.log("🔌 Cerrando conexiones de Prisma...");
+    try {
+      await prisma.$disconnect();
+    } catch {
+      // Ignorar errores al desconectar
+    }
+    process.exit(0);
+  };
+
+  process.on("SIGINT", shutdownHandler);
+  process.on("SIGTERM", shutdownHandler);
+}
+
 export default prisma;
