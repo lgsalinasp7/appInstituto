@@ -44,7 +44,7 @@ export function EnrollmentDashboard() {
     email: s.email,
     enrollmentDate: s.enrollmentDate,
     advisor: s.advisor,
-    status: s.status as "active" | "inactive" | "transferred",
+    status: s.status as "MATRICULADO" | "EN_OTRA_INSTITUCION" | "PENDIENTE",
     program: s.program,
     totalValue: s.totalValue,
     paidAmount: s.paidAmount,

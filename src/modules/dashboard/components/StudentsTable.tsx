@@ -61,8 +61,9 @@ export function StudentsTable({ students, onPaymentClick }: StudentsTableProps) 
               className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
             >
               <option value="all">Todos los estados</option>
-              <option value="active">Activos</option>
-              <option value="inactive">Inactivos</option>
+              <option value="MATRICULADO">Matriculados</option>
+              <option value="PENDIENTE">Pendientes</option>
+              <option value="EN_OTRA_INSTITUCION">En otra institución</option>
             </select>
           </div>
           <div className="text-sm text-[#64748b] font-semibold">
@@ -374,9 +375,11 @@ function StudentDetailModal({
               <div className="bg-gray-50 rounded-xl p-4">
                 <p className="text-xs text-gray-500 uppercase font-bold mb-1">Estado</p>
                 <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold ${
-                  student.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                  student.status === "MATRICULADO" ? "bg-green-100 text-green-800" : 
+                  student.status === "PENDIENTE" ? "bg-yellow-100 text-yellow-800" : "bg-gray-100 text-gray-800"
                 }`}>
-                  {student.status === "active" ? "Activo" : "Inactivo"}
+                  {student.status === "MATRICULADO" ? "Matriculado" : 
+                   student.status === "PENDIENTE" ? "Pendiente" : "En otra institución"}
                 </span>
               </div>
             </div>

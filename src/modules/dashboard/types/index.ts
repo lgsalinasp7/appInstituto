@@ -8,11 +8,11 @@ export type DashboardTab = 'dashboard' | 'enrollments' | 'payments' | 'cartera' 
 // Payment status
 export type PaymentStatus = 'paid' | 'pending' | 'overdue';
 
-// Student status
-export type StudentStatus = 'active' | 'inactive' | 'transferred';
+// Student status (matches Prisma enum)
+export type StudentStatus = 'MATRICULADO' | 'EN_OTRA_INSTITUCION' | 'PENDIENTE';
 
-// Payment methods
-export type PaymentMethod = 'Bancolombia' | 'Efectivo' | 'Transferencia' | 'Wompi' | 'Otro';
+// Payment methods (matches Prisma enum)
+export type PaymentMethod = 'BANCOLOMBIA' | 'NEQUI' | 'DAVIPLATA' | 'EFECTIVO' | 'OTRO';
 
 // Student interface
 export interface Student {

@@ -25,16 +25,19 @@ function createPrismaClient(): PrismaClient {
   return new PrismaClient({ adapter });
 }
 
-let prismaInstance: PrismaClient | undefined;
-
-try {
-  prismaInstance = globalForPrisma.prisma ?? createPrismaClient();
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = prismaInstance;
+function getPrismaClient(): PrismaClient {
+  if (globalForPrisma.prisma) {
+    return globalForPrisma.prisma;
   }
-} catch {
-  console.error("Failed to initialize Prisma client. Database operations will not work.");
+
+  const client = createPrismaClient();
+  
+  if (process.env.NODE_ENV !== "production") {
+    globalForPrisma.prisma = client;
+  }
+  
+  return client;
 }
 
-export const prisma = prismaInstance as PrismaClient;
+export const prisma = getPrismaClient();
 export default prisma;
