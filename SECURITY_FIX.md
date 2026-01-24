@@ -25,17 +25,40 @@ ssh-keygen -t rsa -b 4096 -C "tu-email@ejemplo.com"
 
 ### 2. **Eliminar la Clave del Historial de Git**
 
+**⚠️ ARCHIVOS DETECTADOS:** `id_github_lgsalinasp` y `id_github_lgsalinasp.pub`
+
 #### Opción A: Usando git filter-branch (Recomendado)
 
 ```bash
-# Reemplaza 'nombre-del-archivo' con el nombre real del archivo de la clave
+# Eliminar ambos archivos del historial completo
 git filter-branch --force --index-filter \
-  "git rm --cached --ignore-unmatch nombre-del-archivo" \
+  "git rm --cached --ignore-unmatch id_github_lgsalinasp id_github_lgsalinasp.pub" \
   --prune-empty --tag-name-filter cat -- --all
+
+# Limpiar referencias
+git reflog expire --expire=now --all
+git gc --prune=now --aggressive
 
 # Forzar push (CUIDADO: esto reescribe el historial)
 git push origin --force --all
 git push origin --force --tags
+```
+
+#### Opción B: Usando BFG Repo-Cleaner (Más fácil)
+
+```bash
+# Descargar BFG: https://rtyley.github.io/bfg-repo-cleaner/
+
+# Eliminar los archivos específicos
+java -jar bfg.jar --delete-files id_github_lgsalinasp
+java -jar bfg.jar --delete-files id_github_lgsalinasp.pub
+
+# Limpiar referencias
+git reflog expire --expire=now --all
+git gc --prune=now --aggressive
+
+# Forzar push
+git push origin --force --all
 ```
 
 #### Opción B: Usando BFG Repo-Cleaner (Más fácil)

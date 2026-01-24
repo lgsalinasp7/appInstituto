@@ -33,6 +33,10 @@ id_ed25519
 id_ed25519.pub
 id_ecdsa
 id_ecdsa.pub
+id_github_*
+id_*_rsa
+id_*_ed25519
+id_*_ecdsa
 *.ppk
 .ssh/
 *_rsa
