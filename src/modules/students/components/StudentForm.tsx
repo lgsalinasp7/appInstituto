@@ -60,6 +60,17 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
 
   const selectedProgramId = watch("programId");
 
+  // Automatizar valores financieros al cambiar el programa
+  useEffect(() => {
+    if (selectedProgramId && programs.length > 0 && !isEditing) {
+      const program = programs.find(p => p.id === selectedProgramId);
+      if (program) {
+        setValue("totalProgramValue", Number(program.totalValue));
+        setValue("initialPayment", Number(program.matriculaValue));
+      }
+    }
+  }, [selectedProgramId, programs, setValue, isEditing]);
+
   // Efecto para Resetear el formulario cuando cambia el estudiante o se abre/cierra
   useEffect(() => {
     if (isOpen) {
@@ -354,7 +365,7 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
                   <option value="">Seleccione un programa</option>
                   {programs.map((program) => (
                     <option key={program.id} value={program.id}>
-                      {program.name} - ${Number(program.totalValue).toLocaleString()}
+                      {program.name}
                     </option>
                   ))}
                 </select>
@@ -365,16 +376,13 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
 
               <div>
                 <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider">
-                  Estado
+                  Cantidad de Módulos
                 </label>
-                <select
-                  {...register("status")}
-                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-medium"
-                >
-                  <option value="MATRICULADO">Matriculado</option>
-                  <option value="EN_OTRA_INSTITUCION">En otra institución</option>
-                  <option value="PENDIENTE">Pendiente</option>
-                </select>
+                <div className="w-full mt-1 px-4 py-3 bg-gray-100 border-2 border-gray-200 rounded-xl text-[#1e3a5f] font-bold">
+                  {selectedProgramId && programs.find(p => p.id === selectedProgramId)
+                    ? `${programs.find(p => p.id === selectedProgramId)?.modulesCount} Módulos`
+                    : "---"}
+                </div>
               </div>
 
               <div>
