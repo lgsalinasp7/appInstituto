@@ -53,8 +53,8 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
   return (
     <div className="relative">
       <div className="relative backdrop-blur-xl bg-white/95 rounded-3xl shadow-2xl shadow-black/20 border border-white/20 overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#1e3a5f] via-[#3b82f6] to-[#1e3a5f]" />
-        
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-blue-500 to-primary" />
+
         <div className="pt-6 pb-4 px-6 text-center relative">
           <div className="flex justify-center mb-4">
             <div className="relative w-16 h-16 opacity-90">
@@ -66,11 +66,11 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
               />
             </div>
           </div>
-          
-          <h1 className="text-xl font-bold text-[#1e3a5f] mb-1.5">
+
+          <h1 className="text-xl font-bold text-primary mb-1.5">
             ¡Bienvenido de nuevo!
           </h1>
-          <p className="text-sm text-[#64748b]">
+          <p className="text-sm text-gray-500">
             Ingresa tus credenciales para continuar
           </p>
         </div>
@@ -83,16 +83,16 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[#1e3a5f] font-semibold text-sm">
+                    <FormLabel className="text-primary font-semibold text-sm">
                       Correo electrónico
                     </FormLabel>
                     <FormControl>
                       <div className="relative group">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#94a3b8] group-focus-within:text-[#1e3a5f] transition-colors" />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-primary transition-colors" />
                         <Input
                           type="email"
                           placeholder="tu@email.com"
-                          className="pl-12 h-12 bg-[#f8fafc] border-2 border-[#e2e8f0] rounded-xl focus:border-[#1e3a5f] focus:ring-4 focus:ring-[#1e3a5f]/10 transition-all placeholder:text-[#94a3b8]"
+                          className="pl-12 h-12 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-gray-400"
                           {...field}
                         />
                       </div>
@@ -101,36 +101,36 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="password"
                 render={({ field }) => (
                   <FormItem>
                     <div className="flex items-center justify-between">
-                      <FormLabel className="text-[#1e3a5f] font-semibold text-sm">
+                      <FormLabel className="text-primary font-semibold text-sm">
                         Contraseña
                       </FormLabel>
                       <Link
                         href="/auth/forgot-password"
-                        className="text-xs text-[#3b82f6] hover:text-[#1e3a5f] font-medium transition-colors"
+                        className="text-xs text-blue-500 hover:text-primary font-medium transition-colors"
                       >
                         ¿Olvidaste tu contraseña?
                       </Link>
                     </div>
                     <FormControl>
                       <div className="relative group">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#94a3b8] group-focus-within:text-[#1e3a5f] transition-colors" />
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-primary transition-colors" />
                         <Input
                           type={showPassword ? "text" : "password"}
                           placeholder="••••••••"
-                          className="pl-12 pr-12 h-12 bg-[#f8fafc] border-2 border-[#e2e8f0] rounded-xl focus:border-[#1e3a5f] focus:ring-4 focus:ring-[#1e3a5f]/10 transition-all placeholder:text-[#94a3b8]"
+                          className="pl-12 pr-12 h-12 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-gray-400"
                           {...field}
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-[#94a3b8] hover:text-[#1e3a5f] transition-colors"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors"
                         >
                           {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                         </button>
@@ -143,7 +143,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
 
               <Button
                 type="submit"
-                className="w-full h-12 bg-gradient-to-r from-[#1e3a5f] to-[#2d4a6f] hover:from-[#2d4a6f] hover:to-[#1e3a5f] text-white font-semibold rounded-xl shadow-lg shadow-[#1e3a5f]/25 hover:shadow-xl hover:shadow-[#1e3a5f]/30 transition-all duration-300 group"
+                className="w-full h-12 bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary text-white font-semibold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 group"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -179,7 +179,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
 
       </div>
 
-      <div className="absolute -inset-4 bg-gradient-to-r from-[#1e3a5f]/10 via-[#3b82f6]/10 to-[#1e3a5f]/10 rounded-[32px] blur-2xl -z-10 opacity-60" />
+      <div className="absolute -inset-4 bg-gradient-to-r from-primary/10 via-blue-500/10 to-primary/10 rounded-[32px] blur-2xl -z-10 opacity-60" />
     </div>
   );
 }

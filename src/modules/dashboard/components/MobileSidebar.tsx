@@ -58,21 +58,21 @@ export function MobileSidebar({ isOpen, onClose, activeTab, onTabChange }: Mobil
               />
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-[#1e3a5f] text-sm">Educamos con Valores</span>
-              <span className="text-xs text-[#64748b]">Panel de Gestión</span>
+              <span className="font-bold text-primary text-sm">Educamos con Valores</span>
+              <span className="text-xs text-gray-500">Panel de Gestión</span>
             </div>
           </div>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <X size={20} className="text-[#64748b]" />
+            <X size={20} className="text-gray-500" />
           </button>
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-          <p className="text-xs font-bold text-[#94a3b8] uppercase tracking-wider px-3 mb-3">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider px-3 mb-3">
             Menú Principal
           </p>
           {navItems.map((item) => {
@@ -83,8 +83,8 @@ export function MobileSidebar({ isOpen, onClose, activeTab, onTabChange }: Mobil
                 key={item.id}
                 onClick={() => handleTabChange(item.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium text-sm ${isActive
-                    ? "bg-gradient-instituto text-white shadow-lg shadow-[#1e3a5f]/20"
-                    : "text-[#64748b] hover:bg-gray-50 hover:text-[#1e3a5f] active:bg-gray-100"
+                    ? "bg-gradient-instituto text-white shadow-lg shadow-primary/20"
+                    : "text-gray-500 hover:bg-gray-50 hover:text-primary active:bg-gray-100"
                   }`}
               >
                 <Icon size={20} strokeWidth={2} />
@@ -96,14 +96,14 @@ export function MobileSidebar({ isOpen, onClose, activeTab, onTabChange }: Mobil
 
         {/* Bottom Section - User Options */}
         <div className="p-4 border-t border-gray-100 space-y-1">
-          <p className="text-xs font-bold text-[#94a3b8] uppercase tracking-wider px-3 mb-2">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">
             Cuenta
           </p>
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[#64748b] hover:bg-gray-50 hover:text-[#1e3a5f] transition-all font-medium text-sm">
+          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-primary transition-all font-medium text-sm">
             <User size={20} strokeWidth={2} />
             <span>Mi Perfil</span>
           </button>
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[#64748b] hover:bg-gray-50 hover:text-[#1e3a5f] transition-all font-medium text-sm">
+          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-primary transition-all font-medium text-sm">
             <Settings size={20} strokeWidth={2} />
             <span>Configuración</span>
           </button>
@@ -115,7 +115,7 @@ export function MobileSidebar({ isOpen, onClose, activeTab, onTabChange }: Mobil
 
         {/* Footer */}
         <div className="p-4 text-center border-t border-gray-100">
-          <p className="text-xs text-[#94a3b8]">
+          <p className="text-xs text-gray-400">
             © {new Date().getFullYear()} Educamos con Valores
           </p>
         </div>

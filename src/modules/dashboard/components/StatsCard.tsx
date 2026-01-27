@@ -16,7 +16,7 @@ export function StatsCard({ card }: StatsCardProps) {
   return (
     <Card className="shadow-instituto card-hover border-0 bg-white">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-[#64748b]">
+        <CardTitle className="text-sm font-medium text-gray-500">
           {card.title}
         </CardTitle>
         {card.icon && (
@@ -24,11 +24,11 @@ export function StatsCard({ card }: StatsCardProps) {
         )}
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-[#1e3a5f] tracking-tight truncate" title={String(card.value)}>
+        <div className="text-2xl font-bold text-primary tracking-tight truncate" title={String(card.value)}>
           {card.value}
         </div>
         {card.description && (
-          <p className="text-xs text-[#94a3b8] mt-1">{card.description}</p>
+          <p className="text-xs text-gray-400 mt-1">{card.description}</p>
         )}
         {card.trend && (
           <p

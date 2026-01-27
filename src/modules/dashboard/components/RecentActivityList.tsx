@@ -42,32 +42,32 @@ export function RecentActivityList({ activities }: RecentActivityListProps) {
   return (
     <Card className="shadow-instituto border-0 bg-white">
       <CardHeader>
-        <CardTitle className="text-[#1e3a5f]">Actividad Reciente</CardTitle>
+        <CardTitle className="text-primary">Actividad Reciente</CardTitle>
         <CardDescription>Últimas acciones en el sistema</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           {activities.length === 0 ? (
-            <p className="text-sm text-[#64748b] text-center py-8">
+            <p className="text-sm text-gray-500 text-center py-8">
               No hay actividad reciente
             </p>
           ) : (
             activities.map((activity, index) => (
               <div
                 key={activity.id}
-                className="flex items-center gap-4 p-3 rounded-lg hover:bg-[#f8fafc] transition-colors"
+                className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
-                <Avatar className="h-10 w-10 bg-[#1e3a5f]">
-                  <AvatarFallback className="bg-[#1e3a5f] text-white text-sm">
+                <Avatar className="h-10 w-10 bg-primary">
+                  <AvatarFallback className="bg-primary text-white text-sm">
                     {activity.user?.name?.[0] || activity.user?.email[0] || "?"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#1e3a5f] truncate">
+                  <p className="text-sm font-medium text-primary truncate">
                     {activity.user?.name || activity.user?.email || "Sistema"}
                   </p>
-                  <p className="text-sm text-[#64748b] truncate">
+                  <p className="text-sm text-gray-500 truncate">
                     {activity.description}
                   </p>
                 </div>
@@ -79,7 +79,7 @@ export function RecentActivityList({ activities }: RecentActivityListProps) {
                   >
                     {activity.action.split(".")[1]}
                   </span>
-                  <span className="text-xs text-[#94a3b8]">
+                  <span className="text-xs text-gray-400">
                     {formatTime(activity.timestamp)}
                   </span>
                 </div>

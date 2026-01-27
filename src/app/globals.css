@@ -7,19 +7,22 @@
 
 :root {
   /* Colores Primarios - Extraídos del logo */
-  --primary: #1e3a5f;           /* Azul marino - mano principal */
+  --primary: #1e3a5f;
+  /* Azul marino - mano principal */
   --primary-light: #2d4a6f;
   --primary-dark: #0f2847;
   --primary-foreground: #ffffff;
 
   /* Colores Secundarios */
-  --secondary: #64748b;         /* Gris - mano pequeña */
+  --secondary: #64748b;
+  /* Gris - mano pequeña */
   --secondary-light: #94a3b8;
   --secondary-dark: #475569;
   --secondary-foreground: #ffffff;
 
   /* Colores de Acento */
-  --accent: #3b82f6;            /* Azul brillante para CTAs */
+  --accent: #3b82f6;
+  /* Azul brillante para CTAs */
   --accent-light: #60a5fa;
   --accent-dark: #2563eb;
   --accent-foreground: #ffffff;
@@ -75,7 +78,7 @@
     --border: #334155;
     --input: #334155;
     --ring: #3b82f6;
-    
+
     --primary: #3b82f6;
     --primary-foreground: #ffffff;
     --secondary: #475569;
@@ -91,16 +94,36 @@
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
+  --color-primary-dark: var(--primary-dark);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
+  --color-secondary-light: var(--secondary-light);
+  --color-secondary-dark: var(--secondary-dark);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
+  --color-accent-light: var(--accent-light);
+  --color-accent-dark: var(--accent-dark);
   --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-info: var(--info);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-gray-50: var(--gray-50);
+  --color-gray-100: var(--gray-100);
+  --color-gray-200: var(--gray-200);
+  --color-gray-300: var(--gray-300);
+  --color-gray-400: var(--gray-400);
+  --color-gray-500: var(--gray-500);
+  --color-gray-600: var(--gray-600);
+  --color-gray-700: var(--gray-700);
+  --color-gray-800: var(--gray-800);
+  --color-gray-900: var(--gray-900);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --radius-sm: var(--radius-sm);
@@ -141,19 +164,19 @@ body {
 
 /* Sombras personalizadas */
 .shadow-instituto {
-  box-shadow: 
+  box-shadow:
     0 1px 3px 0 rgb(30 58 95 / 0.1),
     0 1px 2px -1px rgb(30 58 95 / 0.1);
 }
 
 .shadow-instituto-md {
-  box-shadow: 
+  box-shadow:
     0 4px 6px -1px rgb(30 58 95 / 0.1),
     0 2px 4px -2px rgb(30 58 95 / 0.1);
 }
 
 .shadow-instituto-lg {
-  box-shadow: 
+  box-shadow:
     0 10px 15px -3px rgb(30 58 95 / 0.1),
     0 4px 6px -4px rgb(30 58 95 / 0.1);
 }
@@ -165,7 +188,7 @@ body {
 
 .card-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 
+  box-shadow:
     0 10px 15px -3px rgb(30 58 95 / 0.1),
     0 4px 6px -4px rgb(30 58 95 / 0.1);
 }
@@ -176,6 +199,7 @@ body {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -187,10 +211,21 @@ body {
 }
 
 /* Delay para animaciones escalonadas */
-.animation-delay-100 { animation-delay: 100ms; }
-.animation-delay-200 { animation-delay: 200ms; }
-.animation-delay-300 { animation-delay: 300ms; }
-.animation-delay-400 { animation-delay: 400ms; }
+.animation-delay-100 {
+  animation-delay: 100ms;
+}
+
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+
+.animation-delay-400 {
+  animation-delay: 400ms;
+}
 
 /* ============================================
    COMPONENTES INSTITUCIONALES
@@ -296,6 +331,7 @@ body.menu-open {
   from {
     transform: translateX(-100%);
   }
+
   to {
     transform: translateX(0);
   }
@@ -305,6 +341,7 @@ body.menu-open {
   from {
     transform: translateX(0);
   }
+
   to {
     transform: translateX(-100%);
   }
@@ -314,6 +351,7 @@ body.menu-open {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -323,6 +361,7 @@ body.menu-open {
   from {
     opacity: 1;
   }
+
   to {
     opacity: 0;
   }

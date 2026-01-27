@@ -140,15 +140,15 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
           <div className="p-8 space-y-6">
             <div className="bg-gray-50 rounded-2xl p-5 space-y-3">
               <div className="flex justify-between">
-                <span className="text-[#64748b]">Número de Recibo</span>
-                <span className="font-bold text-[#1e3a5f]">{successData.receiptNumber}</span>
+                <span className="text-gray-500">Número de Recibo</span>
+                <span className="font-bold text-primary">{successData.receiptNumber}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#64748b]">Estudiante</span>
-                <span className="font-bold text-[#1e3a5f]">{studentName}</span>
+                <span className="text-gray-500">Estudiante</span>
+                <span className="font-bold text-primary">{studentName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#64748b]">Nuevo Saldo</span>
+                <span className="text-gray-500">Nuevo Saldo</span>
                 <span className="font-bold text-green-600">${successData.newBalance.toLocaleString()}</span>
               </div>
             </div>
@@ -168,7 +168,7 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
             <div className="flex gap-3">
               <button
                 onClick={handleClose}
-                className="flex-1 py-3.5 bg-gray-100 text-[#64748b] font-bold rounded-xl hover:bg-gray-200 transition-all"
+                className="flex-1 py-3.5 bg-gray-100 text-gray-500 font-bold rounded-xl hover:bg-gray-200 transition-all"
               >
                 Cerrar
               </button>
@@ -231,18 +231,18 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
 
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                 Monto del Pago *
               </label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94a3b8] font-bold text-lg">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-lg">
                   $
                 </span>
                 <input
                   {...register("amount")}
                   type="number"
                   placeholder="0"
-                  className="w-full pl-10 pr-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-bold text-[#1e3a5f] transition-all"
+                  className="w-full pl-10 pr-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-bold text-primary transition-all"
                 />
               </div>
               {errors.amount && (
@@ -250,12 +250,12 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                 Método de Pago *
               </label>
               <select
                 {...register("method")}
-                className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] appearance-none font-bold text-[#1e3a5f] cursor-pointer transition-all"
+                className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none font-bold text-primary cursor-pointer transition-all"
               >
                 <option value="BANCOLOMBIA">Bancolombia</option>
                 <option value="NEQUI">Nequi</option>
@@ -267,58 +267,58 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider">
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
               Referencia de Pago / Comprobante
             </label>
             <input
               {...register("reference")}
               type="text"
               placeholder="Ej: REF-123456"
-              className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-semibold transition-all"
+              className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-semibold transition-all"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider">
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
               Comentarios
             </label>
             <textarea
               {...register("comments")}
               rows={2}
               placeholder="Notas adicionales del pago..."
-              className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] resize-none font-medium transition-all"
+              className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none font-medium transition-all"
             />
           </div>
 
           {watchAmount > 0 && (
-            <div className="bg-gradient-to-r from-[#1e3a5f]/5 to-[#1e3a5f]/10 p-5 rounded-2xl border border-[#1e3a5f]/10">
-              <h4 className="text-sm font-bold text-[#1e3a5f] mb-3">Vista Previa</h4>
+            <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-5 rounded-2xl border border-primary/10">
+              <h4 className="text-sm font-bold text-primary mb-3">Vista Previa</h4>
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <p className="text-xs text-[#64748b] mb-1">Total Programa</p>
-                  <p className="font-bold text-[#1e3a5f]">${totalValue.toLocaleString()}</p>
+                  <p className="text-xs text-gray-500 mb-1">Total Programa</p>
+                  <p className="font-bold text-primary">${totalValue.toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-[#64748b] mb-1">Ya Pagado</p>
+                  <p className="text-xs text-gray-500 mb-1">Ya Pagado</p>
                   <p className="font-bold text-green-600">${(totalPaid + (watchAmount || 0)).toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-[#64748b] mb-1">Nuevo Saldo</p>
+                  <p className="text-xs text-gray-500 mb-1">Nuevo Saldo</p>
                   <p className="font-bold text-orange-600">${newBalancePreview.toLocaleString()}</p>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="bg-[#1e3a5f]/5 p-5 rounded-2xl flex items-start gap-3 border border-[#1e3a5f]/10">
-            <div className="mt-0.5 p-2 bg-[#1e3a5f] rounded-lg shadow-md">
+          <div className="bg-primary/5 p-5 rounded-2xl flex items-start gap-3 border border-primary/10">
+            <div className="mt-0.5 p-2 bg-primary rounded-lg shadow-md">
               <CheckCircle2 size={18} className="text-white" strokeWidth={2.5} />
             </div>
             <div>
-              <p className="text-sm font-bold text-[#1e3a5f]">
+              <p className="text-sm font-bold text-primary">
                 Acciones Automáticas
               </p>
-              <p className="text-xs text-[#64748b] mt-1.5 leading-relaxed font-semibold">
+              <p className="text-xs text-gray-500 mt-1.5 leading-relaxed font-semibold">
                 Al guardar se generará automáticamente el <strong>Recibo Digital</strong> con
                 número de consecutivo único y se actualizará el saldo del estudiante.
               </p>
@@ -329,7 +329,7 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
             <button
               type="button"
               onClick={handleClose}
-              className="flex-1 py-3.5 text-[#64748b] font-bold hover:bg-gray-100 rounded-xl transition-all border-2 border-gray-200"
+              className="flex-1 py-3.5 text-gray-500 font-bold hover:bg-gray-100 rounded-xl transition-all border-2 border-gray-200"
             >
               Cancelar
             </button>

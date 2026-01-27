@@ -51,7 +51,7 @@ export function CarteraView() {
     return (
         <div>
             <div className="mb-6 flex justify-between items-center">
-                <h3 className="text-lg font-bold text-[#1e3a5f]">Compromisos Pendientes</h3>
+                <h3 className="text-lg font-bold text-primary">Compromisos Pendientes</h3>
                 <span className="bg-red-50 text-red-700 px-3 py-1 rounded-full text-sm font-bold">
                     Total en Mora: ${commitments.reduce((acc, c) => acc + Number(c.amount), 0).toLocaleString()}
                 </span>
@@ -73,7 +73,7 @@ export function CarteraView() {
                         return (
                             <div key={commitment.id} className={`p-4 rounded-xl border-l-4 shadow-sm bg-white ${isOverdue ? "border-red-500" : "border-yellow-500"}`}>
                                 <div className="flex justify-between items-start mb-2">
-                                    <h4 className="font-bold text-[#1e3a5f] truncate">{commitment.student.fullName}</h4>
+                                    <h4 className="font-bold text-primary truncate">{commitment.student.fullName}</h4>
                                     <span className={`text-xs px-2 py-0.5 rounded font-bold ${isOverdue ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}>
                                         {isOverdue ? `${daysOverdue} días mora` : "Pendiente"}
                                     </span>
@@ -92,7 +92,7 @@ export function CarteraView() {
                                 </div>
 
                                 <div className="flex justify-between items-center pt-3 border-t border-gray-100">
-                                    <span className="font-bold text-lg text-[#1e3a5f]">${Number(commitment.amount).toLocaleString()}</span>
+                                    <span className="font-bold text-lg text-primary">${Number(commitment.amount).toLocaleString()}</span>
                                     <button className="text-xs font-bold text-blue-600 hover:text-blue-800">
                                         Gestionar
                                     </button>

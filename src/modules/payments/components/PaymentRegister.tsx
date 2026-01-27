@@ -75,7 +75,7 @@ export function PaymentRegister() {
         }
     };
 
-    const searchStudent = async (idOrTerm?: string) => {
+    const searchStudent = async (idOrTerm?: string, suggestedAmount?: number) => {
         const term = idOrTerm || searchTerm;
         if (!term) return;
         setLoading(true);
@@ -86,7 +86,7 @@ export function PaymentRegister() {
             const data = await res.json();
             if (data.success && data.data.students.length > 0) {
                 const found = data.data.students[0];
-                handleSelectStudent(found);
+                handleSelectStudent(found, suggestedAmount);
             } else {
                 setMsg({ type: "error", text: "Estudiante no encontrado" });
             }
@@ -182,14 +182,14 @@ export function PaymentRegister() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-1 flex flex-col gap-6">
                     <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                        <h3 className="text-sm font-bold text-[#1e3a5f] uppercase mb-4 flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-primary uppercase mb-4 flex items-center gap-2">
                             <Search size={16} /> Buscar Estudiante
                         </h3>
                         <div className="space-y-3">
                             <input
                                 type="text"
                                 placeholder="Documento o nombre..."
-                                className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-[#1e3a5f] transition-all font-medium"
+                                className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-primary transition-all font-medium"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 onKeyDown={(e) => e.key === "Enter" && searchStudent()}
@@ -197,7 +197,7 @@ export function PaymentRegister() {
                             <button
                                 onClick={() => searchStudent()}
                                 disabled={loading}
-                                className="w-full py-3 bg-[#1e3a5f] text-white font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
+                                className="w-full py-3 bg-primary text-white font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
                             >
                                 {loading ? "Buscando..." : "Buscar"}
                             </button>
@@ -205,7 +205,7 @@ export function PaymentRegister() {
                     </div>
 
                     {student && (
-                        <div className="bg-[#1e3a5f] text-white p-6 rounded-2xl shadow-xl animate-fade-in-up">
+                        <div className="bg-primary text-white p-6 rounded-2xl shadow-xl animate-fade-in-up">
                             <div className="flex items-center gap-4 mb-6">
                                 <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-xl font-bold">
                                     {student.fullName.charAt(0)}
@@ -235,7 +235,7 @@ export function PaymentRegister() {
                             <DollarSign size={120} />
                         </div>
 
-                        <h3 className="text-xl font-bold text-[#1e3a5f] mb-6 flex items-center gap-2">
+                        <h3 className="text-xl font-bold text-primary mb-6 flex items-center gap-2">
                             Registrar Recaudo
                         </h3>
 
@@ -266,7 +266,7 @@ export function PaymentRegister() {
                                         <input
                                             type="number"
                                             required
-                                            className="w-full pl-10 pr-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-[#1e3a5f] focus:outline-none font-bold text-2xl text-[#1e3a5f] transition-all"
+                                            className="w-full pl-10 pr-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-primary focus:outline-none font-bold text-2xl text-primary transition-all"
                                             value={paymentData.amount}
                                             onChange={e => setPaymentData({ ...paymentData, amount: Number(e.target.value) })}
                                         />
@@ -276,7 +276,7 @@ export function PaymentRegister() {
                                 <div>
                                     <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Medio de Pago</label>
                                     <select
-                                        className="w-full px-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-[#1e3a5f] focus:outline-none font-bold text-gray-600"
+                                        className="w-full px-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-primary focus:outline-none font-bold text-gray-600"
                                         value={paymentData.method}
                                         onChange={e => setPaymentData({ ...paymentData, method: e.target.value })}
                                     >
@@ -292,7 +292,7 @@ export function PaymentRegister() {
                             <div>
                                 <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Notas / Observaciones</label>
                                 <textarea
-                                    className="w-full px-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-[#1e3a5f] focus:outline-none"
+                                    className="w-full px-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-primary focus:outline-none"
                                     rows={2}
                                     placeholder="Ej: Pago cuota 3 ó Abono parcial"
                                     value={paymentData.comments}
@@ -303,7 +303,7 @@ export function PaymentRegister() {
                             <button
                                 type="submit"
                                 disabled={loading || !student || paymentData.amount <= 0}
-                                className="w-full py-5 bg-gradient-instituto text-white font-black rounded-2xl shadow-xl hover:shadow-[#1e3a5f]/40 transition-all disabled:opacity-30 flex items-center justify-center gap-3 text-lg"
+                                className="w-full py-5 bg-gradient-instituto text-white font-black rounded-2xl shadow-xl hover:shadow-primary/40 transition-all disabled:opacity-30 flex items-center justify-center gap-3 text-lg"
                             >
                                 {loading ? "Procesando..." : "CONFIRMAR TRANSACCIÓN"}
                                 {!loading && <ArrowRight size={20} />}
@@ -316,7 +316,7 @@ export function PaymentRegister() {
             {/* Tabla de Vencimientos */}
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="p-6 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <h3 className="font-extrabold text-[#1e3a5f] flex items-center gap-2">
+                    <h3 className="font-extrabold text-primary flex items-center gap-2">
                         <Calendar className="text-blue-500" size={20} />
                         Pagos por Vencer
                     </h3>
@@ -326,8 +326,8 @@ export function PaymentRegister() {
                                 key={range}
                                 onClick={() => setFilterRange(range)}
                                 className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${filterRange === range
-                                        ? "bg-white text-[#1e3a5f] shadow-sm"
-                                        : "text-gray-400 hover:text-gray-600"
+                                    ? "bg-white text-primary shadow-sm"
+                                    : "text-gray-400 hover:text-gray-600"
                                     }`}
                             >
                                 {range === "today" ? "Hoy" : range === "week" ? "Esta Semana" : "Este Mes"}
@@ -358,7 +358,7 @@ export function PaymentRegister() {
                                 {pendingCommitments.map((c) => (
                                     <tr key={c.id} className="hover:bg-blue-50/30 transition-colors group">
                                         <td className="px-6 py-4">
-                                            <div className="font-bold text-[#1e3a5f]">{c.student.fullName}</div>
+                                            <div className="font-bold text-primary">{c.student.fullName}</div>
                                             <div className="text-[10px] text-gray-400">{c.student.phone}</div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -371,12 +371,12 @@ export function PaymentRegister() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <span className="font-black text-[#1e3a5f]">${Number(c.amount).toLocaleString()}</span>
+                                            <span className="font-black text-primary">${Number(c.amount).toLocaleString()}</span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <button
-                                                onClick={() => handleSelectStudent(c.student, c.amount)}
-                                                className="p-2 bg-white border border-gray-200 rounded-lg text-[#1e3a5f] hover:bg-[#1e3a5f] hover:text-white transition-all shadow-sm group-hover:shadow-md"
+                                                onClick={() => searchStudent(c.student.fullName, c.amount)}
+                                                className="p-2 bg-white border border-gray-200 rounded-lg text-primary hover:bg-primary hover:text-white transition-all shadow-sm group-hover:shadow-md"
                                                 title="Cargar para pagar"
                                             >
                                                 <DollarSign size={16} />

@@ -65,9 +65,9 @@ export function Pagination({
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 bg-white border-t border-gray-100">
       <div className="flex items-center gap-4 text-sm text-gray-600">
         <span>
-          Mostrando <span className="font-bold text-[#1e3a5f]">{startItem}</span> a{" "}
-          <span className="font-bold text-[#1e3a5f]">{endItem}</span> de{" "}
-          <span className="font-bold text-[#1e3a5f]">{totalItems}</span> resultados
+          Mostrando <span className="font-bold text-primary">{startItem}</span> a{" "}
+          <span className="font-bold text-primary">{endItem}</span> de{" "}
+          <span className="font-bold text-primary">{totalItems}</span> resultados
         </span>
 
         {showItemsPerPage && onItemsPerPageChange && (
@@ -76,7 +76,7 @@ export function Pagination({
             <select
               value={itemsPerPage}
               onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
-              className="px-2 py-1 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+              className="px-2 py-1 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value={5}>5</option>
               <option value={10}>10</option>
@@ -114,7 +114,7 @@ export function Pagination({
                 disabled={page === "..."}
                 className={`min-w-[36px] h-9 px-3 rounded-lg text-sm font-medium transition-colors ${
                   page === currentPage
-                    ? "bg-[#1e3a5f] text-white"
+                    ? "bg-primary text-white"
                     : page === "..."
                     ? "cursor-default text-gray-400"
                     : "text-gray-600 hover:bg-gray-100"

@@ -109,31 +109,31 @@ export function StudentDetailModal({ studentId, isOpen, onClose, onPaymentClick 
 
         {isLoading ? (
           <div className="p-8 text-center">
-            <div className="animate-spin w-8 h-8 border-4 border-[#1e3a5f] border-t-transparent rounded-full mx-auto" />
+            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
           </div>
         ) : student ? (
           <div className="p-6 max-h-[60vh] overflow-y-auto">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-6">
                 <div className="bg-gray-50 rounded-2xl p-5">
-                  <h3 className="text-sm font-bold text-[#1e3a5f] uppercase tracking-wider flex items-center gap-2 mb-4">
+                  <h3 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2 mb-4">
                     <Phone size={16} />
                     Contacto
                   </h3>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <Phone size={14} className="text-[#64748b]" />
+                      <Phone size={14} className="text-gray-500" />
                       <span className="text-sm font-medium">{student.phone}</span>
                     </div>
                     {student.email && (
                       <div className="flex items-center gap-3">
-                        <Mail size={14} className="text-[#64748b]" />
+                        <Mail size={14} className="text-gray-500" />
                         <span className="text-sm font-medium">{student.email}</span>
                       </div>
                     )}
                     {student.address && (
                       <div className="flex items-center gap-3">
-                        <MapPin size={14} className="text-[#64748b]" />
+                        <MapPin size={14} className="text-gray-500" />
                         <span className="text-sm font-medium">{student.address}</span>
                       </div>
                     )}
@@ -142,26 +142,26 @@ export function StudentDetailModal({ studentId, isOpen, onClose, onPaymentClick 
 
                 {(student.guardianName || student.guardianPhone) && (
                   <div className="bg-gray-50 rounded-2xl p-5">
-                    <h3 className="text-sm font-bold text-[#1e3a5f] uppercase tracking-wider flex items-center gap-2 mb-4">
+                    <h3 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2 mb-4">
                       <UserCheck size={16} />
                       Acudiente
                     </h3>
                     <div className="space-y-3">
                       {student.guardianName && (
                         <div className="flex items-center gap-3">
-                          <User size={14} className="text-[#64748b]" />
+                          <User size={14} className="text-gray-500" />
                           <span className="text-sm font-medium">{student.guardianName}</span>
                         </div>
                       )}
                       {student.guardianPhone && (
                         <div className="flex items-center gap-3">
-                          <Phone size={14} className="text-[#64748b]" />
+                          <Phone size={14} className="text-gray-500" />
                           <span className="text-sm font-medium">{student.guardianPhone}</span>
                         </div>
                       )}
                       {student.guardianEmail && (
                         <div className="flex items-center gap-3">
-                          <Mail size={14} className="text-[#64748b]" />
+                          <Mail size={14} className="text-gray-500" />
                           <span className="text-sm font-medium">{student.guardianEmail}</span>
                         </div>
                       )}
@@ -170,25 +170,25 @@ export function StudentDetailModal({ studentId, isOpen, onClose, onPaymentClick 
                 )}
 
                 <div className="bg-gray-50 rounded-2xl p-5">
-                  <h3 className="text-sm font-bold text-[#1e3a5f] uppercase tracking-wider flex items-center gap-2 mb-4">
+                  <h3 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2 mb-4">
                     <GraduationCap size={16} />
                     Información Académica
                   </h3>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-sm text-[#64748b]">Programa</span>
-                      <span className="text-sm font-bold text-[#1e3a5f]">{student.program.name}</span>
+                      <span className="text-sm text-gray-500">Programa</span>
+                      <span className="text-sm font-bold text-primary">{student.program.name}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-[#64748b]">Asesor</span>
-                      <span className="text-sm font-bold text-[#1e3a5f]">{student.advisor.name || student.advisor.email}</span>
+                      <span className="text-sm text-gray-500">Asesor</span>
+                      <span className="text-sm font-bold text-primary">{student.advisor.name || student.advisor.email}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-[#64748b] flex items-center gap-1">
+                      <span className="text-sm text-gray-500 flex items-center gap-1">
                         <Calendar size={12} />
                         Fecha de Matrícula
                       </span>
-                      <span className="text-sm font-bold text-[#1e3a5f]">
+                      <span className="text-sm font-bold text-primary">
                         {new Date(student.enrollmentDate).toLocaleDateString("es-CO")}
                       </span>
                     </div>
@@ -197,7 +197,7 @@ export function StudentDetailModal({ studentId, isOpen, onClose, onPaymentClick 
               </div>
 
               <div className="space-y-6">
-                <div className="bg-gradient-to-br from-[#1e3a5f] to-[#2d4a6f] rounded-2xl p-5 text-white">
+                <div className="bg-gradient-to-br from-primary to-primary-light rounded-2xl p-5 text-white">
                   <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 mb-4">
                     <DollarSign size={16} />
                     Resumen Financiero
@@ -232,7 +232,7 @@ export function StudentDetailModal({ studentId, isOpen, onClose, onPaymentClick 
 
                   <button
                     onClick={onPaymentClick}
-                    className="mt-4 w-full py-3 bg-white text-[#1e3a5f] font-bold rounded-xl hover:bg-gray-100 transition-all flex items-center justify-center gap-2"
+                    className="mt-4 w-full py-3 bg-white text-primary font-bold rounded-xl hover:bg-gray-100 transition-all flex items-center justify-center gap-2"
                   >
                     <CreditCard size={18} />
                     Registrar Pago
@@ -240,13 +240,13 @@ export function StudentDetailModal({ studentId, isOpen, onClose, onPaymentClick 
                 </div>
 
                 <div className="bg-gray-50 rounded-2xl p-5">
-                  <h3 className="text-sm font-bold text-[#1e3a5f] uppercase tracking-wider flex items-center gap-2 mb-4">
+                  <h3 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2 mb-4">
                     <CreditCard size={16} />
                     Historial de Pagos ({payments.length})
                   </h3>
                   
                   {payments.length === 0 ? (
-                    <p className="text-sm text-[#64748b] text-center py-4">
+                    <p className="text-sm text-gray-500 text-center py-4">
                       No hay pagos registrados
                     </p>
                   ) : (
@@ -255,16 +255,16 @@ export function StudentDetailModal({ studentId, isOpen, onClose, onPaymentClick 
                         <div key={payment.id} className="bg-white p-3 rounded-xl border border-gray-200">
                           <div className="flex justify-between items-start">
                             <div>
-                              <p className="font-bold text-[#1e3a5f]">${payment.amount.toLocaleString()}</p>
-                              <p className="text-xs text-[#64748b]">
+                              <p className="font-bold text-primary">${payment.amount.toLocaleString()}</p>
+                              <p className="text-xs text-gray-500">
                                 {new Date(payment.paymentDate).toLocaleDateString("es-CO")}
                               </p>
                             </div>
-                            <span className="text-xs bg-[#1e3a5f]/10 text-[#1e3a5f] px-2 py-1 rounded-lg font-bold">
+                            <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-lg font-bold">
                               {payment.method}
                             </span>
                           </div>
-                          <p className="text-xs text-[#94a3b8] mt-1">
+                          <p className="text-xs text-gray-400 mt-1">
                             Recibo: {payment.receiptNumber}
                           </p>
                         </div>

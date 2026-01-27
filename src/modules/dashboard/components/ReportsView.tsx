@@ -34,7 +34,7 @@ export function ReportsView({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         {/* Advisor Ranking */}
         <div className="bg-white p-5 sm:p-7 rounded-2xl border border-gray-100 shadow-instituto">
-          <h3 className="font-bold text-lg text-[#1e3a5f] mb-4 sm:mb-6">
+          <h3 className="font-bold text-lg text-primary mb-4 sm:mb-6">
             Ventas por Asesor
           </h3>
           <div className="space-y-4 sm:space-y-5">
@@ -45,10 +45,10 @@ export function ReportsView({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between mb-1.5 sm:mb-2">
-                    <span className="text-sm font-bold text-[#1e3a5f] truncate">
+                    <span className="text-sm font-bold text-primary truncate">
                       {advisor.name}
                     </span>
-                    <span className="text-xs sm:text-sm text-[#64748b] font-semibold ml-2 flex-shrink-0">
+                    <span className="text-xs sm:text-sm text-gray-500 font-semibold ml-2 flex-shrink-0">
                       {advisor.sales} ventas
                     </span>
                   </div>
@@ -60,7 +60,7 @@ export function ReportsView({
                   </div>
                 </div>
                 <div className="text-right min-w-[70px] sm:min-w-[90px] flex-shrink-0">
-                  <span className="text-sm font-bold text-[#1e3a5f]">
+                  <span className="text-sm font-bold text-primary">
                     ${advisor.collected.toLocaleString()}
                   </span>
                 </div>
@@ -71,7 +71,7 @@ export function ReportsView({
 
         {/* Programs Distribution */}
         <div className="bg-white p-5 sm:p-7 rounded-2xl border border-gray-100 shadow-instituto flex flex-col">
-          <h3 className="font-bold text-lg text-[#1e3a5f] mb-4 sm:mb-6">
+          <h3 className="font-bold text-lg text-primary mb-4 sm:mb-6">
             Distribución de Programas
           </h3>
           <div className="h-48 sm:h-64">
@@ -101,20 +101,20 @@ export function ReportsView({
             </ResponsiveContainer>
           </div>
           <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-4 sm:mt-6">
-            <div className="text-center p-2 sm:p-3 bg-[#1e3a5f]/5 rounded-xl border border-[#1e3a5f]/10">
-              <p className="text-[10px] sm:text-xs text-[#64748b] mb-0.5 sm:mb-1 font-bold uppercase tracking-wide">
+            <div className="text-center p-2 sm:p-3 bg-primary/5 rounded-xl border border-primary/10">
+              <p className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1 font-bold uppercase tracking-wide">
                 Bachillerato
               </p>
-              <p className="font-bold text-[#1e3a5f] text-base sm:text-lg">65%</p>
+              <p className="font-bold text-primary text-base sm:text-lg">65%</p>
             </div>
             <div className="text-center p-2 sm:p-3 bg-orange-50 rounded-xl border border-orange-100">
-              <p className="text-[10px] sm:text-xs text-[#64748b] mb-0.5 sm:mb-1 font-bold uppercase tracking-wide">
+              <p className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1 font-bold uppercase tracking-wide">
                 Inglés
               </p>
               <p className="font-bold text-orange-600 text-base sm:text-lg">25%</p>
             </div>
             <div className="text-center p-2 sm:p-3 bg-emerald-50 rounded-xl border border-emerald-100">
-              <p className="text-[10px] sm:text-xs text-[#64748b] mb-0.5 sm:mb-1 font-bold uppercase tracking-wide">
+              <p className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1 font-bold uppercase tracking-wide">
                 Otros
               </p>
               <p className="font-bold text-emerald-600 text-base sm:text-lg">10%</p>
@@ -128,8 +128,8 @@ export function ReportsView({
         {/* Header */}
         <div className="p-4 sm:p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
           <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
-            <h3 className="font-bold text-[#1e3a5f]">Cartera Pendiente Detallada</h3>
-            <button className="flex items-center justify-center gap-2 text-xs font-bold text-[#1e3a5f] bg-[#1e3a5f]/5 px-4 py-2.5 rounded-xl hover:bg-[#1e3a5f]/10 transition-all border border-[#1e3a5f]/10 w-full sm:w-auto">
+            <h3 className="font-bold text-primary">Cartera Pendiente Detallada</h3>
+            <button className="flex items-center justify-center gap-2 text-xs font-bold text-primary bg-primary/5 px-4 py-2.5 rounded-xl hover:bg-primary/10 transition-all border border-primary/10 w-full sm:w-auto">
               <Download size={14} strokeWidth={3} />
               Exportar Reporte
             </button>
@@ -142,18 +142,18 @@ export function ReportsView({
             <div key={i} className="p-4 hover:bg-orange-50/30 transition-colors">
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <p className="font-bold text-[#1e3a5f]">{row.name}</p>
-                  <span className="text-xs bg-gray-100 px-2 py-0.5 rounded text-[#64748b] font-semibold">
+                  <p className="font-bold text-primary">{row.name}</p>
+                  <span className="text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-500 font-semibold">
                     {row.advisor}
                   </span>
                 </div>
                 <span className="font-bold text-red-600">${row.balance.toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between mt-3">
-                <span className="text-sm text-[#64748b]">
-                  Vence: <span className="font-semibold text-[#334155]">{row.due}</span>
+                <span className="text-sm text-gray-500">
+                  Vence: <span className="font-semibold text-gray-700">{row.due}</span>
                 </span>
-                <button className="flex items-center gap-1 text-sm font-bold text-[#1e3a5f] hover:underline">
+                <button className="flex items-center gap-1 text-sm font-bold text-primary hover:underline">
                   Gestionar
                   <ChevronRight size={16} />
                 </button>
@@ -167,19 +167,19 @@ export function ReportsView({
           <table className="w-full text-left">
             <thead className="bg-gradient-to-r from-gray-50 to-gray-100/50">
               <tr>
-                <th className="px-6 py-4 text-xs font-bold text-[#64748b] uppercase">
+                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">
                   Estudiante
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-[#64748b] uppercase">
+                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">
                   Deuda Total
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-[#64748b] uppercase">
+                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">
                   Vencimiento
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-[#64748b] uppercase">
+                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">
                   Asesor
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-[#64748b] uppercase">
+                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">
                   Acción
                 </th>
               </tr>
@@ -187,22 +187,22 @@ export function ReportsView({
             <tbody className="divide-y divide-gray-100">
               {pendingDebts.map((row, i) => (
                 <tr key={i} className="hover:bg-orange-50/30 transition-colors">
-                  <td className="px-6 py-4 text-sm font-bold text-[#1e3a5f]">
+                  <td className="px-6 py-4 text-sm font-bold text-primary">
                     {row.name}
                   </td>
                   <td className="px-6 py-4 text-sm font-bold text-red-600">
                     ${row.balance.toLocaleString()}
                   </td>
-                  <td className="px-6 py-4 text-sm text-[#334155] font-semibold">
+                  <td className="px-6 py-4 text-sm text-gray-700 font-semibold">
                     {row.due}
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-xs bg-gray-100 px-3 py-1 rounded-lg text-[#334155] font-bold border border-gray-200">
+                    <span className="text-xs bg-gray-100 px-3 py-1 rounded-lg text-gray-700 font-bold border border-gray-200">
                       {row.advisor}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <button className="text-xs font-bold text-[#1e3a5f] hover:text-[#2d4a6f] hover:underline">
+                    <button className="text-xs font-bold text-primary hover:text-[#2d4a6f] hover:underline">
                       Gestionar Cobro
                     </button>
                   </td>

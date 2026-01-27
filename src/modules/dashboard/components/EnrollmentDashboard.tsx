@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { TrendingUp, Users, Clock, DollarSign } from "lucide-react";
 import { DashboardHeader } from "./DashboardHeader";
 import { StatCard } from "./StatCard";
@@ -41,20 +41,18 @@ export function EnrollmentDashboard() {
     fetchStats();
   }, []);
 
-  const dashboardStats = useMemo(() => {
-    if (!stats) return {
-      todayRevenue: "$0",
-      monthlyRevenue: "$0",
-      overdueAmount: "$0",
-      activeStudents: "0"
-    };
-    return {
-      todayRevenue: `$${Number(stats.todayRevenue).toLocaleString("es-CO")}`,
-      monthlyRevenue: `$${Number(stats.monthlyRevenue).toLocaleString("es-CO")}`,
-      overdueAmount: `$${Number(stats.overdueAmount).toLocaleString("es-CO")}`,
-      activeStudents: String(stats.activeStudents),
-    };
-  }, [stats]);
+  // React 19 Compiler optimizes this automatically - no useMemo needed
+  const dashboardStats = !stats ? {
+    todayRevenue: "$0",
+    monthlyRevenue: "$0",
+    overdueAmount: "$0",
+    activeStudents: "0"
+  } : {
+    todayRevenue: `$${Number(stats.todayRevenue).toLocaleString("es-CO")}`,
+    monthlyRevenue: `$${Number(stats.monthlyRevenue).toLocaleString("es-CO")}`,
+    overdueAmount: `$${Number(stats.overdueAmount).toLocaleString("es-CO")}`,
+    activeStudents: String(stats.activeStudents),
+  };
 
   const revenueData: RevenueData[] = DEMO_REVENUE_CHART;
 
@@ -110,7 +108,7 @@ export function EnrollmentDashboard() {
           icon={Users}
           trend="up"
           trendValue="+4.2%"
-          gradient="from-[#1e3a5f] to-[#2d4a6f]"
+          gradient="from-primary to-primary-light"
         />
       </div>
 

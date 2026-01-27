@@ -25,7 +25,7 @@ export function StatCard({
   gradient,
 }: StatCardProps) {
   return (
-    <div className="group relative bg-white p-6 rounded-2xl border border-gray-100 hover:border-[#1e3a5f]/20 transition-all duration-300 shadow-instituto hover:shadow-instituto-lg">
+    <div className="group relative bg-white p-6 rounded-2xl border border-gray-100 hover:border-primary/20 transition-all duration-300 shadow-instituto hover:shadow-instituto-lg">
       <div className="flex justify-between items-start mb-4">
         <div
           className={`p-3 rounded-xl bg-gradient-to-br ${gradient} text-white shadow-lg`}
@@ -43,10 +43,10 @@ export function StatCard({
           </span>
         )}
       </div>
-      <h3 className="text-[#64748b] text-[10px] font-bold uppercase tracking-wider">
+      <h3 className="text-gray-500 text-[10px] font-bold uppercase tracking-wider">
         {title}
       </h3>
-      <p className="text-2xl font-bold text-[#1e3a5f] mt-1 tracking-tight truncate" title={String(value)}>
+      <p className="text-2xl font-bold text-primary mt-1 tracking-tight truncate" title={String(value)}>
         {value}
       </p>
     </div>

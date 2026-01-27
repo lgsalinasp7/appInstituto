@@ -74,11 +74,11 @@ export function ProgramManager() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center mb-4">
-                <h3 className="font-bold text-[#1e3a5f] flex items-center gap-2">
+                <h3 className="font-bold text-primary flex items-center gap-2">
                     <BookOpen size={20} />
                     Gestión de Programas Académicos
                 </h3>
-                <button className="px-4 py-2 bg-[#1e3a5f] text-white rounded-lg text-sm font-bold flex items-center gap-2 hover:opacity-90">
+                <button className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold flex items-center gap-2 hover:opacity-90">
                     <Plus size={16} /> Nuevo Programa
                 </button>
             </div>
@@ -108,7 +108,7 @@ export function ProgramManager() {
                                             onChange={e => setEditForm({ ...editForm, name: e.target.value })}
                                         />
                                     ) : (
-                                        <span className="font-bold text-[#1e3a5f]">{p.name}</span>
+                                        <span className="font-bold text-primary">{p.name}</span>
                                     )}
                                 </td>
                                 <td className="px-6 py-4 text-center">
@@ -160,7 +160,7 @@ export function ProgramManager() {
                                             </>
                                         ) : (
                                             <>
-                                                <button onClick={() => handleEditClick(p)} className="p-1.5 text-[#1e3a5f] hover:bg-blue-50 rounded-lg">
+                                                <button onClick={() => handleEditClick(p)} className="p-1.5 text-primary hover:bg-blue-50 rounded-lg">
                                                     <Edit size={18} />
                                                 </button>
                                                 <button className="p-1.5 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-lg">

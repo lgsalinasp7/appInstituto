@@ -27,6 +27,10 @@ model User {
   registeredPayments Payment[]
   prospects          Prospect[]
 
+  // New fields for User Management & Invitations
+  invitationLimit Int          @default(0)
+  sentInvitations Invitation[] @relation("SentInvitations")
+
   @@index([email])
   @@index([roleId])
 }
@@ -39,7 +43,8 @@ model Role {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  users User[]
+  users       User[]
+  invitations Invitation[]
 
   @@index([name])
 }
@@ -321,4 +326,30 @@ model SystemConfig {
   updatedAt DateTime @updatedAt
 
   @@index([key])
+}
+
+model Invitation {
+  id        String           @id @default(cuid())
+  email     String
+  role      Role             @relation(fields: [roleId], references: [id])
+  roleId    String
+  status    InvitationStatus @default(PENDING)
+  token     String           @unique
+  expiresAt DateTime
+
+  inviter   User   @relation("SentInvitations", fields: [inviterId], references: [id])
+  inviterId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([token])
+  @@index([inviterId])
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
 }

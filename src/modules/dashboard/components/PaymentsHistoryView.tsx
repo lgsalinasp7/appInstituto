@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { CreditCard, Search, Download, Calendar, Send, Eye, Edit2, X, Printer, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Pagination } from "./Pagination";
 import { DEMO_PAYMENTS, DEMO_METHOD_STATS } from "../data/demo-data";
@@ -42,38 +42,36 @@ export function PaymentsHistoryView({ advisorId: _advisorId }: PaymentsHistoryVi
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  const filteredPayments = useMemo(() => {
-    return payments.filter((payment) => {
-      const matchesSearch =
-        payment.student.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        payment.receiptNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        payment.student.documentNumber.includes(searchTerm);
+  const filteredPayments = payments.filter((payment) => {
+    const matchesSearch =
+      payment.student.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.receiptNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.student.documentNumber.includes(searchTerm);
 
-      const matchesMethod = methodFilter === "all" || payment.method === methodFilter;
+    const matchesMethod = methodFilter === "all" || payment.method === methodFilter;
 
-      let matchesDate = true;
-      if (dateFilter !== "all") {
-        const paymentDate = new Date(payment.paymentDate);
-        const now = new Date();
-        
-        switch (dateFilter) {
-          case "today":
-            matchesDate = paymentDate.toDateString() === now.toDateString();
-            break;
-          case "week":
-            const weekAgo = new Date(now.setDate(now.getDate() - 7));
-            matchesDate = paymentDate >= weekAgo;
-            break;
-          case "month":
-            const monthAgo = new Date(now.setMonth(now.getMonth() - 1));
-            matchesDate = paymentDate >= monthAgo;
-            break;
-        }
+    let matchesDate = true;
+    if (dateFilter !== "all") {
+      const paymentDate = new Date(payment.paymentDate);
+      const now = new Date();
+
+      switch (dateFilter) {
+        case "today":
+          matchesDate = paymentDate.toDateString() === now.toDateString();
+          break;
+        case "week":
+          const weekAgo = new Date(now.setDate(now.getDate() - 7));
+          matchesDate = paymentDate >= weekAgo;
+          break;
+        case "month":
+          const monthAgo = new Date(now.setMonth(now.getMonth() - 1));
+          matchesDate = paymentDate >= monthAgo;
+          break;
       }
+    }
 
-      return matchesSearch && matchesMethod && matchesDate;
-    });
-  }, [payments, searchTerm, methodFilter, dateFilter]);
+    return matchesSearch && matchesMethod && matchesDate;
+  });
 
   const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
   const paginatedPayments = filteredPayments.slice(
@@ -133,7 +131,7 @@ export function PaymentsHistoryView({ advisorId: _advisorId }: PaymentsHistoryVi
               </span>
               <span className="text-sm text-gray-500">{stat.percentage}%</span>
             </div>
-            <p className="text-xl font-bold text-[#1e3a5f]">${stat.amount.toLocaleString()}</p>
+            <p className="text-xl font-bold text-primary">${stat.amount.toLocaleString()}</p>
             <p className="text-xs text-gray-500">{stat.count} transacciones</p>
           </div>
         ))}
@@ -148,14 +146,14 @@ export function PaymentsHistoryView({ advisorId: _advisorId }: PaymentsHistoryVi
               placeholder="Buscar por estudiante, recibo o documento..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f]"
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
           <div className="flex flex-wrap gap-2">
             <select
               value={dateFilter}
               onChange={(e) => { setDateFilter(e.target.value as typeof dateFilter); setCurrentPage(1); }}
-              className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+              className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="all">Todo el tiempo</option>
               <option value="today">Hoy</option>
@@ -165,7 +163,7 @@ export function PaymentsHistoryView({ advisorId: _advisorId }: PaymentsHistoryVi
             <select
               value={methodFilter}
               onChange={(e) => { setMethodFilter(e.target.value); setCurrentPage(1); }}
-              className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+              className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="all">Todos los métodos</option>
               <option value="BANCOLOMBIA">Bancolombia</option>
@@ -174,7 +172,7 @@ export function PaymentsHistoryView({ advisorId: _advisorId }: PaymentsHistoryVi
               <option value="EFECTIVO">Efectivo</option>
               <option value="OTRO">Otro</option>
             </select>
-            <button className="px-4 py-2.5 bg-[#1e3a5f] text-white rounded-xl hover:bg-[#2d4a6f] transition-colors flex items-center gap-2">
+            <button className="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-light transition-colors flex items-center gap-2">
               <Download size={18} />
               <span className="hidden sm:inline">Exportar</span>
             </button>
@@ -185,7 +183,7 @@ export function PaymentsHistoryView({ advisorId: _advisorId }: PaymentsHistoryVi
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-[#1e3a5f] flex items-center gap-2">
+            <h3 className="font-bold text-primary flex items-center gap-2">
               <Calendar size={18} />
               Historial de Pagos
             </h3>
@@ -209,13 +207,13 @@ export function PaymentsHistoryView({ advisorId: _advisorId }: PaymentsHistoryVi
               {paginatedPayments.map((payment) => (
                 <tr key={payment.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
-                    <span className="font-mono text-sm font-bold text-[#1e3a5f]">
+                    <span className="font-mono text-sm font-bold text-primary">
                       {payment.receiptNumber}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <div>
-                      <p className="font-semibold text-[#1e3a5f]">{payment.student.fullName}</p>
+                      <p className="font-semibold text-primary">{payment.student.fullName}</p>
                       <p className="text-xs text-gray-500">Doc: {payment.student.documentNumber}</p>
                     </div>
                   </td>
@@ -237,7 +235,7 @@ export function PaymentsHistoryView({ advisorId: _advisorId }: PaymentsHistoryVi
                     <div className="flex gap-1">
                       <button
                         onClick={() => handleViewDetails(payment)}
-                        className="p-2 text-[#1e3a5f] hover:bg-[#1e3a5f]/10 rounded-lg transition-colors"
+                        className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
                         title="Ver detalles"
                       >
                         <Eye size={18} />
@@ -281,7 +279,7 @@ export function PaymentsHistoryView({ advisorId: _advisorId }: PaymentsHistoryVi
             <div key={payment.id} className="p-4 hover:bg-gray-50">
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <p className="font-bold text-[#1e3a5f]">{payment.student.fullName}</p>
+                  <p className="font-bold text-primary">{payment.student.fullName}</p>
                   <p className="text-xs text-gray-500 font-mono">{payment.receiptNumber}</p>
                 </div>
                 <span className="font-bold text-emerald-600">${payment.amount.toLocaleString()}</span>
@@ -296,7 +294,7 @@ export function PaymentsHistoryView({ advisorId: _advisorId }: PaymentsHistoryVi
                   </span>
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={() => handleViewDetails(payment)} className="p-2 text-[#1e3a5f]">
+                  <button onClick={() => handleViewDetails(payment)} className="p-2 text-primary">
                     <Eye size={16} />
                   </button>
                   <button onClick={() => handleEdit(payment)} className="p-2 text-orange-600">
@@ -378,7 +376,7 @@ function PaymentDetailsModal({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
-        <div className="bg-gradient-to-r from-[#1e3a5f] to-[#2d4a6f] p-6 text-white relative">
+        <div className="bg-gradient-to-r from-primary to-primary-light p-6 text-white relative">
           <button
             onClick={onClose}
             className="absolute right-4 top-4 text-white/70 hover:text-white transition-colors"
@@ -401,12 +399,12 @@ function PaymentDetailsModal({
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-xs text-gray-500 uppercase font-bold mb-1">Estudiante</p>
-              <p className="font-bold text-[#1e3a5f]">{payment.student.fullName}</p>
+              <p className="font-bold text-primary">{payment.student.fullName}</p>
               <p className="text-sm text-gray-500">Doc: {payment.student.documentNumber}</p>
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-xs text-gray-500 uppercase font-bold mb-1">Fecha de Pago</p>
-              <p className="font-bold text-[#1e3a5f]">
+              <p className="font-bold text-primary">
                 {new Date(payment.paymentDate).toLocaleDateString("es-CO", {
                   weekday: "long",
                   year: "numeric",
@@ -426,7 +424,7 @@ function PaymentDetailsModal({
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-xs text-gray-500 uppercase font-bold mb-1">Referencia</p>
-              <p className="font-bold text-[#1e3a5f]">{payment.reference || "N/A"}</p>
+              <p className="font-bold text-primary">{payment.reference || "N/A"}</p>
             </div>
           </div>
 
@@ -439,7 +437,7 @@ function PaymentDetailsModal({
 
           <div className="bg-gray-50 rounded-xl p-4">
             <p className="text-xs text-gray-500 uppercase font-bold mb-1">Registrado por</p>
-            <p className="font-bold text-[#1e3a5f]">{payment.registeredBy.name}</p>
+            <p className="font-bold text-primary">{payment.registeredBy.name}</p>
             <p className="text-sm text-gray-500">{payment.registeredBy.email}</p>
           </div>
         </div>
@@ -453,7 +451,7 @@ function PaymentDetailsModal({
           </button>
           <button
             onClick={() => window.print()}
-            className="flex-1 py-2.5 bg-gray-100 text-[#1e3a5f] rounded-xl font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+            className="flex-1 py-2.5 bg-gray-100 text-primary rounded-xl font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
           >
             <Printer size={18} />
             Imprimir
@@ -576,7 +574,7 @@ function EditPaymentModal({
           <div className="bg-gray-50 rounded-xl p-4">
             <div className="flex justify-between items-center">
               <div>
-                <p className="font-bold text-[#1e3a5f]">{payment.student.fullName}</p>
+                <p className="font-bold text-primary">{payment.student.fullName}</p>
                 <p className="text-sm text-gray-500">{new Date(payment.paymentDate).toLocaleDateString("es-CO")}</p>
               </div>
               <p className="text-xl font-bold text-emerald-600">${payment.amount.toLocaleString()}</p>

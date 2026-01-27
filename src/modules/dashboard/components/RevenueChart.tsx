@@ -24,10 +24,10 @@ export function RevenueChart({ data }: RevenueChartProps) {
   return (
     <div className="bg-white p-7 rounded-2xl border border-gray-100 shadow-instituto">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="font-bold text-lg text-[#1e3a5f]">
+        <h3 className="font-bold text-lg text-primary">
           Crecimiento de Ingresos
         </h3>
-        <select className="bg-gray-50 text-xs font-semibold px-4 py-2 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 cursor-pointer">
+        <select className="bg-gray-50 text-xs font-semibold px-4 py-2 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
           <option>Últimos 30 días</option>
           <option>Este mes</option>
         </select>

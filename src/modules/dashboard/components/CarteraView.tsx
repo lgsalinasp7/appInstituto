@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { AlertCircle, Calendar, Phone, MessageCircle, CheckCircle2, Clock, RefreshCw, DollarSign, X, History, Search } from "lucide-react";
 import { Pagination } from "./Pagination";
 import { DEMO_CARTERA_SUMMARY, DEMO_CARTERA_ALERTS, DEMO_STUDENT_DEBTS } from "../data/demo-data";
@@ -52,25 +52,22 @@ export function CarteraView({ advisorId: _advisorId }: CarteraViewProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  
+
   const [showCommitmentModal, setShowCommitmentModal] = useState(false);
   const [showAbonoModal, setShowAbonoModal] = useState(false);
   const [showHistorialModal, setShowHistorialModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<StudentDebt | null>(null);
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
 
-  const filteredAlerts = useMemo(() => {
-    return alerts.filter(alert =>
-      alert.studentName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [alerts, searchTerm]);
+  // React 19 Compiler optimizes this automatically - no useMemo needed
+  const filteredAlerts = alerts.filter(alert =>
+    alert.studentName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const filteredDebts = useMemo(() => {
-    return debts.filter(debt =>
-      debt.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      debt.documentNumber.includes(searchTerm)
-    );
-  }, [debts, searchTerm]);
+  const filteredDebts = debts.filter(debt =>
+    debt.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    debt.documentNumber.includes(searchTerm)
+  );
 
   const totalPagesDebts = Math.ceil(filteredDebts.length / itemsPerPage);
   const paginatedDebts = filteredDebts.slice(
@@ -156,7 +153,7 @@ export function CarteraView({ advisorId: _advisorId }: CarteraViewProps) {
           <p className="text-sm opacity-75">{summary.upcomingCount} compromisos</p>
         </div>
 
-        <div className="bg-gradient-to-br from-[#1e3a5f] to-[#2d4a6f] rounded-2xl p-5 text-white">
+        <div className="bg-gradient-to-br from-primary to-primary-light rounded-2xl p-5 text-white">
           <div className="flex items-center gap-2 mb-2">
             <RefreshCw size={20} />
             <span className="text-sm font-medium opacity-90">Total Pendiente</span>
@@ -171,21 +168,19 @@ export function CarteraView({ advisorId: _advisorId }: CarteraViewProps) {
           <div className="flex">
             <button
               onClick={() => { setActiveTab("alerts"); setCurrentPage(1); }}
-              className={`flex-1 px-6 py-4 text-sm font-bold transition-colors ${
-                activeTab === "alerts"
-                  ? "text-[#1e3a5f] border-b-2 border-[#1e3a5f] bg-[#1e3a5f]/5"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
+              className={`flex-1 px-6 py-4 text-sm font-bold transition-colors ${activeTab === "alerts"
+                ? "text-primary border-b-2 border-primary bg-primary/5"
+                : "text-gray-500 hover:text-gray-700"
+                }`}
             >
               Alertas de Cobro ({filteredAlerts.length})
             </button>
             <button
               onClick={() => { setActiveTab("debts"); setCurrentPage(1); }}
-              className={`flex-1 px-6 py-4 text-sm font-bold transition-colors ${
-                activeTab === "debts"
-                  ? "text-[#1e3a5f] border-b-2 border-[#1e3a5f] bg-[#1e3a5f]/5"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
+              className={`flex-1 px-6 py-4 text-sm font-bold transition-colors ${activeTab === "debts"
+                ? "text-primary border-b-2 border-primary bg-primary/5"
+                : "text-gray-500 hover:text-gray-700"
+                }`}
             >
               Cartera Detallada ({filteredDebts.length})
             </button>
@@ -200,7 +195,7 @@ export function CarteraView({ advisorId: _advisorId }: CarteraViewProps) {
               placeholder="Buscar estudiante..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
         </div>
@@ -210,7 +205,7 @@ export function CarteraView({ advisorId: _advisorId }: CarteraViewProps) {
             {filteredAlerts.length === 0 ? (
               <div className="text-center py-12">
                 <CheckCircle2 size={48} className="mx-auto text-green-400 mb-4" />
-                <h3 className="text-lg font-bold text-[#1e3a5f] mb-2">Sin alertas pendientes</h3>
+                <h3 className="text-lg font-bold text-primary mb-2">Sin alertas pendientes</h3>
                 <p className="text-gray-500">No hay compromisos de pago vencidos o próximos</p>
               </div>
             ) : (
@@ -271,7 +266,7 @@ export function CarteraView({ advisorId: _advisorId }: CarteraViewProps) {
               {paginatedDebts.length === 0 ? (
                 <div className="text-center py-12">
                   <CheckCircle2 size={48} className="mx-auto text-green-400 mb-4" />
-                  <h3 className="text-lg font-bold text-[#1e3a5f] mb-2">Sin cartera pendiente</h3>
+                  <h3 className="text-lg font-bold text-primary mb-2">Sin cartera pendiente</h3>
                   <p className="text-gray-500">Todos los estudiantes están al día</p>
                 </div>
               ) : (
@@ -293,7 +288,7 @@ export function CarteraView({ advisorId: _advisorId }: CarteraViewProps) {
                         <tr key={debt.studentId} className="hover:bg-gray-50">
                           <td className="px-6 py-4">
                             <div>
-                              <p className="font-bold text-[#1e3a5f]">{debt.studentName}</p>
+                              <p className="font-bold text-primary">{debt.studentName}</p>
                               <p className="text-xs text-gray-500">{debt.phone}</p>
                             </div>
                           </td>
@@ -309,11 +304,10 @@ export function CarteraView({ advisorId: _advisorId }: CarteraViewProps) {
                               </div>
                               <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                                 <div
-                                  className={`h-full rounded-full ${
-                                    progressPercent >= 75 ? "bg-green-500" :
+                                  className={`h-full rounded-full ${progressPercent >= 75 ? "bg-green-500" :
                                     progressPercent >= 50 ? "bg-blue-500" :
-                                    progressPercent >= 25 ? "bg-yellow-500" : "bg-red-500"
-                                  }`}
+                                      progressPercent >= 25 ? "bg-yellow-500" : "bg-red-500"
+                                    }`}
                                   style={{ width: `${progressPercent}%` }}
                                 />
                               </div>
@@ -324,11 +318,10 @@ export function CarteraView({ advisorId: _advisorId }: CarteraViewProps) {
                             <span className="font-bold text-red-600 text-lg">${debt.remainingBalance.toLocaleString()}</span>
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`text-sm ${
-                              debt.daysSinceLastPayment !== null && debt.daysSinceLastPayment > 30
-                                ? "text-red-600 font-bold"
-                                : "text-gray-600"
-                            }`}>
+                            <span className={`text-sm ${debt.daysSinceLastPayment !== null && debt.daysSinceLastPayment > 30
+                              ? "text-red-600 font-bold"
+                              : "text-gray-600"
+                              }`}>
                               {debt.daysSinceLastPayment !== null
                                 ? `Hace ${debt.daysSinceLastPayment} días`
                                 : "Sin pagos"}
@@ -360,7 +353,7 @@ export function CarteraView({ advisorId: _advisorId }: CarteraViewProps) {
                                   setSelectedStudent(debt);
                                   setShowCommitmentModal(true);
                                 }}
-                                className="p-2 text-[#1e3a5f] hover:bg-[#1e3a5f]/10 rounded-lg"
+                                className="p-2 text-primary hover:bg-primary/10 rounded-lg"
                                 title="Crear compromiso"
                               >
                                 <Calendar size={18} />
@@ -384,7 +377,7 @@ export function CarteraView({ advisorId: _advisorId }: CarteraViewProps) {
                 </table>
               )}
             </div>
-            
+
             {filteredDebts.length > 0 && (
               <Pagination
                 currentPage={currentPage}
@@ -448,7 +441,7 @@ function CommitmentModal({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-        <div className="bg-[#1e3a5f] p-6 text-white relative rounded-t-2xl">
+        <div className="bg-primary p-6 text-white relative rounded-t-2xl">
           <button onClick={onClose} className="absolute right-4 top-4 text-white/70 hover:text-white">
             <X size={24} />
           </button>
@@ -475,7 +468,7 @@ function CommitmentModal({
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(Number(e.target.value))}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
           </div>
@@ -485,7 +478,7 @@ function CommitmentModal({
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div>
@@ -495,7 +488,7 @@ function CommitmentModal({
               onChange={(e) => setComments(e.target.value)}
               rows={2}
               placeholder="Ej: Se compromete a pagar el día 20..."
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 resize-none"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
             />
           </div>
         </div>
@@ -505,7 +498,7 @@ function CommitmentModal({
           </button>
           <button
             onClick={() => onSubmit(student.studentId, amount, new Date(date), comments)}
-            className="flex-1 py-2.5 bg-[#1e3a5f] text-white rounded-lg font-medium hover:bg-[#2d4a6f]"
+            className="flex-1 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-light"
           >
             Crear Compromiso
           </button>
@@ -631,7 +624,7 @@ function AbonoModal({
                   <p className="text-xs text-blue-700">Se creará un compromiso por ${newBalance.toLocaleString()}</p>
                 </div>
               </label>
-              
+
               {createCommitment && (
                 <div className="mt-3 pl-7">
                   <label className="block text-xs font-medium text-blue-800 mb-1">Fecha del compromiso</label>
@@ -751,7 +744,7 @@ function HistorialCompromisosModal({
               <div key={compromiso.id} className="p-4 hover:bg-gray-50">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-bold text-[#1e3a5f]">${compromiso.amount.toLocaleString()}</p>
+                    <p className="font-bold text-primary">${compromiso.amount.toLocaleString()}</p>
                     <p className="text-sm text-gray-500">
                       Fecha compromiso: {new Date(compromiso.date).toLocaleDateString("es-CO")}
                     </p>

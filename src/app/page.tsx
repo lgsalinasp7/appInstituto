@@ -25,7 +25,7 @@ export default function HomePage() {
             <div className="flex justify-center mb-6">
               <Logo size="xl" />
             </div>
-            <CardTitle className="text-2xl font-bold text-[#1e3a5f]">
+            <CardTitle className="text-2xl font-bold text-primary">
               Bienvenido
             </CardTitle>
             <CardDescription className="text-base">
@@ -36,11 +36,11 @@ export default function HomePage() {
             <div className="flex justify-center">
               <Button
                 asChild
-                className="w-full max-w-xs bg-[#1e3a5f] hover:bg-[#2d4a6f] text-white"
+                className="w-full max-w-xs bg-primary hover:bg-primary-light text-white"
               >
                 <Link href="/auth/login">Iniciar Sesión</Link>
               </Button>
-             
+
             </div>
 
           </CardContent>
@@ -48,7 +48,7 @@ export default function HomePage() {
       </div>
 
       {/* Footer minimalista */}
-      <footer className="py-4 text-center text-sm text-white/70 bg-[#0f2847]">
+      <footer className="py-4 text-center text-sm text-white/70 bg-primary-dark">
         © {new Date().getFullYear()} Educamos con Valores. Todos los derechos reservados.
       </footer>
     </main>

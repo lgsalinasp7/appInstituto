@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Calendar, CreditCard, Search, Eye, X, MessageCircle, Clock } from "lucide-react";
 import { Pagination } from "./Pagination";
 import type { Student } from "../types";
@@ -18,16 +18,14 @@ export function StudentsTable({ students, onPaymentClick }: StudentsTableProps) 
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
-  const filteredStudents = useMemo(() => {
-    return students.filter((s) => {
-      const matchesSearch =
-        s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.document.includes(searchTerm) ||
-        s.program.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === "all" || s.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-  }, [students, searchTerm, statusFilter]);
+  const filteredStudents = students.filter((s) => {
+    const matchesSearch =
+      s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.document.includes(searchTerm) ||
+      s.program.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || s.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
   const paginatedStudents = filteredStudents.slice(
@@ -52,13 +50,13 @@ export function StudentsTable({ students, onPaymentClick }: StudentsTableProps) 
                 placeholder="Buscar por nombre, documento o programa..."
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-              className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+              className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="all">Todos los estados</option>
               <option value="MATRICULADO">Matriculados</option>
@@ -66,9 +64,9 @@ export function StudentsTable({ students, onPaymentClick }: StudentsTableProps) 
               <option value="EN_OTRA_INSTITUCION">En otra institución</option>
             </select>
           </div>
-          <div className="text-sm text-[#64748b] font-semibold">
+          <div className="text-sm text-gray-500 font-semibold">
             Mostrando{" "}
-            <span className="font-bold text-[#1e3a5f] text-base">
+            <span className="font-bold text-primary text-base">
               {filteredStudents.length}
             </span>{" "}
             estudiantes
@@ -80,7 +78,7 @@ export function StudentsTable({ students, onPaymentClick }: StudentsTableProps) 
         {paginatedStudents.map((student) => (
           <div
             key={student.id}
-            className="p-4 hover:bg-[#f8fafc] transition-colors"
+            className="p-4 hover:bg-gray-50 transition-colors"
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
@@ -88,33 +86,33 @@ export function StudentsTable({ students, onPaymentClick }: StudentsTableProps) 
                   {student.name.charAt(0)}
                 </div>
                 <div>
-                  <p className="font-bold text-[#1e3a5f]">{student.name}</p>
-                  <p className="text-xs text-[#64748b] font-semibold">
+                  <p className="font-bold text-primary">{student.name}</p>
+                  <p className="text-xs text-gray-500 font-semibold">
                     Doc: {student.document}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => handleViewDetail(student)}
-                className="p-2 text-[#1e3a5f] hover:bg-[#1e3a5f]/10 rounded-lg transition-colors"
+                className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
               >
                 <Eye size={18} />
               </button>
             </div>
 
             <div className="flex flex-wrap gap-2 mb-3">
-              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#1e3a5f]/10 text-[#1e3a5f]">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-primary/10 text-primary">
                 {student.program}
               </span>
-              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-gray-100 text-[#334155]">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-gray-100 text-gray-700">
                 {student.advisor}
               </span>
             </div>
 
             <div className="bg-gray-50 rounded-xl p-3 mb-3">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-xs text-[#64748b] font-semibold">Saldo Pendiente</span>
-                <span className="font-bold text-[#1e3a5f]">
+                <span className="text-xs text-gray-500 font-semibold">Saldo Pendiente</span>
+                <span className="font-bold text-primary">
                   ${student.remainingBalance.toLocaleString()}
                 </span>
               </div>
@@ -127,17 +125,17 @@ export function StudentsTable({ students, onPaymentClick }: StudentsTableProps) 
                 />
               </div>
               <div className="flex justify-between mt-1.5">
-                <span className="text-xs text-[#94a3b8]">
+                <span className="text-xs text-gray-400">
                   Pagado: ${student.paidAmount.toLocaleString()}
                 </span>
-                <span className="text-xs text-[#94a3b8]">
+                <span className="text-xs text-gray-400">
                   {Math.round((student.paidAmount / student.totalValue) * 100)}%
                 </span>
               </div>
             </div>
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-[#64748b]">
+              <div className="flex items-center gap-2 text-gray-500">
                 <Calendar size={14} />
                 <span className="text-sm font-semibold">
                   Próximo: {student.nextPaymentDate}
@@ -159,25 +157,25 @@ export function StudentsTable({ students, onPaymentClick }: StudentsTableProps) 
         <table className="w-full text-left">
           <thead className="bg-gradient-to-r from-gray-50 to-gray-100/50">
             <tr>
-              <th className="px-6 py-4 text-xs font-bold text-[#64748b] uppercase tracking-wider">
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
                 Estudiante
               </th>
-              <th className="px-6 py-4 text-xs font-bold text-[#64748b] uppercase tracking-wider">
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
                 Programa
               </th>
-              <th className="px-6 py-4 text-xs font-bold text-[#64748b] uppercase tracking-wider">
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
                 Progreso de Pago
               </th>
-              <th className="px-6 py-4 text-xs font-bold text-[#64748b] uppercase tracking-wider">
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
                 Saldo
               </th>
-              <th className="px-6 py-4 text-xs font-bold text-[#64748b] uppercase tracking-wider">
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
                 Próximo Pago
               </th>
-              <th className="px-6 py-4 text-xs font-bold text-[#64748b] uppercase tracking-wider">
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
                 Asesor
               </th>
-              <th className="px-6 py-4 text-xs font-bold text-[#64748b] uppercase tracking-wider" />
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -186,7 +184,7 @@ export function StudentsTable({ students, onPaymentClick }: StudentsTableProps) 
               return (
                 <tr
                   key={student.id}
-                  className="hover:bg-[#f8fafc] transition-colors"
+                  className="hover:bg-gray-50 transition-colors"
                 >
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-3">
@@ -194,17 +192,17 @@ export function StudentsTable({ students, onPaymentClick }: StudentsTableProps) 
                         {student.name.charAt(0)}
                       </div>
                       <div>
-                        <p className="font-bold text-sm text-[#1e3a5f]">
+                        <p className="font-bold text-sm text-primary">
                           {student.name}
                         </p>
-                        <p className="text-xs text-[#64748b] font-semibold">
+                        <p className="text-xs text-gray-500 font-semibold">
                           Doc: {student.document}
                         </p>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-5">
-                    <span className="text-sm text-[#334155] font-semibold">
+                    <span className="text-sm text-gray-700 font-semibold">
                       {student.program}
                     </span>
                   </td>
@@ -234,14 +232,14 @@ export function StudentsTable({ students, onPaymentClick }: StudentsTableProps) 
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-2">
-                      <Calendar size={14} className="text-[#94a3b8]" />
-                      <span className="text-sm text-[#334155] font-semibold">
+                      <Calendar size={14} className="text-gray-400" />
+                      <span className="text-sm text-gray-700 font-semibold">
                         {student.nextPaymentDate}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-5">
-                    <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-gray-100 text-[#334155] border border-gray-200">
+                    <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200">
                       {student.advisor}
                     </span>
                   </td>
@@ -249,7 +247,7 @@ export function StudentsTable({ students, onPaymentClick }: StudentsTableProps) 
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => handleViewDetail(student)}
-                        className="p-2.5 text-[#1e3a5f] hover:bg-[#1e3a5f]/10 rounded-xl transition-colors border border-transparent hover:border-[#1e3a5f]/20"
+                        className="p-2.5 text-primary hover:bg-primary/10 rounded-xl transition-colors border border-transparent hover:border-primary/20"
                         title="Ver Detalle"
                       >
                         <Eye size={18} strokeWidth={2.5} />
@@ -275,10 +273,10 @@ export function StudentsTable({ students, onPaymentClick }: StudentsTableProps) 
           <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <span className="text-3xl">📋</span>
           </div>
-          <h3 className="text-lg font-bold text-[#1e3a5f] mb-2">
+          <h3 className="text-lg font-bold text-primary mb-2">
             No hay estudiantes
           </h3>
-          <p className="text-sm text-[#64748b]">
+          <p className="text-sm text-gray-500">
             No se encontraron estudiantes con los filtros aplicados.
           </p>
         </div>
@@ -362,15 +360,15 @@ function StudentDetailModal({
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-gray-50 rounded-xl p-4">
                 <p className="text-xs text-gray-500 uppercase font-bold mb-1">Programa</p>
-                <p className="font-bold text-[#1e3a5f]">{student.program}</p>
+                <p className="font-bold text-primary">{student.program}</p>
               </div>
               <div className="bg-gray-50 rounded-xl p-4">
                 <p className="text-xs text-gray-500 uppercase font-bold mb-1">Asesor</p>
-                <p className="font-bold text-[#1e3a5f]">{student.advisor}</p>
+                <p className="font-bold text-primary">{student.advisor}</p>
               </div>
               <div className="bg-gray-50 rounded-xl p-4">
                 <p className="text-xs text-gray-500 uppercase font-bold mb-1">Fecha de Matrícula</p>
-                <p className="font-bold text-[#1e3a5f]">{student.enrollmentDate}</p>
+                <p className="font-bold text-primary">{student.enrollmentDate}</p>
               </div>
               <div className="bg-gray-50 rounded-xl p-4">
                 <p className="text-xs text-gray-500 uppercase font-bold mb-1">Estado</p>
@@ -384,12 +382,12 @@ function StudentDetailModal({
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-[#1e3a5f]/5 to-[#1e3a5f]/10 rounded-xl p-5 border border-[#1e3a5f]/10">
-              <h3 className="text-sm font-bold text-[#1e3a5f] mb-4">Resumen Financiero</h3>
+            <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-5 border border-primary/10">
+              <h3 className="text-sm font-bold text-primary mb-4">Resumen Financiero</h3>
               <div className="grid grid-cols-3 gap-4 text-center mb-4">
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Total Programa</p>
-                  <p className="text-lg font-bold text-[#1e3a5f]">${student.totalValue.toLocaleString()}</p>
+                  <p className="text-lg font-bold text-primary">${student.totalValue.toLocaleString()}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Total Pagado</p>
@@ -403,7 +401,7 @@ function StudentDetailModal({
               <div>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-gray-500">Progreso de pago</span>
-                  <span className="font-bold text-[#1e3a5f]">{progressPercent}%</span>
+                  <span className="font-bold text-primary">{progressPercent}%</span>
                 </div>
                 <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
                   <div
@@ -420,7 +418,7 @@ function StudentDetailModal({
 
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-bold text-[#1e3a5f] flex items-center gap-2">
+                <h3 className="text-sm font-bold text-primary flex items-center gap-2">
                   <Clock size={16} />
                   Historial de Pagos
                 </h3>
@@ -482,7 +480,7 @@ function StudentDetailModal({
           {student.remainingBalance > 0 && (
             <button
               onClick={onPaymentClick}
-              className="flex-1 py-2.5 bg-[#1e3a5f] text-white rounded-xl font-medium hover:bg-[#2d4a6f] transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 bg-primary text-white rounded-xl font-medium hover:bg-primary-light transition-colors flex items-center justify-center gap-2"
             >
               <CreditCard size={18} />
               Registrar Pago

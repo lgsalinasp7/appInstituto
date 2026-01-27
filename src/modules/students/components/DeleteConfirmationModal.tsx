@@ -35,12 +35,12 @@ export function DeleteConfirmationModal({
                         </button>
                     </div>
 
-                    <h3 className="text-xl font-bold text-[#1e3a5f] mb-2">
+                    <h3 className="text-xl font-bold text-primary mb-2">
                         Confirmar Eliminación
                     </h3>
-                    <p className="text-[#64748b] mb-6">
+                    <p className="text-gray-500 mb-6">
                         ¿Estás seguro de que deseas eliminar la matrícula de{" "}
-                        <span className="font-bold text-[#1e3a5f]">{studentName}</span>?
+                        <span className="font-bold text-primary">{studentName}</span>?
                         Esta acción no se puede deshacer y se perderán todos los registros de
                         pagos y compromisos asociados.
                     </p>
@@ -48,7 +48,7 @@ export function DeleteConfirmationModal({
                     <div className="flex gap-3">
                         <button
                             onClick={onClose}
-                            className="flex-1 py-3 px-4 text-[#64748b] font-bold hover:bg-gray-100 rounded-2xl transition-all border-2 border-gray-100"
+                            className="flex-1 py-3 px-4 text-gray-500 font-bold hover:bg-gray-100 rounded-2xl transition-all border-2 border-gray-100"
                         >
                             Cancelar
                         </button>

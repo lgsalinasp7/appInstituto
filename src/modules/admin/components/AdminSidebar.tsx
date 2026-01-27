@@ -61,15 +61,15 @@ export function AdminSidebar() {
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200",
                   isActive
-                    ? "bg-[#1e3a5f] text-white shadow-instituto"
-                    : "text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#1e3a5f]"
+                    ? "bg-primary text-white shadow-instituto"
+                    : "text-gray-500 hover:bg-[#f1f5f9] hover:text-primary"
                 )}
               >
                 <span className="text-lg">{item.icon}</span>
                 <div className="flex flex-col">
                   <span className="font-medium">{item.title}</span>
                   {!isActive && (
-                    <span className="text-xs text-[#94a3b8]">
+                    <span className="text-xs text-gray-400">
                       {item.description}
                     </span>
                   )}
@@ -84,7 +84,7 @@ export function AdminSidebar() {
       <div className="p-4 border-t">
         <Link
           href="/dashboard"
-          className="flex items-center gap-2 text-sm text-[#64748b] hover:text-[#1e3a5f] transition-colors"
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-primary transition-colors"
         >
           <span>←</span>
           <span>Volver al Dashboard</span>

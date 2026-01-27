@@ -201,19 +201,19 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
           )}
 
           <div className="space-y-4">
-            <h3 className="text-sm font-bold text-[#1e3a5f] uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2">
               <User size={16} />
               Datos Personales
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Nombre Completo *
                 </label>
                 <input
                   {...register("fullName")}
-                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-medium transition-all"
+                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium transition-all"
                   placeholder="Nombre completo del estudiante"
                 />
                 {errors.fullName && (
@@ -222,12 +222,12 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
               </div>
 
               <div>
-                <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Tipo de Documento
                 </label>
                 <select
                   {...register("documentType")}
-                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-medium"
+                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
                 >
                   <option value="CC">Cédula de Ciudadanía</option>
                   <option value="TI">Tarjeta de Identidad</option>
@@ -237,13 +237,13 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
               </div>
 
               <div>
-                <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Número de Documento *
                 </label>
                 <input
                   {...register("documentNumber")}
                   disabled={isEditing} // Generalmente no se cambia el documento si ya existe
-                  className={`w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-medium transition-all ${isEditing ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  className={`w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium transition-all ${isEditing ? 'opacity-70 cursor-not-allowed' : ''}`}
                   placeholder="Número de documento"
                 />
                 {errors.documentNumber && (
@@ -254,19 +254,19 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-sm font-bold text-[#1e3a5f] uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2">
               <Phone size={16} />
               Datos de Contacto
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Teléfono *
                 </label>
                 <input
                   {...register("phone")}
-                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-medium transition-all"
+                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium transition-all"
                   placeholder="Número de teléfono"
                 />
                 {errors.phone && (
@@ -275,14 +275,14 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
               </div>
 
               <div>
-                <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider flex items-center gap-1">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
                   <Mail size={12} />
                   Email
                 </label>
                 <input
                   {...register("email")}
                   type="email"
-                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-medium transition-all"
+                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium transition-all"
                   placeholder="correo@ejemplo.com"
                 />
                 {errors.email && (
@@ -291,13 +291,13 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
               </div>
 
               <div className="md:col-span-2">
-                <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider flex items-center gap-1">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
                   <MapPin size={12} />
                   Dirección
                 </label>
                 <input
                   {...register("address")}
-                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-medium transition-all"
+                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium transition-all"
                   placeholder="Dirección de residencia"
                 />
               </div>
@@ -305,42 +305,42 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-sm font-bold text-[#1e3a5f] uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2">
               <UserCheck size={16} />
               Datos del Acudiente
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Nombre del Acudiente
                 </label>
                 <input
                   {...register("guardianName")}
-                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-medium transition-all"
+                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium transition-all"
                   placeholder="Nombre completo"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Teléfono del Acudiente
                 </label>
                 <input
                   {...register("guardianPhone")}
-                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-medium transition-all"
+                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium transition-all"
                   placeholder="Número de teléfono"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Email del Acudiente
                 </label>
                 <input
                   {...register("guardianEmail")}
                   type="email"
-                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-medium transition-all"
+                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium transition-all"
                   placeholder="correo@ejemplo.com"
                 />
               </div>
@@ -348,19 +348,19 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-sm font-bold text-[#1e3a5f] uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2">
               <GraduationCap size={16} />
               Información Académica
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Programa Académico *
                 </label>
                 <select
                   {...register("programId")}
-                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-medium"
+                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
                 >
                   <option value="">Seleccione un programa</option>
                   {programs.map((program) => (
@@ -375,10 +375,10 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
               </div>
 
               <div>
-                <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Cantidad de Módulos
                 </label>
-                <div className="w-full mt-1 px-4 py-3 bg-gray-100 border-2 border-gray-200 rounded-xl text-[#1e3a5f] font-bold">
+                <div className="w-full mt-1 px-4 py-3 bg-gray-100 border-2 border-gray-200 rounded-xl text-primary font-bold">
                   {selectedProgramId && programs.find(p => p.id === selectedProgramId)
                     ? `${programs.find(p => p.id === selectedProgramId)?.modulesCount} Módulos`
                     : "---"}
@@ -386,14 +386,14 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
               </div>
 
               <div>
-                <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider flex items-center gap-1">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
                   <Calendar size={12} />
                   Fecha de Matrícula *
                 </label>
                 <input
                   {...register("enrollmentDate")}
                   type="date"
-                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-medium transition-all"
+                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium transition-all"
                 />
                 {errors.enrollmentDate && (
                   <p className="text-red-500 text-xs mt-1">{errors.enrollmentDate.message}</p>
@@ -401,12 +401,12 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
               </div>
 
               <div>
-                <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Asesor Responsable *
                 </label>
                 <select
                   {...register("advisorId")}
-                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-medium"
+                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
                 >
                   <option value="">Seleccione un asesor</option>
                   {advisors.map((advisor) => (
@@ -423,22 +423,22 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-sm font-bold text-[#1e3a5f] uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2">
               <DollarSign size={16} />
               Información Financiera
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Valor Total del Programa *
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94a3b8] font-bold">$</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
                   <input
                     {...register("totalProgramValue")}
                     type="number"
-                    className="w-full mt-1 pl-8 pr-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-bold text-[#1e3a5f] transition-all"
+                    className="w-full mt-1 pl-8 pr-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-bold text-primary transition-all"
                     placeholder="0"
                   />
                 </div>
@@ -448,15 +448,15 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
               </div>
 
               <div>
-                <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Pago Inicial de Matrícula *
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94a3b8] font-bold">$</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
                   <input
                     {...register("initialPayment")}
                     type="number"
-                    className="w-full mt-1 pl-8 pr-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-bold text-[#1e3a5f] transition-all"
+                    className="w-full mt-1 pl-8 pr-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-bold text-primary transition-all"
                     placeholder="0"
                   />
                 </div>
@@ -468,12 +468,12 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <div>
-                <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Frecuencia de Pago *
                 </label>
                 <select
                   {...register("paymentFrequency")}
-                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-medium"
+                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
                 >
                   <option value="MENSUAL">Mensual (30 días)</option>
                   <option value="QUINCENAL">Quincenal (15 días)</option>
@@ -484,14 +484,14 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
               </div>
 
               <div>
-                <label className="text-xs font-bold text-[#64748b] uppercase tracking-wider flex items-center gap-1">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
                   <Calendar size={12} />
                   Fecha Primer Pago (Módulo 1) *
                 </label>
                 <input
                   {...register("firstCommitmentDate")}
                   type="date"
-                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] font-medium transition-all"
+                  className="w-full mt-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium transition-all"
                 />
                 <p className="text-[10px] text-gray-400 mt-1">Fecha límite para pagar el primer módulo</p>
                 {errors.firstCommitmentDate && (
@@ -503,7 +503,7 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
             {/* Resumen Calculado */}
             {selectedProgramId && programs.find(p => p.id === selectedProgramId) && (
               <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
-                <h4 className="text-xs font-bold text-[#1e3a5f] uppercase mb-2">Resumen de Pagos</h4>
+                <h4 className="text-xs font-bold text-primary uppercase mb-2">Resumen de Pagos</h4>
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-gray-600">Valor total:</span>
                   <span className="font-bold">${Number(programs.find(p => p.id === selectedProgramId)?.totalValue).toLocaleString()}</span>
@@ -526,14 +526,14 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3.5 text-[#64748b] font-bold hover:bg-gray-100 rounded-xl transition-all border-2 border-gray-200"
+              className="flex-1 py-3.5 text-gray-500 font-bold hover:bg-gray-100 rounded-xl transition-all border-2 border-gray-200"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-[2] py-3.5 bg-gradient-instituto hover:opacity-90 text-white font-bold rounded-xl transition-all shadow-lg shadow-[#1e3a5f]/20 disabled:opacity-50"
+              className="flex-[2] py-3.5 bg-gradient-instituto hover:opacity-90 text-white font-bold rounded-xl transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
             >
               {isLoading ? "Guardando..." : (isEditing ? "Guardar Cambios" : "Registrar Estudiante")}
             </button>

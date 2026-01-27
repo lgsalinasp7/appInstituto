@@ -58,7 +58,7 @@ export function SystemSettings() {
                         <Target size={20} />
                     </div>
                     <div>
-                        <h3 className="font-bold text-[#1e3a5f]">Metas Financieras</h3>
+                        <h3 className="font-bold text-primary">Metas Financieras</h3>
                         <p className="text-xs text-gray-500">Define los objetivos mensuales de recaudo</p>
                     </div>
                 </div>
@@ -85,14 +85,14 @@ export function SystemSettings() {
                         <Bell size={20} />
                     </div>
                     <div>
-                        <h3 className="font-bold text-[#1e3a5f]">Notificaciones</h3>
+                        <h3 className="font-bold text-primary">Notificaciones</h3>
                         <p className="text-xs text-gray-500">Configuración de recordatorios de pago</p>
                     </div>
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                     <div>
-                        <p className="text-sm font-bold text-[#1e3a5f]">Días de anticipación</p>
+                        <p className="text-sm font-bold text-primary">Días de anticipación</p>
                         <p className="text-xs text-gray-500">Enviar recordatorio 3 días antes del vencimiento</p>
                     </div>
                     <div className="text-gray-400 italic text-xs">V2 - Pronto</div>
@@ -103,7 +103,7 @@ export function SystemSettings() {
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex items-center gap-2 px-8 py-3 bg-[#1e3a5f] text-white rounded-xl font-bold hover:bg-[#2d4a6f] transition-all disabled:opacity-50"
+                    className="flex items-center gap-2 px-8 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-light transition-all disabled:opacity-50"
                 >
                     {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                     Guardar Cambios

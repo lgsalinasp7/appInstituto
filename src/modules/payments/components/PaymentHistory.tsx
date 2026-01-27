@@ -57,7 +57,7 @@ export function PaymentHistory() {
                         <input
                             type="text"
                             placeholder="Estudiante o Recibo..."
-                            className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#1e3a5f]"
+                            className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
                             value={filters.search}
                             onChange={e => handleFilterChange("search", e.target.value)} // Filtro cliente por ahora
                         />
@@ -68,7 +68,7 @@ export function PaymentHistory() {
                     <label className="text-xs font-bold text-gray-500 uppercase">Desde</label>
                     <input
                         type="date"
-                        className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#1e3a5f]"
+                        className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
                         value={filters.startDate}
                         onChange={e => handleFilterChange("startDate", e.target.value)}
                     />
@@ -78,7 +78,7 @@ export function PaymentHistory() {
                     <label className="text-xs font-bold text-gray-500 uppercase">Hasta</label>
                     <input
                         type="date"
-                        className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#1e3a5f]"
+                        className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
                         value={filters.endDate}
                         onChange={e => handleFilterChange("endDate", e.target.value)}
                     />
@@ -86,7 +86,7 @@ export function PaymentHistory() {
 
                 <button
                     onClick={applyFilters}
-                    className="px-6 py-2.5 bg-[#1e3a5f] text-white font-bold rounded-lg hover:opacity-90 transition-all"
+                    className="px-6 py-2.5 bg-primary text-white font-bold rounded-lg hover:opacity-90 transition-all"
                 >
                     Filtrar
                 </button>
@@ -123,7 +123,7 @@ export function PaymentHistory() {
                                             {new Date(payment.paymentDate).toLocaleDateString()}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="font-bold text-[#1e3a5f] text-sm">{payment.student.fullName}</div>
+                                            <div className="font-bold text-primary text-sm">{payment.student.fullName}</div>
                                             <div className="text-xs text-gray-400">{payment.student.documentNumber}</div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -135,11 +135,11 @@ export function PaymentHistory() {
                                                 <span className="ml-2 text-xs text-gray-500">Módulo {payment.moduleNumber}</span>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 text-right font-bold text-[#1e3a5f]">
+                                        <td className="px-6 py-4 text-right font-bold text-primary">
                                             ${payment.amount.toLocaleString()}
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <button className="text-[#1e3a5f] hover:bg-[#1e3a5f]/10 p-2 rounded-lg transition-colors" title="Descargar Recibo">
+                                            <button className="text-primary hover:bg-primary/10 p-2 rounded-lg transition-colors" title="Descargar Recibo">
                                                 <FileText size={18} />
                                             </button>
                                         </td>

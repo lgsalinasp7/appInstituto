@@ -35,7 +35,7 @@ export function DashboardSidebar() {
         <div className="flex items-center gap-3">
           <Image src="/logo-instituto.png" alt="Logo" width={40} height={40} className="rounded-lg shadow-sm" />
           <div className="flex flex-col">
-            <span className="font-bold text-[#1e3a5f] text-sm">Instituto</span>
+            <span className="font-bold text-primary text-sm">Instituto</span>
             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Gestión v1.0</span>
           </div>
         </div>
@@ -52,8 +52,8 @@ export function DashboardSidebar() {
               key={item.href}
               href={item.href}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm ${isActive
-                ? "bg-[#1e3a5f] text-white shadow-lg shadow-[#1e3a5f]/20"
-                : "text-gray-500 hover:bg-gray-50 hover:text-[#1e3a5f]"
+                ? "bg-primary text-white shadow-lg shadow-primary/20"
+                : "text-gray-500 hover:bg-gray-50 hover:text-primary"
                 }`}
             >
               <Icon size={18} />

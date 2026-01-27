@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { UserPlus, Search, Phone, Mail, MessageCircle, Edit2, Trash2, ArrowRight, X, Clock, PhoneCall, Send, Calendar, CheckCircle2 } from "lucide-react";
 import { Pagination } from "./Pagination";
 import { DEMO_PROSPECTS, DEMO_PROGRAMS, DEMO_PROSPECT_SEGUIMIENTOS } from "../data/demo-data";
@@ -53,7 +53,7 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  
+
   const [showForm, setShowForm] = useState(false);
   const [editingProspect, setEditingProspect] = useState<Prospect | null>(null);
   const [showConvertModal, setShowConvertModal] = useState(false);
@@ -70,16 +70,15 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
     programId: "",
   });
 
-  const filteredProspects = useMemo(() => {
-    return prospects.filter((p) => {
-      const matchesSearch =
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.phone.includes(searchTerm) ||
-        (p.email && p.email.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchesStatus = statusFilter === "all" || p.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-  }, [prospects, searchTerm, statusFilter]);
+  // React 19 Compiler optimizes this automatically - no useMemo needed
+  const filteredProspects = prospects.filter((p) => {
+    const matchesSearch =
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.phone.includes(searchTerm) ||
+      (p.email && p.email.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesStatus = statusFilter === "all" || p.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const totalPages = Math.ceil(filteredProspects.length / itemsPerPage);
   const paginatedProspects = filteredProspects.slice(
@@ -191,7 +190,7 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
     <div className="space-y-6">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-          <p className="text-2xl font-bold text-[#1e3a5f]">{stats.total}</p>
+          <p className="text-2xl font-bold text-primary">{stats.total}</p>
           <p className="text-xs text-gray-500 font-medium">Total</p>
         </div>
         <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
@@ -227,13 +226,13 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
                   placeholder="Buscar por nombre, teléfono o email..."
                   value={searchTerm}
                   onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
               <select
                 value={statusFilter}
                 onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+                className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
               >
                 <option value="all">Todos los estados</option>
                 <option value="CONTACTADO">Contactados</option>
@@ -244,7 +243,7 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
             </div>
             <button
               onClick={() => setShowForm(true)}
-              className="px-4 py-2.5 bg-[#1e3a5f] text-white rounded-xl hover:bg-[#2d4a6f] transition-colors flex items-center gap-2 font-medium"
+              className="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-light transition-colors flex items-center gap-2 font-medium"
             >
               <UserPlus size={18} />
               Nuevo Prospecto
@@ -269,7 +268,7 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
                 <tr key={prospect.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
                     <div>
-                      <p className="font-bold text-[#1e3a5f]">{prospect.name}</p>
+                      <p className="font-bold text-primary">{prospect.name}</p>
                       <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
                         <span className="flex items-center gap-1">
                           <Phone size={12} />
@@ -299,7 +298,7 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
                   <td className="px-6 py-4">
                     {prospect.nextAction && prospect.nextActionDate ? (
                       <div className="text-sm">
-                        <p className="font-medium text-[#1e3a5f]">{prospect.nextAction}</p>
+                        <p className="font-medium text-primary">{prospect.nextAction}</p>
                         <p className="text-xs text-gray-500">
                           {new Date(prospect.nextActionDate).toLocaleDateString("es-CO")}
                         </p>
@@ -344,7 +343,7 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
                       </button>
                       <button
                         onClick={() => handleEdit(prospect)}
-                        className="p-2 text-[#1e3a5f] hover:bg-[#1e3a5f]/10 rounded-lg"
+                        className="p-2 text-primary hover:bg-primary/10 rounded-lg"
                         title="Editar"
                       >
                         <Edit2 size={18} />
@@ -382,7 +381,7 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-bold text-[#1e3a5f]">{prospect.name}</h4>
+                    <h4 className="font-bold text-primary">{prospect.name}</h4>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getStatusStyles(prospect.status)}`}>
                       {getStatusLabel(prospect.status)}
                     </span>
@@ -400,7 +399,7 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
                   </div>
                 </div>
               </div>
-              
+
               {prospect.nextAction && prospect.nextActionDate && (
                 <div className="bg-blue-50 rounded-lg p-2 mb-2 text-xs">
                   <span className="font-medium text-blue-800">{prospect.nextAction}</span>
@@ -423,7 +422,7 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
                 >
                   <Clock size={18} />
                 </button>
-                <button onClick={() => handleEdit(prospect)} className="p-2 text-[#1e3a5f]">
+                <button onClick={() => handleEdit(prospect)} className="p-2 text-primary">
                   <Edit2 size={18} />
                 </button>
                 {prospect.status !== "CERRADO" && prospect.program && (
@@ -442,7 +441,7 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
         {filteredProspects.length === 0 ? (
           <div className="p-12 text-center">
             <UserPlus size={48} className="mx-auto text-gray-300 mb-4" />
-            <h3 className="text-lg font-bold text-[#1e3a5f] mb-2">Sin prospectos</h3>
+            <h3 className="text-lg font-bold text-primary mb-2">Sin prospectos</h3>
             <p className="text-gray-500">No se encontraron prospectos con los filtros aplicados</p>
           </div>
         ) : (
@@ -514,7 +513,7 @@ function ProspectFormModal({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="bg-[#1e3a5f] p-6 text-white relative rounded-t-2xl">
+        <div className="bg-primary p-6 text-white relative rounded-t-2xl">
           <button onClick={onClose} className="absolute right-4 top-4 text-white/70 hover:text-white">
             <X size={24} />
           </button>
@@ -530,7 +529,7 @@ function ProspectFormModal({
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
               required
             />
           </div>
@@ -541,7 +540,7 @@ function ProspectFormModal({
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="300 123 4567"
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
               required
             />
           </div>
@@ -551,7 +550,7 @@ function ProspectFormModal({
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div>
@@ -559,7 +558,7 @@ function ProspectFormModal({
             <select
               value={formData.programId}
               onChange={(e) => setFormData({ ...formData, programId: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="">Seleccionar programa</option>
               {programs.map((p) => (
@@ -572,7 +571,7 @@ function ProspectFormModal({
             <select
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="CONTACTADO">Contactado</option>
               <option value="EN_SEGUIMIENTO">En Seguimiento</option>
@@ -587,14 +586,14 @@ function ProspectFormModal({
               onChange={(e) => setFormData({ ...formData, observations: e.target.value })}
               rows={3}
               placeholder="Notas sobre el prospecto..."
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 resize-none"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
             />
           </div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 border border-gray-200 rounded-lg font-medium hover:bg-gray-50">
               Cancelar
             </button>
-            <button type="submit" className="flex-1 py-2.5 bg-[#1e3a5f] text-white rounded-lg font-medium hover:bg-[#2d4a6f]">
+            <button type="submit" className="flex-1 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-light">
               {isEditing ? "Actualizar" : "Crear"}
             </button>
           </div>
@@ -670,11 +669,10 @@ function SeguimientoModal({
                     key={opt.value}
                     type="button"
                     onClick={() => setType(opt.value)}
-                    className={`p-3 rounded-xl border-2 flex flex-col items-center gap-1 transition-all ${
-                      type === opt.value
-                        ? `border-${opt.color}-500 bg-${opt.color}-50 text-${opt.color}-600`
-                        : "border-gray-200 text-gray-500 hover:border-gray-300"
-                    }`}
+                    className={`p-3 rounded-xl border-2 flex flex-col items-center gap-1 transition-all ${type === opt.value
+                      ? `border-${opt.color}-500 bg-${opt.color}-50 text-${opt.color}-600`
+                      : "border-gray-200 text-gray-500 hover:border-gray-300"
+                      }`}
                   >
                     <Icon size={20} />
                     <span className="text-xs font-medium">{opt.value}</span>
@@ -692,11 +690,10 @@ function SeguimientoModal({
                   key={opt.value}
                   type="button"
                   onClick={() => setResult(opt.value)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                    result === opt.value
-                      ? `bg-${opt.color}-100 text-${opt.color}-800 ring-2 ring-${opt.color}-500`
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${result === opt.value
+                    ? `bg-${opt.color}-100 text-${opt.color}-800 ring-2 ring-${opt.color}-500`
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
                 >
                   {opt.value}
                 </button>
@@ -801,7 +798,7 @@ function HistorialSeguimientosModal({
           {seguimientos.length === 0 ? (
             <div className="p-8 text-center">
               <Clock size={48} className="mx-auto text-gray-300 mb-4" />
-              <h3 className="text-lg font-bold text-[#1e3a5f] mb-2">Sin seguimientos</h3>
+              <h3 className="text-lg font-bold text-primary mb-2">Sin seguimientos</h3>
               <p className="text-gray-500">Aún no hay seguimientos registrados</p>
             </div>
           ) : (
@@ -816,15 +813,14 @@ function HistorialSeguimientosModal({
                   </div>
                   <div className="bg-gray-50 rounded-xl p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-bold text-[#1e3a5f]">{seg.type}</span>
+                      <span className="text-sm font-bold text-primary">{seg.type}</span>
                       <span className="text-xs text-gray-500">{new Date(seg.date).toLocaleDateString("es-CO")}</span>
                     </div>
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-2 ${
-                      seg.result === "Interesado" ? "bg-green-100 text-green-800" :
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-2 ${seg.result === "Interesado" ? "bg-green-100 text-green-800" :
                       seg.result === "No contesta" ? "bg-gray-100 text-gray-800" :
-                      seg.result === "En espera" ? "bg-blue-100 text-blue-800" :
-                      "bg-yellow-100 text-yellow-800"
-                    }`}>
+                        seg.result === "En espera" ? "bg-blue-100 text-blue-800" :
+                          "bg-yellow-100 text-yellow-800"
+                      }`}>
                       {seg.result}
                     </span>
                     <p className="text-sm text-gray-600">{seg.notes}</p>
@@ -948,7 +944,7 @@ function ConvertModal({
           <div className="bg-gray-50 rounded-xl p-3 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-500">Saldo después de matrícula:</span>
-              <span className="font-bold text-[#1e3a5f]">${(data.totalProgramValue - data.initialPayment).toLocaleString()}</span>
+              <span className="font-bold text-primary">${(data.totalProgramValue - data.initialPayment).toLocaleString()}</span>
             </div>
           </div>
         </div>

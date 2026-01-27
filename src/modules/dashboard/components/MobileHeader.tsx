@@ -29,10 +29,10 @@ export function MobileHeader({ isMenuOpen, onMenuToggle }: MobileHeaderProps) {
             />
           </div>
           <div className="hidden sm:flex flex-col">
-            <span className="font-bold text-[#1e3a5f] text-sm leading-tight">
+            <span className="font-bold text-primary text-sm leading-tight">
               Educamos con Valores
             </span>
-            <span className="text-xs text-[#64748b]">Panel de Gestión</span>
+            <span className="text-xs text-gray-500">Panel de Gestión</span>
           </div>
         </div>
 
@@ -40,7 +40,7 @@ export function MobileHeader({ isMenuOpen, onMenuToggle }: MobileHeaderProps) {
         <div className="flex items-center gap-2">
           {/* Notifications */}
           <button className="relative p-2.5 hover:bg-gray-100 rounded-xl transition-colors">
-            <Bell size={20} className="text-[#64748b]" />
+            <Bell size={20} className="text-gray-500" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
           </button>
 
@@ -51,9 +51,9 @@ export function MobileHeader({ isMenuOpen, onMenuToggle }: MobileHeaderProps) {
             aria-label={isMenuOpen ? "Cerrar menú" : "Abrir menú"}
           >
             {isMenuOpen ? (
-              <X size={24} className="text-[#1e3a5f]" />
+              <X size={24} className="text-primary" />
             ) : (
-              <Menu size={24} className="text-[#1e3a5f]" />
+              <Menu size={24} className="text-primary" />
             )}
           </button>
         </div>

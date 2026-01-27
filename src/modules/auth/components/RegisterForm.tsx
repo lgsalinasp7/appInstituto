@@ -58,7 +58,7 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
       {/* Card con glassmorphism */}
       <div className="relative backdrop-blur-xl bg-white/95 rounded-3xl shadow-2xl shadow-black/20 border border-white/20 overflow-hidden">
         {/* Gradiente decorativo en la parte superior */}
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#1e3a5f] via-[#3b82f6] to-[#1e3a5f]" />
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-blue-500 to-primary" />
         
         {/* Header del card */}
         <div className="pt-8 pb-4 px-8 text-center relative">
@@ -74,10 +74,10 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
             </div>
           </div>
           
-          <h1 className="text-2xl font-bold text-[#1e3a5f] mb-2">
+          <h1 className="text-2xl font-bold text-primary mb-2">
             Crear tu cuenta
           </h1>
-          <p className="text-sm text-[#64748b]">
+          <p className="text-sm text-gray-500">
             Únete a nuestra comunidad educativa
           </p>
         </div>
@@ -91,15 +91,15 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[#1e3a5f] font-semibold text-sm">
+                    <FormLabel className="text-primary font-semibold text-sm">
                       Nombre completo
                     </FormLabel>
                     <FormControl>
                       <div className="relative group">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#94a3b8] group-focus-within:text-[#1e3a5f] transition-colors" />
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-primary transition-colors" />
                         <Input
                           placeholder="Tu nombre"
-                          className="pl-12 h-11 bg-[#f8fafc] border-2 border-[#e2e8f0] rounded-xl focus:border-[#1e3a5f] focus:ring-4 focus:ring-[#1e3a5f]/10 transition-all placeholder:text-[#94a3b8]"
+                          className="pl-12 h-11 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-gray-400"
                           {...field}
                         />
                       </div>
@@ -114,16 +114,16 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[#1e3a5f] font-semibold text-sm">
+                    <FormLabel className="text-primary font-semibold text-sm">
                       Correo electrónico
                     </FormLabel>
                     <FormControl>
                       <div className="relative group">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#94a3b8] group-focus-within:text-[#1e3a5f] transition-colors" />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-primary transition-colors" />
                         <Input
                           type="email"
                           placeholder="tu@email.com"
-                          className="pl-12 h-11 bg-[#f8fafc] border-2 border-[#e2e8f0] rounded-xl focus:border-[#1e3a5f] focus:ring-4 focus:ring-[#1e3a5f]/10 transition-all placeholder:text-[#94a3b8]"
+                          className="pl-12 h-11 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-gray-400"
                           {...field}
                         />
                       </div>
@@ -139,22 +139,22 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-[#1e3a5f] font-semibold text-sm">
+                      <FormLabel className="text-primary font-semibold text-sm">
                         Contraseña
                       </FormLabel>
                       <FormControl>
                         <div className="relative group">
-                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#94a3b8] group-focus-within:text-[#1e3a5f] transition-colors" />
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-primary transition-colors" />
                           <Input
                             type={showPassword ? "text" : "password"}
                             placeholder="••••••••"
-                            className="pl-12 pr-10 h-11 bg-[#f8fafc] border-2 border-[#e2e8f0] rounded-xl focus:border-[#1e3a5f] focus:ring-4 focus:ring-[#1e3a5f]/10 transition-all placeholder:text-[#94a3b8]"
+                            className="pl-12 pr-10 h-11 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-gray-400"
                             {...field}
                           />
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94a3b8] hover:text-[#1e3a5f] transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors"
                           >
                             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
@@ -170,22 +170,22 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-[#1e3a5f] font-semibold text-sm">
+                      <FormLabel className="text-primary font-semibold text-sm">
                         Confirmar
                       </FormLabel>
                       <FormControl>
                         <div className="relative group">
-                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#94a3b8] group-focus-within:text-[#1e3a5f] transition-colors" />
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-primary transition-colors" />
                           <Input
                             type={showConfirmPassword ? "text" : "password"}
                             placeholder="••••••••"
-                            className="pl-12 pr-10 h-11 bg-[#f8fafc] border-2 border-[#e2e8f0] rounded-xl focus:border-[#1e3a5f] focus:ring-4 focus:ring-[#1e3a5f]/10 transition-all placeholder:text-[#94a3b8]"
+                            className="pl-12 pr-10 h-11 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-gray-400"
                             {...field}
                           />
                           <button
                             type="button"
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94a3b8] hover:text-[#1e3a5f] transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors"
                           >
                             {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
@@ -198,17 +198,17 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
               </div>
 
               {/* Beneficios */}
-              <div className="bg-[#f8fafc] rounded-xl p-4 space-y-2">
-                <p className="text-xs font-semibold text-[#1e3a5f] mb-2">Al registrarte obtienes:</p>
-                <div className="flex items-center gap-2 text-xs text-[#64748b]">
+              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                <p className="text-xs font-semibold text-primary mb-2">Al registrarte obtienes:</p>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                   <span>Acceso a todos los programas educativos</span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-[#64748b]">
+                <div className="flex items-center gap-2 text-xs text-gray-500">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                   <span>Seguimiento personalizado de tu progreso</span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-[#64748b]">
+                <div className="flex items-center gap-2 text-xs text-gray-500">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                   <span>Soporte directo con asesores</span>
                 </div>
@@ -217,7 +217,7 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
               {/* Botón de submit */}
               <Button
                 type="submit"
-                className="w-full h-12 bg-gradient-to-r from-[#1e3a5f] to-[#2d4a6f] hover:from-[#2d4a6f] hover:to-[#1e3a5f] text-white font-semibold rounded-xl shadow-lg shadow-[#1e3a5f]/25 hover:shadow-xl hover:shadow-[#1e3a5f]/30 transition-all duration-300 group"
+                className="w-full h-12 bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary text-white font-semibold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 group"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -255,10 +255,10 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
         <div className="px-8">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-[#e2e8f0]" />
+              <div className="w-full border-t border-gray-200" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="px-4 bg-white text-[#94a3b8] font-medium">
+              <span className="px-4 bg-white text-gray-400 font-medium">
                 ¿Ya tienes una cuenta?
               </span>
             </div>
@@ -269,7 +269,7 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
         <div className="p-6 pt-4 text-center">
           <Link
             href="/auth/login"
-            className="inline-flex items-center gap-2 text-[#1e3a5f] font-semibold hover:text-[#3b82f6] transition-colors group"
+            className="inline-flex items-center gap-2 text-primary font-semibold hover:text-blue-500 transition-colors group"
           >
             Iniciar sesión
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -278,7 +278,7 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
       </div>
 
       {/* Efecto de sombra suave */}
-      <div className="absolute -inset-4 bg-gradient-to-r from-[#1e3a5f]/10 via-[#3b82f6]/10 to-[#1e3a5f]/10 rounded-[32px] blur-2xl -z-10 opacity-60" />
+      <div className="absolute -inset-4 bg-gradient-to-r from-primary/10 via-blue-500/10 to-primary/10 rounded-[32px] blur-2xl -z-10 opacity-60" />
     </div>
   );
 }
