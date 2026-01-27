@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Invitation } from "@prisma/client";
 
 // Define Types aligned with schema
 export type RoleType = "SUPERADMIN" | "ADMINISTRADOR" | "VENTAS" | "CARTERA" | "USER"; // Default USER
@@ -29,6 +28,26 @@ interface AuthState {
     updateUser: (updates: Partial<AuthUser>) => void;
 }
 
+// Helper to sync auth state with cookie for middleware
+const syncAuthCookie = (isAuthenticated: boolean, state: { user: AuthUser | null }) => {
+    if (typeof document === "undefined") return;
+
+    const cookieValue = JSON.stringify({
+        state: {
+            isAuthenticated,
+            user: state.user ? { id: state.user.id, email: state.user.email } : null,
+        },
+    });
+
+    if (isAuthenticated) {
+        // Set cookie with 7 day expiry
+        document.cookie = `auth-storage=${encodeURIComponent(cookieValue)}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+    } else {
+        // Clear cookie
+        document.cookie = "auth-storage=; path=/; max-age=0";
+    }
+};
+
 export const useAuthStore = create<AuthState>()(
     persist(
         (set) => ({
@@ -36,15 +55,21 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: false,
             isLoading: false,
 
-            login: (user) => set({ user, isAuthenticated: true }),
-            logout: () => set({ user: null, isAuthenticated: false }),
+            login: (user) => {
+                set({ user, isAuthenticated: true });
+                syncAuthCookie(true, { user });
+            },
+            logout: () => {
+                set({ user: null, isAuthenticated: false });
+                syncAuthCookie(false, { user: null });
+            },
             updateUser: (updates) =>
                 set((state) => ({
                     user: state.user ? { ...state.user, ...updates } : null,
                 })),
         }),
         {
-            name: "auth-storage", // localStorage key
+            name: "auth-storage-local", // localStorage key (renamed to avoid conflict)
         }
     )
 );

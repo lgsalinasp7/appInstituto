@@ -8,6 +8,7 @@ import {
     Download,
     AlertCircle
 } from "lucide-react";
+import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 import {
     BarChart,
     Bar,
@@ -91,16 +92,24 @@ export default function ReportesPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-[#1e3a5f]">Reportes Detallados</h1>
-                    <p className="text-[#64748b]">Analiza el rendimiento financiero y operativo</p>
+            <DashboardHeader
+                title="Reportes Detallados"
+                subtitle="Analiza el rendimiento financiero y operativo"
+            >
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => window.open("/api/reports/payments/export", "_blank")}
+                        className="flex items-center justify-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl font-bold hover:bg-emerald-600 shadow-lg shadow-emerald-200 transition-all"
+                    >
+                        <Download size={20} />
+                        Exportar Excel
+                    </button>
+                    <button className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 text-[#1e3a5f] rounded-xl font-bold hover:bg-gray-50 transition-all">
+                        <Download size={20} />
+                        Exportar PDF
+                    </button>
                 </div>
-                <button className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 text-[#1e3a5f] rounded-xl font-bold hover:bg-gray-50 transition-all">
-                    <Download size={20} />
-                    Exportar PDF
-                </button>
-            </div>
+            </DashboardHeader>
 
             {/* Tabs */}
             <div className="flex p-1 bg-gray-100 rounded-xl w-full md:w-fit">

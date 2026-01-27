@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, CheckCircle, AlertCircle, DollarSign, Calendar, MessageSquare, ArrowRight } from "lucide-react";
+import { Search, CheckCircle, AlertCircle, DollarSign, Calendar, MessageSquare, ArrowRight, FileText } from "lucide-react";
 import type { StudentWithRelations } from "@/modules/students/types";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
@@ -256,13 +256,28 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
                                     <span className="font-bold">{msg.text}</span>
                                 </div>
                                 {msg.type === "success" && (
-                                    <button
-                                        onClick={sendWhatsApp}
-                                        className="flex items-center justify-center gap-3 w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg transition-all transform hover:scale-[1.02]"
-                                    >
-                                        <MessageSquare size={20} />
-                                        Enviar Recibo por WhatsApp
-                                    </button>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <button
+                                            onClick={sendWhatsApp}
+                                            className="flex items-center justify-center gap-3 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg transition-all transform hover:scale-[1.02]"
+                                        >
+                                            <MessageSquare size={20} />
+                                            Enviar WhatsApp
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                if (msg.receiptId) {
+                                                    // Buscamos si msg.receiptId es el ID o el Numero. 
+                                                    // Preferimos el ID del objeto devuelto en result.data.id
+                                                    window.open(`/api/receipts/${msg.receiptId}/download`, "_blank");
+                                                }
+                                            }}
+                                            className="flex items-center justify-center gap-3 py-4 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl shadow-lg transition-all transform hover:scale-[1.02]"
+                                        >
+                                            <FileText size={20} />
+                                            Descargar PDF
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         )}

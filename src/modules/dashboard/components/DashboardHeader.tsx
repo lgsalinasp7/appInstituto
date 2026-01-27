@@ -14,6 +14,8 @@ import { useAuthStore } from "@/lib/store/auth-store";
 interface DashboardHeaderProps {
   title?: string;
   subtitle?: string;
+  onFilterChange?: (advisorId?: string, programId?: string) => void;
+  children?: React.ReactNode;
 }
 
 // Map routes to readable names
@@ -29,11 +31,58 @@ const routeNames: Record<string, string> = {
   "/admin/config/roles": "Roles",
 };
 
-export function DashboardHeader({ title, subtitle }: DashboardHeaderProps) {
+export function DashboardHeader({ title, subtitle, onFilterChange, children }: DashboardHeaderProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [advisors, setAdvisors] = useState<any[]>([]);
+  const [programs, setPrograms] = useState<any[]>([]);
+  const [selectedAdvisor, setSelectedAdvisor] = useState("all");
+  const [selectedProgram, setSelectedProgram] = useState("all");
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
+
+  const isVentas = user?.role?.name === "VENTAS";
+  const isCartera = user?.role?.name === "CARTERA";
+  const isAdmin = user?.role?.name === "ADMINISTRADOR" || user?.role?.name === "SUPERADMIN";
+
+  // Sync selected advisor when user is loaded (for VENTAS)
+  useEffect(() => {
+    if (isVentas && user?.id && selectedAdvisor === "all") {
+      setSelectedAdvisor(user.id);
+    }
+  }, [isVentas, user?.id, selectedAdvisor]);
+
+  useEffect(() => {
+    if (onFilterChange) {
+      const fetchData = async () => {
+        try {
+          const [advRes, progRes] = await Promise.all([
+            fetch("/api/users?role=asesor"),
+            fetch("/api/programs")
+          ]);
+          const [advData, progData] = await Promise.all([advRes.json(), progRes.json()]);
+          if (advData.success) setAdvisors(advData.data.users);
+          if (progData.success) setPrograms(progData.data.programs);
+        } catch (error) {
+          console.error("Error fetching header data:", error);
+        }
+      };
+      fetchData();
+    }
+  }, [!!onFilterChange]); // Only run once on mount if onFilterChange is present
+
+  const handleAdvisorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    setSelectedAdvisor(val);
+    onFilterChange?.(val, selectedProgram);
+  };
+
+  const handleProgramChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    setSelectedProgram(val);
+    onFilterChange?.(selectedAdvisor, val);
+  };
 
   // Generate breadcrumbs from pathname
   const generateBreadcrumbs = () => {
@@ -110,7 +159,31 @@ export function DashboardHeader({ title, subtitle }: DashboardHeaderProps) {
         </nav>
 
         {/* Actions - Avatar and Notifications */}
-        <div className="hidden lg:flex items-center gap-4">
+        <div className="flex items-center gap-2 lg:gap-4">
+          {onFilterChange && isAdmin && (
+            <div className="hidden sm:flex items-center gap-2 mr-2">
+              <select
+                value={selectedAdvisor}
+                onChange={handleAdvisorChange}
+                disabled={isVentas}
+                className={`text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/30 ${isVentas ? 'bg-gray-50 cursor-not-allowed opacity-70' : ''}`}
+              >
+                <option value="all">Cualquier Asesor</option>
+                {advisors.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </select>
+              <select
+                value={selectedProgram}
+                onChange={handleProgramChange}
+                className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/30"
+              >
+                <option value="all">Cualquier Programa</option>
+                {programs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+          )}
+
+          {children}
+
           {/* Notification Bell */}
           <button className="relative p-3 hover:bg-gray-100 rounded-xl transition-all">
             <Bell size={20} className="text-gray-500" strokeWidth={2.5} />

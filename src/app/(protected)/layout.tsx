@@ -31,8 +31,6 @@ export default function ProtectedLayout({
 
       <main className="flex-1 lg:ml-72 pt-20 lg:pt-0 min-h-screen">
         <div className="p-4 sm:p-6 lg:p-8">
-          {/* Header visible en todas las páginas */}
-          <DashboardHeader />
           {children}
         </div>
       </main>

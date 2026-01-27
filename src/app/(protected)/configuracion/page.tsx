@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Settings, BookOpen, Users } from "lucide-react";
+import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 import { SystemSettings } from "@/modules/config/components/SystemSettings";
 import { ProgramManager } from "@/modules/config/components/ProgramManager";
 import { UsersManager } from "@/modules/config/components/UsersManager";
@@ -16,12 +17,10 @@ export default function ConfiguracionPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-[#1e3a5f]">Configuración del Sistema</h1>
-                    <p className="text-[#64748b]">Ajusta parámetros globales y catálogo de programas</p>
-                </div>
-            </div>
+            <DashboardHeader
+                title="Configuración del Sistema"
+                subtitle="Ajusta parámetros globales y catálogo de programas"
+            />
 
             {/* Tabs */}
             <div className="flex p-1 bg-gray-100 rounded-xl w-full md:w-fit">

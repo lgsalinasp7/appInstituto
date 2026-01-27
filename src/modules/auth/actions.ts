@@ -12,14 +12,14 @@ export async function loginAction(data: LoginFormData): Promise<{ success: boole
             return { success: false, message: "Usuario no encontrado" };
         }
 
-        // TODO: Implement real password hashing comparison
-        // For now, we compare against the seeded "hashed_password_here" or simple plaintext for dev convenience if needed.
-        // In seed: password is "hashed_password_here"
-        // Ideally user inputs "password" and we verify hash.
-        // For this prototype, if matches DB string exactly OR is "123456" (dev backdoor) we allow.
+        // Verify password using bcrypt
+        if (!user.password) {
+            return { success: false, message: "Cuenta sin contraseña configurada" };
+        }
 
-        // Simple check for the seeded password
-        if (user.password !== data.password && data.password !== "123456") {
+        const isValidPassword = await AuthService.verifyPassword(data.password, user.password);
+
+        if (!isValidPassword) {
             return { success: false, message: "Contraseña incorrecta" };
         }
 

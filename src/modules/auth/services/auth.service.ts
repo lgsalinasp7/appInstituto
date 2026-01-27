@@ -4,7 +4,10 @@
  */
 
 import prisma from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 import type { RegisterData, AuthUser } from "../types";
+
+const SALT_ROUNDS = 12;
 
 export class AuthService {
   /**
@@ -20,13 +23,29 @@ export class AuthService {
   }
 
   /**
-   * Create a new user
+   * Hash a password using bcrypt
+   */
+  static async hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, SALT_ROUNDS);
+  }
+
+  /**
+   * Verify a password against a hash
+   */
+  static async verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
+    return bcrypt.compare(password, hashedPassword);
+  }
+
+  /**
+   * Create a new user with hashed password
    */
   static async createUser(data: RegisterData & { roleId: string }) {
+    const hashedPassword = await this.hashPassword(data.password);
+
     return prisma.user.create({
       data: {
         email: data.email,
-        password: data.password, // Should be hashed before calling this
+        password: hashedPassword,
         name: data.name,
         roleId: data.roleId,
       },

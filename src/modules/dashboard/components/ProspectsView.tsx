@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { UserPlus, Search, Phone, Mail, MessageCircle, Edit2, Trash2, ArrowRight, X, Clock, PhoneCall, Send, Calendar, CheckCircle2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { UserPlus, Search, Phone, Mail, MessageCircle, Edit2, Trash2, ArrowRight, X, Clock, PhoneCall, Send, Calendar, CheckCircle2, Loader2 } from "lucide-react";
 import { Pagination } from "./Pagination";
-import { DEMO_PROSPECTS, DEMO_PROGRAMS, DEMO_PROSPECT_SEGUIMIENTOS } from "../data/demo-data";
+import { toast } from "sonner";
 
 function getDefaultDate(daysAhead: number): string {
   const date = new Date();
@@ -46,13 +46,17 @@ interface ProspectsViewProps {
   currentUserId: string;
 }
 
-export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUserId }: ProspectsViewProps) {
-  const [prospects] = useState<Prospect[]>(DEMO_PROSPECTS);
-  const [programs] = useState<Program[]>(DEMO_PROGRAMS);
+export function ProspectsView({ advisorId, currentUserId }: ProspectsViewProps) {
+  const [prospects, setProspects] = useState<Prospect[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [programFilter, setProgramFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
 
   const [showForm, setShowForm] = useState(false);
   const [editingProspect, setEditingProspect] = useState<Prospect | null>(null);
@@ -70,31 +74,106 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
     programId: "",
   });
 
-  // React 19 Compiler optimizes this automatically - no useMemo needed
-  const filteredProspects = prospects.filter((p) => {
-    const matchesSearch =
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.phone.includes(searchTerm) ||
-      (p.email && p.email.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesStatus = statusFilter === "all" || p.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const fetchProspects = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const queryParams = new URLSearchParams({
+        page: String(currentPage),
+        limit: String(itemsPerPage),
+        ...(searchTerm && { search: searchTerm }),
+        ...(statusFilter !== "all" && { status: statusFilter }),
+        ...(programFilter !== "all" && { programId: programFilter }),
+        ...(advisorId && { advisorId }),
+      });
 
-  const totalPages = Math.ceil(filteredProspects.length / itemsPerPage);
-  const paginatedProspects = filteredProspects.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+      const response = await fetch(`/api/prospects?${queryParams}`);
+      const result = await response.json();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Saving prospect:", formData);
-    resetForm();
+      if (result.success) {
+        setProspects(result.data.prospects);
+        setTotalItems(result.data.total);
+      } else {
+        toast.error("Error al cargar prospectos");
+      }
+    } catch (error) {
+      console.error("Error fetching prospects:", error);
+      toast.error("Error de conexión");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentPage, itemsPerPage, searchTerm, statusFilter, programFilter, advisorId]);
+
+  const fetchPrograms = async () => {
+    try {
+      const response = await fetch("/api/programs");
+      const result = await response.json();
+      if (result.success) {
+        setPrograms(result.data.programs);
+      }
+    } catch (error) {
+      console.error("Error fetching programs:", error);
+    }
   };
 
-  const handleDelete = (id: string) => {
+  useEffect(() => {
+    fetchProspects();
+  }, [fetchProspects]);
+
+  useEffect(() => {
+    fetchPrograms();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      const url = editingProspect
+        ? `/api/prospects/${editingProspect.id}`
+        : "/api/prospects";
+
+      const response = await fetch(url, {
+        method: editingProspect ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          advisorId: currentUserId,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success(editingProspect ? "Prospecto actualizado" : "Prospecto registrado");
+        resetForm();
+        fetchProspects();
+      } else {
+        toast.error(result.error || "Error al guardar");
+      }
+    } catch (error) {
+      toast.error("Error de conexión");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
     if (!confirm("¿Está seguro de eliminar este prospecto?")) return;
-    console.log("Deleting prospect:", id);
+
+    try {
+      const response = await fetch(`/api/prospects/${id}`, {
+        method: "DELETE",
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("Prospecto eliminado");
+        fetchProspects();
+      } else {
+        toast.error("Error al eliminar");
+      }
+    } catch (error) {
+      toast.error("Error de conexión");
+    }
   };
 
   const handleEdit = (prospect: Prospect) => {
@@ -123,28 +202,67 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
     });
   };
 
-  const handleConvert = (prospectId: string, data: {
+  const handleConvert = async (prospectId: string, data: {
     documentType: string;
     documentNumber: string;
     enrollmentDate: Date;
     initialPayment: number;
     totalProgramValue: number;
   }) => {
-    console.log("Converting prospect:", prospectId, data);
-    setShowConvertModal(false);
-    setSelectedProspect(null);
+    try {
+      const response = await fetch(`/api/prospects/${prospectId}/convert`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("¡Prospecto convertido a estudiante!");
+        setShowConvertModal(false);
+        setSelectedProspect(null);
+        fetchProspects();
+      } else {
+        toast.error(result.error || "Error al convertir");
+      }
+    } catch (error) {
+      toast.error("Error de conexión");
+    }
   };
 
-  const handleSeguimiento = (data: {
+  const handleSeguimiento = async (data: {
     type: string;
     result: string;
     notes: string;
     nextAction: string;
     nextActionDate: string;
   }) => {
-    console.log("Registering seguimiento:", data);
-    setShowSeguimientoModal(false);
-    setSelectedProspect(null);
+    if (!selectedProspect) return;
+
+    try {
+      const response = await fetch(`/api/prospects/${selectedProspect.id}/interactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: data.type.toUpperCase(), // Backend expects enum
+          content: data.notes || data.result,
+          advisorId: currentUserId,
+          date: new Date().toISOString(),
+        }),
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("Seguimiento registrado");
+        setShowSeguimientoModal(false);
+        setSelectedProspect(null);
+        fetchProspects();
+      } else {
+        toast.error(result.error || "Error al registrar");
+      }
+    } catch (error) {
+      toast.error("Error de conexión");
+    }
   };
 
   const getStatusStyles = (status: string) => {
@@ -177,14 +295,38 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
     }
   };
 
-  const stats = {
-    total: prospects.length,
-    contactado: prospects.filter((p) => p.status === "CONTACTADO").length,
-    enSeguimiento: prospects.filter((p) => p.status === "EN_SEGUIMIENTO").length,
-    cerrado: prospects.filter((p) => p.status === "CERRADO").length,
-    perdido: prospects.filter((p) => p.status === "PERDIDO").length,
-    conversionRate: Math.round((prospects.filter((p) => p.status === "CERRADO").length / prospects.length) * 100),
+  const [stats, setStats] = useState({
+    total: 0,
+    contactado: 0,
+    enSeguimiento: 0,
+    cerrado: 0,
+    perdido: 0,
+    conversionRate: 0,
+  });
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch(`/api/prospects/stats${advisorId ? `?advisorId=${advisorId}` : ""}`);
+      const result = await response.json();
+      if (result.success) {
+        const byStatus = result.data.byStatus;
+        setStats({
+          total: result.data.total,
+          contactado: byStatus.find((s: any) => s.status === "CONTACTADO")?.count || 0,
+          enSeguimiento: byStatus.find((s: any) => s.status === "EN_SEGUIMIENTO")?.count || 0,
+          cerrado: byStatus.find((s: any) => s.status === "CERRADO")?.count || 0,
+          perdido: byStatus.find((s: any) => s.status === "PERDIDO")?.count || 0,
+          conversionRate: result.data.conversionRate,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
   };
+
+  useEffect(() => {
+    fetchStats();
+  }, [prospects]); // Refresh stats when prospects change
 
   return (
     <div className="space-y-6">
@@ -251,7 +393,12 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
           </div>
         </div>
 
-        <div className="hidden lg:block overflow-x-auto">
+        <div className="hidden lg:block overflow-x-auto relative min-h-[400px]">
+          {isLoading && (
+            <div className="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-10">
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            </div>
+          )}
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
@@ -264,7 +411,7 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {paginatedProspects.map((prospect) => (
+              {prospects.map((prospect) => (
                 <tr key={prospect.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
                     <div>
@@ -376,7 +523,7 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
         </div>
 
         <div className="lg:hidden divide-y divide-gray-100">
-          {paginatedProspects.map((prospect) => (
+          {prospects.map((prospect) => (
             <div key={prospect.id} className="p-4 hover:bg-gray-50 transition-colors">
               <div className="flex items-start justify-between mb-2">
                 <div>
@@ -438,7 +585,7 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
           ))}
         </div>
 
-        {filteredProspects.length === 0 ? (
+        {(!isLoading && prospects.length === 0) ? (
           <div className="p-12 text-center">
             <UserPlus size={48} className="mx-auto text-gray-300 mb-4" />
             <h3 className="text-lg font-bold text-primary mb-2">Sin prospectos</h3>
@@ -447,8 +594,8 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
         ) : (
           <Pagination
             currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={filteredProspects.length}
+            totalPages={Math.ceil(totalItems / itemsPerPage)}
+            totalItems={totalItems}
             itemsPerPage={itemsPerPage}
             onPageChange={setCurrentPage}
             onItemsPerPageChange={(items) => { setItemsPerPage(items); setCurrentPage(1); }}
@@ -487,7 +634,6 @@ export function ProspectsView({ advisorId: _advisorId, currentUserId: _currentUs
       {showHistorialModal && selectedProspect && (
         <HistorialSeguimientosModal
           prospect={selectedProspect}
-          seguimientos={DEMO_PROSPECT_SEGUIMIENTOS.filter(s => s.prospectId === selectedProspect.id)}
           onClose={() => { setShowHistorialModal(false); setSelectedProspect(null); }}
         />
       )}
@@ -771,13 +917,31 @@ function SeguimientoModal({
 
 function HistorialSeguimientosModal({
   prospect,
-  seguimientos,
   onClose,
 }: {
   prospect: Prospect;
-  seguimientos: Seguimiento[];
   onClose: () => void;
 }) {
+  const [interactions, setInteractions] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchInteractions = async () => {
+      try {
+        const response = await fetch(`/api/prospects/${prospect.id}/interactions`);
+        const result = await response.json();
+        if (result.success) {
+          setInteractions(result.data);
+        }
+      } catch (error) {
+        console.error("Error fetching interactions:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchInteractions();
+  }, [prospect.id]);
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden">
@@ -795,47 +959,43 @@ function HistorialSeguimientosModal({
         </div>
 
         <div className="overflow-y-auto max-h-[500px]">
-          {seguimientos.length === 0 ? (
+          {isLoading ? (
+            <div className="p-12 flex justify-center">
+              <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+            </div>
+          ) : interactions.length === 0 ? (
             <div className="p-8 text-center">
               <Clock size={48} className="mx-auto text-gray-300 mb-4" />
-              <h3 className="text-lg font-bold text-primary mb-2">Sin seguimientos</h3>
-              <p className="text-gray-500">Aún no hay seguimientos registrados</p>
+              <p className="text-gray-500">No hay seguimientos registrados aún</p>
             </div>
           ) : (
-            <div className="p-4 space-y-4">
-              {seguimientos.map((seg, index) => (
-                <div key={seg.id} className="relative pl-6">
-                  {index !== seguimientos.length - 1 && (
-                    <div className="absolute left-[11px] top-8 bottom-0 w-0.5 bg-gray-200" />
-                  )}
-                  <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                    <div className="w-2 h-2 rounded-full bg-blue-500" />
-                  </div>
-                  <div className="bg-gray-50 rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-bold text-primary">{seg.type}</span>
-                      <span className="text-xs text-gray-500">{new Date(seg.date).toLocaleDateString("es-CO")}</span>
-                    </div>
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-2 ${seg.result === "Interesado" ? "bg-green-100 text-green-800" :
-                      seg.result === "No contesta" ? "bg-gray-100 text-gray-800" :
-                        seg.result === "En espera" ? "bg-blue-100 text-blue-800" :
-                          "bg-yellow-100 text-yellow-800"
-                      }`}>
-                      {seg.result}
+            <div className="divide-y divide-gray-100">
+              {interactions.map((s) => (
+                <div key={s.id} className="p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] font-bold uppercase tracking-wider">
+                      {s.type}
                     </span>
-                    <p className="text-sm text-gray-600">{seg.notes}</p>
-                    {seg.nextAction && (
-                      <p className="text-xs text-blue-600 mt-2">Siguiente: {seg.nextAction}</p>
-                    )}
+                    <span className="text-xs text-gray-400">
+                      {new Date(s.date).toLocaleString("es-CO", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit"
+                      })}
+                    </span>
                   </div>
+                  <p className="text-sm text-gray-700 mb-1">{s.content}</p>
+                  <p className="text-[10px] text-gray-400">Registrado por: {s.advisor.name}</p>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        <div className="p-4 border-t border-gray-100">
-          <button onClick={onClose} className="w-full py-2.5 border border-gray-200 rounded-lg font-medium hover:bg-gray-50">
+        <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
+          <button onClick={onClose} className="px-6 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
             Cerrar
           </button>
         </div>

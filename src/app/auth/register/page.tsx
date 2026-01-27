@@ -13,12 +13,30 @@ export default function RegisterPage() {
   const router = useRouter();
 
   async function handleRegister(data: RegisterFormData) {
-    // TODO: Implement actual registration logic with auth service
-    console.log("Register attempt:", data);
-    
-    // Simulated registration success
-    toast.success("Registro exitoso. Por favor inicia sesión.");
-    router.push("/auth/login");
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          password: data.password,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        toast.error(result.error || "Error al crear la cuenta");
+        return;
+      }
+
+      toast.success("Cuenta creada exitosamente. Por favor inicia sesión.");
+      router.push("/auth/login");
+    } catch (error) {
+      console.error("Register error:", error);
+      toast.error("Error de conexión. Intenta de nuevo.");
+    }
   }
 
   return <RegisterForm onSubmit={handleRegister} />;

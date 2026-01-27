@@ -31,6 +31,12 @@ const navItems = [
     description: "Permisos y roles",
   },
   {
+    title: "Módulos",
+    href: "/admin/content",
+    icon: "📚",
+    description: "Contenido y entregas",
+  },
+  {
     title: "Auditoría",
     href: "/admin/audit",
     icon: "📋",

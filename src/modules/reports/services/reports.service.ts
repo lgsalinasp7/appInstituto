@@ -204,7 +204,7 @@ export class ReportsService {
     }).sort((a, b) => b.totalStudents - a.totalStudents);
   }
 
-  static async getDashboardStats(advisorId?: string): Promise<DashboardStats> {
+  static async getDashboardStats(advisorId?: string, programId?: string): Promise<DashboardStats> {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const tomorrow = new Date(today);
@@ -214,13 +214,18 @@ export class ReportsService {
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
-    const studentWhere: Prisma.StudentWhereInput = advisorId
-      ? { advisorId }
-      : {};
-
-    const paymentWhere: Prisma.PaymentWhereInput = advisorId
-      ? { registeredById: advisorId }
-      : {};
+    const studentWhere: Prisma.StudentWhereInput = {
+      ...(advisorId && { advisorId }),
+      ...(programId && { programId }),
+    };
+    const paymentWhere: Prisma.PaymentWhereInput = {
+      ...(advisorId && { registeredById: advisorId }),
+      ...(programId && { student: { programId } }),
+    };
+    const commitmentWhere = {
+      ...(advisorId && { student: { advisorId } }),
+      ...(programId && { student: { programId } }),
+    };
 
     const [
       todayRevenueAggregate,
@@ -259,28 +264,35 @@ export class ReportsService {
       }),
       // 6. Conteo compromisos pendientes
       prisma.paymentCommitment.count({
-        where: { status: "PENDIENTE", ...(advisorId && { student: { advisorId } }) },
+        where: { status: "PENDIENTE", ...commitmentWhere },
       }),
       // 7. Monto Cartera en Mora (Vencida)
       prisma.paymentCommitment.aggregate({
         where: {
           status: "PENDIENTE",
           scheduledDate: { lt: today },
-          ...(advisorId && { student: { advisorId } })
+          ...commitmentWhere
         },
         _sum: { amount: true },
       }),
       // 8. Pendientes mes pasado
       prisma.paymentCommitment.count({
-        where: { status: "PENDIENTE", createdAt: { lte: endOfLastMonth }, ...(advisorId && { student: { advisorId } }) },
+        where: { status: "PENDIENTE", createdAt: { lte: endOfLastMonth }, ...commitmentWhere },
       }),
       // 9. Prospectos
       prisma.prospect.count({
-        where: advisorId ? { advisorId } : {},
+        where: {
+          ...(advisorId && { advisorId }),
+          ...(programId && { programId }),
+        },
       }),
       // 10. Cerrados
       prisma.prospect.count({
-        where: { status: "CERRADO", ...(advisorId && { advisorId }) },
+        where: {
+          status: "CERRADO",
+          ...(advisorId && { advisorId }),
+          ...(programId && { programId }),
+        },
       }),
     ]);
 

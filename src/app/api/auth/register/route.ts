@@ -1,0 +1,100 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { AuthService } from "@/modules/auth/services/auth.service";
+import { registerSchema } from "@/modules/auth/schemas";
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+
+    // Validate request body
+    const validation = registerSchema.safeParse({
+      ...body,
+      confirmPassword: body.password, // Schema expects confirmPassword
+    });
+
+    if (!validation.success) {
+      return NextResponse.json(
+        { success: false, error: validation.error.errors[0].message },
+        { status: 400 }
+      );
+    }
+
+    const { name, email, password } = validation.data;
+
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      return NextResponse.json(
+        { success: false, error: "Este correo electrónico ya está registrado" },
+        { status: 409 }
+      );
+    }
+
+    // Find default role (ESTUDIANTE)
+    let role = await prisma.role.findFirst({
+      where: { name: "ESTUDIANTE" },
+    });
+
+    if (!role) {
+      // Fallback to STUDENT
+      role = await prisma.role.findFirst({
+        where: { name: "STUDENT" },
+      });
+    }
+
+    if (!role) {
+      // Fallback to USER if STUDENT not found
+      role = await prisma.role.findFirst({
+        where: { name: "USER" },
+      });
+    }
+
+    // Last resort callback
+    if (!role) {
+      console.error("No default role found (ESTUDIANTE/STUDENT/USER)");
+      return NextResponse.json(
+        { success: false, error: "Error de configuración: Rol de estudiante no encontrado" },
+        { status: 500 }
+      );
+    }
+
+    // Hash password
+    const hashedPassword = await AuthService.hashPassword(password);
+
+    // Create user
+    const newUser = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        roleId: role.id,
+        isActive: true, // Auto-activate or require email verification? Plan says "Verificación de email: No existe" so active true.
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: {
+          select: { name: true }
+        }
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: newUser,
+      message: "Cuenta creada exitosamente"
+    });
+
+  } catch (error) {
+    console.error("Registration error:", error);
+    return NextResponse.json(
+      { success: false, error: "Error interno del servidor" },
+      { status: 500 }
+    );
+  }
+}

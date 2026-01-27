@@ -3,6 +3,7 @@
 import { useAuthStore } from "@/lib/store/auth-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,11 +31,10 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-primary">Mi Perfil</h1>
-        <p className="text-sm text-muted-foreground">Información de tu cuenta</p>
-      </div>
+      <DashboardHeader
+        title="Mi Perfil"
+        subtitle="Información de tu cuenta"
+      />
 
       <div className="grid gap-6 md:grid-cols-3">
         {/* Avatar Card */}

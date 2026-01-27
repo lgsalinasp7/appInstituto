@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CreditCard, History, Users, ArrowLeft } from "lucide-react";
+import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 import { PaymentRegister } from "@/modules/payments/components/PaymentRegister";
 import { PaymentHistory } from "@/modules/payments/components/PaymentHistory";
 import { StudentPaymentTable } from "@/modules/payments/components/StudentPaymentTable";
@@ -23,12 +24,10 @@ export default function RecaudosPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-[#1e3a5f]">Gestión de Recaudos</h1>
-                    <p className="text-[#64748b]">Gestiona los pagos de estudiantes matriculados</p>
-                </div>
-
+            <DashboardHeader
+                title="Gestión de Recaudos"
+                subtitle="Gestiona los pagos de estudiantes matriculados"
+            >
                 {activeTab === "registrar" && (
                     <button
                         onClick={handleBackToList}
@@ -37,7 +36,7 @@ export default function RecaudosPage() {
                         <ArrowLeft size={16} /> Volver a la lista
                     </button>
                 )}
-            </div>
+            </DashboardHeader>
 
             {/* Tabs */}
             <div className="flex p-1 bg-gray-100 rounded-xl w-full md:w-fit">

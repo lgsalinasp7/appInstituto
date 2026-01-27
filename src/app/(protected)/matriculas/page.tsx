@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Plus, Search, Filter, MoreVertical, CreditCard, Pencil, Trash2 } from "lucide-react";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 import { StudentForm, StudentDetailModal, DeleteConfirmationModal } from "@/modules/students/components";
 import type { StudentWithRelations } from "@/modules/students/types";
 import { toast } from "sonner";
@@ -15,6 +17,7 @@ export default function MatriculasPage() {
     const [isDeletingLoading, setIsDeletingLoading] = useState(false);
     const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const { user } = useAuthStore();
 
     const fetchStudents = async () => {
         setLoading(true);
@@ -75,22 +78,21 @@ export default function MatriculasPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-[#1e3a5f]">Gestión de Matrículas</h1>
-                    <p className="text-[#64748b]">Administra los estudiantes inscritos y sus estados</p>
-                </div>
+            <DashboardHeader
+                title="Gestión de Matrículas"
+                subtitle="Administra los estudiantes inscritos y sus estados"
+            >
                 <button
                     onClick={() => {
                         setEditingStudent(null);
                         setIsFormOpen(true);
                     }}
-                    className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-instituto text-white rounded-xl font-bold hover:shadow-lg hover:shadow-[#1e3a5f]/20 transition-all active:scale-95"
+                    className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-instituto text-white rounded-xl font-bold hover:shadow-lg hover:shadow-[#1e3a5f]/20 transition-all active:scale-95"
                 >
                     <Plus size={20} strokeWidth={2.5} />
                     Nueva Matrícula
                 </button>
-            </div>
+            </DashboardHeader>
 
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 {/* Barra de herramientas */}
@@ -233,7 +235,7 @@ export default function MatriculasPage() {
                     setEditingStudent(null);
                 }}
                 onSuccess={handleSuccess}
-                currentUserId="user_current_id_placeholder"
+                currentUserId={user?.id || ""}
                 student={editingStudent}
             />
 

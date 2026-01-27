@@ -2,6 +2,9 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaNeonHttp } from "@prisma/adapter-neon";
 import * as fs from "fs";
 import * as path from "path";
+import bcrypt from "bcryptjs";
+
+const SALT_ROUNDS = 12;
 
 // Leer .env manualmente para asegurar que se cargue
 const envPath = path.resolve(__dirname, "../.env");
@@ -59,46 +62,75 @@ async function main() {
     });
 
     console.log("Creando Superadmin...");
+    // Password: Admin123! (hasheado con bcrypt)
+    const superadminPassword = await bcrypt.hash("Admin123!", SALT_ROUNDS);
     await prisma.user.create({
         data: {
             name: "Luis Salinas",
             email: "superadmin@instituto.edu.co",
             roleId: superAdminRole.id,
             isActive: true,
-            password: "hashed_password_here" // In production this should be hashed
+            password: superadminPassword
         }
     });
 
     console.log("Creando usuario administrador...");
+    // Password: Admin123! (hasheado con bcrypt)
+    const adminPassword = await bcrypt.hash("Admin123!", SALT_ROUNDS);
     await prisma.user.create({
         data: {
             name: "Administrador",
             email: "admin@instituto.edu.co",
             roleId: adminRole.id,
             isActive: true,
-            invitationLimit: 10
+            invitationLimit: 9,
+            password: adminPassword
         }
     });
 
-    console.log("Creando usuarios (asesores)...");
-    const advisors = [
+    console.log("Creando usuarios (asesores y recaudos)...");
+    const advisorList = [
+        { name: "Asesor Comercial 1", email: "asesor1@instituto.edu.co" },
+        { name: "Asesor Comercial 2", email: "asesor2@instituto.edu.co" },
+        { name: "Asesor Comercial 3", email: "asesor3@instituto.edu.co" },
         { name: "María González", email: "maria.gonzalez@instituto.edu.co" },
         { name: "Carlos Rodríguez", email: "carlos.rodriguez@instituto.edu.co" },
-        { name: "Ana Martínez", email: "ana.martinez@instituto.edu.co" },
-        { name: "Luis Hernández", email: "luis.hernandez@instituto.edu.co" },
     ];
 
+    const collectionList = [
+        { name: "Gestor Recaudos 1", email: "recaudos1@instituto.edu.co" },
+        { name: "Gestor Recaudos 2", email: "recaudos2@instituto.edu.co" },
+    ];
+
+    const advisorPassword = await bcrypt.hash("Asesor123!", SALT_ROUNDS);
+    const collectionPassword = await bcrypt.hash("Recaudos123!", SALT_ROUNDS);
+
     const createdAdvisors = [];
-    for (const adv of advisors) {
+    for (const adv of advisorList) {
         const user = await prisma.user.create({
             data: {
                 name: adv.name,
                 email: adv.email,
-                roleId: ventasRole.id, // Assign to VENTAS role
+                roleId: ventasRole.id,
                 isActive: true,
+                password: advisorPassword,
             }
         });
         createdAdvisors.push(user);
+    }
+
+    const createdCollectionUsers = [];
+    for (const coll of collectionList) {
+        const user = await prisma.user.create({
+            data: {
+                name: coll.name,
+                email: coll.email,
+                roleId: carteraRole.id,
+                isActive: true,
+                password: collectionPassword,
+            }
+        });
+        createdCollectionUsers.push(user);
     }
 
     console.log("Creando programas...");
@@ -131,10 +163,12 @@ async function main() {
 
     console.log("Creando estudiantes y pagos...");
     const studentsRaw = [
-        { name: "Laura Sofía Pérez Gómez", document: "1098765432", phone: "3023315972", email: "laura.perez@email.com", programIdx: 0, advisorIdx: 0, enrollmentDate: "2024-08-15", commitmentDateOffset: 0 }, // Hoy
-        { name: "Juan David López Torres", document: "1087654321", phone: "3023315972", email: "juan.lopez@email.com", programIdx: 1, advisorIdx: 1, enrollmentDate: "2024-09-01", commitmentDateOffset: 3 }, // Esta semana
-        { name: "Valentina Ramírez Díaz", document: "1076543210", phone: "3023315972", email: "valentina.ramirez@email.com", programIdx: 2, advisorIdx: 2, enrollmentDate: "2024-10-10", commitmentDateOffset: 15 }, // Este mes
-        { name: "Camila Andrea García Ruiz", document: "1054321098", phone: "3045678901", email: "camila.garcia@email.com", programIdx: 4, advisorIdx: 0, enrollmentDate: "2024-08-25", commitmentDateOffset: 45 }, // Futuro
+        { name: "Laura Sofía Pérez Gómez", document: "1098765432", phone: "3023315972", email: "laura.perez@email.com", programIdx: 0, advisorIdx: 0, enrollmentDate: "2024-11-15", commitmentDateOffset: 0 },
+        { name: "Juan David López Torres", document: "1087654321", phone: "3023315972", email: "juan.lopez@email.com", programIdx: 1, advisorIdx: 1, enrollmentDate: "2025-01-01", commitmentDateOffset: 3 },
+        { name: "Valentina Ramírez Díaz", document: "1076543210", phone: "3023315972", email: "valentina.ramirez@email.com", programIdx: 2, advisorIdx: 2, enrollmentDate: "2025-01-10", commitmentDateOffset: 15 },
+        { name: "Camila Andrea García Ruiz", document: "1054321098", phone: "3045678901", email: "camila.garcia@email.com", programIdx: 4, advisorIdx: 0, enrollmentDate: "2024-12-25", commitmentDateOffset: 45 },
+        { name: "Andrés Felipe Castro", document: "1022334455", phone: "3112223344", email: "andres.castro@email.com", programIdx: 3, advisorIdx: 3, enrollmentDate: "2025-01-05", commitmentDateOffset: 5 },
+        { name: "Diana Marcela Ortiz", document: "1055667788", phone: "3154445566", email: "diana.ortiz@email.com", programIdx: 0, advisorIdx: 4, enrollmentDate: "2025-01-12", commitmentDateOffset: -2 }, // Vencido
     ];
 
     for (const std of studentsRaw) {
@@ -159,7 +193,6 @@ async function main() {
             }
         });
 
-        // Crear un pago de matrícula
         await prisma.payment.create({
             data: {
                 amount: program.matriculaValue,
@@ -172,7 +205,6 @@ async function main() {
             }
         });
 
-        // Crear compromisos
         const today = new Date();
         for (let i = 1; i <= program.modulesCount; i++) {
             const scheduledDate = new Date(today);
@@ -182,7 +214,7 @@ async function main() {
                 data: {
                     scheduledDate: scheduledDate,
                     amount: valorModulo,
-                    status: "PENDIENTE",
+                    status: (i === 1 && std.commitmentDateOffset < 0) ? "PENDIENTE" : "PENDIENTE",
                     moduleNumber: i,
                     studentId: student.id,
                 }
@@ -195,6 +227,9 @@ async function main() {
         { name: "Carolina Mendoza Arias", phone: "3023315972", status: "CONTACTADO" as const, programIdx: 0, advisorIdx: 0 },
         { name: "Pedro José Ramírez Luna", phone: "3023315972", status: "EN_SEGUIMIENTO" as const, programIdx: 1, advisorIdx: 1 },
         { name: "Ana María Quintero Vélez", phone: "3023315972", status: "EN_SEGUIMIENTO" as const, programIdx: 2, advisorIdx: 2 },
+        { name: "Jorge Iván Restrepo", phone: "3201112233", status: "CONTACTADO" as const, programIdx: 3, advisorIdx: 3 },
+        { name: "Martha Lucía Santos", phone: "3189998877", status: "CONTACTADO" as const, programIdx: 4, advisorIdx: 4 },
+        { name: "Roberto Gómez Bolaños", phone: "3005556677", status: "EN_SEGUIMIENTO" as const, programIdx: 0, advisorIdx: 0 },
     ];
 
     for (const pros of prospectsRaw) {

@@ -139,7 +139,11 @@ export function PaymentHistory() {
                                             ${payment.amount.toLocaleString()}
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <button className="text-primary hover:bg-primary/10 p-2 rounded-lg transition-colors" title="Descargar Recibo">
+                                            <button
+                                                onClick={() => window.open(`/api/receipts/${payment.id}/download`, "_blank")}
+                                                className="text-primary hover:bg-primary/10 p-2 rounded-lg transition-colors"
+                                                title="Descargar Recibo"
+                                            >
                                                 <FileText size={18} />
                                             </button>
                                         </td>
