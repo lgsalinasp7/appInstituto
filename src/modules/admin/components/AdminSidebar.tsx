@@ -9,6 +9,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/brand";
+import { useAuthStore } from "@/lib/store/auth-store";
 
 const navItems = [
   {
@@ -25,7 +26,7 @@ const navItems = [
   },
   {
     title: "Roles",
-    href: "/admin/roles",
+    href: "/admin/config/roles",
     icon: "🔐",
     description: "Permisos y roles",
   },
@@ -39,6 +40,20 @@ const navItems = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const { user } = useAuthStore();
+
+  // Filter items based on role - Only SUPERADMIN and ADMINISTRADOR can access admin panel
+  const filteredNavItems = navItems.filter((item) => {
+    const roleName = user?.role?.name?.toUpperCase() || "";
+
+    // Only SUPERADMIN and ADMINISTRADOR can see admin items
+    if (roleName === "SUPERADMIN" || roleName === "ADMINISTRADOR") {
+      return true;
+    }
+
+    // Other roles should not see admin panel
+    return false;
+  });
 
   return (
     <aside className="w-64 border-r bg-white min-h-screen flex flex-col">
@@ -52,7 +67,7 @@ export function AdminSidebar() {
       {/* Navegación */}
       <nav className="flex-1 p-4">
         <div className="space-y-1">
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
@@ -93,3 +108,4 @@ export function AdminSidebar() {
     </aside>
   );
 }
+

@@ -16,6 +16,7 @@ export interface User {
     name: string;
   };
   profile?: UserProfile | null;
+  invitationLimit?: number;
 }
 
 export interface UserProfile {

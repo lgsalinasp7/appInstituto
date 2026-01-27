@@ -98,7 +98,7 @@ model Program {
   name           String   @unique
   description    String?
   totalValue     Decimal  @db.Decimal(10, 2)
-  matriculaValue Decimal  @db.Decimal(10, 2) @default(60000)
+  matriculaValue Decimal  @default(60000) @db.Decimal(10, 2)
   modulesCount   Int      @default(6)
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
@@ -113,10 +113,10 @@ model Program {
 }
 
 model Student {
-  id             String        @id @default(cuid())
+  id             String  @id @default(cuid())
   fullName       String
-  documentType   String        @default("CC")
-  documentNumber String        @unique
+  documentType   String  @default("CC")
+  documentNumber String  @unique
   email          String?
   phone          String
   address        String?
@@ -209,8 +209,8 @@ model PaymentCommitment {
   comments        String?
 
   // Campos nuevos para lógica de negocio
-  moduleNumber       Int    @default(1)
-  notificationsSent  Json?  // { "7dias": false, "3dias": false, "1dia": false }
+  moduleNumber      Int   @default(1)
+  notificationsSent Json? // { "7dias": false, "3dias": false, "1dia": false }
 
   student   Student @relation(fields: [studentId], references: [id])
   studentId String

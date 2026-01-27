@@ -45,11 +45,28 @@ async function main() {
     await prisma.systemConfig.deleteMany();
 
     console.log("Creando roles...");
-    const adminRole = await prisma.role.create({
-        data: { name: "admin", description: "Administrador del sistema", permissions: ["all"] }
+    const superAdminRole = await prisma.role.create({
+        data: { name: "SUPERADMIN", description: "Super Administrador (Invisible)", permissions: ["all"] }
     });
-    const advisorRole = await prisma.role.create({
-        data: { name: "asesor", description: "Asesor educativo", permissions: ["read", "write"] }
+    const adminRole = await prisma.role.create({
+        data: { name: "ADMINISTRADOR", description: "Administrador del sistema", permissions: ["all"] }
+    });
+    const ventasRole = await prisma.role.create({
+        data: { name: "VENTAS", description: "Ventas y Matrículas", permissions: ["dashboard", "matriculas"] }
+    });
+    const carteraRole = await prisma.role.create({
+        data: { name: "CARTERA", description: "Cartera y Recaudos", permissions: ["dashboard", "recaudos"] }
+    });
+
+    console.log("Creando Superadmin...");
+    await prisma.user.create({
+        data: {
+            name: "Luis Salinas",
+            email: "superadmin@instituto.edu.co",
+            roleId: superAdminRole.id,
+            isActive: true,
+            password: "hashed_password_here" // In production this should be hashed
+        }
     });
 
     console.log("Creando usuario administrador...");
@@ -59,6 +76,7 @@ async function main() {
             email: "admin@instituto.edu.co",
             roleId: adminRole.id,
             isActive: true,
+            invitationLimit: 10
         }
     });
 
@@ -76,7 +94,7 @@ async function main() {
             data: {
                 name: adv.name,
                 email: adv.email,
-                roleId: advisorRole.id,
+                roleId: ventasRole.id, // Assign to VENTAS role
                 isActive: true,
             }
         });

@@ -105,6 +105,7 @@ export class AuthService {
         name: user.role.name,
         permissions: user.role.permissions,
       },
+      invitationLimit: user.invitationLimit,
     };
   }
 }

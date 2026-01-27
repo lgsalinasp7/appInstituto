@@ -24,6 +24,7 @@ export interface AuthUser {
     name: string;
     permissions: string[];
   };
+  invitationLimit: number;
 }
 
 export interface AuthSession {

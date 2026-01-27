@@ -19,7 +19,11 @@ interface Commitment {
     };
 }
 
-export function PaymentRegister() {
+interface PaymentRegisterProps {
+    preSelectedStudent?: StudentWithRelations | null;
+}
+
+export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
     const [searchTerm, setSearchTerm] = useState("");
     const [student, setStudent] = useState<StudentWithRelations | null>(null);
     const [loading, setLoading] = useState(false);
@@ -38,6 +42,12 @@ export function PaymentRegister() {
     useEffect(() => {
         fetchPendingCommitments();
     }, [filterRange]);
+
+    useEffect(() => {
+        if (preSelectedStudent) {
+            handleSelectStudent(preSelectedStudent);
+        }
+    }, [preSelectedStudent]);
 
     const fetchPendingCommitments = async () => {
         setLoadingTable(true);

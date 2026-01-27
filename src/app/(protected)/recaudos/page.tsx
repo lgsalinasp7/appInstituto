@@ -1,25 +1,56 @@
 "use client";
 
 import { useState } from "react";
-import { CreditCard, History, AlertCircle } from "lucide-react";
+import { CreditCard, History, Users, ArrowLeft } from "lucide-react";
 import { PaymentRegister } from "@/modules/payments/components/PaymentRegister";
 import { PaymentHistory } from "@/modules/payments/components/PaymentHistory";
-import { CarteraView } from "@/modules/payments/components/CarteraView";
+import { StudentPaymentTable } from "@/modules/payments/components/StudentPaymentTable";
+import type { StudentWithRelations } from "@/modules/students/types";
 
 export default function RecaudosPage() {
-    const [activeTab, setActiveTab] = useState<"registrar" | "historial" | "cartera">("registrar");
+    const [activeTab, setActiveTab] = useState<"lista" | "registrar" | "historial">("lista");
+    const [selectedStudent, setSelectedStudent] = useState<StudentWithRelations | null>(null);
+
+    const handleSelectStudent = (student: StudentWithRelations) => {
+        setSelectedStudent(student);
+        setActiveTab("registrar");
+    };
+
+    const handleBackToList = () => {
+        setSelectedStudent(null);
+        setActiveTab("lista");
+    };
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-[#1e3a5f]">Gestión de Recaudos</h1>
-                    <p className="text-[#64748b]">Registra pagos, consulta historial y gestiona cartera</p>
+                    <p className="text-[#64748b]">Gestiona los pagos de estudiantes matriculados</p>
                 </div>
+
+                {activeTab === "registrar" && (
+                    <button
+                        onClick={handleBackToList}
+                        className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-[#1e3a5f] transition-colors"
+                    >
+                        <ArrowLeft size={16} /> Volver a la lista
+                    </button>
+                )}
             </div>
 
             {/* Tabs */}
             <div className="flex p-1 bg-gray-100 rounded-xl w-full md:w-fit">
+                <button
+                    onClick={() => setActiveTab("lista")}
+                    className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === "lista"
+                        ? "bg-white text-[#1e3a5f] shadow-sm"
+                        : "text-gray-500 hover:text-gray-700"
+                        }`}
+                >
+                    <Users size={18} />
+                    Estudiantes
+                </button>
                 <button
                     onClick={() => setActiveTab("registrar")}
                     className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === "registrar"
@@ -40,22 +71,18 @@ export default function RecaudosPage() {
                     <History size={18} />
                     Historial
                 </button>
-                <button
-                    onClick={() => setActiveTab("cartera")}
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === "cartera"
-                        ? "bg-white text-[#1e3a5f] shadow-sm"
-                        : "text-gray-500 hover:text-gray-700"
-                        }`}
-                >
-                    <AlertCircle size={18} />
-                    Cartera
-                </button>
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm min-h-[500px] p-6">
-                {activeTab === "registrar" && <PaymentRegister />}
+            <div className="min-h-[500px]">
+                {activeTab === "lista" && (
+                    <StudentPaymentTable onSelectStudent={handleSelectStudent} />
+                )}
+
+                {activeTab === "registrar" && (
+                    <PaymentRegister preSelectedStudent={selectedStudent} />
+                )}
+
                 {activeTab === "historial" && <PaymentHistory />}
-                {activeTab === "cartera" && <CarteraView />}
             </div>
         </div>
     );

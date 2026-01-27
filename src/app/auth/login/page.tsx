@@ -1,24 +1,25 @@
 "use client";
 
-/**
- * Login Page
- * Renders the login form from the auth module
- */
-
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { LoginForm, type LoginFormData } from "@/modules/auth";
+import { loginAction } from "@/modules/auth/actions";
+import { useAuthStore } from "@/lib/store/auth-store";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuthStore();
 
   async function handleLogin(data: LoginFormData) {
-    // TODO: Implement actual login logic with auth service
-    console.log("Login attempt:", data);
-    
-    // Simulated login success
-    toast.success("Inicio de sesión exitoso");
-    router.push("/dashboard");
+    const result = await loginAction(data);
+
+    if (result.success && result.user) {
+      login(result.user); // Update Zustand Store
+      toast.success(`Bienvenido, ${result.user.name}`);
+      router.push("/dashboard");
+    } else {
+      toast.error(result.message || "Error al iniciar sesión");
+    }
   }
 
   return <LoginForm onSubmit={handleLogin} />;
