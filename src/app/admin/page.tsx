@@ -1,19 +1,19 @@
-/**
- * Admin Dashboard Page
- * Panel principal de administración con diseño institucional
- */
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AdminService } from "@/modules/admin/services/admin.service";
 
-// Mock stats
-const systemStats = [
-  { title: "Usuarios Totales", value: 150, icon: "👥", color: "bg-blue-50 text-blue-600" },
-  { title: "Roles Definidos", value: 4, icon: "🔐", color: "bg-purple-50 text-purple-600" },
-  { title: "Sesiones Activas", value: 42, icon: "🟢", color: "bg-green-50 text-green-600" },
-  { title: "Registros de Auditoría", value: 1250, icon: "📋", color: "bg-amber-50 text-amber-600" },
-];
+export const dynamic = "force-dynamic";
 
-export default function AdminDashboardPage() {
+export default async function AdminDashboardPage() {
+  const stats = await AdminService.getSystemStats();
+
+  const systemStats = [
+    { title: "Usuarios Totales", value: stats.usersCount, icon: "👥", color: "bg-blue-50 text-blue-600" },
+    { title: "Roles Definidos", value: stats.rolesCount, icon: "🔐", color: "bg-purple-50 text-purple-600" },
+    { title: "Sesiones Activas", value: stats.sessionsCount, icon: "🟢", color: "bg-green-50 text-green-600" },
+    { title: "Registros de Auditoría", value: stats.logsCount, icon: "📋", color: "bg-amber-50 text-amber-600" },
+  ];
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -152,9 +152,8 @@ function StatusItem({
     <div className="flex items-center justify-between py-2">
       <div className="flex items-center gap-3">
         <span
-          className={`h-2.5 w-2.5 rounded-full ${
-            isHealthy ? "bg-green-500" : "bg-red-500"
-          }`}
+          className={`h-2.5 w-2.5 rounded-full ${isHealthy ? "bg-green-500" : "bg-red-500"
+            }`}
         />
         <span className="text-sm text-[#1e3a5f]">{label}</span>
       </div>

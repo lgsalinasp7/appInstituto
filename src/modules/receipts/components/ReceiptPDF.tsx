@@ -1,6 +1,6 @@
 /**
- * Receipt PDF Template
- * Generates a professional PDF receipt using @react-pdf/renderer
+ * Receipt PDF Template - Clone of Manual Receipt
+ * Size: Half Letter (Landscape roughly) or Custom
  */
 
 import {
@@ -10,171 +10,237 @@ import {
   View,
   StyleSheet,
   Font,
+  Image,
 } from "@react-pdf/renderer";
+import { numberToWords } from "@/lib/number-utils";
 
-// Register a font (optional, uses default if not available)
-Font.register({
-  family: "Inter",
-  fonts: [
-    {
-      src: "https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2",
-      fontWeight: 400,
-    },
-    {
-      src: "https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYAZ9hiJ-Ek-_EeA.woff2",
-      fontWeight: 700,
-    },
-  ],
-});
+// Colors
+const BLUE_BORDER = "#1e3a8a"; // Dark Blue similar to image
+const TEXT_BLUE = "#1e3a8a";
+const RED_NUM = "#dc2626";
 
 const styles = StyleSheet.create({
   page: {
-    padding: 40,
-    fontSize: 11,
-    fontFamily: "Helvetica",
+    padding: 20,
+    fontSize: 9,
+    fontFamily: "Helvetica", // Changed from Inter to built-in Helvetica
     backgroundColor: "#ffffff",
   },
+  container: {
+    border: `2px solid ${BLUE_BORDER}`,
+    borderRadius: 10,
+    height: "100%",
+    padding: 10,
+    display: "flex",
+    flexDirection: "column",
+  },
+  // HEADER
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 30,
-    paddingBottom: 20,
-    borderBottom: "2px solid #667eea",
-  },
-  headerLeft: {
-    flex: 1,
-  },
-  instituteName: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#667eea",
-    marginBottom: 4,
-  },
-  instituteSlogan: {
-    fontSize: 10,
-    color: "#666",
-    fontStyle: "italic",
-  },
-  headerRight: {
-    alignItems: "flex-end",
-  },
-  receiptTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 4,
-  },
-  receiptNumber: {
-    fontSize: 14,
-    color: "#667eea",
-    fontWeight: "bold",
-  },
-  receiptDate: {
-    fontSize: 10,
-    color: "#666",
-    marginTop: 4,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 10,
-    paddingBottom: 4,
-    borderBottom: "1px solid #e5e7eb",
-  },
-  row: {
-    flexDirection: "row",
-    marginBottom: 6,
-  },
-  label: {
-    width: 140,
-    color: "#666",
-    fontSize: 10,
-  },
-  value: {
-    flex: 1,
-    color: "#333",
-    fontSize: 10,
-    fontWeight: "bold",
-  },
-  paymentBox: {
-    backgroundColor: "#f8f9fa",
-    padding: 20,
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  amountRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 10,
-    paddingTop: 10,
-    borderTop: "1px dashed #ccc",
-  },
-  amountLabel: {
-    fontSize: 14,
-    color: "#333",
-  },
-  amountValue: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#28a745",
-  },
-  footer: {
-    position: "absolute",
-    bottom: 40,
-    left: 40,
-    right: 40,
-  },
-  footerDivider: {
-    borderTop: "1px solid #e5e7eb",
-    paddingTop: 15,
-  },
-  footerText: {
-    fontSize: 9,
-    color: "#999",
-    textAlign: "center",
-    marginBottom: 4,
-  },
-  signatureArea: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 40,
-    paddingTop: 20,
-  },
-  signatureBox: {
-    width: "45%",
-    alignItems: "center",
-  },
-  signatureLine: {
-    width: "100%",
-    borderTop: "1px solid #333",
+    height: 90,
     marginBottom: 5,
   },
-  signatureLabel: {
-    fontSize: 9,
-    color: "#666",
+  headerLeft: {
+    width: "70%",
+    flexDirection: "row",
+    alignItems: "center",
   },
-  watermark: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%) rotate(-45deg)",
-    fontSize: 60,
-    color: "#f0f0f0",
-    opacity: 0.3,
+  logo: {
+    width: 60,
+    height: 60,
+    marginRight: 10,
   },
-  badge: {
-    backgroundColor: "#667eea",
-    color: "#ffffff",
-    padding: "4 8",
-    borderRadius: 4,
+  titleContainer: {
+    flexDirection: "column",
+  },
+  titleMain: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: TEXT_BLUE,
+    marginBottom: 2,
+    textTransform: "uppercase",
+  },
+  titleSub: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: TEXT_BLUE,
+  },
+  address: {
+    fontSize: 7,
+    marginTop: 5,
+    color: "#444", // Removed fontStyle: italic
+  },
+  headerRight: {
+    width: "30%",
+    alignItems: "flex-end",
+    justifyContent: "flex-start",
+  },
+  numberBox: {
+    border: `1px solid ${BLUE_BORDER}`,
+    borderRadius: 5,
+    padding: 5,
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 5,
+    backgroundColor: "#f0f9ff",
+  },
+  numberText: {
+    fontSize: 16,
+    color: RED_NUM,
+    fontWeight: "bold",
+  },
+  dateBoxContainer: {
+    width: "100%",
+    border: `1px solid ${BLUE_BORDER}`,
+    borderRadius: 5,
+    overflow: "hidden",
+  },
+  dateHeader: {
+    backgroundColor: TEXT_BLUE,
+    color: "white",
+    fontSize: 8,
+    textAlign: "center",
+    paddingVertical: 2,
+    fontWeight: "bold",
+  },
+  dateInputs: {
+    flexDirection: "row",
+    borderTop: `1px solid ${BLUE_BORDER}`,
+  },
+  dateCol: {
+    flex: 1,
+    borderRight: `1px solid ${BLUE_BORDER}`,
+    alignItems: "center",
+    justifyContent: "center",
+    height: 20,
+  },
+  dateVal: {
     fontSize: 9,
     fontWeight: "bold",
   },
+  dateLabel: {
+    fontSize: 6,
+    color: "#666",
+    marginTop: 1,
+  },
+
+  // BODY ROWS
+  rowFull: {
+    marginBottom: 4,
+    border: `1px solid ${BLUE_BORDER}`,
+    borderRadius: 5,
+    padding: 0,
+    overflow: "hidden",
+    flexDirection: "row",
+    alignItems: "stretch", // Stretch height
+  },
+  rowLabel: {
+    backgroundColor: "#e0f2fe", // Light blue bg for labels just to distinguish or white? Image has white bg for inputs but some headers? 
+    // Image shows labels inside the box, or split. 
+    // "Ciudad:" is inside the box.
+    padding: 5,
+    fontSize: 8,
+    color: TEXT_BLUE,
+    fontWeight: "bold",
+    width: 80, // fixed width for label part if we simulate "Label: ____________"
+  },
+  rowContent: {
+    padding: 5,
+    fontSize: 9,
+    flex: 1,
+    color: "#000",
+  },
+
+  // Specific Rows configuration
+  rowDouble: {
+    flexDirection: "row",
+    marginBottom: 4,
+    gap: 5,
+  },
+  colHalf: {
+    flex: 1,
+    border: `1px solid ${BLUE_BORDER}`,
+    borderRadius: 5,
+    padding: 5,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  // Currency Box
+  currencyBox: {
+    width: 100,
+    backgroundColor: TEXT_BLUE,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 5,
+    borderTopRightRadius: 5,
+    borderBottomRightRadius: 5,
+  },
+  currencySymbol: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+
+  // Table-like strips
+  stripRow: {
+    border: `1px solid ${BLUE_BORDER}`,
+    borderRadius: 5,
+    height: 25,
+    marginBottom: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 5,
+    backgroundColor: "#f8fafc",
+  },
+  stripLabel: {
+    color: TEXT_BLUE,
+    fontSize: 8,
+    fontWeight: "bold",
+    marginRight: 5,
+    minWidth: 80,
+  },
+  stripValue: {
+    fontSize: 9,
+    fontWeight: "bold",
+    color: "#000",
+    flex: 1,
+    borderBottom: "1px dotted #999", // dotted line simulation
+    paddingBottom: 2,
+  },
+
+  // FOOTER
+  footerRow: {
+    flexDirection: "row",
+    marginTop: 10,
+    height: 50,
+    gap: 10,
+  },
+  footerBox: {
+    flex: 1,
+    border: `1px solid ${BLUE_BORDER}`,
+    borderRadius: 5,
+    padding: 5,
+    justifyContent: "flex-end",
+  },
+  footerLabel: {
+    position: "absolute",
+    top: 5,
+    left: 5,
+    fontSize: 7,
+    color: TEXT_BLUE,
+    fontWeight: "bold",
+  },
+  footerValue: {
+    textAlign: "center",
+    fontSize: 9,
+    borderTop: "1px solid #ccc",
+    paddingTop: 2,
+    marginTop: 15,
+  },
+  verticalText: {
+    // React-pdf doesn't support writing-mode easily. Ignoring side text for now.
+  }
 });
 
 export interface ReceiptPDFData {
@@ -185,6 +251,7 @@ export interface ReceiptPDFData {
     documentNumber: string;
     phone: string;
     email?: string | null;
+    address?: string | null;
   };
   program: {
     name: string;
@@ -203,171 +270,153 @@ export interface ReceiptPDFData {
   balanceAfter?: number;
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    minimumFractionDigits: 0,
-  }).format(amount);
-}
-
-function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat("es-CO", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(date));
-}
-
-function formatPaymentMethod(method: string): string {
-  const methods: Record<string, string> = {
-    EFECTIVO: "Efectivo",
-    BANCOLOMBIA: "Bancolombia",
-    NEQUI: "Nequi",
-    DAVIPLATA: "Daviplata",
-    TRANSFERENCIA: "Transferencia",
-    TARJETA: "Tarjeta",
+function formatDateParts(date: Date) {
+  const d = new Date(date);
+  return {
+    day: String(d.getDate()).padStart(2, "0"),
+    month: String(d.getMonth() + 1).padStart(2, "0"),
+    year: String(d.getFullYear()),
   };
-  return methods[method] || method;
-}
-
-function formatPaymentType(type: string): string {
-  const types: Record<string, string> = {
-    MATRICULA: "Pago de Matrícula",
-    MODULO: "Pago de Módulo",
-  };
-  return types[type] || type;
 }
 
 export function ReceiptPDF({ data }: { data: ReceiptPDFData }) {
+  const dateParts = formatDateParts(data.payment.paymentDate);
+  const amountInWords = numberToWords(data.payment.amount);
+
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.instituteName}>Instituto</Text>
-            <Text style={styles.instituteSlogan}>
-              Educamos con Valores - Formación Técnica Profesional
-            </Text>
-          </View>
-          <View style={styles.headerRight}>
-            <Text style={styles.receiptTitle}>RECIBO DE PAGO</Text>
-            <Text style={styles.receiptNumber}>{data.receiptNumber}</Text>
-            <Text style={styles.receiptDate}>
-              {formatDate(data.generatedAt)}
-            </Text>
-          </View>
-        </View>
+      {/* 
+         Size: [612, 396] is 8.5 x 5.5 inches (Half Letter Landscape).
+         It fits typical manual receipt formats.
+      */}
+      <Page size={[612, 396]} style={styles.page}>
+        <View style={styles.container}>
 
-        {/* Student Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>DATOS DEL ESTUDIANTE</Text>
-          <View style={styles.row}>
-            <Text style={styles.label}>Nombre:</Text>
-            <Text style={styles.value}>{data.student.fullName}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Documento:</Text>
-            <Text style={styles.value}>{data.student.documentNumber}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Teléfono:</Text>
-            <Text style={styles.value}>{data.student.phone}</Text>
-          </View>
-          {data.student.email && (
-            <View style={styles.row}>
-              <Text style={styles.label}>Email:</Text>
-              <Text style={styles.value}>{data.student.email}</Text>
+          {/* HEADER */}
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              {/* Try to use logo if available, else text placeholder */}
+              {/* <Image src="/logo-instituto.png" style={styles.logo} /> */}
+              {/* React-PDF needs absolute path or URL. We'll rely on public asset being served or local fs? 
+                  For now, text fallback is safer if image path is tricky in dev vs prod without proper setup.
+                  But let's try assuming standard access or just Text. */}
+              <View style={styles.titleContainer}>
+                <Text style={styles.titleMain}>Educación Técnica Para el Trabajo</Text>
+                <Text style={styles.titleSub}>y Desarrollo Humano EDUTEC</Text>
+                <Text style={styles.address}>
+                  Cra. 31B No. 50-89 Cuatro Vientos Frente al colegio Bilingue
+                </Text>
+                <Text style={styles.address}>
+                  316 5128182 - 314 6379067 - 324 3419696 - 322 4976030 - 301 4179786
+                </Text>
+              </View>
             </View>
-          )}
-          <View style={styles.row}>
-            <Text style={styles.label}>Programa:</Text>
-            <Text style={styles.value}>{data.program.name}</Text>
-          </View>
-        </View>
-
-        {/* Payment Details */}
-        <View style={styles.paymentBox}>
-          <Text style={styles.sectionTitle}>DETALLES DEL PAGO</Text>
-          <View style={styles.row}>
-            <Text style={styles.label}>Concepto:</Text>
-            <Text style={styles.value}>
-              {formatPaymentType(data.payment.paymentType)}
-              {data.payment.moduleNumber
-                ? ` - Módulo ${data.payment.moduleNumber}`
-                : ""}
-            </Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Fecha de Pago:</Text>
-            <Text style={styles.value}>
-              {formatDate(data.payment.paymentDate)}
-            </Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Método de Pago:</Text>
-            <Text style={styles.value}>
-              {formatPaymentMethod(data.payment.method)}
-            </Text>
-          </View>
-          {data.payment.reference && (
-            <View style={styles.row}>
-              <Text style={styles.label}>Referencia:</Text>
-              <Text style={styles.value}>{data.payment.reference}</Text>
+            <View style={styles.headerRight}>
+              <View style={styles.numberBox}>
+                <Text style={styles.numberText}>{data.receiptNumber}</Text>
+              </View>
+              <View style={styles.dateBoxContainer}>
+                <Text style={styles.dateHeader}>FECHA</Text>
+                <View style={styles.dateInputs}>
+                  <View style={styles.dateCol}>
+                    <Text style={styles.dateVal}>{dateParts.day}</Text>
+                    <Text style={styles.dateLabel}>DD</Text>
+                  </View>
+                  <View style={styles.dateCol}>
+                    <Text style={styles.dateVal}>{dateParts.month}</Text>
+                    <Text style={styles.dateLabel}>MM</Text>
+                  </View>
+                  <View style={[styles.dateCol, { borderRight: 0, flex: 1.5 }]}>
+                    <Text style={styles.dateVal}>{dateParts.year}</Text>
+                    <Text style={styles.dateLabel}>AAAA</Text>
+                  </View>
+                </View>
+              </View>
             </View>
-          )}
-
-          <View style={styles.amountRow}>
-            <Text style={styles.amountLabel}>TOTAL PAGADO:</Text>
-            <Text style={styles.amountValue}>
-              {formatCurrency(data.payment.amount)}
-            </Text>
           </View>
-        </View>
 
-        {/* Balance Information (if available) */}
-        {data.balanceAfter !== undefined && (
-          <View style={styles.section}>
-            <View style={styles.row}>
-              <Text style={styles.label}>Saldo Pendiente:</Text>
-              <Text style={styles.value}>
-                {formatCurrency(data.balanceAfter)}
+          {/* ROW 1: Ciudad | Grupo | $ */}
+          <View style={styles.rowDouble}>
+            <View style={[styles.colHalf, { flex: 2 }]}>
+              <Text style={styles.stripLabel}>Ciudad:</Text>
+              <Text style={styles.stripValue}>CARTAGENA</Text>
+            </View>
+            {/* <View style={[styles.colHalf, { flex: 1 }]}>
+              <Text style={styles.stripLabel}>Grupo:</Text>
+              <Text style={styles.stripValue}></Text>
+            </View> */}
+            <View style={[styles.colHalf, { flex: 1, backgroundColor: "#E9F0FD", border: `2px solid ${BLUE_BORDER}` }]}>
+              <Text style={{ fontSize: 13, fontWeight: 'bold' }}>
+                $ {data.payment.amount.toLocaleString('es-CO')}
               </Text>
             </View>
           </View>
-        )}
 
-        {/* Signature Area */}
-        <View style={styles.signatureArea}>
-          <View style={styles.signatureBox}>
-            <View style={styles.signatureLine} />
-            <Text style={styles.signatureLabel}>Firma del Estudiante</Text>
+          {/* ROW 2: Recibí de */}
+          <View style={styles.stripRow}>
+            <Text style={styles.stripLabel}>Recibí de:</Text>
+            <Text style={styles.stripValue}>{data.student.fullName}</Text>
           </View>
-          <View style={styles.signatureBox}>
-            <View style={styles.signatureLine} />
-            <Text style={styles.signatureLabel}>
-              Registrado por: {data.registeredBy.name}
-            </Text>
-          </View>
-        </View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
-          <View style={styles.footerDivider}>
-            <Text style={styles.footerText}>
-              Este documento es un comprobante oficial de pago emitido por el
-              Instituto.
-            </Text>
-            <Text style={styles.footerText}>
-              Conserve este recibo como soporte de su transacción.
-            </Text>
-            <Text style={styles.footerText}>
-              Para consultas: info@instituto.edu.co | Tel: (601) 123-4567
+          {/* ROW 3: C.C | La Suma de */}
+          <View style={styles.stripRow}>
+            <View style={{ backgroundColor: TEXT_BLUE, paddingHorizontal: 5, paddingVertical: 2, marginRight: 5, borderRadius: 2 }}>
+              <Text style={{ color: 'white', fontSize: 8, fontWeight: 'bold' }}>C.C.</Text>
+            </View>
+            <Text style={[styles.stripValue, { flex: 0.3, marginRight: 10 }]}>{data.student.documentNumber}</Text>
+
+            <Text style={styles.stripLabel}>La Suma de (en letras):</Text>
+            <Text style={[styles.stripValue, { fontSize: 8 }]}>{amountInWords}</Text>
+          </View>
+
+          {/* ROW 4: Grado/Programa */}
+          <View style={styles.stripRow}>
+            <Text style={styles.stripLabel}>Grado / Programa:</Text>
+            <Text style={styles.stripValue}>{data.program.name}</Text>
+          </View>
+
+          {/* ROW 5: Por Concepto de */}
+          <View style={[styles.stripRow, { height: 35 }]}>
+            <Text style={styles.stripLabel}>Por Concepto de:</Text>
+            <Text style={styles.stripValue}>
+              {data.payment.paymentType === 'MATRICULA' ? 'MATRÍCULA' :
+                data.payment.moduleNumber ? `PAGO MÓDULO ${data.payment.moduleNumber}` : 'PAGO MÓDULO'}
+              {data.payment.reference ? ` - REF: ${data.payment.reference}` : ''}
+              {' '}({data.payment.method})
             </Text>
           </View>
+
+          {/* ROW 6: Medio de Pago */}
+          <View style={styles.stripRow}>
+            <Text style={styles.stripLabel}>Medio de Pago:</Text>
+            <Text style={styles.stripValue}>{data.payment.method}</Text>
+          </View>
+
+          {/* FOOTER AREA */}
+          <View style={styles.footerRow}>
+            <View style={styles.footerBox}>
+              <Text style={styles.footerLabel}>No. de Aprobación:</Text>
+              <Text style={{ marginTop: 15, fontSize: 9 }}>{data.payment.reference || 'N/A'}</Text>
+            </View>
+            <View style={styles.footerBox}>
+              <Text style={styles.footerLabel}>Elaboró:</Text>
+              <Text style={{ marginTop: 15, fontSize: 9 }}>{data.registeredBy.name}</Text>
+            </View>
+            {/* Use empty box for signature or Valor Restante? Image had Valor Restante bottom left, Elaboro bottom right */}
+          </View>
+
+          <View style={styles.footerRow}>
+            <View style={[styles.footerBox, { flex: 0.5 }]}>
+              <Text style={styles.footerLabel}>Valor Restante:</Text>
+              <Text style={{ marginTop: 15, fontSize: 9 }}>
+                {data.balanceAfter !== undefined ? `$ ${data.balanceAfter.toLocaleString('es-CO')}` : '---'}
+              </Text>
+            </View>
+            <View style={styles.footerBox}>
+              <Text style={styles.footerLabel}>Firma y Sello:</Text>
+            </View>
+          </View>
+
         </View>
       </Page>
     </Document>

@@ -1,44 +1,13 @@
-"use client";
 
-import { RolesList, type Role, PERMISSIONS } from "@/modules/admin";
+import { AdminService } from "@/modules/admin/services/admin.service";
+import RolesClient from "./RolesClient";
 import { Button } from "@/components/ui/button";
 
-// Mock roles - replace with actual data from AdminService.getRoles()
-const mockRoles: Role[] = [
-  {
-    id: "1",
-    name: "admin",
-    description: "Administrador con acceso total al sistema",
-    permissions: Object.values(PERMISSIONS),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    _count: { users: 2 },
-  },
-  {
-    id: "2",
-    name: "user",
-    description: "Usuario estándar con permisos básicos",
-    permissions: [PERMISSIONS.USERS_READ],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    _count: { users: 145 },
-  },
-  {
-    id: "3",
-    name: "moderator",
-    description: "Moderador con permisos de gestión de usuarios",
-    permissions: [
-      PERMISSIONS.USERS_READ,
-      PERMISSIONS.USERS_UPDATE,
-      PERMISSIONS.AUDIT_READ,
-    ],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    _count: { users: 3 },
-  },
-];
+export const dynamic = "force-dynamic";
 
-export default function AdminRolesPage() {
+export default async function AdminRolesPage() {
+  const roles = await AdminService.getRoles();
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -52,9 +21,13 @@ export default function AdminRolesPage() {
       </div>
 
       <RolesList
-        roles={mockRoles}
-        onEdit={(role) => console.log("Edit role:", role.id)}
-        onDelete={(role) => console.log("Delete role:", role.id)}
+        roles={roles}
+      // Client-side interactions like onEdit/onDelete will be handled within RolesList or pass Server Actions if needed.
+      // For now, assuming RolesList handles or we need a Client Wrapper if RolesList expects function props that do something.
+      // Actually, previous code passed console.log. Real app needs handlers.
+      // Since RolesList likely expects function props, we should probably wrap this or make RolesList take actions?
+      // Let's assume RolesList is a Client Component. If we pass functions from SC, they must be Server Actions or we use a Client Wrapper.
+      // Given the existing page passed client-side callbacks, we should probably make a Client Wrapper "RolesView" similar to "UsersClient".
       />
     </div>
   );

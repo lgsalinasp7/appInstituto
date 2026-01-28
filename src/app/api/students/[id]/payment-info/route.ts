@@ -60,6 +60,7 @@ export async function GET(
             program.modulesCount;
 
         // Minimum payment is the current pending commitment amount (or moduleValue if none exists)
+        // Effectively this is the "Suggested Payment" to cover the full module/debt.
         const currentCommitment = student.commitments[0];
         const minimumPayment = currentCommitment
             ? Number(currentCommitment.amount)

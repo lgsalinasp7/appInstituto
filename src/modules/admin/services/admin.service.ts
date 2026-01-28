@@ -112,11 +112,11 @@ export class AdminService {
       ...(userId && { userId }),
       ...(startDate || endDate
         ? {
-            createdAt: {
-              ...(startDate && { gte: startDate }),
-              ...(endDate && { lte: endDate }),
-            },
-          }
+          createdAt: {
+            ...(startDate && { gte: startDate }),
+            ...(endDate && { lte: endDate }),
+          },
+        }
         : {}),
     };
 
@@ -140,6 +140,34 @@ export class AdminService {
       limit,
       totalPages: Math.ceil(total / limit),
     };
+  }
+
+  // ==========================================
+  // INVITATIONS MANAGEMENT
+  // ==========================================
+
+  /**
+   * Get all invitations
+   */
+  static async getInvitations() {
+    return prisma.invitation.findMany({
+      include: {
+        role: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        inviter: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
   }
 
   // ==========================================

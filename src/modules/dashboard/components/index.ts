@@ -11,7 +11,6 @@ export { DashboardHeader } from "./DashboardHeader";
 export { RevenueChart } from "./RevenueChart";
 export { AlertsList } from "./AlertsList";
 export { StudentsTable } from "./StudentsTable";
-export { ReportsView } from "./ReportsView";
 export { PaymentModal } from "./PaymentModal";
 export { PaymentsHistoryView } from "./PaymentsHistoryView";
 export { CarteraView } from "./CarteraView";

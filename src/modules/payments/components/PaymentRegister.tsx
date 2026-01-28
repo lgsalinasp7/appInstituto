@@ -271,7 +271,7 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
                                             <span className="font-medium">{paymentInfo.currentModule} / {paymentInfo.modulesCount}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="opacity-70">Pago Mínimo</span>
+                                            <span className="opacity-70">Valor Módulo</span>
                                             <span className="font-bold text-yellow-300">${paymentInfo.minimumPayment.toLocaleString()}</span>
                                         </div>
                                     </>

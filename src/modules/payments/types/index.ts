@@ -5,6 +5,7 @@ export type { PaymentMethod };
 export interface PaymentFilters {
   studentId?: string;
   advisorId?: string;
+  search?: string;
   method?: PaymentMethod;
   startDate?: Date;
   endDate?: Date;

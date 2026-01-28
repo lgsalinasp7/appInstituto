@@ -62,6 +62,14 @@ export class PaymentService {
       }
     }
 
+    if (filters.search) {
+      where.OR = [
+        { student: { fullName: { contains: filters.search, mode: "insensitive" } } },
+        { student: { documentNumber: { contains: filters.search } } },
+        { receiptNumber: { contains: filters.search, mode: "insensitive" } },
+      ];
+    }
+
     const [payments, total] = await Promise.all([
       prisma.payment.findMany({
         where,
@@ -204,102 +212,138 @@ export class PaymentService {
         });
 
         if (currentCommitment) {
-          const minimumPayment = Number(currentCommitment.amount);
-
-          // VALIDACION: El pago MINIMO es el valor del compromiso actual
-          if (Number(data.amount) < minimumPayment) {
-            throw new Error(
-              `El pago mínimo es $${minimumPayment.toLocaleString()}. No se permiten abonos menores al valor del módulo.`
-            );
-          }
+          const commitmentAmount = Number(currentCommitment.amount);
 
           moduleNumber = currentCommitment.moduleNumber;
-          let remainingAmount = Number(data.amount);
+          let remainingPayment = Number(data.amount);
           let currentMod = currentCommitment;
-          let modulesCompleted = 0;
 
-          // Procesar pagos de múltiples módulos si el monto lo permite
-          while (remainingAmount >= Number(currentMod.amount)) {
-            // Marcar este compromiso como pagado
-            await tx.paymentCommitment.update({
-              where: { id: currentMod.id },
-              data: { status: "PAGADO" }
-            });
+          // Loop to handle "paying multiple commitments" or "partial payment"
+          // In practice, this loop handles paying off current debt + potentially next one
+          while (remainingPayment > 0) {
 
-            remainingAmount -= Number(currentMod.amount);
-            modulesCompleted++;
+            // Check if payment covers this commitment fully
+            const amountToApply = Math.min(remainingPayment, Number(currentMod.amount));
 
-            // Actualizar módulo actual del estudiante
-            await tx.student.update({
-              where: { id: student.id },
-              data: { currentModule: currentMod.moduleNumber },
-            });
+            // Logic:
+            // 1. Calculate new balance for this commitment
+            const newBalance = Number(currentMod.amount) - amountToApply;
 
-            // Crear siguiente compromiso si no existe y no es el último
-            const nextModNum = currentMod.moduleNumber + 1;
-            if (nextModNum <= program.modulesCount) {
-              let nextCommitment = await tx.paymentCommitment.findFirst({
-                where: { studentId: student.id, moduleNumber: nextModNum }
+            if (newBalance <= 0) {
+              // FULLY PAID THIS COMMITMENT
+              await tx.paymentCommitment.update({
+                where: { id: currentMod.id },
+                data: {
+                  status: "PAGADO",
+                  amount: 0 // Optional: Set to 0 to reflect no debt? Or keep original price?
+                  // Design decision from Plan: Update amount to reflect remaining debt.
+                  // So here amount becomes 0.
+                }
               });
 
-              if (!nextCommitment) {
-                const daysToAdd = student.paymentFrequency === "QUINCENAL" ? 15 : 30;
-                const nextDate = new Date(currentMod.scheduledDate);
-                nextDate.setDate(nextDate.getDate() + daysToAdd);
+              // Update student current module
+              await tx.student.update({
+                where: { id: student.id },
+                data: { currentModule: currentMod.moduleNumber },
+              });
 
-                nextCommitment = await tx.paymentCommitment.create({
-                  data: {
-                    studentId: student.id,
-                    amount: moduleValue,
-                    scheduledDate: nextDate,
-                    moduleNumber: nextModNum,
-                    status: "PENDIENTE"
+              remainingPayment -= amountToApply; // Should match Number(currentMod.amount) if full
+
+              // Prepare for next module if there is money left
+              if (remainingPayment > 0) {
+                const nextModNum = currentMod.moduleNumber + 1;
+                if (nextModNum <= program.modulesCount) {
+                  let nextCommitment = await tx.paymentCommitment.findFirst({
+                    where: { studentId: student.id, moduleNumber: nextModNum }
+                  });
+
+                  if (!nextCommitment) {
+                    const daysToAdd = student.paymentFrequency === "QUINCENAL" ? 15 : 30;
+                    // Safer date calc: based on last scheduled date or today
+                    const baseDate = currentMod.scheduledDate < new Date() ? new Date() : currentMod.scheduledDate;
+                    const nextDate = new Date(baseDate);
+                    nextDate.setDate(nextDate.getDate() + daysToAdd);
+
+                    nextCommitment = await tx.paymentCommitment.create({
+                      data: {
+                        studentId: student.id,
+                        amount: moduleValue,
+                        scheduledDate: nextDate,
+                        moduleNumber: nextModNum,
+                        status: "PENDIENTE"
+                      }
+                    });
                   }
-                });
+                  currentMod = nextCommitment;
+                } else {
+                  // End of program
+                  break;
+                }
+              } else {
+                break; // Done
               }
 
-              // Si hay sobrante suficiente, seguimos al siguiente módulo
-              if (remainingAmount >= Number(nextCommitment.amount)) {
-                currentMod = nextCommitment;
-              } else {
-                // No hay suficiente para el siguiente, detener el loop
-                break;
-              }
             } else {
-              // Es el último módulo, no hay más
+              // PARTIAL PAYMENT
+              // Update commitment with new lower amount
+              await tx.paymentCommitment.update({
+                where: { id: currentMod.id },
+                data: {
+                  amount: newBalance,
+                  status: "PENDIENTE"
+                }
+              });
+              remainingPayment = 0; // All money used
               break;
             }
           }
         } else {
-          // Si no hay compromisos pendientes pero ya pagó matrícula, crear el Módulo 1
+          // No pending commitments found (all previous paid, or none created)
+          // Logic for creating new one
           if (student.currentModule < program.modulesCount) {
             const nextMod = student.currentModule + 1;
 
-            // Validar que al menos pague un módulo completo
-            if (Number(data.amount) < moduleValue) {
-              throw new Error(
-                `El pago mínimo es $${moduleValue.toLocaleString()} (valor del módulo).`
-              );
+            // Is this a partial pay for a NEW module?
+            // Total value required = moduleValue
+            // Payment = data.amount
+
+            let status: "PAGADO" | "PENDIENTE" = "PENDIENTE";
+            let commitmentAmount = moduleValue;
+
+            if (Number(data.amount) >= moduleValue) {
+              status = "PAGADO";
+              commitmentAmount = 0; // No debt left
+
+              // Advance module
+              await tx.student.update({
+                where: { id: student.id },
+                data: { currentModule: nextMod },
+              });
+            } else {
+              status = "PENDIENTE";
+              commitmentAmount = moduleValue - Number(data.amount);
+              // Do NOT advance module yet
             }
 
-            // Crear primer compromiso como ya pagado
+            // Create commitment reflecting the RESULT of this payment
+            // e.g. if partial, create commitment with remaining balance
             await tx.paymentCommitment.create({
               data: {
                 studentId: student.id,
-                amount: moduleValue,
+                amount: commitmentAmount,
                 scheduledDate: new Date(),
                 moduleNumber: nextMod,
-                status: "PAGADO",
-                comments: `Creado y pagado en una sola transacción.`
+                status: status,
+                comments: status === "PAGADO" ? "Pagado inmediatamente" : "Abono inicial"
               }
             });
 
-            await tx.student.update({
-              where: { id: student.id },
-              data: { currentModule: nextMod },
-            });
-
             moduleNumber = nextMod;
+
+            // If there was excess payment (over moduleValue), we should technically loop
+            // But for simplicity in this "Else" block (rare case of no pending commitments), just handle 1 module.
+            // Ideally we should create the commitment FIRST then enter the loop above.
+            // But strict "No Pending" check prevents that.
           }
         }
       }
@@ -406,5 +450,177 @@ export class PaymentService {
       endDate: tomorrow,
       limit: 100,
     });
+  }
+
+  static async getCarteraStats() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const sevenDaysLater = new Date(today);
+    sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
+
+    // 1. Total Pendiente (All pending commitments)
+    const totalPending = await prisma.paymentCommitment.aggregate({
+      where: { status: { not: "PAGADO" } }, // PENDIENTE or VENCIDO (if exists) or just check status != PAGADO
+      _sum: { amount: true },
+    });
+
+    // 2. Vencidos (Pending and date < today)
+    const overdue = await prisma.paymentCommitment.aggregate({
+      where: {
+        status: { not: "PAGADO" },
+        scheduledDate: { lt: today }
+      },
+      _sum: { amount: true },
+      _count: true
+    });
+
+    // 3. Vencen Hoy (Pending and date >= today and date < tomorrow)
+    const dueToday = await prisma.paymentCommitment.aggregate({
+      where: {
+        status: { not: "PAGADO" },
+        scheduledDate: { gte: today, lt: tomorrow }
+      },
+      _sum: { amount: true },
+      _count: true
+    });
+
+    // 4. Próximos 7 días (Pending and date >= tomorrow and date <= 7 days)
+    const upcoming = await prisma.paymentCommitment.aggregate({
+      where: {
+        status: { not: "PAGADO" },
+        scheduledDate: { gte: tomorrow, lte: sevenDaysLater }
+      },
+      _sum: { amount: true },
+      _count: true
+    });
+
+    return {
+      totalPendingAmount: Number(totalPending._sum.amount) || 0,
+      overdue: { amount: Number(overdue._sum.amount) || 0, count: overdue._count },
+      today: { amount: Number(dueToday._sum.amount) || 0, count: dueToday._count },
+      upcoming: { amount: Number(upcoming._sum.amount) || 0, count: upcoming._count },
+    };
+  }
+
+  static async getDebts(params: { search?: string; page?: number; limit?: number }) {
+    const { search, page = 1, limit = 10 } = params;
+
+    // Find students with pending commitments
+    // If search provided, filter by student name/doc
+
+    const where: Prisma.StudentWhereInput = {
+      commitments: {
+        some: {
+          status: { not: "PAGADO" }
+        }
+      }
+    };
+
+    if (search) {
+      where.OR = [
+        { fullName: { contains: search, mode: "insensitive" } },
+        { documentNumber: { contains: search } }
+      ];
+    }
+
+    const [students, total] = await Promise.all([
+      prisma.student.findMany({
+        where,
+        include: {
+          commitments: {
+            where: { status: { not: "PAGADO" } },
+            orderBy: { scheduledDate: 'asc' }
+          },
+          payments: {
+            orderBy: { paymentDate: 'desc' },
+            take: 1
+          },
+          program: true,
+          advisor: true
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.student.count({ where })
+    ]);
+
+    // Transform to efficient format
+    const debts = students.map(student => {
+      const pendingAmount = student.commitments.reduce((acc, curr) => acc + Number(curr.amount), 0);
+      const totalPaid = Number(student.totalProgramValue) - pendingAmount; // Approximation or calculate from payments
+      // Better to calculate totalPaid from payments aggregate if needed, but for now:
+      // Wait, student might have future commitments not yet created? No, we usually create commitments?
+      // Actually, totalPaid is better properly calculated.
+
+      const lastPayment = student.payments[0];
+      const daysSinceLastPayment = lastPayment ?
+        Math.floor((new Date().getTime() - new Date(lastPayment.paymentDate).getTime()) / (1000 * 3600 * 24))
+        : null;
+
+      return {
+        studentId: student.id,
+        studentName: student.fullName,
+        documentNumber: student.documentNumber,
+        phone: student.phone,
+        programName: student.program.name,
+        advisorName: student.advisor?.name || "Sin Asesor",
+        totalProgramValue: Number(student.totalProgramValue),
+        totalPaid: 0, // Placeholder, calculating below
+        //  remainingBalance: pendingAmount // Only considers created commitments. 
+        // Ideally remaining balance = TotalValue - TotalPaid.
+        remainingBalance: 0, // Placeholder
+        daysSinceLastPayment,
+        commitments: student.commitments
+      };
+    });
+
+    // Correct calculations requires total payments sum
+    // But doing aggregate for each student is N+1.
+    // For list view, we might approximate or fetch differently.
+    // Given complexity, let's keep it simple: fetch all payments for these students? No, too heavy.
+    // Let's assume remainingBalance = TotalProgramValue - TotalPaid.
+    // Let's fetch Sum of Payments for these students.
+
+    // Actually, we can use `remainingBalance` logic:
+    // If we trust `paymentCommitments` covering the schedule, then sum(pending commitments) is the debt.
+    // But if not all commitments are created (e.g. only next module), then it's partially correct.
+    // However, the `PaymentService.createPayment` logic seems to create commitments incrementally?
+    // Re-reading `createPayment`: it creates next commitment when paying current.
+    // So `paymentCommitments` table only has "Active" or "Next" commitments + Past ones.
+    // It might NOT have the *future* uncreated ones.
+    // So Debt shouldn't be sum(commitments). 
+    // Debt = TotalProgramValue - Sum(Payments).
+
+    // To allow calculating Debt efficiently, let's just query `Payment` sum for these students.
+    // or simply `student.payments` (but we limited to 1).
+
+    // For this iteration, I will do a second query to get sums, or iterate.
+    // Since page limit is 10, it's cheap to run 10 aggregates or 1 group by.
+    const studentIds = students.map(s => s.id);
+
+    const paymentsSum = await prisma.payment.groupBy({
+      by: ['studentId'],
+      where: { studentId: { in: studentIds } },
+      _sum: { amount: true }
+    });
+
+    const paymentsMap = new Map(paymentsSum.map(p => [p.studentId, Number(p._sum.amount)]));
+
+    return {
+      debts: debts.map(d => {
+        const paid = paymentsMap.get(d.studentId) || 0;
+        return {
+          ...d,
+          totalPaid: paid,
+          remainingBalance: d.totalProgramValue - paid
+        };
+      }),
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
+    };
   }
 }

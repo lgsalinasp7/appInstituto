@@ -4,12 +4,13 @@ import { useState } from "react";
 import { CreditCard, History, Users, ArrowLeft } from "lucide-react";
 import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 import { PaymentRegister } from "@/modules/payments/components/PaymentRegister";
-import { PaymentHistory } from "@/modules/payments/components/PaymentHistory";
+import { PaymentsHistoryView } from "@/modules/dashboard/components/PaymentsHistoryView";
+import { CarteraView } from "@/modules/dashboard/components/CarteraView";
 import { StudentPaymentTable } from "@/modules/payments/components/StudentPaymentTable";
 import type { StudentWithRelations } from "@/modules/students/types";
 
 export default function RecaudosPage() {
-    const [activeTab, setActiveTab] = useState<"lista" | "registrar" | "historial">("lista");
+    const [activeTab, setActiveTab] = useState<"lista" | "registrar" | "historial" | "cartera">("lista");
     const [selectedStudent, setSelectedStudent] = useState<StudentWithRelations | null>(null);
 
     const handleSelectStudent = (student: StudentWithRelations) => {
@@ -81,7 +82,9 @@ export default function RecaudosPage() {
                     <PaymentRegister preSelectedStudent={selectedStudent} />
                 )}
 
-                {activeTab === "historial" && <PaymentHistory />}
+                {activeTab === "historial" && <PaymentsHistoryView />}
+
+                {activeTab === "cartera" && <CarteraView />}
             </div>
         </div>
     );

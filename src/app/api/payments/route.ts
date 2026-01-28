@@ -10,12 +10,13 @@ export async function GET(request: NextRequest) {
     const filters = {
       studentId: searchParams.get("studentId") || undefined,
       advisorId: searchParams.get("advisorId") || undefined,
+      search: searchParams.get("search") || undefined,
       method: (searchParams.get("method") as PaymentMethod) || undefined,
-      startDate: searchParams.get("startDate") 
-        ? new Date(searchParams.get("startDate")!) 
+      startDate: searchParams.get("startDate")
+        ? new Date(searchParams.get("startDate")!)
         : undefined,
-      endDate: searchParams.get("endDate") 
-        ? new Date(searchParams.get("endDate")!) 
+      endDate: searchParams.get("endDate")
+        ? new Date(searchParams.get("endDate")!)
         : undefined,
       page: Number(searchParams.get("page")) || 1,
       limit: Number(searchParams.get("limit")) || 10,

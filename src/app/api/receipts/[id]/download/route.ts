@@ -36,6 +36,22 @@ export async function GET(
       );
     }
 
+    // Calculate balance
+    // Note: This calculates balance NOW, not at the time of payment.
+    // For a receipt, usually "Remaining Balance" means current debt.
+    const totalProgramValue = Number(payment.student.totalProgramValue);
+    const totalPayments = await prisma.payment.aggregate({
+      where: { studentId: payment.student.id },
+      _sum: { amount: true }
+    });
+    const totalPaid = Number(totalPayments._sum.amount) || 0;
+    const balanceAfter = totalProgramValue - totalPaid;
+
+    // Resolve absolute path to logo
+    const path = require('path');
+    const process = require('process');
+    const logoPath = path.join(process.cwd(), 'public', 'logo-edutec.png');
+
     // Prepare data for PDF
     const pdfData = {
       receiptNumber: payment.receiptNumber,
@@ -45,6 +61,7 @@ export async function GET(
         documentNumber: payment.student.documentNumber,
         phone: payment.student.phone,
         email: payment.student.email,
+        address: payment.student.address,
       },
       program: {
         name: payment.student.program.name,
@@ -60,9 +77,8 @@ export async function GET(
       registeredBy: {
         name: payment.registeredBy.name || "Sistema",
       },
-      // Note: Calculating balanceAfter accurately per payment would require 
-      // summing history, so we'll just show the student's program info for now 
-      // or omit it to keep it simple and accurate for the receipt itself.
+      balanceAfter: balanceAfter,
+      logoSrc: logoPath
     };
 
     // Render PDF to stream
