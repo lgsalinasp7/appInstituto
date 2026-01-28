@@ -181,8 +181,8 @@ export class StudentService {
       return `REC-${year}-${random}`;
     };
 
-    // Calcular valor por módulo
-    const valorModulo = (Number(program.totalValue) - Number(program.matriculaValue)) / program.modulesCount;
+    // Calcular valor por módulo basado en los valores REALES ingresados
+    const valorModulo = (Number(data.totalProgramValue) - Number(data.initialPayment)) / program.modulesCount;
 
     // Ejecutar todo en una transacción
     const result = await prisma.$transaction(async (tx) => {
@@ -224,7 +224,7 @@ export class StudentService {
       const payment = await tx.payment.create({
         data: {
           studentId: student.id,
-          amount: Number(program.matriculaValue),
+          amount: Number(data.initialPayment),
           paymentDate: new Date(),
           method: data.paymentMethod || "EFECTIVO",
           reference: data.paymentReference || null,

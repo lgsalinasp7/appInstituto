@@ -16,7 +16,9 @@
       "mcp__vercel-instituto__get_project",
       "Bash(npx prisma db seed)",
       "Bash(npx tsx:*)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Bash(npx tsc:*)",
+      "Bash(timeout 8 npm run dev:*)"
     ]
   }
 }

@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { GuestGuard } from "@/components/auth";
 
 /**
  * Auth Layout
@@ -12,6 +15,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
+    <GuestGuard>
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0f2847] via-[#1e3a5f] to-[#2d4a6f]">
       {/* Patrón de fondo sutil */}
       <div className="absolute inset-0 opacity-[0.03]" style={{
@@ -65,5 +69,6 @@ export default function AuthLayout({
         </footer>
       </div>
     </div>
+    </GuestGuard>
   );
 }

@@ -167,88 +167,141 @@ export class PaymentService {
         // --- LOGICA MATRÍCULA ---
         paymentType = "MATRICULA";
 
-        // Validar monto exacto
-        if (Number(data.amount) !== Number(program.matriculaValue)) {
-          throw new Error(`El valor de la matrícula debe ser $${Number(program.matriculaValue).toLocaleString()}`);
-        }
-
-        // Acciones:
-        // a. Marcar matrícula como pagada
-        await tx.student.update({
-          where: { id: student.id },
-          data: { matriculaPaid: true },
-        });
-
-        // b. Crear PRIMER compromiso (Módulo 1)
-        // Usar firstCommitmentDate del estudiante o hoy + 30 días por defecto
-        const firstDate = student.firstCommitmentDate || new Date(new Date().setDate(new Date().getDate() + 30));
-
-        await tx.paymentCommitment.create({
-          data: {
-            studentId: student.id,
-            amount: moduleValue,
-            scheduledDate: firstDate,
-            moduleNumber: 1,
-            status: "PENDIENTE",
-          }
-        });
-
-      } else {
-        // --- LOGICA MÓDULO (PAGO MENSUAL) ---
-        paymentType = "MODULO";
-        moduleNumber = student.currentModule + 1; // El módulo que está PAGANDO
-        nextModuleNumber = moduleNumber + 1;      // El SIGUIENTE módulo
-
-        // Validar monto exacto (sin decimales extremos, permitir margen mínimo si es necesario, pero regla dice EXACTO)
-        // Usaremos math.abs < 100 pesos por si acaso errores de float, o strict equality
-        if (Math.abs(Number(data.amount) - moduleValue) > 100) {
-          throw new Error(`El valor del módulo debe ser $${moduleValue.toLocaleString()}`);
-        }
-
-        // Acciones:
-        // a. Actualizar módulo actual del estudiante
-        await tx.student.update({
-          where: { id: student.id },
-          data: { currentModule: moduleNumber },
-        });
-
-        // b. Buscar y marcar como PAGADO el compromiso de ESTE módulo
-        // Buscamos compromiso pendiente más antiguo o por número de módulo
-        const currentCommitment = await tx.paymentCommitment.findFirst({
-          where: {
-            studentId: student.id,
-            moduleNumber: moduleNumber,
-            status: "PENDIENTE"
-          }
-        });
-
-        if (currentCommitment) {
-          await tx.paymentCommitment.update({
-            where: { id: currentCommitment.id },
-            data: { status: "PAGADO" }
+        // Si el pago es total o mayor, marcamos como pagada
+        if (Number(data.amount) >= Number(program.matriculaValue)) {
+          await tx.student.update({
+            where: { id: student.id },
+            data: { matriculaPaid: true },
           });
-        }
 
-        // c. Crear SIGUIENTE compromiso (si no es el último módulo)
-        if (nextModuleNumber <= program.modulesCount) {
-          // Calcular fecha según frecuencia
-          const daysToAdd = student.paymentFrequency === "QUINCENAL" ? 15 : 30;
-          const nextDate = new Date();
-          nextDate.setDate(nextDate.getDate() + daysToAdd);
-
+          // Crear PRIMER compromiso (Módulo 1)
+          const firstDate = student.firstCommitmentDate || new Date(new Date().setDate(new Date().getDate() + 30));
           await tx.paymentCommitment.create({
             data: {
               studentId: student.id,
               amount: moduleValue,
-              scheduledDate: nextDate,
-              moduleNumber: nextModuleNumber,
-              status: "PENDIENTE"
+              scheduledDate: firstDate,
+              moduleNumber: 1,
+              status: "PENDIENTE",
             }
           });
         }
+        // Si el pago es parcial (< matriculaValue), no marcamos matriculaPaid: true
+        // El frontend o backend debería permitir completar el saldo después.
+        // Para simplificar esta versión, permitimos cualquier monto y si completa el valor, se activa.
 
-        // d. Registrar ENTREGA de contenido (Opcional, si existiera tabla de entregas vinculada)
-        // ...
+      } else {
+        // --- LOGICA MODULO (PAGO MENSUAL O MULTIPLES MODULOS) ---
+        paymentType = "MODULO";
+
+        // Buscamos el compromiso pendiente más antiguo
+        const currentCommitment = await tx.paymentCommitment.findFirst({
+          where: {
+            studentId: student.id,
+            status: "PENDIENTE"
+          },
+          orderBy: { moduleNumber: "asc" }
+        });
+
+        if (currentCommitment) {
+          const minimumPayment = Number(currentCommitment.amount);
+
+          // VALIDACION: El pago MINIMO es el valor del compromiso actual
+          if (Number(data.amount) < minimumPayment) {
+            throw new Error(
+              `El pago mínimo es $${minimumPayment.toLocaleString()}. No se permiten abonos menores al valor del módulo.`
+            );
+          }
+
+          moduleNumber = currentCommitment.moduleNumber;
+          let remainingAmount = Number(data.amount);
+          let currentMod = currentCommitment;
+          let modulesCompleted = 0;
+
+          // Procesar pagos de múltiples módulos si el monto lo permite
+          while (remainingAmount >= Number(currentMod.amount)) {
+            // Marcar este compromiso como pagado
+            await tx.paymentCommitment.update({
+              where: { id: currentMod.id },
+              data: { status: "PAGADO" }
+            });
+
+            remainingAmount -= Number(currentMod.amount);
+            modulesCompleted++;
+
+            // Actualizar módulo actual del estudiante
+            await tx.student.update({
+              where: { id: student.id },
+              data: { currentModule: currentMod.moduleNumber },
+            });
+
+            // Crear siguiente compromiso si no existe y no es el último
+            const nextModNum = currentMod.moduleNumber + 1;
+            if (nextModNum <= program.modulesCount) {
+              let nextCommitment = await tx.paymentCommitment.findFirst({
+                where: { studentId: student.id, moduleNumber: nextModNum }
+              });
+
+              if (!nextCommitment) {
+                const daysToAdd = student.paymentFrequency === "QUINCENAL" ? 15 : 30;
+                const nextDate = new Date(currentMod.scheduledDate);
+                nextDate.setDate(nextDate.getDate() + daysToAdd);
+
+                nextCommitment = await tx.paymentCommitment.create({
+                  data: {
+                    studentId: student.id,
+                    amount: moduleValue,
+                    scheduledDate: nextDate,
+                    moduleNumber: nextModNum,
+                    status: "PENDIENTE"
+                  }
+                });
+              }
+
+              // Si hay sobrante suficiente, seguimos al siguiente módulo
+              if (remainingAmount >= Number(nextCommitment.amount)) {
+                currentMod = nextCommitment;
+              } else {
+                // No hay suficiente para el siguiente, detener el loop
+                break;
+              }
+            } else {
+              // Es el último módulo, no hay más
+              break;
+            }
+          }
+        } else {
+          // Si no hay compromisos pendientes pero ya pagó matrícula, crear el Módulo 1
+          if (student.currentModule < program.modulesCount) {
+            const nextMod = student.currentModule + 1;
+
+            // Validar que al menos pague un módulo completo
+            if (Number(data.amount) < moduleValue) {
+              throw new Error(
+                `El pago mínimo es $${moduleValue.toLocaleString()} (valor del módulo).`
+              );
+            }
+
+            // Crear primer compromiso como ya pagado
+            await tx.paymentCommitment.create({
+              data: {
+                studentId: student.id,
+                amount: moduleValue,
+                scheduledDate: new Date(),
+                moduleNumber: nextMod,
+                status: "PAGADO",
+                comments: `Creado y pagado en una sola transacción.`
+              }
+            });
+
+            await tx.student.update({
+              where: { id: student.id },
+              data: { currentModule: nextMod },
+            });
+
+            moduleNumber = nextMod;
+          }
+        }
       }
 
       // 3. Crear el Registro de Pago

@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { Search, CheckCircle, AlertCircle, DollarSign, Calendar, MessageSquare, ArrowRight, FileText } from "lucide-react";
+import { useAuthStore } from "@/lib/store/auth-store";
 import type { StudentWithRelations } from "@/modules/students/types";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatCurrency, parseCurrency } from "@/lib/utils";
 
 interface Commitment {
     id: string;
@@ -24,6 +26,7 @@ interface PaymentRegisterProps {
 }
 
 export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
+    const { user } = useAuthStore();
     const [searchTerm, setSearchTerm] = useState("");
     const [student, setStudent] = useState<StudentWithRelations | null>(null);
     const [loading, setLoading] = useState(false);
@@ -137,7 +140,7 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     studentId: student.id,
-                    advisorId: "user_placeholder_id", // TODO
+                    advisorId: user?.id || "unknown",
                     amount: Number(paymentData.amount),
                     method: paymentData.method,
                     comments: paymentData.comments,
@@ -289,11 +292,13 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
                                     <div className="relative">
                                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 font-bold text-xl">$</span>
                                         <input
-                                            type="number"
+                                            type="text"
                                             required
                                             className="w-full pl-10 pr-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-primary focus:outline-none font-bold text-2xl text-primary transition-all"
-                                            value={paymentData.amount}
-                                            onChange={e => setPaymentData({ ...paymentData, amount: Number(e.target.value) })}
+                                            value={formatCurrency(paymentData.amount)}
+                                            onChange={e => setPaymentData({ ...paymentData, amount: parseCurrency(e.target.value) })}
+                                            onFocus={e => e.target.select()}
+                                            placeholder="0"
                                         />
                                     </div>
                                 </div>

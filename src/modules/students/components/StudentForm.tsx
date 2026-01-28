@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { X, User, Phone, Mail, MapPin, GraduationCap, Calendar, DollarSign, UserCheck, CreditCard } from "lucide-react";
 import { createStudentSchema, PAYMENT_METHODS, type CreateStudentInput } from "../schemas";
 import type { StudentWithRelations, CreateStudentResult } from "../types";
+import { formatCurrency, parseCurrency } from "@/lib/utils";
 
 // Helper para formatear fecha a YYYY-MM-DD
 const formatDateForInput = (date: Date): string => {
@@ -108,20 +109,35 @@ export function StudentForm({ isOpen, onClose, onSuccess, onSuccessWithData, cur
           firstCommitmentDate: formatDateForInput(student.firstCommitmentDate ? new Date(student.firstCommitmentDate) : new Date()) as unknown as Date,
         });
       } else {
-        // Modo Creación: Limpiar/Default con fecha de hoy
+        // Modo Creación: Limpiar TODOS los campos explícitamente
         const todayDate = new Date();
         const firstCommitment = new Date(todayDate);
         firstCommitment.setDate(firstCommitment.getDate() + 30);
 
         reset({
+          // Datos personales - limpiar
+          fullName: "",
           documentType: "CC",
-          status: "MATRICULADO",
+          documentNumber: "",
+          // Datos de contacto - limpiar
+          phone: "",
+          email: "",
+          address: "",
+          // Datos del acudiente - limpiar
+          guardianName: "",
+          guardianPhone: "",
+          guardianEmail: "",
+          // Información académica - defaults
+          programId: "",
           enrollmentDate: formatDateForInput(todayDate) as unknown as Date,
           advisorId: currentUserId,
+          status: "MATRICULADO",
+          // Información financiera - defaults
           initialPayment: 0,
           totalProgramValue: 0,
           paymentFrequency: "MENSUAL",
           firstCommitmentDate: formatDateForInput(firstCommitment) as unknown as Date,
+          // Pago de matrícula - defaults
           paymentMethod: "EFECTIVO" as any,
           paymentReference: "",
         });
@@ -460,11 +476,14 @@ export function StudentForm({ isOpen, onClose, onSuccess, onSuccessWithData, cur
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
                   <input
-                    {...register("totalProgramValue")}
-                    type="number"
+                    type="text"
                     className="w-full mt-1 pl-8 pr-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-bold text-primary transition-all"
                     placeholder="0"
+                    value={formatCurrency(watch("totalProgramValue"))}
+                    onChange={(e) => setValue("totalProgramValue", parseCurrency(e.target.value))}
+                    onFocus={(e) => e.target.select()}
                   />
+                  <input type="hidden" {...register("totalProgramValue")} />
                 </div>
                 {errors.totalProgramValue && (
                   <p className="text-red-500 text-xs mt-1">{errors.totalProgramValue.message}</p>
@@ -478,11 +497,14 @@ export function StudentForm({ isOpen, onClose, onSuccess, onSuccessWithData, cur
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
                   <input
-                    {...register("initialPayment")}
-                    type="number"
+                    type="text"
                     className="w-full mt-1 pl-8 pr-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-bold text-primary transition-all"
                     placeholder="0"
+                    value={formatCurrency(watch("initialPayment"))}
+                    onChange={(e) => setValue("initialPayment", parseCurrency(e.target.value))}
+                    onFocus={(e) => e.target.select()}
                   />
+                  <input type="hidden" {...register("initialPayment")} />
                 </div>
                 {errors.initialPayment && (
                   <p className="text-red-500 text-xs mt-1">{errors.initialPayment.message}</p>
@@ -564,10 +586,16 @@ export function StudentForm({ isOpen, onClose, onSuccess, onSuccessWithData, cur
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Valor a Pagar
                     </label>
-                    <div className="w-full mt-1 px-4 py-3 bg-white border-2 border-emerald-300 rounded-xl text-emerald-700 font-bold text-lg">
-                      ${selectedProgramId && programs.find(p => p.id === selectedProgramId)
-                        ? Number(programs.find(p => p.id === selectedProgramId)?.matriculaValue || 0).toLocaleString()
-                        : "0"}
+                    <div className="relative mt-1">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-400 font-bold">$</span>
+                      <input
+                        type="text"
+                        className="w-full pl-8 pr-4 py-3 bg-white border-2 border-emerald-300 rounded-xl text-emerald-700 font-bold text-lg focus:outline-none focus:border-emerald-500 transition-all"
+                        placeholder="0"
+                        value={formatCurrency(watch("initialPayment"))}
+                        onChange={(e) => setValue("initialPayment", parseCurrency(e.target.value))}
+                        onFocus={(e) => e.target.select()}
+                      />
                     </div>
                   </div>
 

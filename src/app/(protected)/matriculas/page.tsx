@@ -19,6 +19,7 @@ export default function MatriculasPage() {
     const [receiptData, setReceiptData] = useState<CreateStudentResult | null>(null);
     const [viewReceiptData, setViewReceiptData] = useState<MatriculaReceiptData | null>(null);
     const [isLoadingReceipt, setIsLoadingReceipt] = useState(false);
+    const [formKey, setFormKey] = useState(0); // Key para forzar remontaje del formulario
     const { user } = useAuthStore();
 
     const fetchStudents = async () => {
@@ -130,6 +131,7 @@ export default function MatriculasPage() {
                     <button
                         onClick={() => {
                             setEditingStudent(null);
+                            setFormKey(prev => prev + 1); // Incrementar key para forzar formulario limpio
                             setIsFormOpen(true);
                         }}
                         className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-instituto text-white rounded-xl font-bold hover:shadow-lg hover:shadow-[#1e3a5f]/20 transition-all active:scale-95"
@@ -260,6 +262,7 @@ export default function MatriculasPage() {
             </div>
 
             <StudentForm
+                key={editingStudent ? `edit-${editingStudent.id}` : `new-${formKey}`}
                 isOpen={isFormOpen}
                 onClose={() => {
                     setIsFormOpen(false);
