@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, GripVertical, Save, X, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -32,6 +33,21 @@ export function ContentManager() {
         name: "",
         description: "",
         orderIndex: 0,
+    });
+
+    const [isProcessingAction, setIsProcessingAction] = useState(false);
+    const [confirmConfig, setConfirmConfig] = useState<{
+        isOpen: boolean;
+        title: string;
+        description: string;
+        onConfirm: () => void;
+        variant: "default" | "destructive";
+    }>({
+        isOpen: false,
+        title: "",
+        description: "",
+        onConfirm: () => { },
+        variant: "default",
     });
 
     useEffect(() => {
@@ -108,9 +124,18 @@ export function ContentManager() {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("¿Está seguro de eliminar este contenido?")) return;
+    const handleDelete = (id: string) => {
+        setConfirmConfig({
+            isOpen: true,
+            title: "¿Eliminar contenido?",
+            description: "¿Está seguro de eliminar este contenido? Esta acción no se puede deshacer.",
+            variant: "destructive",
+            onConfirm: () => executeDelete(id),
+        });
+    };
 
+    const executeDelete = async (id: string) => {
+        setIsProcessingAction(true);
         try {
             const res = await fetch(`/api/content/${id}`, { method: "DELETE" });
             const data = await res.json();
@@ -120,6 +145,9 @@ export function ContentManager() {
             }
         } catch (error) {
             toast.error("Error al eliminar");
+        } finally {
+            setIsProcessingAction(false);
+            setConfirmConfig(prev => ({ ...prev, isOpen: false }));
         }
     };
 
@@ -289,6 +317,18 @@ export function ContentManager() {
                     )}
                 </div>
             </div>
+
+            {/* Confirm Dialog */}
+            <ConfirmDialog
+                isOpen={confirmConfig.isOpen}
+                onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmConfig.onConfirm}
+                title={confirmConfig.title}
+                description={confirmConfig.description}
+                variant={confirmConfig.variant}
+                isLoading={isProcessingAction}
+                confirmText={confirmConfig.variant === "destructive" ? "Eliminar" : "Confirmar"}
+            />
         </div>
     );
 }

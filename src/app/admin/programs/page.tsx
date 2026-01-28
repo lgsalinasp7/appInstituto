@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Users, DollarSign } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface Program {
   id: string;
@@ -31,6 +33,21 @@ export default function AdminProgramsPage() {
     isActive: true,
   });
 
+  const [isProcessingAction, setIsProcessingAction] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+    variant: "default" | "destructive";
+  }>({
+    isOpen: false,
+    title: "",
+    description: "",
+    onConfirm: () => { },
+    variant: "default",
+  });
+
   useEffect(() => {
     fetchPrograms();
   }, []);
@@ -51,11 +68,11 @@ export default function AdminProgramsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const url = editingProgram 
-      ? `/api/programs/${editingProgram.id}` 
+
+    const url = editingProgram
+      ? `/api/programs/${editingProgram.id}`
       : "/api/programs";
-    
+
     const method = editingProgram ? "PATCH" : "POST";
 
     try {
@@ -90,9 +107,18 @@ export default function AdminProgramsPage() {
     setShowForm(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("¿Está seguro de eliminar este programa?")) return;
+  const handleDelete = (id: string) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "¿Eliminar programa?",
+      description: "¿Está seguro de eliminar este programa? Esta acción no se puede deshacer y puede afectar a estudiantes matriculados.",
+      variant: "destructive",
+      onConfirm: () => executeDelete(id),
+    });
+  };
 
+  const executeDelete = async (id: string) => {
+    setIsProcessingAction(true);
     try {
       const response = await fetch(`/api/programs/${id}`, {
         method: "DELETE",
@@ -102,10 +128,14 @@ export default function AdminProgramsPage() {
         fetchPrograms();
       } else {
         const data = await response.json();
-        alert(data.error);
+        toast.error(data.error);
       }
     } catch (error) {
       console.error("Error deleting program:", error);
+      toast.error("Error de conexión");
+    } finally {
+      setIsProcessingAction(false);
+      setConfirmConfig(prev => ({ ...prev, isOpen: false }));
     }
   };
 
@@ -264,6 +294,18 @@ export default function AdminProgramsPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmConfig.isOpen}
+        onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmConfig.onConfirm}
+        title={confirmConfig.title}
+        description={confirmConfig.description}
+        variant={confirmConfig.variant}
+        isLoading={isProcessingAction}
+        confirmText={confirmConfig.variant === "destructive" ? "Eliminar" : "Confirmar"}
+      />
     </div>
   );
 }

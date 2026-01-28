@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { UserPlus, Search, Phone, Mail, MessageCircle, Edit2, Trash2, ArrowRight, X, Clock, PhoneCall, Send, Calendar, CheckCircle2, Loader2 } from "lucide-react";
 import { Pagination } from "./Pagination";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 function getDefaultDate(daysAhead: number): string {
   const date = new Date();
@@ -57,6 +58,21 @@ export function ProspectsView({ advisorId, currentUserId }: ProspectsViewProps) 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
+  const [isProcessingAction, setIsProcessingAction] = useState(false);
+
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+    variant: "default" | "destructive";
+  }>({
+    isOpen: false,
+    title: "",
+    description: "",
+    onConfirm: () => { },
+    variant: "default",
+  });
 
   const [showForm, setShowForm] = useState(false);
   const [editingProspect, setEditingProspect] = useState<Prospect | null>(null);
@@ -156,9 +172,18 @@ export function ProspectsView({ advisorId, currentUserId }: ProspectsViewProps) 
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("¿Está seguro de eliminar este prospecto?")) return;
+  const handleDelete = (id: string) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "¿Eliminar prospecto?",
+      description: "¿Está seguro de eliminar este prospecto? Esta acción no se puede deshacer.",
+      variant: "destructive",
+      onConfirm: () => executeDelete(id),
+    });
+  };
 
+  const executeDelete = async (id: string) => {
+    setIsProcessingAction(true);
     try {
       const response = await fetch(`/api/prospects/${id}`, {
         method: "DELETE",
@@ -173,6 +198,9 @@ export function ProspectsView({ advisorId, currentUserId }: ProspectsViewProps) 
       }
     } catch (error) {
       toast.error("Error de conexión");
+    } finally {
+      setIsProcessingAction(false);
+      setConfirmConfig(prev => ({ ...prev, isOpen: false }));
     }
   };
 
@@ -637,6 +665,18 @@ export function ProspectsView({ advisorId, currentUserId }: ProspectsViewProps) 
           onClose={() => { setShowHistorialModal(false); setSelectedProspect(null); }}
         />
       )}
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmConfig.isOpen}
+        onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmConfig.onConfirm}
+        title={confirmConfig.title}
+        description={confirmConfig.description}
+        variant={confirmConfig.variant}
+        isLoading={isProcessingAction}
+        confirmText={confirmConfig.variant === "destructive" ? "Eliminar" : "Confirmar"}
+      />
     </div>
   );
 }

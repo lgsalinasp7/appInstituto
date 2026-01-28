@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     if (role === "advisor") {
       where.role = {
-        name: { in: ["ADMINISTRADOR", "VENTAS", "CARTERA"] },
+        name: { in: ["ADMINISTRADOR", "VENTAS"] },
       };
     }
 

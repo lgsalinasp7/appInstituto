@@ -62,6 +62,8 @@ export default function ReportesPage() {
     const [agingData, setAgingData] = useState<AgingData | null>(null);
     const [advisorsData, setAdvisorsData] = useState<AdvisorData[]>([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ADVISORS_PER_PAGE = 10;
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -251,53 +253,89 @@ export default function ReportesPage() {
                         {activeTab === "asesores" && (
                             <div className="space-y-6 animate-fade-in-up">
                                 <h3 className="font-bold text-[#1e3a5f]">Rendimiento por Asesor</h3>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full">
-                                        <thead className="bg-[#f8fafc]">
-                                            <tr>
-                                                <th className="px-6 py-4 text-left text-xs font-bold text-[#64748b] uppercase">Asesor</th>
-                                                <th className="px-6 py-4 text-center text-xs font-bold text-[#64748b] uppercase">Matrículas</th>
-                                                <th className="px-6 py-4 text-right text-xs font-bold text-[#64748b] uppercase">Recaudo Total</th>
-                                                <th className="px-6 py-4 text-center text-xs font-bold text-[#64748b] uppercase">Eficiencia</th>
-                                                <th className="px-6 py-4 text-right text-xs font-bold text-[#64748b] uppercase">Recaudo Mes</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-100">
-                                            {advisorsData.map((advisor) => (
-                                                <tr key={advisor.advisorId} className="hover:bg-gray-50/50 transition-colors">
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs uppercase">
-                                                                {advisor.advisorName.charAt(0)}
-                                                            </div>
-                                                            <span className="text-sm font-bold text-[#1e3a5f]">{advisor.advisorName}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-center text-sm font-medium text-gray-600">
-                                                        {advisor.totalStudents}
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right text-sm font-bold text-[#1e3a5f]">
-                                                        ${advisor.totalCollected.toLocaleString()}
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center justify-center gap-2">
-                                                            <div className="flex-1 max-w-[60px] h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                                                <div
-                                                                    className="h-full bg-emerald-500"
-                                                                    style={{ width: `${advisor.collectionRate}%` }}
-                                                                ></div>
-                                                            </div>
-                                                            <span className="text-xs font-bold text-gray-500">{advisor.collectionRate}%</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right text-sm font-bold text-emerald-600">
-                                                        ${advisor.revenueThisMonth.toLocaleString()}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                {advisorsData.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-12 text-gray-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                        <Users size={48} className="mb-4 opacity-20" />
+                                        <p className="text-lg font-medium">No hay asesores registrados</p>
+                                        <p className="text-sm">Los usuarios con rol de Administrador o Ventas aparecerán aquí.</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full">
+                                                <thead className="bg-[#f8fafc]">
+                                                    <tr>
+                                                        <th className="px-6 py-4 text-left text-xs font-bold text-[#64748b] uppercase">Asesor</th>
+                                                        <th className="px-6 py-4 text-center text-xs font-bold text-[#64748b] uppercase">Matrículas</th>
+                                                        <th className="px-6 py-4 text-right text-xs font-bold text-[#64748b] uppercase">Recaudo Total</th>
+                                                        <th className="px-6 py-4 text-center text-xs font-bold text-[#64748b] uppercase">Eficiencia</th>
+                                                        <th className="px-6 py-4 text-right text-xs font-bold text-[#64748b] uppercase">Recaudo Mes</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100">
+                                                    {advisorsData
+                                                        .slice((currentPage - 1) * ADVISORS_PER_PAGE, currentPage * ADVISORS_PER_PAGE)
+                                                        .map((advisor) => (
+                                                            <tr key={advisor.advisorId} className="hover:bg-gray-50/50 transition-colors">
+                                                                <td className="px-6 py-4">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs uppercase">
+                                                                            {advisor.advisorName.charAt(0)}
+                                                                        </div>
+                                                                        <span className="text-sm font-bold text-[#1e3a5f]">{advisor.advisorName}</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-4 text-center text-sm font-medium text-gray-600">
+                                                                    {advisor.totalStudents}
+                                                                </td>
+                                                                <td className="px-6 py-4 text-right text-sm font-bold text-[#1e3a5f]">
+                                                                    ${advisor.totalCollected.toLocaleString()}
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    <div className="flex items-center justify-center gap-2">
+                                                                        <div className="flex-1 max-w-[60px] h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                                            <div
+                                                                                className="h-full bg-emerald-500"
+                                                                                style={{ width: `${advisor.collectionRate}%` }}
+                                                                            ></div>
+                                                                        </div>
+                                                                        <span className="text-xs font-bold text-gray-500">{advisor.collectionRate}%</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-4 text-right text-sm font-bold text-emerald-600">
+                                                                    ${advisor.revenueThisMonth.toLocaleString()}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        {advisorsData.length > ADVISORS_PER_PAGE && (
+                                            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                                                <p className="text-sm text-gray-500">
+                                                    Mostrando {Math.min(advisorsData.length, (currentPage - 1) * ADVISORS_PER_PAGE + 1)} a {Math.min(advisorsData.length, currentPage * ADVISORS_PER_PAGE)} de {advisorsData.length} asesores
+                                                </p>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                                        disabled={currentPage === 1}
+                                                        className="px-4 py-2 text-sm font-bold text-[#1e3a5f] bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                                    >
+                                                        Anterior
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setCurrentPage(p => p + 1)}
+                                                        disabled={currentPage * ADVISORS_PER_PAGE >= advisorsData.length}
+                                                        className="px-4 py-2 text-sm font-bold text-[#1e3a5f] bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                                    >
+                                                        Siguiente
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
                             </div>
                         )}
                     </>

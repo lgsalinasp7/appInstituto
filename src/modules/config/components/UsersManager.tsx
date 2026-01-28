@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Pencil, Trash2, Save, X, Loader2, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { InviteUserModal } from "./InviteUserModal";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface User {
     id: string;
@@ -53,8 +54,23 @@ export function UsersManager() {
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [isProcessingAction, setIsProcessingAction] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 10;
+
+    const [confirmConfig, setConfirmConfig] = useState<{
+        isOpen: boolean;
+        title: string;
+        description: string;
+        onConfirm: () => void;
+        variant: "default" | "destructive";
+    }>({
+        isOpen: false,
+        title: "",
+        description: "",
+        onConfirm: () => { },
+        variant: "default",
+    });
 
     const isSuperAdmin = currentUser?.role.name === "SUPERADMIN";
     const isAdmin = currentUser?.role.name === "ADMINISTRADOR";
@@ -179,11 +195,18 @@ export function UsersManager() {
         }
     };
 
-    const handleDeleteUser = async (userId: string) => {
-        if (!confirm("¿Estás seguro de eliminar este usuario? Esta acción no se puede deshacer.")) {
-            return;
-        }
+    const handleDeleteUser = (userId: string) => {
+        setConfirmConfig({
+            isOpen: true,
+            title: "¿Eliminar usuario?",
+            description: "Esta acción no se puede deshacer. El usuario perderá el acceso al sistema inmediatamente.",
+            variant: "destructive",
+            onConfirm: () => executeDeleteUser(userId),
+        });
+    };
 
+    const executeDeleteUser = async (userId: string) => {
+        setIsProcessingAction(true);
         try {
             const response = await fetch(`/api/users/${userId}`, {
                 method: "DELETE",
@@ -201,14 +224,24 @@ export function UsersManager() {
         } catch (error) {
             console.error("Error deleting user:", error);
             toast.error("Error al eliminar usuario");
+        } finally {
+            setIsProcessingAction(false);
+            setConfirmConfig(prev => ({ ...prev, isOpen: false }));
         }
     };
 
-    const handleDeleteInvitation = async (invitationId: string) => {
-        if (!confirm("¿Cancelar esta invitación?")) {
-            return;
-        }
+    const handleDeleteInvitation = (invitationId: string) => {
+        setConfirmConfig({
+            isOpen: true,
+            title: "¿Cancelar invitación?",
+            description: "El enlace de invitación dejará de funcionar y el cupo se liberará.",
+            variant: "destructive",
+            onConfirm: () => executeDeleteInvitation(invitationId),
+        });
+    };
 
+    const executeDeleteInvitation = async (invitationId: string) => {
+        setIsProcessingAction(true);
         try {
             const response = await fetch(`/api/invitations/${invitationId}`, {
                 method: "DELETE",
@@ -226,6 +259,9 @@ export function UsersManager() {
         } catch (error) {
             console.error("Error deleting invitation:", error);
             toast.error("Error al cancelar invitación");
+        } finally {
+            setIsProcessingAction(false);
+            setConfirmConfig(prev => ({ ...prev, isOpen: false }));
         }
     };
 
@@ -537,6 +573,18 @@ export function UsersManager() {
                 onOpenChange={setIsInviteModalOpen}
                 onInviteSuccess={handleInviteSuccess}
                 isSuperAdmin={isSuperAdmin}
+            />
+
+            {/* Confirm Dialog */}
+            <ConfirmDialog
+                isOpen={confirmConfig.isOpen}
+                onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmConfig.onConfirm}
+                title={confirmConfig.title}
+                description={confirmConfig.description}
+                variant={confirmConfig.variant}
+                isLoading={isProcessingAction}
+                confirmText={confirmConfig.variant === "destructive" ? "Eliminar" : "Confirmar"}
             />
         </div>
     );

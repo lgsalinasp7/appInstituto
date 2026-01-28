@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Edit, Trash2, Check, X, BookOpen } from "lucide-react";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { Program } from "@/modules/programs/types";
 
 interface NewProgramForm {
@@ -28,6 +29,21 @@ export function ProgramManager() {
     const [editForm, setEditForm] = useState<Partial<Program>>({});
     const [isCreating, setIsCreating] = useState(false);
     const [newProgram, setNewProgram] = useState<NewProgramForm>(emptyNewProgram);
+
+    const [isProcessingAction, setIsProcessingAction] = useState(false);
+    const [confirmConfig, setConfirmConfig] = useState<{
+        isOpen: boolean;
+        title: string;
+        description: string;
+        onConfirm: () => void;
+        variant: "default" | "destructive";
+    }>({
+        isOpen: false,
+        title: "",
+        description: "",
+        onConfirm: () => { },
+        variant: "default",
+    });
 
     useEffect(() => {
         fetchPrograms();
@@ -131,6 +147,38 @@ export function ProgramManager() {
     const handleCancelCreate = () => {
         setIsCreating(false);
         setNewProgram(emptyNewProgram);
+    };
+
+    const handleDelete = (id: string) => {
+        setConfirmConfig({
+            isOpen: true,
+            title: "¿Eliminar programa?",
+            description: "Esta acción no se puede deshacer y eliminará permanentemente el programa.",
+            variant: "destructive",
+            onConfirm: () => executeDelete(id),
+        });
+    };
+
+    const executeDelete = async (id: string) => {
+        setIsProcessingAction(true);
+        try {
+            const res = await fetch(`/api/programs/${id}`, {
+                method: "DELETE",
+            });
+            const data = await res.json();
+            if (res.ok) {
+                toast.success("Programa eliminado exitosamente");
+                fetchPrograms();
+            } else {
+                toast.error(data.error || "Error al eliminar el programa");
+            }
+        } catch (error) {
+            console.error("Error deleting program:", error);
+            toast.error("Error de red al intentar eliminar");
+        } finally {
+            setIsProcessingAction(false);
+            setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        }
     };
 
     return (
@@ -279,7 +327,10 @@ export function ProgramManager() {
                                                 <button onClick={() => handleEditClick(p)} className="p-1.5 text-primary hover:bg-blue-50 rounded-lg">
                                                     <Edit size={18} />
                                                 </button>
-                                                <button className="p-1.5 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-lg">
+                                                <button
+                                                    onClick={() => handleDelete(p.id)}
+                                                    className="p-1.5 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                                                >
                                                     <Trash2 size={18} />
                                                 </button>
                                             </>
@@ -291,6 +342,18 @@ export function ProgramManager() {
                     </tbody>
                 </table>}
             </div>
+
+            {/* Confirm Dialog */}
+            <ConfirmDialog
+                isOpen={confirmConfig.isOpen}
+                onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmConfig.onConfirm}
+                title={confirmConfig.title}
+                description={confirmConfig.description}
+                variant={confirmConfig.variant}
+                isLoading={isProcessingAction}
+                confirmText={confirmConfig.variant === "destructive" ? "Eliminar" : "Confirmar"}
+            />
         </div>
     );
 }

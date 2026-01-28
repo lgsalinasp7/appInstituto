@@ -84,7 +84,7 @@ export class ReportsService {
     const advisors = await prisma.user.findMany({
       where: {
         role: {
-          name: { in: ["admin", "advisor", "asesor"] },
+          name: { in: ["ADMINISTRADOR", "VENTAS"] },
         },
         isActive: true,
       },
