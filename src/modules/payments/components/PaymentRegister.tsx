@@ -40,6 +40,13 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
     const [pendingCommitments, setPendingCommitments] = useState<Commitment[]>([]);
     const [filterRange, setFilterRange] = useState<"all" | "today" | "week" | "month">("week");
     const [loadingTable, setLoadingTable] = useState(false);
+    const [paymentInfo, setPaymentInfo] = useState<{
+        moduleValue: number;
+        minimumPayment: number;
+        remainingBalance: number;
+        currentModule: number;
+        modulesCount: number;
+    } | null>(null);
 
     // Cargar compromisos al montar y cuando cambie el filtro
     useEffect(() => {
@@ -110,20 +117,40 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
         }
     };
 
-    const handleSelectStudent = (found: StudentWithRelations, suggestedAmount?: number) => {
+    const handleSelectStudent = async (found: StudentWithRelations, suggestedAmount?: number) => {
         setStudent(found);
         setSearchTerm(found.documentNumber);
+        setPaymentInfo(null);
 
-        if (suggestedAmount) {
-            setPaymentData(prev => ({ ...prev, amount: suggestedAmount }));
-        } else {
-            // Lógica por defecto: si no pago matricula, sugerir matricula
-            if (!found.matriculaPaid) {
+        // Fetch payment info from API
+        try {
+            const res = await fetch(`/api/students/${found.id}/payment-info`);
+            const data = await res.json();
+            if (data.success) {
+                setPaymentInfo({
+                    moduleValue: data.data.moduleValue,
+                    minimumPayment: data.data.minimumPayment,
+                    remainingBalance: data.data.remainingBalance,
+                    currentModule: data.data.currentModule,
+                    modulesCount: data.data.modulesCount,
+                });
+
+                // Pre-fill with suggested amount or minimum payment
+                const amount = suggestedAmount || data.data.minimumPayment;
+                setPaymentData(prev => ({ ...prev, amount }));
+            }
+        } catch (error) {
+            console.error("Error fetching payment info:", error);
+            // Fallback to old logic
+            if (suggestedAmount) {
+                setPaymentData(prev => ({ ...prev, amount: suggestedAmount }));
+            } else if (!found.matriculaPaid) {
                 setPaymentData(prev => ({ ...prev, amount: Number(found.initialPayment) }));
             } else {
                 setPaymentData(prev => ({ ...prev, amount: 0 }));
             }
         }
+
         // Scroll al formulario
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
@@ -140,7 +167,7 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     studentId: student.id,
-                    advisorId: user?.id || "unknown",
+                    registeredById: user?.id || "unknown",
                     amount: Number(paymentData.amount),
                     method: paymentData.method,
                     comments: paymentData.comments,
@@ -233,9 +260,25 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
                                     <span className="opacity-70">Programa</span>
                                     <span className="font-medium text-right">{student.program.name}</span>
                                 </div>
+                                {paymentInfo && (
+                                    <>
+                                        <div className="flex justify-between">
+                                            <span className="opacity-70">Valor Módulo</span>
+                                            <span className="font-bold text-emerald-300">${paymentInfo.moduleValue.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="opacity-70">Módulo Actual</span>
+                                            <span className="font-medium">{paymentInfo.currentModule} / {paymentInfo.modulesCount}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="opacity-70">Pago Mínimo</span>
+                                            <span className="font-bold text-yellow-300">${paymentInfo.minimumPayment.toLocaleString()}</span>
+                                        </div>
+                                    </>
+                                )}
                                 <div className="flex justify-between">
                                     <span className="opacity-70">Saldo</span>
-                                    <span className="font-bold text-orange-300">${Number(student.remainingBalance).toLocaleString()}</span>
+                                    <span className="font-bold text-orange-300">${paymentInfo ? paymentInfo.remainingBalance.toLocaleString() : Number(student.remainingBalance).toLocaleString()}</span>
                                 </div>
                             </div>
                         </div>

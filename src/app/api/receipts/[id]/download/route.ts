@@ -11,8 +11,14 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const payment = await prisma.payment.findUnique({
-      where: { id },
+    // Search by id OR receiptNumber to support both
+    const payment = await prisma.payment.findFirst({
+      where: {
+        OR: [
+          { id },
+          { receiptNumber: id }
+        ]
+      },
       include: {
         student: {
           include: {
