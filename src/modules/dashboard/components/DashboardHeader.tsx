@@ -182,8 +182,6 @@ export function DashboardHeader({ title, subtitle, onFilterChange, children }: D
             </div>
           )}
 
-          {children}
-
           {/* Notification Bell */}
           <button className="relative p-3 hover:bg-gray-100 rounded-xl transition-all">
             <Bell size={20} className="text-gray-500" strokeWidth={2.5} />
@@ -266,13 +264,20 @@ export function DashboardHeader({ title, subtitle, onFilterChange, children }: D
 
       {/* Title Section - Only show if title is provided */}
       {title && (
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-          <h2 className="text-2xl sm:text-3xl font-bold text-primary">{title}</h2>
-          {subtitle && (
-            <>
-              <div className="hidden sm:block h-8 w-px bg-gray-300" />
-              <p className="text-sm text-gray-500 font-medium">{subtitle}</p>
-            </>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-primary">{title}</h2>
+            {subtitle && (
+              <>
+                <div className="hidden sm:block h-8 w-px bg-gray-300" />
+                <p className="text-sm text-gray-500 font-medium">{subtitle}</p>
+              </>
+            )}
+          </div>
+          {children && (
+            <div className="flex items-center gap-2">
+              {children}
+            </div>
           )}
         </div>
       )}

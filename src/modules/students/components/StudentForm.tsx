@@ -3,9 +3,14 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, User, Phone, Mail, MapPin, GraduationCap, Calendar, DollarSign, UserCheck } from "lucide-react";
-import { createStudentSchema, type CreateStudentInput } from "../schemas";
-import type { StudentWithRelations } from "../types";
+import { X, User, Phone, Mail, MapPin, GraduationCap, Calendar, DollarSign, UserCheck, CreditCard } from "lucide-react";
+import { createStudentSchema, PAYMENT_METHODS, type CreateStudentInput } from "../schemas";
+import type { StudentWithRelations, CreateStudentResult } from "../types";
+
+// Helper para formatear fecha a YYYY-MM-DD
+const formatDateForInput = (date: Date): string => {
+  return date.toISOString().split('T')[0];
+};
 
 interface Program {
   id: string;
@@ -25,17 +30,22 @@ interface StudentFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  onSuccessWithData?: (data: CreateStudentResult) => void;
   currentUserId: string;
   student?: StudentWithRelations | null;
 }
 
-export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student }: StudentFormProps) {
+export function StudentForm({ isOpen, onClose, onSuccess, onSuccessWithData, currentUserId, student }: StudentFormProps) {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isEditing = !!student;
+
+  const today = new Date();
+  const defaultFirstCommitment = new Date(today);
+  defaultFirstCommitment.setDate(defaultFirstCommitment.getDate() + 30);
 
   const {
     register,
@@ -49,12 +59,14 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
     defaultValues: {
       documentType: "CC",
       status: "MATRICULADO",
-      enrollmentDate: new Date(),
+      enrollmentDate: formatDateForInput(today) as unknown as Date,
       advisorId: currentUserId,
       initialPayment: 0,
       totalProgramValue: 0,
       paymentFrequency: "MENSUAL",
-      firstCommitmentDate: new Date(new Date().setDate(new Date().getDate() + 30)),
+      firstCommitmentDate: formatDateForInput(defaultFirstCommitment) as unknown as Date,
+      paymentMethod: "EFECTIVO" as any,
+      paymentReference: "",
     },
   });
 
@@ -86,26 +98,32 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
           guardianName: student.guardianName || "",
           guardianPhone: student.guardianPhone || "",
           guardianEmail: student.guardianEmail || "",
-          enrollmentDate: new Date(student.enrollmentDate),
+          enrollmentDate: formatDateForInput(new Date(student.enrollmentDate)) as unknown as Date,
           initialPayment: student.initialPayment,
           totalProgramValue: student.totalProgramValue,
           status: student.status as any,
           programId: student.programId,
           advisorId: student.advisorId,
           paymentFrequency: student.paymentFrequency as any,
-          firstCommitmentDate: student.firstCommitmentDate ? new Date(student.firstCommitmentDate) : new Date(),
+          firstCommitmentDate: formatDateForInput(student.firstCommitmentDate ? new Date(student.firstCommitmentDate) : new Date()) as unknown as Date,
         });
       } else {
-        // Modo Creación: Limpiar/Default
+        // Modo Creación: Limpiar/Default con fecha de hoy
+        const todayDate = new Date();
+        const firstCommitment = new Date(todayDate);
+        firstCommitment.setDate(firstCommitment.getDate() + 30);
+
         reset({
           documentType: "CC",
           status: "MATRICULADO",
-          enrollmentDate: new Date(),
+          enrollmentDate: formatDateForInput(todayDate) as unknown as Date,
           advisorId: currentUserId,
           initialPayment: 0,
           totalProgramValue: 0,
           paymentFrequency: "MENSUAL",
-          firstCommitmentDate: new Date(new Date().setDate(new Date().getDate() + 30)),
+          firstCommitmentDate: formatDateForInput(firstCommitment) as unknown as Date,
+          paymentMethod: "EFECTIVO" as any,
+          paymentReference: "",
         });
       }
     }
@@ -165,7 +183,13 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
 
       reset();
       onSuccess();
-      onClose();
+
+      // Si es una nueva matrícula y tenemos callback con datos, llamarlo para mostrar el recibo
+      if (!isEditing && onSuccessWithData && result.data) {
+        onSuccessWithData(result.data);
+      } else {
+        onClose();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
@@ -522,6 +546,65 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
             )}
           </div>
 
+          {/* Sección de Pago de Matrícula - Solo para nuevas matrículas */}
+          {!isEditing && (
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2">
+                <CreditCard size={16} />
+                Pago de Matrícula
+              </h3>
+
+              <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+                <p className="text-sm text-emerald-700 mb-4">
+                  El estudiante debe pagar la matrícula para completar la inscripción. Este pago se registra automáticamente.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Valor a Pagar
+                    </label>
+                    <div className="w-full mt-1 px-4 py-3 bg-white border-2 border-emerald-300 rounded-xl text-emerald-700 font-bold text-lg">
+                      ${selectedProgramId && programs.find(p => p.id === selectedProgramId)
+                        ? Number(programs.find(p => p.id === selectedProgramId)?.matriculaValue || 0).toLocaleString()
+                        : "0"}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Método de Pago *
+                    </label>
+                    <select
+                      {...register("paymentMethod")}
+                      className="w-full mt-1 px-4 py-3 bg-white border-2 border-emerald-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
+                    >
+                      {PAYMENT_METHODS.map((method) => (
+                        <option key={method.value} value={method.value}>
+                          {method.label}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.paymentMethod && (
+                      <p className="text-red-500 text-xs mt-1">{errors.paymentMethod.message}</p>
+                    )}
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Referencia / Comprobante (opcional)
+                    </label>
+                    <input
+                      {...register("paymentReference")}
+                      className="w-full mt-1 px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium transition-all"
+                      placeholder="Ej: Número de transacción Nequi, comprobante de transferencia"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-4 pt-4 border-t border-gray-100">
             <button
               type="button"
@@ -535,7 +618,7 @@ export function StudentForm({ isOpen, onClose, onSuccess, currentUserId, student
               disabled={isLoading}
               className="flex-[2] py-3.5 bg-gradient-instituto hover:opacity-90 text-white font-bold rounded-xl transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
             >
-              {isLoading ? "Guardando..." : (isEditing ? "Guardar Cambios" : "Registrar Estudiante")}
+              {isLoading ? "Procesando..." : (isEditing ? "Guardar Cambios" : "Registrar Matrícula y Pago")}
             </button>
           </div>
         </form>

@@ -165,42 +165,123 @@ export class StudentService {
       throw new Error("Ya existe un estudiante con este número de documento");
     }
 
-    const student = await prisma.student.create({
-      data: {
-        fullName: data.fullName,
-        documentType: data.documentType,
-        documentNumber: data.documentNumber,
-        email: data.email || null,
-        phone: data.phone,
-        address: data.address || null,
-        guardianName: data.guardianName || null,
-        guardianPhone: data.guardianPhone || null,
-        guardianEmail: data.guardianEmail || null,
-        enrollmentDate: data.enrollmentDate,
-        initialPayment: data.initialPayment,
-        totalProgramValue: data.totalProgramValue,
-        status: data.status || "MATRICULADO",
-        programId: data.programId,
-        advisorId: data.advisorId,
-        paymentFrequency: data.paymentFrequency,
-        firstCommitmentDate: data.firstCommitmentDate,
-        currentModule: 0,
-        matriculaPaid: false,
-      },
-      include: {
-        program: {
-          select: { id: true, name: true },
-        },
-        advisor: {
-          select: { id: true, name: true, email: true },
-        },
-      },
+    // Obtener el programa para calcular valores
+    const program = await prisma.program.findUnique({
+      where: { id: data.programId },
     });
 
+    if (!program) {
+      throw new Error("El programa seleccionado no existe");
+    }
+
+    // Generar número de recibo único
+    const generateReceiptNumber = () => {
+      const year = new Date().getFullYear();
+      const random = Math.floor(Math.random() * 100000).toString().padStart(5, "0");
+      return `REC-${year}-${random}`;
+    };
+
+    // Calcular valor por módulo
+    const valorModulo = (Number(program.totalValue) - Number(program.matriculaValue)) / program.modulesCount;
+
+    // Ejecutar todo en una transacción
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Crear el estudiante con matrícula pagada
+      const student = await tx.student.create({
+        data: {
+          fullName: data.fullName,
+          documentType: data.documentType,
+          documentNumber: data.documentNumber,
+          email: data.email || null,
+          phone: data.phone,
+          address: data.address || null,
+          guardianName: data.guardianName || null,
+          guardianPhone: data.guardianPhone || null,
+          guardianEmail: data.guardianEmail || null,
+          enrollmentDate: data.enrollmentDate,
+          initialPayment: data.initialPayment,
+          totalProgramValue: data.totalProgramValue,
+          status: data.status || "MATRICULADO",
+          programId: data.programId,
+          advisorId: data.advisorId,
+          paymentFrequency: data.paymentFrequency,
+          firstCommitmentDate: data.firstCommitmentDate,
+          currentModule: 0,
+          matriculaPaid: true, // ✅ Ya pagó la matrícula
+        },
+        include: {
+          program: {
+            select: { id: true, name: true, matriculaValue: true, totalValue: true, modulesCount: true },
+          },
+          advisor: {
+            select: { id: true, name: true, email: true },
+          },
+        },
+      });
+
+      // 2. Registrar el pago de matrícula
+      const receiptNumber = generateReceiptNumber();
+      const payment = await tx.payment.create({
+        data: {
+          studentId: student.id,
+          amount: Number(program.matriculaValue),
+          paymentDate: new Date(),
+          method: data.paymentMethod || "EFECTIVO",
+          reference: data.paymentReference || null,
+          paymentType: "MATRICULA",
+          moduleNumber: null, // No aplica para matrícula
+          receiptNumber: receiptNumber,
+          registeredById: data.advisorId,
+        },
+      });
+
+      // 3. Crear el primer compromiso de pago (Módulo 1)
+      const commitment = await tx.paymentCommitment.create({
+        data: {
+          studentId: student.id,
+          amount: valorModulo,
+          scheduledDate: data.firstCommitmentDate,
+          moduleNumber: 1,
+          status: "PENDIENTE",
+        },
+      });
+
+      return {
+        student,
+        payment,
+        commitment,
+        program,
+      };
+    });
+
+    // Retornar datos completos para el recibo
     return {
-      ...student,
-      initialPayment: Number(student.initialPayment),
-      totalProgramValue: Number(student.totalProgramValue),
+      student: {
+        ...result.student,
+        initialPayment: Number(result.student.initialPayment),
+        totalProgramValue: Number(result.student.totalProgramValue),
+      },
+      payment: {
+        id: result.payment.id,
+        amount: Number(result.payment.amount),
+        paymentDate: result.payment.paymentDate,
+        method: result.payment.method,
+        reference: result.payment.reference,
+        paymentType: result.payment.paymentType,
+        receiptNumber: result.payment.receiptNumber,
+      },
+      commitment: {
+        id: result.commitment.id,
+        amount: Number(result.commitment.amount),
+        scheduledDate: result.commitment.scheduledDate,
+        moduleNumber: result.commitment.moduleNumber,
+      },
+      program: {
+        name: result.program.name,
+        totalValue: Number(result.program.totalValue),
+        matriculaValue: Number(result.program.matriculaValue),
+        modulesCount: result.program.modulesCount,
+      },
     };
   }
 
@@ -305,6 +386,80 @@ export class StudentService {
         registeredBy: p.registeredBy,
         createdAt: p.createdAt,
       })),
+    };
+  }
+
+  static async getMatriculaReceipt(studentId: string) {
+    const student = await prisma.student.findUnique({
+      where: { id: studentId },
+      include: {
+        program: true,
+        advisor: {
+          select: { id: true, name: true, email: true },
+        },
+        payments: {
+          where: { paymentType: "MATRICULA" },
+          include: {
+            registeredBy: {
+              select: { name: true, email: true },
+            },
+          },
+          take: 1,
+          orderBy: { paymentDate: "desc" },
+        },
+        commitments: {
+          where: { moduleNumber: 1 },
+          take: 1,
+        },
+      },
+    });
+
+    if (!student) {
+      throw new Error("Estudiante no encontrado");
+    }
+
+    const matriculaPayment = student.payments[0];
+    if (!matriculaPayment) {
+      throw new Error("No se encontró el pago de matrícula para este estudiante");
+    }
+
+    const firstCommitment = student.commitments[0];
+    if (!firstCommitment) {
+      throw new Error("No se encontró el compromiso de pago del primer módulo");
+    }
+
+    return {
+      student: {
+        id: student.id,
+        fullName: student.fullName,
+        documentType: student.documentType,
+        documentNumber: student.documentNumber,
+        phone: student.phone,
+        email: student.email,
+      },
+      payment: {
+        id: matriculaPayment.id,
+        amount: Number(matriculaPayment.amount),
+        paymentDate: matriculaPayment.paymentDate,
+        method: matriculaPayment.method,
+        reference: matriculaPayment.reference,
+        paymentType: matriculaPayment.paymentType,
+        receiptNumber: matriculaPayment.receiptNumber,
+      },
+      commitment: {
+        amount: Number(firstCommitment.amount),
+        scheduledDate: firstCommitment.scheduledDate,
+        moduleNumber: firstCommitment.moduleNumber,
+      },
+      program: {
+        name: student.program.name,
+        totalValue: Number(student.program.totalValue),
+        matriculaValue: Number(student.program.matriculaValue),
+        modulesCount: student.program.modulesCount,
+      },
+      registeredBy: {
+        name: matriculaPayment.registeredBy?.name || "Sistema",
+      },
     };
   }
 }

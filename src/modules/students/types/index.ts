@@ -1,4 +1,4 @@
-import { StudentStatus, PaymentFrequency } from "@prisma/client";
+import { StudentStatus, PaymentFrequency, PaymentMethod } from "@prisma/client";
 
 export type { StudentStatus }; // Re-export if needed or just use it
 
@@ -22,7 +22,7 @@ export interface CreateStudentData {
   guardianPhone?: string;
   guardianEmail?: string;
   enrollmentDate: Date;
-  // New fields
+  // Configuración de pagos
   paymentFrequency: PaymentFrequency;
   firstCommitmentDate: Date;
   initialPayment: number;
@@ -30,6 +30,35 @@ export interface CreateStudentData {
   status?: StudentStatus;
   programId: string;
   advisorId: string;
+  // Datos del pago de matrícula
+  paymentMethod?: PaymentMethod;
+  paymentReference?: string;
+}
+
+// Resultado de crear matrícula con pago
+export interface CreateStudentResult {
+  student: StudentWithRelations;
+  payment: {
+    id: string;
+    amount: number;
+    paymentDate: Date;
+    method: string;
+    reference: string | null;
+    paymentType: string;
+    receiptNumber: string;
+  };
+  commitment: {
+    id: string;
+    amount: number;
+    scheduledDate: Date;
+    moduleNumber: number;
+  };
+  program: {
+    name: string;
+    totalValue: number;
+    matriculaValue: number;
+    modulesCount: number;
+  };
 }
 
 export interface UpdateStudentData {
@@ -91,4 +120,38 @@ export interface StudentsListResponse {
   page: number;
   limit: number;
   totalPages: number;
+}
+
+export interface MatriculaReceiptData {
+  student: {
+    id: string;
+    fullName: string;
+    documentType: string;
+    documentNumber: string;
+    phone: string;
+    email: string | null;
+  };
+  payment: {
+    id: string;
+    amount: number;
+    paymentDate: Date;
+    method: string;
+    reference: string | null;
+    paymentType: string;
+    receiptNumber: string;
+  };
+  commitment: {
+    amount: number;
+    scheduledDate: Date;
+    moduleNumber: number;
+  };
+  program: {
+    name: string;
+    totalValue: number;
+    matriculaValue: number;
+    modulesCount: number;
+  };
+  registeredBy: {
+    name: string;
+  };
 }

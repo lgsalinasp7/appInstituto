@@ -5,11 +5,29 @@ import { Plus, Edit, Trash2, Check, X, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import type { Program } from "@/modules/programs/types";
 
+interface NewProgramForm {
+    name: string;
+    matriculaValue: number;
+    totalValue: number;
+    modulesCount: number;
+    description?: string;
+}
+
+const emptyNewProgram: NewProgramForm = {
+    name: "",
+    matriculaValue: 0,
+    totalValue: 0,
+    modulesCount: 1,
+    description: "",
+};
+
 export function ProgramManager() {
     const [programs, setPrograms] = useState<Program[]>([]);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState<string | null>(null);
     const [editForm, setEditForm] = useState<Partial<Program>>({});
+    const [isCreating, setIsCreating] = useState(false);
+    const [newProgram, setNewProgram] = useState<NewProgramForm>(emptyNewProgram);
 
     useEffect(() => {
         fetchPrograms();
@@ -71,6 +89,50 @@ export function ProgramManager() {
         }
     };
 
+    const handleCreateProgram = async () => {
+        // Validación básica antes de enviar
+        if (!newProgram.name || newProgram.name.length < 2) {
+            toast.error("El nombre debe tener al menos 2 caracteres");
+            return;
+        }
+        if (newProgram.modulesCount < 1) {
+            toast.error("La cantidad de módulos debe ser al menos 1");
+            return;
+        }
+        if (newProgram.totalValue <= 0) {
+            toast.error("El valor total debe ser mayor a 0");
+            return;
+        }
+
+        try {
+            const res = await fetch("/api/programs", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(newProgram)
+            });
+            const data = await res.json();
+            if (res.ok) {
+                toast.success("Programa creado exitosamente");
+                setIsCreating(false);
+                setNewProgram(emptyNewProgram);
+                fetchPrograms();
+            } else {
+                toast.error(data.error || "Error al crear el programa");
+                if (data.details) {
+                    console.error("Detalles de validación:", data.details);
+                }
+            }
+        } catch (error) {
+            console.error("Error creating program:", error);
+            toast.error("Error de red al crear programa");
+        }
+    };
+
+    const handleCancelCreate = () => {
+        setIsCreating(false);
+        setNewProgram(emptyNewProgram);
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center mb-4">
@@ -78,7 +140,11 @@ export function ProgramManager() {
                     <BookOpen size={20} />
                     Gestión de Programas Académicos
                 </h3>
-                <button className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold flex items-center gap-2 hover:opacity-90">
+                <button
+                    onClick={() => setIsCreating(true)}
+                    disabled={isCreating}
+                    className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold flex items-center gap-2 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                     <Plus size={16} /> Nuevo Programa
                 </button>
             </div>
@@ -98,6 +164,56 @@ export function ProgramManager() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
+                        {isCreating && (
+                            <tr className="bg-blue-50/50">
+                                <td className="px-6 py-4">
+                                    <input
+                                        className="px-2 py-1 border rounded w-full"
+                                        placeholder="Nombre del programa"
+                                        value={newProgram.name}
+                                        onChange={e => setNewProgram({ ...newProgram, name: e.target.value })}
+                                        autoFocus
+                                    />
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <input
+                                        type="number"
+                                        className="px-2 py-1 border rounded w-24 text-center"
+                                        placeholder="0"
+                                        value={newProgram.matriculaValue || ""}
+                                        onChange={e => setNewProgram({ ...newProgram, matriculaValue: Number(e.target.value) })}
+                                    />
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <input
+                                        type="number"
+                                        className="px-2 py-1 border rounded w-32 text-center"
+                                        placeholder="0"
+                                        value={newProgram.totalValue || ""}
+                                        onChange={e => setNewProgram({ ...newProgram, totalValue: Number(e.target.value) })}
+                                    />
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <input
+                                        type="number"
+                                        className="px-2 py-1 border rounded w-16 text-center"
+                                        min={1}
+                                        value={newProgram.modulesCount}
+                                        onChange={e => setNewProgram({ ...newProgram, modulesCount: Number(e.target.value) })}
+                                    />
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                    <div className="flex justify-end gap-2">
+                                        <button onClick={handleCreateProgram} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg">
+                                            <Check size={18} />
+                                        </button>
+                                        <button onClick={handleCancelCreate} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg">
+                                            <X size={18} />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        )}
                         {programs.map(p => (
                             <tr key={p.id} className="hover:bg-gray-50/50 transition-colors">
                                 <td className="px-6 py-4">

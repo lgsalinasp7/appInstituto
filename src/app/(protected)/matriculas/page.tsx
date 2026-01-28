@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Search, Filter, MoreVertical, CreditCard, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, CreditCard, Pencil, Trash2 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
-import { StudentForm, StudentDetailModal, DeleteConfirmationModal } from "@/modules/students/components";
-import type { StudentWithRelations } from "@/modules/students/types";
+import { StudentForm, DeleteConfirmationModal, ReceiptConfirmationModal } from "@/modules/students/components";
+import type { StudentWithRelations, CreateStudentResult, MatriculaReceiptData } from "@/modules/students/types";
 import { toast } from "sonner";
 
 export default function MatriculasPage() {
@@ -15,8 +15,10 @@ export default function MatriculasPage() {
     const [editingStudent, setEditingStudent] = useState<StudentWithRelations | null>(null);
     const [deletingStudent, setDeletingStudent] = useState<StudentWithRelations | null>(null);
     const [isDeletingLoading, setIsDeletingLoading] = useState(false);
-    const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [receiptData, setReceiptData] = useState<CreateStudentResult | null>(null);
+    const [viewReceiptData, setViewReceiptData] = useState<MatriculaReceiptData | null>(null);
+    const [isLoadingReceipt, setIsLoadingReceipt] = useState(false);
     const { user } = useAuthStore();
 
     const fetchStudents = async () => {
@@ -51,6 +53,16 @@ export default function MatriculasPage() {
         setEditingStudent(null);
     };
 
+    const handleSuccessWithData = (data: CreateStudentResult) => {
+        setIsFormOpen(false);
+        setReceiptData(data);
+        toast.success("Matrícula registrada exitosamente");
+    };
+
+    const handleCloseReceipt = () => {
+        setReceiptData(null);
+    };
+
     const handleDeleteConfirm = async () => {
         if (!deletingStudent) return;
 
@@ -76,28 +88,36 @@ export default function MatriculasPage() {
         }
     };
 
+    const handleViewReceipt = async (studentId: string) => {
+        setIsLoadingReceipt(true);
+        try {
+            const response = await fetch(`/api/students/${studentId}/receipt`);
+            const data = await response.json();
+
+            if (data.success) {
+                setViewReceiptData(data.data);
+            } else {
+                throw new Error(data.error || "Error al obtener el recibo");
+            }
+        } catch (error) {
+            console.error("Error fetching receipt:", error);
+            toast.error(error instanceof Error ? error.message : "Error al obtener el recibo de matrícula");
+        } finally {
+            setIsLoadingReceipt(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
             <DashboardHeader
                 title="Gestión de Matrículas"
                 subtitle="Administra los estudiantes inscritos y sus estados"
-            >
-                <button
-                    onClick={() => {
-                        setEditingStudent(null);
-                        setIsFormOpen(true);
-                    }}
-                    className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-instituto text-white rounded-xl font-bold hover:shadow-lg hover:shadow-[#1e3a5f]/20 transition-all active:scale-95"
-                >
-                    <Plus size={20} strokeWidth={2.5} />
-                    Nueva Matrícula
-                </button>
-            </DashboardHeader>
+            />
 
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 {/* Barra de herramientas */}
-                <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row gap-4">
-                    <div className="relative flex-1">
+                <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
+                    <div className="relative flex-1 max-w-md">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
                             type="text"
@@ -107,6 +127,16 @@ export default function MatriculasPage() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
+                    <button
+                        onClick={() => {
+                            setEditingStudent(null);
+                            setIsFormOpen(true);
+                        }}
+                        className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-instituto text-white rounded-xl font-bold hover:shadow-lg hover:shadow-[#1e3a5f]/20 transition-all active:scale-95"
+                    >
+                        <Plus size={20} strokeWidth={2.5} />
+                        Nueva Matrícula
+                    </button>
                 </div>
 
                 {/* Tabla */}
@@ -187,9 +217,10 @@ export default function MatriculasPage() {
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-1">
                                                 <button
-                                                    onClick={() => setSelectedStudentId(student.id)}
-                                                    className="p-2 text-gray-400 hover:text-[#1e3a5f] hover:bg-[#1e3a5f]/5 rounded-lg transition-colors"
-                                                    title="Ver detalle y pagos"
+                                                    onClick={() => handleViewReceipt(student.id)}
+                                                    disabled={isLoadingReceipt || !student.matriculaPaid}
+                                                    className="p-2 text-gray-400 hover:text-[#1e3a5f] hover:bg-[#1e3a5f]/5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    title={student.matriculaPaid ? "Ver recibo de matrícula" : "Matrícula no pagada"}
                                                 >
                                                     <CreditCard size={18} />
                                                 </button>
@@ -235,21 +266,10 @@ export default function MatriculasPage() {
                     setEditingStudent(null);
                 }}
                 onSuccess={handleSuccess}
+                onSuccessWithData={handleSuccessWithData}
                 currentUserId={user?.id || ""}
                 student={editingStudent}
             />
-
-            {selectedStudentId && (
-                <StudentDetailModal
-                    studentId={selectedStudentId}
-                    isOpen={!!selectedStudentId}
-                    onClose={() => setSelectedStudentId(null)}
-                    onPaymentClick={() => {
-                        console.log("Ir a pagar para", selectedStudentId);
-                        setSelectedStudentId(null);
-                    }}
-                />
-            )}
 
             <DeleteConfirmationModal
                 isOpen={!!deletingStudent}
@@ -258,6 +278,37 @@ export default function MatriculasPage() {
                 studentName={deletingStudent?.fullName || ""}
                 isLoading={isDeletingLoading}
             />
+
+            {receiptData && (
+                <ReceiptConfirmationModal
+                    isOpen={!!receiptData}
+                    onClose={handleCloseReceipt}
+                    data={{
+                        student: {
+                            id: receiptData.student.id,
+                            fullName: receiptData.student.fullName,
+                            documentType: receiptData.student.documentType,
+                            documentNumber: receiptData.student.documentNumber,
+                            phone: receiptData.student.phone,
+                            email: receiptData.student.email,
+                        },
+                        payment: receiptData.payment,
+                        commitment: receiptData.commitment,
+                        program: receiptData.program,
+                        registeredBy: {
+                            name: user?.name || user?.email || "Sistema",
+                        },
+                    }}
+                />
+            )}
+
+            {viewReceiptData && (
+                <ReceiptConfirmationModal
+                    isOpen={!!viewReceiptData}
+                    onClose={() => setViewReceiptData(null)}
+                    data={viewReceiptData}
+                />
+            )}
         </div>
     );
 }
