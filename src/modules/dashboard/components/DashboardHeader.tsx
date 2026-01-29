@@ -132,11 +132,11 @@ export function DashboardHeader({ title, subtitle, onFilterChange, children }: D
   };
 
   return (
-    <header className="flex flex-col gap-4 mb-6 lg:mb-8 pb-4 lg:pb-6 border-b border-gray-200">
+    <header className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6 lg:mb-8 pb-3 sm:pb-4 lg:pb-6 border-b border-gray-200">
       {/* Breadcrumbs and Actions Row */}
-      <div className="flex items-center justify-between gap-4">
-        {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-sm">
+      <div className="flex items-center justify-between gap-2 sm:gap-4">
+        {/* Breadcrumbs - simplified on mobile */}
+        <nav className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm overflow-x-auto">
           {breadcrumbs.map((crumb, index) => (
             <div key={`breadcrumb-${index}`} className="flex items-center gap-2">
               {index > 0 && <ChevronRight size={14} className="text-gray-400" />}
@@ -158,8 +158,8 @@ export function DashboardHeader({ title, subtitle, onFilterChange, children }: D
           ))}
         </nav>
 
-        {/* Actions - Avatar and Notifications */}
-        <div className="flex items-center gap-2 lg:gap-4">
+        {/* Actions - Avatar and Notifications - Hidden on mobile (MobileHeader handles this) */}
+        <div className="hidden lg:flex items-center gap-2 lg:gap-4">
           {onFilterChange && isAdmin && (
             <div className="hidden sm:flex items-center gap-2 mr-2">
               <select
@@ -264,9 +264,9 @@ export function DashboardHeader({ title, subtitle, onFilterChange, children }: D
 
       {/* Title Section - Only show if title is provided */}
       {title && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-            <h2 className="text-2xl sm:text-3xl font-bold text-primary">{title}</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-6">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-primary">{title}</h2>
             {subtitle && (
               <>
                 <div className="hidden sm:block h-8 w-px bg-gray-300" />

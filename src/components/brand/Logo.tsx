@@ -48,18 +48,18 @@ export function Logo({
         <div className="flex flex-col">
           <span
             className={cn(
-              "font-bold leading-tight",
+              "font-black leading-tight tracking-tight",
               sizeConfig.text,
               isDark ? "text-white" : "text-[#1e3a5f]"
             )}
           >
-            Educamos con Valores
+            EDUTEC
           </span>
           <span className={cn(
-            "text-xs leading-tight",
-            isDark ? "text-white/70" : "text-muted-foreground"
+            "text-[10px] font-bold leading-tight uppercase tracking-widest",
+            isDark ? "text-white/70" : "text-gray-400"
           )}>
-            Tu camino hacia el éxito educativo
+            Educamos con Valores
           </span>
         </div>
       )}

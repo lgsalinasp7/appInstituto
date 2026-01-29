@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Check, X, BookOpen } from "lucide-react";
+import { Plus, Edit, Trash2, Check, X, BookOpen, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { Program } from "@/modules/programs/types";
@@ -182,165 +182,281 @@ export function ProgramManager() {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center mb-4">
-                <h3 className="font-bold text-primary flex items-center gap-2">
-                    <BookOpen size={20} />
-                    Gestión de Programas Académicos
-                </h3>
+        <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+                <div>
+                    <h3 className="font-black text-[#1e3a5f] flex items-center gap-2">
+                        <BookOpen size={20} className="text-primary" />
+                        Programas Académicos
+                    </h3>
+                    <p className="text-xs text-gray-500 font-medium">Administra el catálogo de programas y sus costos</p>
+                </div>
                 <button
                     onClick={() => setIsCreating(true)}
                     disabled={isCreating}
-                    className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold flex items-center gap-2 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full sm:w-auto px-6 py-2.5 bg-[#1e3a5f] text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-900/10 transition-all active:scale-95"
                 >
-                    <Plus size={16} /> Nuevo Programa
+                    <Plus size={18} /> Nuevo Programa
                 </button>
             </div>
 
+            {isCreating && (
+                <div className="bg-blue-50/50 p-4 sm:p-6 rounded-2xl border border-blue-100 animate-fade-in-up">
+                    <h4 className="font-bold text-[#1e3a5f] mb-4 text-sm flex items-center gap-2">
+                        <Plus size={16} /> Configurar Nuevo Programa
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Nombre</label>
+                            <input
+                                className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm font-bold text-[#1e3a5f]"
+                                placeholder="Ej: Técnico en Sistemas"
+                                value={newProgram.name}
+                                onChange={e => setNewProgram({ ...newProgram, name: e.target.value })}
+                                autoFocus
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Matrícula ($)</label>
+                            <input
+                                type="number"
+                                className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm font-bold text-[#1e3a5f]"
+                                placeholder="0"
+                                value={newProgram.matriculaValue || ""}
+                                onChange={e => setNewProgram({ ...newProgram, matriculaValue: Number(e.target.value) })}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Total ($)</label>
+                            <input
+                                type="number"
+                                className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm font-bold text-[#1e3a5f]"
+                                placeholder="0"
+                                value={newProgram.totalValue || ""}
+                                onChange={e => setNewProgram({ ...newProgram, totalValue: Number(e.target.value) })}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Módulos</label>
+                            <input
+                                type="number"
+                                className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm font-bold text-[#1e3a5f]"
+                                min={1}
+                                value={newProgram.modulesCount}
+                                onChange={e => setNewProgram({ ...newProgram, modulesCount: Number(e.target.value) })}
+                            />
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-blue-100/50">
+                        <button
+                            onClick={handleCancelCreate}
+                            className="px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handleCreateProgram}
+                            className="px-6 py-2 bg-emerald-500 text-white rounded-xl text-sm font-bold hover:bg-emerald-600 transition-all shadow-md shadow-emerald-200"
+                        >
+                            Guardar Programa
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                {loading && (
-                    <div className="p-8 text-center text-gray-400">Cargando programas...</div>
+                {loading ? (
+                    <div className="p-12 text-center">
+                        <Loader2 className="animate-spin mx-auto text-primary mb-4" size={32} />
+                        <p className="text-gray-400 font-medium">Cargando catálogo...</p>
+                    </div>
+                ) : programs.length === 0 ? (
+                    <div className="p-12 text-center bg-gray-50/50">
+                        <BookOpen size={48} className="mx-auto text-gray-200 mb-4" />
+                        <p className="text-gray-500 font-bold text-lg">No hay programas registrados</p>
+                        <p className="text-sm text-gray-400 mt-1">Comienza agregando tu primer programa académico.</p>
+                    </div>
+                ) : (
+                    <>
+                        {/* Mobile View: Cards */}
+                        <div className="md:hidden divide-y divide-gray-50">
+                            {programs.map(p => (
+                                <div key={p.id} className="p-4 hover:bg-gray-50/50 transition-colors space-y-3">
+                                    <div className="flex justify-between items-start">
+                                        <div className="min-w-0 flex-1 mr-3">
+                                            {isEditing === p.id ? (
+                                                <input
+                                                    className="w-full px-3 py-1.5 border rounded-lg text-sm font-bold text-[#1e3a5f] focus:ring-2 focus:ring-primary/20 outline-none"
+                                                    value={editForm.name}
+                                                    onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                                                />
+                                            ) : (
+                                                <h4 className="font-black text-[#1e3a5f] truncate">{p.name}</h4>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-1">
+                                            {isEditing === p.id ? (
+                                                <>
+                                                    <button onClick={handleSave} className="p-2 text-emerald-600 bg-emerald-50 rounded-lg">
+                                                        <Check size={16} />
+                                                    </button>
+                                                    <button onClick={() => setIsEditing(null)} className="p-2 text-red-600 bg-red-50 rounded-lg">
+                                                        <X size={16} />
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <button onClick={() => handleEditClick(p)} className="p-2 text-primary bg-blue-50 rounded-lg">
+                                                        <Edit size={16} />
+                                                    </button>
+                                                    <button onClick={() => handleDelete(p.id)} className="p-2 text-red-400 bg-red-50/50 rounded-lg">
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <div className="bg-gray-50 p-2 rounded-xl border border-gray-100">
+                                            <span className="text-[9px] font-bold text-gray-400 uppercase block mb-0.5">Matrícula</span>
+                                            {isEditing === p.id ? (
+                                                <input
+                                                    type="number"
+                                                    className="w-full bg-transparent text-xs font-bold text-[#1e3a5f] outline-none"
+                                                    value={editForm.matriculaValue}
+                                                    onChange={e => setEditForm({ ...editForm, matriculaValue: Number(e.target.value) })}
+                                                />
+                                            ) : (
+                                                <span className="text-xs font-bold text-[#1e3a5f]">${p.matriculaValue.toLocaleString()}</span>
+                                            )}
+                                        </div>
+                                        <div className="bg-emerald-50 p-2 rounded-xl border border-emerald-100">
+                                            <span className="text-[9px] font-bold text-emerald-600/70 uppercase block mb-0.5">Total</span>
+                                            {isEditing === p.id ? (
+                                                <input
+                                                    type="number"
+                                                    className="w-full bg-transparent text-xs font-bold text-emerald-700 outline-none"
+                                                    value={editForm.totalValue}
+                                                    onChange={e => setEditForm({ ...editForm, totalValue: Number(e.target.value) })}
+                                                />
+                                            ) : (
+                                                <span className="text-xs font-bold text-emerald-700">${p.totalValue.toLocaleString()}</span>
+                                            )}
+                                        </div>
+                                        <div className="bg-gray-50 p-2 rounded-xl border border-gray-100 text-center">
+                                            <span className="text-[9px] font-bold text-gray-400 uppercase block mb-0.5">Módulos</span>
+                                            {isEditing === p.id ? (
+                                                <input
+                                                    type="number"
+                                                    className="w-full bg-transparent text-xs font-bold text-gray-600 outline-none text-center"
+                                                    value={editForm.modulesCount}
+                                                    onChange={e => setEditForm({ ...editForm, modulesCount: Number(e.target.value) })}
+                                                />
+                                            ) : (
+                                                <span className="text-xs font-bold text-gray-600">{p.modulesCount}</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Desktop View: Table */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50/50">
+                                    <tr>
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100">Nombre del Programa</th>
+                                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100">Matrícula ($)</th>
+                                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100">Valor Total ($)</th>
+                                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100">Módulos</th>
+                                        <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {programs.map(p => (
+                                        <tr key={p.id} className="hover:bg-blue-50/30 transition-colors group">
+                                            <td className="px-6 py-4">
+                                                {isEditing === p.id ? (
+                                                    <input
+                                                        className="px-4 py-2 border rounded-xl w-full text-sm font-bold text-[#1e3a5f] outline-none focus:ring-2 focus:ring-primary/20"
+                                                        value={editForm.name}
+                                                        onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                                                    />
+                                                ) : (
+                                                    <span className="font-bold text-[#1e3a5f] group-hover:text-primary transition-colors">{p.name}</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                {isEditing === p.id ? (
+                                                    <input
+                                                        type="number"
+                                                        className="px-3 py-2 border rounded-xl w-28 text-center text-sm font-bold outline-none"
+                                                        value={editForm.matriculaValue}
+                                                        onChange={e => setEditForm({ ...editForm, matriculaValue: Number(e.target.value) })}
+                                                    />
+                                                ) : (
+                                                    <span className="text-gray-600 font-medium">${p.matriculaValue.toLocaleString()}</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                {isEditing === p.id ? (
+                                                    <input
+                                                        type="number"
+                                                        className="px-3 py-2 border rounded-xl w-32 text-center text-sm font-bold text-emerald-600 outline-none"
+                                                        value={editForm.totalValue}
+                                                        onChange={e => setEditForm({ ...editForm, totalValue: Number(e.target.value) })}
+                                                    />
+                                                ) : (
+                                                    <span className="font-black text-emerald-600">${p.totalValue.toLocaleString()}</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                {isEditing === p.id ? (
+                                                    <input
+                                                        type="number"
+                                                        className="px-3 py-2 border rounded-xl w-20 text-center text-sm font-bold outline-none"
+                                                        value={editForm.modulesCount}
+                                                        onChange={e => setEditForm({ ...editForm, modulesCount: Number(e.target.value) })}
+                                                    />
+                                                ) : (
+                                                    <span className="text-gray-500 font-black">{p.modulesCount}</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex justify-end gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                                                    {isEditing === p.id ? (
+                                                        <>
+                                                            <button onClick={handleSave} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all">
+                                                                <Check size={18} />
+                                                            </button>
+                                                            <button onClick={() => setIsEditing(null)} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all">
+                                                                <X size={18} />
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <button onClick={() => handleEditClick(p)} className="p-2 text-primary hover:bg-blue-50 rounded-xl transition-all">
+                                                                <Edit size={18} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDelete(p.id)}
+                                                                className="p-2 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                                                            >
+                                                                <Trash2 size={18} />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
                 )}
-                {!loading && <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-100">
-                        <tr>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase">Nombre</th>
-                            <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase">Matrícula ($)</th>
-                            <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase">Total ($)</th>
-                            <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase">Módulos</th>
-                            <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
-                        {isCreating && (
-                            <tr className="bg-blue-50/50">
-                                <td className="px-6 py-4">
-                                    <input
-                                        className="px-2 py-1 border rounded w-full"
-                                        placeholder="Nombre del programa"
-                                        value={newProgram.name}
-                                        onChange={e => setNewProgram({ ...newProgram, name: e.target.value })}
-                                        autoFocus
-                                    />
-                                </td>
-                                <td className="px-6 py-4 text-center">
-                                    <input
-                                        type="number"
-                                        className="px-2 py-1 border rounded w-24 text-center"
-                                        placeholder="0"
-                                        value={newProgram.matriculaValue || ""}
-                                        onChange={e => setNewProgram({ ...newProgram, matriculaValue: Number(e.target.value) })}
-                                    />
-                                </td>
-                                <td className="px-6 py-4 text-center">
-                                    <input
-                                        type="number"
-                                        className="px-2 py-1 border rounded w-32 text-center"
-                                        placeholder="0"
-                                        value={newProgram.totalValue || ""}
-                                        onChange={e => setNewProgram({ ...newProgram, totalValue: Number(e.target.value) })}
-                                    />
-                                </td>
-                                <td className="px-6 py-4 text-center">
-                                    <input
-                                        type="number"
-                                        className="px-2 py-1 border rounded w-16 text-center"
-                                        min={1}
-                                        value={newProgram.modulesCount}
-                                        onChange={e => setNewProgram({ ...newProgram, modulesCount: Number(e.target.value) })}
-                                    />
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex justify-end gap-2">
-                                        <button onClick={handleCreateProgram} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg">
-                                            <Check size={18} />
-                                        </button>
-                                        <button onClick={handleCancelCreate} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg">
-                                            <X size={18} />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        )}
-                        {programs.map(p => (
-                            <tr key={p.id} className="hover:bg-gray-50/50 transition-colors">
-                                <td className="px-6 py-4">
-                                    {isEditing === p.id ? (
-                                        <input
-                                            className="px-2 py-1 border rounded w-full"
-                                            value={editForm.name}
-                                            onChange={e => setEditForm({ ...editForm, name: e.target.value })}
-                                        />
-                                    ) : (
-                                        <span className="font-bold text-primary">{p.name}</span>
-                                    )}
-                                </td>
-                                <td className="px-6 py-4 text-center">
-                                    {isEditing === p.id ? (
-                                        <input
-                                            type="number"
-                                            className="px-2 py-1 border rounded w-24 text-center"
-                                            value={editForm.matriculaValue}
-                                            onChange={e => setEditForm({ ...editForm, matriculaValue: Number(e.target.value) })}
-                                        />
-                                    ) : (
-                                        <span className="text-gray-600">${p.matriculaValue.toLocaleString()}</span>
-                                    )}
-                                </td>
-                                <td className="px-6 py-4 text-center font-bold text-emerald-600">
-                                    {isEditing === p.id ? (
-                                        <input
-                                            type="number"
-                                            className="px-2 py-1 border rounded w-32 text-center"
-                                            value={editForm.totalValue}
-                                            onChange={e => setEditForm({ ...editForm, totalValue: Number(e.target.value) })}
-                                        />
-                                    ) : (
-                                        <span>${p.totalValue.toLocaleString()}</span>
-                                    )}
-                                </td>
-                                <td className="px-6 py-4 text-center">
-                                    {isEditing === p.id ? (
-                                        <input
-                                            type="number"
-                                            className="px-2 py-1 border rounded w-16 text-center"
-                                            value={editForm.modulesCount}
-                                            onChange={e => setEditForm({ ...editForm, modulesCount: Number(e.target.value) })}
-                                        />
-                                    ) : (
-                                        <span className="text-gray-500 font-medium">{p.modulesCount}</span>
-                                    )}
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex justify-end gap-2">
-                                        {isEditing === p.id ? (
-                                            <>
-                                                <button onClick={handleSave} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg">
-                                                    <Check size={18} />
-                                                </button>
-                                                <button onClick={() => setIsEditing(null)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg">
-                                                    <X size={18} />
-                                                </button>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <button onClick={() => handleEditClick(p)} className="p-1.5 text-primary hover:bg-blue-50 rounded-lg">
-                                                    <Edit size={18} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(p.id)}
-                                                    className="p-1.5 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>}
             </div>
 
             {/* Confirm Dialog */}

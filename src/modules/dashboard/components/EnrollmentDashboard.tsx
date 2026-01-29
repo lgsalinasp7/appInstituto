@@ -48,14 +48,14 @@ export function EnrollmentDashboard({ stats }: EnrollmentDashboardProps) {
   const alerts: AlertItem[] = [];
 
   return (
-    <div className="space-y-6 lg:space-y-8 animate-fade-in-up">
+    <div className="space-y-4 sm:space-y-6 lg:space-y-8 animate-fade-in-up">
       <DashboardHeader
         title="Panel de Control"
-        subtitle={isAdmin ? "Vista general del instituto" : isVentas ? "Mis indicadores de ventas" : "Resumen de cartera y recaudos"}
+        subtitle={isAdmin ? "Vista general" : isVentas ? "Mis ventas" : "Resumen cartera"}
         onFilterChange={handleFilterChange}
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         <StatCard
           title={isVentas ? "Mis Ventas Hoy" : "Recaudo de Hoy"}
           value={dashboardStats.todayRevenue}
@@ -107,8 +107,8 @@ export function EnrollmentDashboard({ stats }: EnrollmentDashboardProps) {
         )}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
-        <div className="xl:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+        <div className="lg:col-span-2">
           <RevenueChart data={revenueData} />
         </div>
         {!isVentas && <AlertsList alerts={alerts} />}

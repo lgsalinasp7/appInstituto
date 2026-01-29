@@ -11,6 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import Image from "next/image";
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Logo } from "@/components/brand";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,21 +60,14 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
       <div className="relative backdrop-blur-xl bg-white/95 rounded-3xl shadow-2xl shadow-black/20 border border-white/20 overflow-hidden">
         {/* Gradiente decorativo en la parte superior */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-blue-500 to-primary" />
-        
+
         {/* Header del card */}
         <div className="pt-8 pb-4 px-8 text-center relative">
           {/* Logo pequeño centrado */}
-          <div className="flex justify-center mb-4">
-            <div className="relative w-16 h-16 opacity-90">
-              <Image
-                src="/logo-instituto.png"
-                alt="Educamos con Valores"
-                fill
-                className="object-contain drop-shadow-lg"
-              />
-            </div>
+          <div className="flex justify-center mb-6">
+            <Logo size="lg" />
           </div>
-          
+
           <h1 className="text-2xl font-bold text-primary mb-2">
             Crear tu cuenta
           </h1>
@@ -132,7 +126,7 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
                   </FormItem>
                 )}
               />
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -164,7 +158,7 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="confirmPassword"

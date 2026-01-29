@@ -23,7 +23,7 @@ export function PaymentsHistoryView({ advisorId: _advisorId }: PaymentsHistoryVi
   const [dateFilter, setDateFilter] = useState<"today" | "week" | "month" | "all">("all");
   const [methodFilter, setMethodFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
   const [totalItems, setTotalItems] = useState(0);
 
   // Modal state
@@ -306,7 +306,90 @@ export function PaymentsHistoryView({ advisorId: _advisorId }: PaymentsHistoryVi
           )}
         </div>
 
-        {/* Mobile View Omitted for brevity, can be re-added if needed, but keeping consistent with Desktop first for admin tools */}
+        {/* Mobile List View */}
+        <div className="lg:hidden divide-y divide-gray-100">
+          {loading ? (
+            <div className="flex items-center justify-center py-12 text-gray-400">Cargando pagos...</div>
+          ) : payments.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+              <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                <AlertCircle size={32} className="text-gray-300" />
+              </div>
+              <p className="text-gray-500 font-bold">No se encontraron pagos</p>
+              <p className="text-sm text-gray-400 mt-1">Intenta ajustar los filtros de búsqueda</p>
+            </div>
+          ) : (
+            payments.map((payment) => (
+              <div key={payment.id} className="p-4 active:bg-gray-50 transition-colors">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Recibo</span>
+                    <span className="font-mono font-bold text-primary">{payment.receiptNumber}</span>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tight ${getMethodColor(payment.method)}`}>
+                    {payment.method}
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-xs font-bold text-gray-400 uppercase block mb-0.5">Estudiante</span>
+                    <p className="font-bold text-primary leading-tight">{payment.student.fullName}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Doc: {payment.student.documentNumber}</p>
+                  </div>
+
+                  <div className="flex justify-between items-end pt-2">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-gray-400 uppercase mb-0.5">Monto</span>
+                      <span className="text-xl font-black text-emerald-600">${payment.amount.toLocaleString()}</span>
+                    </div>
+
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => handleViewDetails(payment)}
+                        className="p-2.5 bg-primary/5 text-primary rounded-xl"
+                      >
+                        <Eye size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleEdit(payment)}
+                        className="p-2.5 bg-orange-50 text-orange-600 rounded-xl"
+                      >
+                        <Edit2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => sendReceiptViaWhatsApp(
+                          payment.student.phone || "",
+                          {
+                            receiptNumber: payment.receiptNumber,
+                            studentName: payment.student.fullName,
+                            studentDocument: payment.student.documentNumber,
+                            amount: payment.amount,
+                            paymentDate: payment.paymentDate ? new Date(payment.paymentDate).toISOString() : new Date().toISOString(),
+                            method: payment.method,
+                            reference: payment.reference || "",
+                            programName: "Programa",
+                          }
+                        )}
+                        className="p-2.5 bg-green-50 text-green-600 rounded-xl"
+                      >
+                        <Send size={18} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center pt-3 border-t border-gray-50">
+                    <span className="text-[10px] text-gray-400 italic">
+                      {new Date(payment.paymentDate).toLocaleDateString("es-CO", { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                    <span className="text-[10px] text-gray-400 font-medium">
+                      Por: {payment.registeredBy.name}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
 
         <Pagination
           currentPage={currentPage}

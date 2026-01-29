@@ -8,6 +8,7 @@ import Image from "next/image";
 import { Mail, ArrowRight, ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
+import { Logo } from "@/components/brand";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,14 +91,7 @@ export function ForgotPasswordForm() {
 
             <div className="pt-8 pb-4 px-8 text-center">
                 <div className="flex justify-center mb-6">
-                    <div className="relative w-16 h-16">
-                        <Image
-                            src="/logo-instituto.png"
-                            alt="Logo"
-                            fill
-                            className="object-contain"
-                        />
-                    </div>
+                    <Logo size="lg" />
                 </div>
                 <h1 className="text-2xl font-bold text-primary mb-2">Restablecer contraseña</h1>
                 <p className="text-sm text-gray-500">

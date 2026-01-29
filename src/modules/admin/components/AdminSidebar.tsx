@@ -26,7 +26,7 @@ const navItems = [
   },
   {
     title: "Roles",
-    href: "/admin/config/roles",
+    href: "/admin/roles",
     icon: "🔐",
     description: "Permisos y roles",
   },

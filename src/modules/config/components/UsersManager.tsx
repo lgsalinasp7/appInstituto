@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Pencil, Trash2, Save, X, Loader2, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Save, X, Loader2, RefreshCw, ChevronLeft, ChevronRight, Users } from "lucide-react";
 import { toast } from "sonner";
 import { InviteUserModal } from "./InviteUserModal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -301,271 +301,407 @@ export function UsersManager() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
                 <div>
-                    <h3 className="text-xl font-bold text-primary">Gestión de Usuarios</h3>
-                    <p className="text-sm text-muted-foreground">
-                        Administra usuarios activos e invitaciones
+                    <h3 className="font-black text-[#1e3a5f] flex items-center gap-2">
+                        <Users size={20} className="text-primary" />
+                        Gestión de Usuarios
+                    </h3>
+                    <p className="text-xs text-gray-500 font-medium">
+                        Administra accesos, roles e invitaciones del sistema
                         {isAdmin && (
-                            <span className="ml-2 text-primary font-medium">
-                                - Invitaciones disponibles: {remainingInvitations}
+                            <span className="ml-1 text-[#1e3a5f] font-bold">
+                                • {remainingInvitations} cupos libres
                             </span>
                         )}
                     </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full sm:w-auto">
                     <Button
                         variant="outline"
-                        size="sm"
+                        size="icon"
                         onClick={handleRefresh}
                         disabled={isLoading}
+                        className="rounded-xl border-gray-200 h-10 w-10 flex-shrink-0"
                     >
-                        <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
+                        <RefreshCw size={18} className={isLoading ? "animate-spin text-primary" : "text-[#1e3a5f]"} />
                     </Button>
                     <Button
                         onClick={handleInviteClick}
-                        className="gap-2"
+                        className="flex-1 sm:flex-none gap-2 bg-[#1e3a5f] text-white rounded-xl h-10 font-bold px-6 shadow-lg shadow-blue-900/10 hover:opacity-90"
                         disabled={isAdmin && remainingInvitations <= 0}
                     >
-                        <Plus size={16} /> Invitar Usuario
-                        {isAdmin && ` (${remainingInvitations})`}
+                        <Plus size={18} />
+                        <span className="hidden sm:inline">Invitar Usuario</span>
+                        <span className="sm:hidden">Invitar</span>
                     </Button>
                 </div>
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-4 border-b">
+            {/* Tabs - Styled like main config tabs */}
+            <div className="flex p-1 bg-gray-100 rounded-xl w-full sm:w-fit overflow-x-auto">
                 <button
                     onClick={() => setActiveTab("active")}
-                    className={`pb-2 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === "active" ? "border-primary text-primary" : "border-transparent text-gray-500 hover:text-gray-700"}`}
+                    className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-1 sm:flex-none ${activeTab === "active"
+                        ? "bg-white text-[#1e3a5f] shadow-sm"
+                        : "text-gray-500 hover:text-gray-700"
+                        }`}
                 >
                     Usuarios Activos ({filteredUsers.length})
                 </button>
                 <button
                     onClick={() => setActiveTab("invited")}
-                    className={`pb-2 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === "invited" ? "border-primary text-primary" : "border-transparent text-gray-500 hover:text-gray-700"}`}
+                    className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-1 sm:flex-none ${activeTab === "invited"
+                        ? "bg-white text-[#1e3a5f] shadow-sm"
+                        : "text-gray-500 hover:text-gray-700"
+                        }`}
                 >
                     Invitaciones ({invitationsToShow.length})
                 </button>
             </div>
 
-            {/* Search */}
-            <div className="relative max-w-sm">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            {/* Search and Filters */}
+            <div className="relative group max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-primary transition-colors" />
                 <Input
                     placeholder="Buscar por nombre o email..."
-                    className="pl-8"
+                    className="pl-10 h-11 bg-white border-gray-100 rounded-xl focus:ring-primary/10 transition-all text-sm font-medium"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
 
-            {/* Content */}
-            <Card>
-                <CardContent className="p-0">
-                    {activeTab === "active" ? (
-                        <div className="rounded-md border">
-                            {/* Header */}
-                            {/* Header */}
-                            <div className="overflow-x-auto">
-                                <div className={`grid gap-4 p-4 font-medium text-sm text-muted-foreground border-b bg-muted/50 min-w-[1000px] ${isSuperAdmin ? 'grid-cols-12' : 'grid-cols-10'}`}>
-                                    <div className="col-span-2">Nombre</div>
-                                    <div className="col-span-2">Email</div>
-                                    <div className="col-span-2">Rol</div>
-                                    <div className="col-span-1">Estado</div>
-                                    {isSuperAdmin && <div className="col-span-2">Invitado por</div>}
-                                    {isSuperAdmin && <div className="col-span-1">Tope</div>}
-                                    <div className="col-span-2 text-right px-4">Acciones</div>
+            {/* Content Container */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden min-h-[400px]">
+                {activeTab === "active" ? (
+                    <>
+                        {/* Mobile View: Cards */}
+                        <div className="lg:hidden divide-y divide-gray-50">
+                            {paginatedUsers.length === 0 ? (
+                                <div className="p-12 text-center">
+                                    <Users size={48} className="mx-auto text-gray-200 mb-4" />
+                                    <p className="text-gray-500 font-bold">No se encontraron usuarios</p>
                                 </div>
-
-                                {/* Rows */}
-                                {filteredUsers.length === 0 ? (
-                                    <div className="p-8 text-center text-muted-foreground">
-                                        No se encontraron usuarios
-                                    </div>
-                                ) : (
-                                    paginatedUsers.map((u) => (
-                                        <div key={u.id} className={`grid gap-4 p-4 items-center border-b last:border-0 hover:bg-muted/5 min-w-[1000px] ${isSuperAdmin ? 'grid-cols-12' : 'grid-cols-10'}`}>
-                                            <div className="col-span-2">
-                                                {editingUserId === u.id ? (
-                                                    <Input
-                                                        value={editForm.name ?? ""}
-                                                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                                                        className="h-8"
-                                                    />
-                                                ) : (
-                                                    <div className="font-medium text-sm">{u.name || "Sin nombre"}</div>
-                                                )}
-                                            </div>
-                                            <div className="col-span-2">
-                                                {editingUserId === u.id ? (
-                                                    <Input
-                                                        value={editForm.email ?? ""}
-                                                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                                                        className="h-8"
-                                                    />
-                                                ) : (
-                                                    <div className="text-xs text-muted-foreground truncate">{u.email}</div>
-                                                )}
-                                            </div>
-                                            <div className="col-span-2">
-                                                <Badge variant="outline" className="capitalize">
-                                                    {u.role.name}
-                                                </Badge>
-                                            </div>
-                                            <div className="col-span-1">
-                                                <Badge variant={u.isActive ? "default" : "destructive"} className={u.isActive ? "bg-green-100 text-green-700 hover:bg-green-100 px-1.5" : "px-1.5"}>
-                                                    {u.isActive ? "Activo" : "Inactivo"}
-                                                </Badge>
-                                            </div>
-
-                                            {isSuperAdmin && (
-                                                <div className="col-span-2 text-xs text-muted-foreground truncate">
-                                                    {u.invitedBy ? (u.invitedBy.name || u.invitedBy.email) : (u.role.name === "SUPERADMIN" ? "-" : "Sistema/Seed")}
+                            ) : (
+                                paginatedUsers.map((u) => (
+                                    <div key={u.id} className="p-4 hover:bg-gray-50/50 transition-colors space-y-4">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1e3a5f] to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                                                    {u.name ? u.name.charAt(0).toUpperCase() : u.email.charAt(0).toUpperCase()}
                                                 </div>
-                                            )}
-
-                                            {isSuperAdmin && (
-                                                <div className="col-span-1">
-                                                    {u.role.name === "ADMINISTRADOR" ? (
-                                                        editingUserId === u.id ? (
-                                                            <Input
-                                                                type="number"
-                                                                value={editForm.invitationLimit ?? 0}
-                                                                onChange={(e) => setEditForm({ ...editForm, invitationLimit: parseInt(e.target.value) || 0 })}
-                                                                className="w-16 h-8"
-                                                            />
-                                                        ) : (
-                                                            <span className="text-sm font-medium">{u.invitationLimit}</span>
-                                                        )
+                                                <div className="min-w-0">
+                                                    {editingUserId === u.id ? (
+                                                        <Input
+                                                            value={editForm.name ?? ""}
+                                                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                                            className="h-8 text-xs font-bold p-1"
+                                                        />
                                                     ) : (
-                                                        <span className="text-xs text-muted-foreground">-</span>
+                                                        <p className="font-bold text-[#1e3a5f] text-sm truncate">{u.name || "Sin nombre"}</p>
                                                     )}
+                                                    <p className="text-[10px] text-gray-400 font-medium truncate">{u.email}</p>
                                                 </div>
-                                            )}
-
-                                            <div className="col-span-2 flex justify-end gap-1 px-2">
+                                            </div>
+                                            <div className="flex gap-1">
                                                 {editingUserId === u.id ? (
                                                     <>
-                                                        <Button
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
-                                                            onClick={() => handleSaveUser(u.id)}
-                                                            disabled={isSaving}
-                                                            title="Guardar"
-                                                        >
-                                                            {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                                                        </Button>
-                                                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingUserId(null)} title="Cancelar">
-                                                            <X size={14} />
-                                                        </Button>
+                                                        <button onClick={() => handleSaveUser(u.id)} disabled={isSaving} className="p-2 text-emerald-600 bg-emerald-50 rounded-lg">
+                                                            {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                                                        </button>
+                                                        <button onClick={() => setEditingUserId(null)} className="p-2 text-red-600 bg-red-50 rounded-lg">
+                                                            <X size={16} />
+                                                        </button>
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <Button size="icon" variant="ghost" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => handleEditUser(u.id)} title="Editar">
-                                                            <Pencil size={14} />
-                                                        </Button>
+                                                        <button onClick={() => handleEditUser(u.id)} className="p-2 text-primary bg-blue-50 rounded-lg">
+                                                            <Pencil size={16} />
+                                                        </button>
                                                         {isSuperAdmin && u.role.name !== "SUPERADMIN" && (
-                                                            <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleDeleteUser(u.id)} title="Eliminar">
-                                                                <Trash2 size={14} />
-                                                            </Button>
+                                                            <button onClick={() => handleDeleteUser(u.id)} className="p-2 text-red-400 bg-red-50 rounded-lg">
+                                                                <Trash2 size={16} />
+                                                            </button>
                                                         )}
                                                     </>
                                                 )}
                                             </div>
                                         </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="rounded-md border">
-                            {/* Header */}
-                            <div className="grid grid-cols-12 gap-4 p-4 font-medium text-sm text-muted-foreground border-b bg-muted/50">
-                                <div className="col-span-4">Email</div>
-                                <div className="col-span-2">Rol</div>
-                                <div className="col-span-2">Estado</div>
-                                <div className="col-span-2">Invitado por</div>
-                                <div className="col-span-2">Acciones</div>
-                            </div>
 
-                            {/* Rows */}
-                            {invitationsToShow.length === 0 ? (
-                                <div className="p-8 text-center text-muted-foreground">
-                                    No hay invitaciones pendientes
-                                </div>
-                            ) : (
-                                paginatedInvitations.map((inv) => (
-                                    <div key={inv.id} className="grid grid-cols-12 gap-4 p-4 items-center border-b last:border-0">
-                                        <div className="col-span-4 font-medium text-sm">{inv.email}</div>
-                                        <div className="col-span-2">
-                                            <Badge variant="outline">{inv.role.name}</Badge>
-                                        </div>
-                                        <div className="col-span-2">
-                                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${inv.status === "PENDING" ? "bg-yellow-100 text-yellow-800" :
-                                                inv.status === "ACCEPTED" ? "bg-green-100 text-green-800" :
-                                                    "bg-red-100 text-red-800"
-                                                }`}>
-                                                {inv.status === "PENDING" ? "Pendiente" : inv.status === "ACCEPTED" ? "Activa" : "Expirada"}
-                                            </span>
-                                        </div>
-                                        <div className="col-span-2 text-sm text-muted-foreground">
-                                            {inv.inviter?.name || inv.inviter?.email || "-"}
-                                        </div>
-                                        <div className="col-span-2">
-                                            {inv.status === "PENDING" && (
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                    onClick={() => handleDeleteInvitation(inv.id)}
-                                                >
-                                                    <Trash2 size={14} className="mr-1" /> Cancelar
-                                                </Button>
+                                        <div className="grid grid-cols-2 gap-3 pb-2">
+                                            <div className="space-y-1">
+                                                <span className="text-[9px] font-bold text-gray-400 uppercase block">Rol</span>
+                                                <Badge variant="outline" className="text-[10px] py-0 h-5 border-blue-100 text-blue-700 bg-blue-50/50">{u.role.name}</Badge>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <span className="text-[9px] font-bold text-gray-400 uppercase block">Estado</span>
+                                                <Badge variant={u.isActive ? "default" : "destructive"} className={`text-[10px] py-0 h-5 ${u.isActive ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' : ''}`}>
+                                                    {u.isActive ? "Activo" : "Inactivo"}
+                                                </Badge>
+                                            </div>
+                                            {isSuperAdmin && (
+                                                <>
+                                                    <div className="space-y-1">
+                                                        <span className="text-[9px] font-bold text-gray-400 uppercase block">Invitado por</span>
+                                                        <span className="text-[10px] font-bold text-gray-600 truncate block">
+                                                            {u.invitedBy ? u.invitedBy.email.split('@')[0] : "-"}
+                                                        </span>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <span className="text-[9px] font-bold text-gray-400 uppercase block">Tope Invit.</span>
+                                                        {editingUserId === u.id ? (
+                                                            <input
+                                                                type="number"
+                                                                value={editForm.invitationLimit}
+                                                                onChange={(e) => setEditForm({ ...editForm, invitationLimit: parseInt(e.target.value) || 0 })}
+                                                                className="w-12 text-[10px] font-bold border rounded outline-none"
+                                                            />
+                                                        ) : (
+                                                            <span className="text-[10px] font-black text-[#1e3a5f]">{u.invitationLimit}</span>
+                                                        )}
+                                                    </div>
+                                                </>
                                             )}
                                         </div>
                                     </div>
                                 ))
                             )}
                         </div>
-                    )}
 
-                    {/* Pagination */}
-                    {totalPages > 1 && (
-                        <div className="flex items-center justify-between p-4 border-t bg-muted/20">
-                            <div className="text-xs text-muted-foreground">
-                                Mostrando {startIndex + 1} a {Math.min(startIndex + ITEMS_PER_PAGE, totalItems)} de {totalItems} registros
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                                    disabled={currentPage === 1}
-                                >
-                                    <ChevronLeft size={16} />
-                                </Button>
-                                <div className="text-xs font-medium px-2">
-                                    Página {currentPage} de {totalPages}
-                                </div>
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                                    disabled={currentPage === totalPages}
-                                >
-                                    <ChevronRight size={16} />
-                                </Button>
-                            </div>
+                        {/* Desktop View: Table */}
+                        <div className="hidden lg:block overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50/50">
+                                    <tr className="border-b border-gray-100">
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Usuario</th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Rol</th>
+                                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Estado</th>
+                                        {isSuperAdmin && <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Invitado por</th>}
+                                        {isSuperAdmin && <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Tope</th>}
+                                        <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {paginatedUsers.map((u) => (
+                                        <tr key={u.id} className="hover:bg-blue-50/10 transition-colors group">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#1e3a5f] to-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-sm">
+                                                        {u.name ? u.name.charAt(0).toUpperCase() : u.email.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        {editingUserId === u.id ? (
+                                                            <div className="space-y-1">
+                                                                <Input
+                                                                    value={editForm.name ?? ""}
+                                                                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                                                    className="h-8 text-xs font-bold w-48"
+                                                                />
+                                                                <Input
+                                                                    value={editForm.email ?? ""}
+                                                                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                                                                    className="h-8 text-[10px] w-48"
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                <p className="font-bold text-[#1e3a5f] text-sm group-hover:text-primary transition-colors">{u.name || "Sin nombre"}</p>
+                                                                <p className="text-[10px] text-gray-400 font-medium">{u.email}</p>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <Badge variant="outline" className="capitalize text-[10px] font-bold border-blue-100 text-[#1e3a5f] bg-blue-50/30">
+                                                    {u.role.name}
+                                                </Badge>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <Badge variant={u.isActive ? "default" : "destructive"} className={`text-[10px] font-bold ${u.isActive ? "bg-emerald-500 hover:bg-emerald-600" : ""}`}>
+                                                    {u.isActive ? "Activo" : "Inactivo"}
+                                                </Badge>
+                                            </td>
+                                            {isSuperAdmin && (
+                                                <td className="px-6 py-4">
+                                                    <span className="text-[10px] font-medium text-gray-500">
+                                                        {u.invitedBy ? (u.invitedBy.name || u.invitedBy.email) : (u.role.name === "SUPERADMIN" ? "-" : "Autoregistro")}
+                                                    </span>
+                                                </td>
+                                            )}
+                                            {isSuperAdmin && (
+                                                <td className="px-6 py-4 text-center">
+                                                    {u.role.name === "ADMINISTRADOR" ? (
+                                                        editingUserId === u.id ? (
+                                                            <Input
+                                                                type="number"
+                                                                value={editForm.invitationLimit ?? 0}
+                                                                onChange={(e) => setEditForm({ ...editForm, invitationLimit: parseInt(e.target.value) || 0 })}
+                                                                className="w-16 h-8 text-center text-xs font-bold border-gray-200 mx-auto"
+                                                            />
+                                                        ) : (
+                                                            <span className="text-sm font-black text-[#1e3a5f]">{u.invitationLimit}</span>
+                                                        )
+                                                    ) : (
+                                                        <span className="text-gray-300">-</span>
+                                                    )}
+                                                </td>
+                                            )}
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex justify-end gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
+                                                    {editingUserId === u.id ? (
+                                                        <>
+                                                            <button onClick={() => handleSaveUser(u.id)} disabled={isSaving} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl">
+                                                                {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                                                            </button>
+                                                            <button onClick={() => setEditingUserId(null)} className="p-2 text-red-600 hover:bg-red-50 rounded-xl">
+                                                                <X size={16} />
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <button onClick={() => handleEditUser(u.id)} className="p-2 text-primary hover:bg-blue-50 rounded-xl">
+                                                                <Pencil size={16} />
+                                                            </button>
+                                                            {isSuperAdmin && u.role.name !== "SUPERADMIN" && (
+                                                                <button onClick={() => handleDeleteUser(u.id)} className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl">
+                                                                    <Trash2 size={16} />
+                                                                </button>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
-                    )}
-                </CardContent>
-            </Card>
+                    </>
+                ) : (
+                    <>
+                        {/* Mobile View: Invitation Cards */}
+                        <div className="lg:hidden divide-y divide-gray-50">
+                            {paginatedInvitations.length === 0 ? (
+                                <div className="p-12 text-center">
+                                    <Plus size={48} className="mx-auto text-gray-200 mb-4" />
+                                    <p className="text-gray-500 font-bold">Sin invitaciones pendientes</p>
+                                </div>
+                            ) : (
+                                paginatedInvitations.map((inv) => (
+                                    <div key={inv.id} className="p-4 hover:bg-gray-50/50 transition-colors space-y-3">
+                                        <div className="flex justify-between items-start">
+                                            <div className="min-w-0 flex-1">
+                                                <p className="font-bold text-[#1e3a5f] text-sm truncate">{inv.email}</p>
+                                                <Badge variant="outline" className="mt-1 text-[9px] h-4 leading-none border-blue-100 text-blue-600">{inv.role.name}</Badge>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-2">
+                                                <Badge className={`text-[10px] py-0 h-5 ${inv.status === 'PENDING' ? 'bg-amber-100 text-amber-700 hover:bg-amber-100' : 'bg-gray-100 text-gray-700 hover:bg-gray-100'}`}>
+                                                    {inv.status === 'PENDING' ? 'Pendiente' : 'Expirada'}
+                                                </Badge>
+                                                {inv.status === 'PENDING' && (
+                                                    <button onClick={() => handleDeleteInvitation(inv.id)} className="p-2 text-red-400 bg-red-50/50 rounded-lg">
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="pt-2 border-t border-gray-50 flex justify-between items-center">
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter text-left">Por: {inv.inviter?.name || inv.inviter?.email.split('@')[0]}</span>
+                                            <span className="text-[9px] font-medium text-gray-400">Hace {Math.floor((Date.now() - new Date(inv.createdAt).getTime()) / (1000 * 60 * 60 * 24))} días</span>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        {/* Desktop View: Invitations Table */}
+                        <div className="hidden lg:block overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50/50">
+                                    <tr className="border-b border-gray-100">
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Email Invitado</th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Rol Asignado</th>
+                                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Estado</th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Invitado por</th>
+                                        <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {paginatedInvitations.map((inv) => (
+                                        <tr key={inv.id} className="hover:bg-amber-50/10 transition-colors group">
+                                            <td className="px-6 py-4">
+                                                <p className="font-bold text-[#1e3a5f] text-sm">{inv.email}</p>
+                                                <p className="text-[9px] text-gray-400 font-medium">Enviada el {new Date(inv.createdAt).toLocaleDateString()}</p>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <Badge variant="outline" className="text-[10px] font-bold border-blue-100 text-[#1e3a5f]">
+                                                    {inv.role.name}
+                                                </Badge>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <Badge className={`text-[10px] font-bold ${inv.status === 'PENDING' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-gray-400'}`}>
+                                                    {inv.status === 'PENDING' ? 'Pendiente' : 'Expirada'}
+                                                </Badge>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="text-[10px] font-medium text-gray-500">
+                                                    {inv.inviter?.name || inv.inviter?.email}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                {inv.status === "PENDING" && (
+                                                    <button
+                                                        onClick={() => handleDeleteInvitation(inv.id)}
+                                                        className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all"
+                                                        title="Cancelar invitación"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
+                )}
+
+                {/* Unified Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-gray-50 bg-gray-50/30 gap-4">
+                        <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                            Mostrando {startIndex + 1} - {Math.min(startIndex + ITEMS_PER_PAGE, totalItems)} de {totalItems}
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9 px-3 rounded-xl border-gray-200 text-[#1e3a5f] font-bold hover:bg-white disabled:opacity-40"
+                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                disabled={currentPage === 1}
+                            >
+                                <ChevronLeft size={16} className="mr-1" /> Anterior
+                            </Button>
+                            <div className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-black text-[#1e3a5f] min-w-[32px] text-center shadow-sm">
+                                {currentPage}
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9 px-3 rounded-xl border-gray-200 text-[#1e3a5f] font-bold hover:bg-white disabled:opacity-40"
+                                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                disabled={currentPage === totalPages}
+                            >
+                                Siguiente <ChevronRight size={16} className="ml-1" />
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* Invite Modal */}
             <InviteUserModal

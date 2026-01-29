@@ -175,7 +175,7 @@ Total Pagado: $${receipt.balance.totalPaid.toLocaleString()}
 Saldo Pendiente: $${receipt.balance.remainingBalance.toLocaleString()}
 
 ━━━━━━━━━━━━━━━━
-_Educamos con Valores_
+*EDUTEC* - _Educamos con Valores_
     `.trim();
 
     return encodeURIComponent(message);
@@ -186,7 +186,7 @@ _Educamos con Valores_
     const phone = phoneNumber || receipt.student.phone;
     const cleanPhone = phone.replace(/\D/g, "");
     const formattedPhone = cleanPhone.startsWith("57") ? cleanPhone : `57${cleanPhone}`;
-    
+
     return `https://wa.me/${formattedPhone}?text=${message}`;
   }
 

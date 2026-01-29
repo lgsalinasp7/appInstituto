@@ -12,7 +12,7 @@ interface ReceiptData {
 }
 
 export function generateReceiptMessage(data: ReceiptData): string {
-  const institutionName = data.institutionName || "Instituto de Formación Técnica";
+  const institutionName = data.institutionName || "EDUTEC";
   const formattedDate = new Date(data.paymentDate).toLocaleDateString("es-CO", {
     weekday: "long",
     year: "numeric",
@@ -63,7 +63,7 @@ export function generateReceiptMessage(data: ReceiptData): string {
 Este es un comprobante digital válido.
 ━━━━━━━━━━━━━━━━━━━━
 
-_${institutionName}_
+_*${institutionName}*_
 _¡Educamos con Valores!_ 🙌`;
 
   return message;
@@ -71,15 +71,15 @@ _¡Educamos con Valores!_ 🙌`;
 
 export function generateWhatsAppUrl(phone: string, message: string, useWebWhatsApp: boolean = false): string {
   const cleanPhone = phone.replace(/\D/g, "");
-  
+
   const phoneWithCountry = cleanPhone.startsWith("57") ? cleanPhone : `57${cleanPhone}`;
-  
+
   const encodedMessage = encodeURIComponent(message.trim());
-  
+
   if (useWebWhatsApp) {
     return `https://web.whatsapp.com/send?phone=${phoneWithCountry}&text=${encodedMessage}`;
   }
-  
+
   return `https://api.whatsapp.com/send?phone=${phoneWithCountry}&text=${encodedMessage}`;
 }
 
@@ -142,7 +142,7 @@ interface ReminderData {
 }
 
 export function generatePaymentReminderMessage(data: ReminderData): string {
-  const institutionName = data.institutionName || "Instituto de Formación Técnica";
+  const institutionName = data.institutionName || "EDUTEC";
   const formattedDate = new Date(data.dueDate).toLocaleDateString("es-CO", {
     weekday: "long",
     year: "numeric",

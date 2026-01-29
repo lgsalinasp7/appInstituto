@@ -93,110 +93,118 @@ export default function ReportesPage() {
     }, [fetchData]);
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
             <DashboardHeader
-                title="Reportes Detallados"
-                subtitle="Analiza el rendimiento financiero y operativo"
+                title="Reportes"
+                subtitle="Rendimiento financiero"
             >
-                <div className="flex gap-3">
+                <div className="flex gap-2 sm:gap-3">
                     <button
                         onClick={() => window.open("/api/reports/payments/export", "_blank")}
-                        className="flex items-center justify-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl font-bold hover:bg-emerald-600 shadow-lg shadow-emerald-200 transition-all"
+                        className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-emerald-500 text-white rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm hover:bg-emerald-600 shadow-lg shadow-emerald-200 transition-all"
                     >
-                        <Download size={20} />
-                        Exportar Excel
+                        <Download size={16} className="sm:w-5 sm:h-5" />
+                        <span className="hidden sm:inline">Exportar</span> Excel
                     </button>
-                    <button className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 text-[#1e3a5f] rounded-xl font-bold hover:bg-gray-50 transition-all">
-                        <Download size={20} />
-                        Exportar PDF
+                    <button className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-white border border-gray-200 text-[#1e3a5f] rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm hover:bg-gray-50 transition-all">
+                        <Download size={16} className="sm:w-5 sm:h-5" />
+                        PDF
                     </button>
                 </div>
             </DashboardHeader>
 
-            {/* Tabs */}
-            <div className="flex p-1 bg-gray-100 rounded-xl w-full md:w-fit">
+            {/* Tabs - Responsive */}
+            <div className="flex p-1 bg-gray-100 rounded-xl w-full overflow-x-auto">
                 <button
                     onClick={() => setActiveTab("financiero")}
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === "financiero"
+                    className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all whitespace-nowrap flex-1 sm:flex-none ${activeTab === "financiero"
                         ? "bg-white text-[#1e3a5f] shadow-sm"
                         : "text-gray-500 hover:text-gray-700"
                         }`}
                 >
-                    <TrendingUp size={18} />
+                    <TrendingUp size={16} className="sm:w-[18px] sm:h-[18px]" />
                     Financiero
                 </button>
                 <button
                     onClick={() => setActiveTab("cartera")}
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === "cartera"
+                    className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all whitespace-nowrap flex-1 sm:flex-none ${activeTab === "cartera"
                         ? "bg-white text-[#1e3a5f] shadow-sm"
                         : "text-gray-500 hover:text-gray-700"
                         }`}
                 >
-                    <PieChart size={18} />
-                    Cartera (Edades)
+                    <PieChart size={16} className="sm:w-[18px] sm:h-[18px]" />
+                    Cartera
                 </button>
                 <button
                     onClick={() => setActiveTab("asesores")}
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === "asesores"
+                    className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all whitespace-nowrap flex-1 sm:flex-none ${activeTab === "asesores"
                         ? "bg-white text-[#1e3a5f] shadow-sm"
                         : "text-gray-500 hover:text-gray-700"
                         }`}
                 >
-                    <Users size={18} />
+                    <Users size={16} className="sm:w-[18px] sm:h-[18px]" />
                     Asesores
                 </button>
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 min-h-[400px]">
+            <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4 lg:p-6 min-h-[300px] sm:min-h-[400px]">
                 {loading ? (
                     <div className="flex items-center justify-center h-64 text-gray-400">Cargando datos...</div>
                 ) : (
                     <>
                         {activeTab === "financiero" && financialData && (
-                            <div className="space-y-8 animate-fade-in-up">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-100">
-                                        <p className="text-sm font-bold text-emerald-600 uppercase">Total Recaudado</p>
-                                        <p className="text-2xl font-black text-emerald-900 mt-1">
+                            <div className="space-y-6 sm:space-y-8 animate-fade-in-up">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+                                    <div className="p-4 sm:p-6 bg-emerald-50 rounded-2xl border border-emerald-100 shadow-sm shadow-emerald-100/20">
+                                        <p className="text-xs sm:text-sm font-bold text-emerald-600 uppercase tracking-wider">Total Recaudado</p>
+                                        <p className="text-xl sm:text-2xl lg:text-3xl font-black text-emerald-900 mt-1 sm:mt-2">
                                             ${financialData.totalRevenue.toLocaleString()}
                                         </p>
                                     </div>
-                                    <div className="p-6 bg-blue-50 rounded-2xl border border-blue-100">
-                                        <p className="text-sm font-bold text-blue-600 uppercase">Promedio Pago</p>
-                                        <p className="text-2xl font-black text-blue-900 mt-1">
+                                    <div className="p-4 sm:p-6 bg-blue-50 rounded-2xl border border-blue-100 shadow-sm shadow-blue-100/20">
+                                        <p className="text-xs sm:text-sm font-bold text-blue-600 uppercase tracking-wider">Promedio Pago</p>
+                                        <p className="text-xl sm:text-2xl lg:text-3xl font-black text-blue-900 mt-1 sm:mt-2">
                                             ${Math.round(financialData.averagePayment).toLocaleString()}
                                         </p>
                                     </div>
-                                    <div className="p-6 bg-orange-50 rounded-2xl border border-orange-100">
-                                        <p className="text-sm font-bold text-orange-600 uppercase">Pendiente por Cobrar</p>
-                                        <p className="text-2xl font-black text-orange-900 mt-1">
+                                    <div className="p-4 sm:p-6 bg-orange-50 rounded-2xl border border-orange-100 shadow-sm shadow-orange-100/20">
+                                        <p className="text-xs sm:text-sm font-bold text-orange-600 uppercase tracking-wider">Pendiente</p>
+                                        <p className="text-xl sm:text-2xl lg:text-3xl font-black text-orange-900 mt-1 sm:mt-2">
                                             ${financialData.pendingAmount.toLocaleString()}
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="h-80 w-full">
-                                    <h3 className="font-bold text-[#1e3a5f] mb-4">Ingresos por Día</h3>
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={financialData.dailyRevenue || []}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                            <XAxis dataKey="date" axisLine={false} tickLine={false} fontSize={12} />
-                                            <YAxis axisLine={false} tickLine={false} fontSize={12} tickFormatter={(v: number) => `$${(v || 0) / 1000}k`} />
-                                            <Tooltip
-                                                contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
-                                                formatter={(value) => [`$${(Number(value) || 0).toLocaleString()}`, "Monto"]}
-                                            />
-                                            <Bar dataKey="amount" fill="#1e3a5f" radius={[4, 4, 0, 0]} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
+                                <div className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-100 shadow-sm">
+                                    <h3 className="font-bold text-sm sm:text-base text-[#1e3a5f] mb-4 sm:mb-6 flex items-center gap-2">
+                                        <TrendingUp size={18} className="text-primary" />
+                                        Ingresos por Día
+                                    </h3>
+                                    <div className="h-52 sm:h-64 lg:h-80 w-full">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={financialData.dailyRevenue || []}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                <XAxis dataKey="date" axisLine={false} tickLine={false} fontSize={12} />
+                                                <YAxis axisLine={false} tickLine={false} fontSize={12} tickFormatter={(v: number) => `$${(v || 0) / 1000}k`} />
+                                                <Tooltip
+                                                    contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
+                                                    formatter={(value) => [`$${(Number(value) || 0).toLocaleString()}`, "Monto"]}
+                                                />
+                                                <Bar dataKey="amount" fill="#1e3a5f" radius={[4, 4, 0, 0]} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
                                 </div>
                             </div>
                         )}
 
                         {activeTab === "cartera" && agingData && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-fade-in-up">
-                                <div>
-                                    <h3 className="font-bold text-[#1e3a5f] mb-6">Distribución de Cartera por Edades</h3>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 animate-fade-in-up">
+                                <div className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-100 shadow-sm">
+                                    <h3 className="font-bold text-[#1e3a5f] mb-6 flex items-center gap-2">
+                                        <PieChart size={18} className="text-primary" />
+                                        Distribución de Cartera
+                                    </h3>
                                     <div className="h-64">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <RePieChart>
@@ -214,36 +222,46 @@ export default function ReportesPage() {
                                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                     ))}
                                                 </Pie>
-                                                <Tooltip formatter={(value) => [`$${(Number(value) || 0).toLocaleString()}`, "Deuda"]} />
+                                                <Tooltip
+                                                    contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
+                                                    formatter={(value) => [`$${(Number(value) || 0).toLocaleString()}`, "Deuda"]}
+                                                />
                                             </RePieChart>
                                         </ResponsiveContainer>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4 mt-6">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
                                         {agingData.brackets.map((b: AgingBracket, i: number) => (
-                                            <div key={b.label} className="flex items-center gap-2">
-                                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i] }}></div>
-                                                <span className="text-sm font-medium text-gray-600">{b.label}:</span>
-                                                <span className="text-sm font-bold text-[#1e3a5f]">${b.amount.toLocaleString()}</span>
+                                            <div key={b.label} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 border border-transparent hover:border-gray-200 transition-all">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i] }}></div>
+                                                    <span className="text-xs font-bold text-gray-500 uppercase tracking-tight">{b.label}</span>
+                                                </div>
+                                                <span className="text-xs font-black text-[#1e3a5f]">${b.amount.toLocaleString()}</span>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
 
-                                <div className="space-y-4">
-                                    <div className="p-6 bg-red-50 rounded-2xl border border-red-100 flex items-center justify-between">
+                                <div className="space-y-4 lg:space-y-6">
+                                    <div className="p-6 bg-red-50 rounded-2xl border border-red-100 shadow-sm shadow-red-100/20 flex items-center justify-between group">
                                         <div>
-                                            <p className="text-sm font-bold text-red-600 uppercase">Cartera Total en Mora</p>
-                                            <p className="text-3xl font-black text-red-900 mt-1">${agingData.totalOverdue.toLocaleString()}</p>
+                                            <p className="text-xs sm:text-sm font-bold text-red-600 uppercase tracking-wider">Cartera Total en Mora</p>
+                                            <p className="text-2xl sm:text-3xl font-black text-red-900 mt-1">${agingData.totalOverdue.toLocaleString()}</p>
                                         </div>
-                                        <AlertCircle size={40} className="text-red-500 opacity-20" />
+                                        <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                            <AlertCircle size={28} className="text-red-500" />
+                                        </div>
                                     </div>
 
-                                    <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                                        <h4 className="font-bold text-[#1e3a5f] mb-3 text-sm uppercase">Recomendación</h4>
-                                        <p className="text-sm text-gray-600 leading-relaxed">
+                                    <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                                        <h4 className="font-bold text-[#1e3a5f] mb-3 text-xs uppercase tracking-widest flex items-center gap-2">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                                            Recomendación Estratégica
+                                        </h4>
+                                        <p className="text-sm text-gray-600 leading-relaxed font-medium">
                                             El {Math.round((agingData.brackets[3].amount / agingData.totalOverdue) * 100) || 0}% de la cartera tiene más de 90 días.
-                                            Se recomienda iniciar procesos de cobro jurídico para estos casos.
+                                            Se recomienda priorizar procesos de cobro jurídico para mitigar riesgos financieros inmediatos.
                                         </p>
                                     </div>
                                 </div>
@@ -251,35 +269,77 @@ export default function ReportesPage() {
                         )}
 
                         {activeTab === "asesores" && (
-                            <div className="space-y-6 animate-fade-in-up">
-                                <h3 className="font-bold text-[#1e3a5f]">Rendimiento por Asesor</h3>
+                            <div className="space-y-4 sm:space-y-6 animate-fade-in-up">
+                                {/* Desktop/Internal Header removed for cleaner look, like Recaudos */}
                                 {advisorsData.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-12 text-gray-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                                        <Users size={48} className="mb-4 opacity-20" />
-                                        <p className="text-lg font-medium">No hay asesores registrados</p>
-                                        <p className="text-sm">Los usuarios con rol de Administrador o Ventas aparecerán aquí.</p>
+                                    <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                        <Users size={48} className="mb-4 text-gray-300 opacity-50" />
+                                        <p className="text-gray-500 font-bold text-lg">No hay asesores registrados</p>
+                                        <p className="text-sm text-gray-400 mt-1">Los usuarios con rol de Administrador o Ventas aparecerán aquí.</p>
                                     </div>
                                 ) : (
                                     <>
-                                        <div className="overflow-x-auto">
+                                        {/* Mobile View: Cards */}
+                                        <div className="md:hidden divide-y divide-gray-100 -mx-3 sm:-mx-4">
+                                            {advisorsData
+                                                .slice((currentPage - 1) * ADVISORS_PER_PAGE, currentPage * ADVISORS_PER_PAGE)
+                                                .map((advisor) => (
+                                                    <div key={advisor.advisorId} className="p-4 hover:bg-gray-50/50 transition-colors">
+                                                        <div className="flex items-center gap-3 mb-4">
+                                                            <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm uppercase flex-shrink-0">
+                                                                {advisor.advisorName.charAt(0)}
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <p className="font-bold text-[#1e3a5f] text-sm truncate">{advisor.advisorName}</p>
+                                                                <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Asesor Comercial</p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="grid grid-cols-2 gap-4 mb-4">
+                                                            <div>
+                                                                <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Matrículas</span>
+                                                                <span className="text-sm font-bold text-gray-700">{advisor.totalStudents} estudiantes</span>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Eficiencia</span>
+                                                                <span className="text-sm font-bold text-emerald-600">{advisor.collectionRate}%</span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex justify-between items-end pt-3 border-t border-gray-50">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[10px] font-bold text-gray-400 uppercase mb-0.5">Recaudo Total</span>
+                                                                <span className="text-lg font-black text-[#1e3a5f]">${advisor.totalCollected.toLocaleString()}</span>
+                                                            </div>
+                                                            <div className="flex flex-col items-end">
+                                                                <span className="text-[10px] font-bold text-gray-400 uppercase mb-0.5">Este Mes</span>
+                                                                <span className="text-sm font-bold text-emerald-600">${advisor.revenueThisMonth.toLocaleString()}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                        </div>
+
+                                        {/* Desktop View: Table */}
+                                        <div className="hidden md:block overflow-x-auto">
                                             <table className="w-full">
-                                                <thead className="bg-[#f8fafc]">
+                                                <thead className="bg-gray-50/50">
                                                     <tr>
-                                                        <th className="px-6 py-4 text-left text-xs font-bold text-[#64748b] uppercase">Asesor</th>
-                                                        <th className="px-6 py-4 text-center text-xs font-bold text-[#64748b] uppercase">Matrículas</th>
-                                                        <th className="px-6 py-4 text-right text-xs font-bold text-[#64748b] uppercase">Recaudo Total</th>
-                                                        <th className="px-6 py-4 text-center text-xs font-bold text-[#64748b] uppercase">Eficiencia</th>
-                                                        <th className="px-6 py-4 text-right text-xs font-bold text-[#64748b] uppercase">Recaudo Mes</th>
+                                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Asesor</th>
+                                                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Matrículas</th>
+                                                        <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Recaudo Total</th>
+                                                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Eficiencia</th>
+                                                        <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">Recaudo Mes</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody className="divide-y divide-gray-100">
+                                                <tbody className="divide-y divide-gray-50">
                                                     {advisorsData
                                                         .slice((currentPage - 1) * ADVISORS_PER_PAGE, currentPage * ADVISORS_PER_PAGE)
                                                         .map((advisor) => (
-                                                            <tr key={advisor.advisorId} className="hover:bg-gray-50/50 transition-colors">
+                                                            <tr key={advisor.advisorId} className="hover:bg-blue-50/30 transition-colors group">
                                                                 <td className="px-6 py-4">
                                                                     <div className="flex items-center gap-3">
-                                                                        <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs uppercase">
+                                                                        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm uppercase">
                                                                             {advisor.advisorName.charAt(0)}
                                                                         </div>
                                                                         <span className="text-sm font-bold text-[#1e3a5f]">{advisor.advisorName}</span>
@@ -293,9 +353,9 @@ export default function ReportesPage() {
                                                                 </td>
                                                                 <td className="px-6 py-4">
                                                                     <div className="flex items-center justify-center gap-2">
-                                                                        <div className="flex-1 max-w-[60px] h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                                        <div className="flex-1 max-w-[80px] h-2 bg-gray-100 rounded-full overflow-hidden">
                                                                             <div
-                                                                                className="h-full bg-emerald-500"
+                                                                                className="h-full bg-emerald-500 rounded-full"
                                                                                 style={{ width: `${advisor.collectionRate}%` }}
                                                                             ></div>
                                                                         </div>

@@ -217,19 +217,19 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
     };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8">
+        <div className="space-y-4 sm:space-y-6 lg:space-y-8">
             {/* Buscador y Formulario Principal */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-1 flex flex-col gap-6">
-                    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                        <h3 className="text-sm font-bold text-primary uppercase mb-4 flex items-center gap-2">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+                <div className="lg:col-span-1 flex flex-col gap-4 sm:gap-6">
+                    <div className="bg-white p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm">
+                        <h3 className="text-xs sm:text-sm font-bold text-primary uppercase mb-3 sm:mb-4 flex items-center gap-2">
                             <Search size={16} /> Buscar Estudiante
                         </h3>
                         <div className="space-y-3">
                             <input
                                 type="text"
                                 placeholder="Documento o nombre..."
-                                className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-primary transition-all font-medium"
+                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-primary transition-all font-medium text-sm"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 onKeyDown={(e) => e.key === "Enter" && searchStudent()}
@@ -237,7 +237,7 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
                             <button
                                 onClick={() => searchStudent()}
                                 disabled={loading}
-                                className="w-full py-3 bg-primary text-white font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
+                                className="w-full py-2.5 sm:py-3 bg-primary text-white font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 text-sm"
                             >
                                 {loading ? "Buscando..." : "Buscar"}
                             </button>
@@ -245,20 +245,20 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
                     </div>
 
                     {student && (
-                        <div className="bg-primary text-white p-6 rounded-2xl shadow-xl animate-fade-in-up">
-                            <div className="flex items-center gap-4 mb-6">
-                                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-xl font-bold">
+                        <div className="bg-primary text-white p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-xl animate-fade-in-up">
+                            <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-full flex items-center justify-center text-lg sm:text-xl font-bold flex-shrink-0">
                                     {student.fullName.charAt(0)}
                                 </div>
-                                <div>
-                                    <h3 className="font-bold leading-tight">{student.fullName}</h3>
+                                <div className="min-w-0">
+                                    <h3 className="font-bold leading-tight text-sm sm:text-base truncate">{student.fullName}</h3>
                                     <p className="text-blue-200 text-xs">{student.documentNumber}</p>
                                 </div>
                             </div>
-                            <div className="space-y-2 text-sm border-t border-white/10 pt-4">
-                                <div className="flex justify-between">
+                            <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm border-t border-white/10 pt-3 sm:pt-4">
+                                <div className="flex justify-between gap-2">
                                     <span className="opacity-70">Programa</span>
-                                    <span className="font-medium text-right">{student.program.name}</span>
+                                    <span className="font-medium text-right truncate max-w-[120px] sm:max-w-none">{student.program.name}</span>
                                 </div>
                                 {paymentInfo && (
                                     <>
@@ -267,12 +267,8 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
                                             <span className="font-bold text-emerald-300">${paymentInfo.moduleValue.toLocaleString()}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="opacity-70">Módulo Actual</span>
+                                            <span className="opacity-70">Módulo</span>
                                             <span className="font-medium">{paymentInfo.currentModule} / {paymentInfo.modulesCount}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="opacity-70">Valor Módulo</span>
-                                            <span className="font-bold text-yellow-300">${paymentInfo.minimumPayment.toLocaleString()}</span>
                                         </div>
                                     </>
                                 )}
@@ -286,58 +282,56 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
                 </div>
 
                 <div className="lg:col-span-2">
-                    <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-4 opacity-5">
+                    <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm sm:shadow-xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-4 opacity-5 hidden sm:block">
                             <DollarSign size={120} />
                         </div>
 
-                        <h3 className="text-xl font-bold text-primary mb-6 flex items-center gap-2">
+                        <h3 className="text-base sm:text-lg lg:text-xl font-bold text-primary mb-4 sm:mb-6 flex items-center gap-2">
                             Registrar Recaudo
                         </h3>
 
                         {msg && (
-                            <div className="mb-6 space-y-4 animate-bounce-in">
-                                <div className={`p-4 rounded-xl flex items-center gap-3 ${msg.type === "success" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-red-50 text-red-700 border border-red-100"}`}>
-                                    {msg.type === "success" ? <CheckCircle size={22} /> : <AlertCircle size={22} />}
-                                    <span className="font-bold">{msg.text}</span>
+                            <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4 animate-bounce-in">
+                                <div className={`p-3 sm:p-4 rounded-xl flex items-center gap-2 sm:gap-3 ${msg.type === "success" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-red-50 text-red-700 border border-red-100"}`}>
+                                    {msg.type === "success" ? <CheckCircle size={18} className="flex-shrink-0" /> : <AlertCircle size={18} className="flex-shrink-0" />}
+                                    <span className="font-bold text-sm sm:text-base">{msg.text}</span>
                                 </div>
                                 {msg.type === "success" && (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-2 gap-2 sm:gap-4">
                                         <button
                                             onClick={sendWhatsApp}
-                                            className="flex items-center justify-center gap-3 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg transition-all transform hover:scale-[1.02]"
+                                            className="flex items-center justify-center gap-1.5 sm:gap-3 py-3 sm:py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg transition-all transform hover:scale-[1.02] text-xs sm:text-base"
                                         >
-                                            <MessageSquare size={20} />
-                                            Enviar WhatsApp
+                                            <MessageSquare size={16} className="sm:w-5 sm:h-5" />
+                                            <span className="hidden xs:inline">Enviar</span> WhatsApp
                                         </button>
                                         <button
                                             onClick={() => {
                                                 if (msg.receiptId) {
-                                                    // Buscamos si msg.receiptId es el ID o el Numero. 
-                                                    // Preferimos el ID del objeto devuelto en result.data.id
                                                     window.open(`/api/receipts/${msg.receiptId}/download`, "_blank");
                                                 }
                                             }}
-                                            className="flex items-center justify-center gap-3 py-4 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl shadow-lg transition-all transform hover:scale-[1.02]"
+                                            className="flex items-center justify-center gap-1.5 sm:gap-3 py-3 sm:py-4 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl shadow-lg transition-all transform hover:scale-[1.02] text-xs sm:text-base"
                                         >
-                                            <FileText size={20} />
-                                            Descargar PDF
+                                            <FileText size={16} className="sm:w-5 sm:h-5" />
+                                            <span className="hidden xs:inline">Descargar</span> PDF
                                         </button>
                                     </div>
                                 )}
                             </div>
                         )}
 
-                        <form onSubmit={handleRegisterPayment} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <form onSubmit={handleRegisterPayment} className="space-y-4 sm:space-y-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Valor a Recibir *</label>
+                                    <label className="block text-[10px] sm:text-xs font-bold text-gray-400 uppercase mb-1.5 sm:mb-2">Valor a Recibir *</label>
                                     <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 font-bold text-xl">$</span>
+                                        <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-300 font-bold text-lg sm:text-xl">$</span>
                                         <input
                                             type="text"
                                             required
-                                            className="w-full pl-10 pr-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-primary focus:outline-none font-bold text-2xl text-primary transition-all"
+                                            className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-3 sm:py-4 bg-gray-50 border-2 border-gray-100 rounded-xl sm:rounded-2xl focus:border-primary focus:outline-none font-bold text-xl sm:text-2xl text-primary transition-all"
                                             value={formatCurrency(paymentData.amount)}
                                             onChange={e => setPaymentData({ ...paymentData, amount: parseCurrency(e.target.value) })}
                                             onFocus={e => e.target.select()}
@@ -347,9 +341,9 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Medio de Pago</label>
+                                    <label className="block text-[10px] sm:text-xs font-bold text-gray-400 uppercase mb-1.5 sm:mb-2">Medio de Pago</label>
                                     <select
-                                        className="w-full px-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-primary focus:outline-none font-bold text-gray-600"
+                                        className="w-full px-3 sm:px-4 py-3 sm:py-4 bg-gray-50 border-2 border-gray-100 rounded-xl sm:rounded-2xl focus:border-primary focus:outline-none font-bold text-gray-600 text-sm sm:text-base"
                                         value={paymentData.method}
                                         onChange={e => setPaymentData({ ...paymentData, method: e.target.value })}
                                     >
@@ -363,9 +357,9 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Notas / Observaciones</label>
+                                <label className="block text-[10px] sm:text-xs font-bold text-gray-400 uppercase mb-1.5 sm:mb-2">Notas / Observaciones</label>
                                 <textarea
-                                    className="w-full px-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-primary focus:outline-none"
+                                    className="w-full px-3 sm:px-4 py-3 sm:py-4 bg-gray-50 border-2 border-gray-100 rounded-xl sm:rounded-2xl focus:border-primary focus:outline-none text-sm sm:text-base"
                                     rows={2}
                                     placeholder="Ej: Pago cuota 3 ó Abono parcial"
                                     value={paymentData.comments}
@@ -376,10 +370,10 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
                             <button
                                 type="submit"
                                 disabled={loading || !student || paymentData.amount <= 0}
-                                className="w-full py-5 bg-gradient-instituto text-white font-black rounded-2xl shadow-xl hover:shadow-primary/40 transition-all disabled:opacity-30 flex items-center justify-center gap-3 text-lg"
+                                className="w-full py-3.5 sm:py-5 bg-gradient-instituto text-white font-black rounded-xl sm:rounded-2xl shadow-xl hover:shadow-primary/40 transition-all disabled:opacity-30 flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-lg"
                             >
                                 {loading ? "Procesando..." : "CONFIRMAR TRANSACCIÓN"}
-                                {!loading && <ArrowRight size={20} />}
+                                {!loading && <ArrowRight size={18} className="sm:w-5 sm:h-5" />}
                             </button>
                         </form>
                     </div>
@@ -387,80 +381,112 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
             </div>
 
             {/* Tabla de Vencimientos */}
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <h3 className="font-extrabold text-primary flex items-center gap-2">
-                        <Calendar className="text-blue-500" size={20} />
+            <div className="bg-white rounded-xl sm:rounded-2xl lg:rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="p-4 sm:p-6 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                    <h3 className="font-extrabold text-primary flex items-center gap-2 text-sm sm:text-base">
+                        <Calendar className="text-blue-500" size={18} />
                         Pagos por Vencer
                     </h3>
-                    <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100">
+                    <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100 overflow-x-auto">
                         {(["today", "week", "month"] as const).map((range) => (
                             <button
                                 key={range}
                                 onClick={() => setFilterRange(range)}
-                                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${filterRange === range
+                                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-bold transition-all whitespace-nowrap ${filterRange === range
                                     ? "bg-white text-primary shadow-sm"
                                     : "text-gray-400 hover:text-gray-600"
                                     }`}
                             >
-                                {range === "today" ? "Hoy" : range === "week" ? "Esta Semana" : "Este Mes"}
+                                {range === "today" ? "Hoy" : range === "week" ? "Semana" : "Mes"}
                             </button>
                         ))}
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                    {loadingTable ? (
-                        <div className="p-12 text-center text-gray-400 animate-pulse">Cargando próximos pagos...</div>
-                    ) : pendingCommitments.length === 0 ? (
-                        <div className="p-12 text-center text-gray-400">
-                            No hay pagos programados para este periodo.
+                {loadingTable ? (
+                    <div className="p-8 sm:p-12 text-center text-gray-400 animate-pulse text-sm">Cargando próximos pagos...</div>
+                ) : pendingCommitments.length === 0 ? (
+                    <div className="p-8 sm:p-12 text-center text-gray-400 text-sm">
+                        No hay pagos programados para este periodo.
+                    </div>
+                ) : (
+                    <>
+                        {/* Mobile Card View */}
+                        <div className="md:hidden divide-y divide-gray-100">
+                            {pendingCommitments.map((c) => (
+                                <div key={c.id} className="p-4 hover:bg-gray-50 transition-colors">
+                                    <div className="flex items-start justify-between gap-3 mb-2">
+                                        <div className="min-w-0 flex-1">
+                                            <h4 className="font-bold text-primary text-sm truncate">{c.student.fullName}</h4>
+                                            <p className="text-[10px] text-gray-400">{c.student.phone}</p>
+                                        </div>
+                                        <span className={`text-[10px] font-bold px-2 py-1 rounded-md flex-shrink-0 ${new Date(c.scheduledDate) < new Date() ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"
+                                            }`}>
+                                            {format(new Date(c.scheduledDate), "dd MMM", { locale: es })}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mb-3 truncate">{c.student.program?.name || "Sin programa"}</p>
+                                    <div className="flex items-center justify-between">
+                                        <span className="font-black text-primary text-base">${Number(c.amount).toLocaleString()}</span>
+                                        <button
+                                            onClick={() => searchStudent(c.student.fullName, c.amount)}
+                                            className="flex items-center gap-1.5 px-3 py-2 bg-primary text-white text-xs font-bold rounded-lg hover:opacity-90 transition-all"
+                                        >
+                                            <DollarSign size={14} />
+                                            Pagar
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                    ) : (
-                        <table className="w-full">
-                            <thead className="bg-gray-50/50">
-                                <tr>
-                                    <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Estudiante</th>
-                                    <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Programa</th>
-                                    <th className="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Vencimiento</th>
-                                    <th className="px-6 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Valor</th>
-                                    <th className="px-6 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-50">
-                                {pendingCommitments.map((c) => (
-                                    <tr key={c.id} className="hover:bg-blue-50/30 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <div className="font-bold text-primary">{c.student.fullName}</div>
-                                            <div className="text-[10px] text-gray-400">{c.student.phone}</div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="text-sm text-gray-600">{c.student.program?.name || "Sin programa"}</span>
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className={`text-xs font-bold px-2 py-1 rounded-md ${new Date(c.scheduledDate) < new Date() ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"
-                                                }`}>
-                                                {format(new Date(c.scheduledDate), "dd MMM", { locale: es })}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <span className="font-black text-primary">${Number(c.amount).toLocaleString()}</span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button
-                                                onClick={() => searchStudent(c.student.fullName, c.amount)}
-                                                className="p-2 bg-white border border-gray-200 rounded-lg text-primary hover:bg-primary hover:text-white transition-all shadow-sm group-hover:shadow-md"
-                                                title="Cargar para pagar"
-                                            >
-                                                <DollarSign size={16} />
-                                            </button>
-                                        </td>
+
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50/50">
+                                    <tr>
+                                        <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Estudiante</th>
+                                        <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Programa</th>
+                                        <th className="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Vencimiento</th>
+                                        <th className="px-6 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Valor</th>
+                                        <th className="px-6 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Acción</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    )}
-                </div>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {pendingCommitments.map((c) => (
+                                        <tr key={c.id} className="hover:bg-blue-50/30 transition-colors group">
+                                            <td className="px-6 py-4">
+                                                <div className="font-bold text-primary">{c.student.fullName}</div>
+                                                <div className="text-[10px] text-gray-400">{c.student.phone}</div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="text-sm text-gray-600">{c.student.program?.name || "Sin programa"}</span>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className={`text-xs font-bold px-2 py-1 rounded-md ${new Date(c.scheduledDate) < new Date() ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"
+                                                    }`}>
+                                                    {format(new Date(c.scheduledDate), "dd MMM", { locale: es })}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <span className="font-black text-primary">${Number(c.amount).toLocaleString()}</span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button
+                                                    onClick={() => searchStudent(c.student.fullName, c.amount)}
+                                                    className="p-2 bg-white border border-gray-200 rounded-lg text-primary hover:bg-primary hover:text-white transition-all shadow-sm group-hover:shadow-md"
+                                                    title="Cargar para pagar"
+                                                >
+                                                    <DollarSign size={16} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );

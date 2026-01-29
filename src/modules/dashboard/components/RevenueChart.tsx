@@ -22,17 +22,17 @@ interface RevenueChartProps {
 
 export function RevenueChart({ data }: RevenueChartProps) {
   return (
-    <div className="bg-white p-7 rounded-2xl border border-gray-100 shadow-instituto">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="font-bold text-lg text-primary">
+    <div className="bg-white p-4 sm:p-5 lg:p-7 rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6">
+        <h3 className="font-bold text-sm sm:text-base lg:text-lg text-primary">
           Crecimiento de Ingresos
         </h3>
-        <select className="bg-gray-50 text-xs font-semibold px-4 py-2 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
+        <select className="bg-gray-50 text-xs font-semibold px-3 sm:px-4 py-2 border border-gray-200 rounded-lg sm:rounded-xl outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer w-full sm:w-auto">
           <option>Últimos 30 días</option>
           <option>Este mes</option>
         </select>
       </div>
-      <div className="h-80 w-full">
+      <div className="h-52 sm:h-64 lg:h-80 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data}>
             <CartesianGrid
@@ -44,13 +44,15 @@ export function RevenueChart({ data }: RevenueChartProps) {
               dataKey="name"
               axisLine={false}
               tickLine={false}
-              tick={{ fill: "#64748b", fontSize: 12, fontWeight: 600 }}
-              dy={10}
+              tick={{ fill: "#64748b", fontSize: 10, fontWeight: 600 }}
+              dy={8}
+              interval="preserveStartEnd"
             />
             <YAxis
               axisLine={false}
               tickLine={false}
-              tick={{ fill: "#64748b", fontSize: 12, fontWeight: 600 }}
+              tick={{ fill: "#64748b", fontSize: 10, fontWeight: 600 }}
+              width={40}
             />
             <Tooltip
               contentStyle={{

@@ -28,11 +28,13 @@ export function MobileHeader({ isMenuOpen, onMenuToggle }: MobileHeaderProps) {
               priority
             />
           </div>
-          <div className="hidden sm:flex flex-col">
-            <span className="font-bold text-primary text-sm leading-tight">
-              Educamos con Valores
+          <div className="flex flex-col">
+            <span className="font-black text-[#1e3a5f] text-base leading-none tracking-tighter">
+              EDUTEC
             </span>
-            <span className="text-xs text-gray-500">Panel de Gestión</span>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+              Institución
+            </span>
           </div>
         </div>
 

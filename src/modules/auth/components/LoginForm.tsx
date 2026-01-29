@@ -11,6 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import Image from "next/image";
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
+import { Logo } from "@/components/brand";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,15 +57,8 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-blue-500 to-primary" />
 
         <div className="pt-6 pb-4 px-6 text-center relative">
-          <div className="flex justify-center mb-4">
-            <div className="relative w-16 h-16 opacity-90">
-              <Image
-                src="/logo-instituto.png"
-                alt="Educamos con Valores"
-                fill
-                className="object-contain drop-shadow-lg"
-              />
-            </div>
+          <div className="flex justify-center mb-6">
+            <Logo size="lg" />
           </div>
 
           <h1 className="text-xl font-bold text-primary mb-1.5">
