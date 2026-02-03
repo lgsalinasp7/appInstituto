@@ -4,6 +4,7 @@
  */
 
 import prisma from "@/lib/prisma";
+import { getCurrentTenantId } from "@/lib/tenant";
 import bcrypt from "bcryptjs";
 import type { RegisterData, AuthUser } from "../types";
 
@@ -11,13 +12,30 @@ const SALT_ROUNDS = 12;
 
 export class AuthService {
   /**
-   * Find user by email
+   * Find user by email (global - for login across tenants)
    */
   static async findUserByEmail(email: string) {
     return prisma.user.findUnique({
       where: { email },
       include: {
         role: true,
+        tenant: true,
+      },
+    });
+  }
+
+  /**
+   * Find user by email within current tenant
+   */
+  static async findUserByEmailInTenant(email: string) {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) return null;
+
+    return prisma.user.findFirst({
+      where: { email, tenantId },
+      include: {
+        role: true,
+        tenant: true,
       },
     });
   }
@@ -39,8 +57,9 @@ export class AuthService {
   /**
    * Create a new user with hashed password
    */
-  static async createUser(data: RegisterData & { roleId: string }) {
+  static async createUser(data: RegisterData & { roleId: string; tenantId?: string }) {
     const hashedPassword = await this.hashPassword(data.password);
+    const tenantId = data.tenantId || await getCurrentTenantId() as string;
 
     return prisma.user.create({
       data: {
@@ -48,19 +67,32 @@ export class AuthService {
         password: hashedPassword,
         name: data.name,
         roleId: data.roleId,
+        tenantId,
       },
       include: {
         role: true,
+        tenant: true,
       },
     });
   }
 
   /**
-   * Get default user role
+   * Get default user role for current tenant
    */
   static async getDefaultRole() {
+    const tenantId = await getCurrentTenantId();
     return prisma.role.findFirst({
-      where: { name: "user" },
+      where: { name: "user", ...(tenantId && { tenantId }) },
+    });
+  }
+
+  /**
+   * Get role by name within tenant
+   */
+  static async getRoleByName(name: string) {
+    const tenantId = await getCurrentTenantId();
+    return prisma.role.findFirst({
+      where: { name, ...(tenantId && { tenantId }) },
     });
   }
 
@@ -125,6 +157,26 @@ export class AuthService {
         permissions: user.role.permissions,
       },
       invitationLimit: user.invitationLimit,
+      tenantId: user.tenantId,
+      tenant: user.tenant ? {
+        id: user.tenant.id,
+        name: user.tenant.name,
+        slug: user.tenant.slug,
+      } : undefined,
     };
+  }
+
+  /**
+   * Validate user belongs to current tenant
+   */
+  static async validateUserTenant(userId: string): Promise<boolean> {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) return false;
+
+    const user = await prisma.user.findFirst({
+      where: { id: userId, tenantId }
+    });
+
+    return !!user;
   }
 }

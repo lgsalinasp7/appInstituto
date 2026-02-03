@@ -11,6 +11,7 @@ export interface PaymentFilters {
   endDate?: Date;
   page?: number;
   limit?: number;
+  tenantId?: string;
 }
 
 export interface CreatePaymentData {
@@ -21,6 +22,15 @@ export interface CreatePaymentData {
   comments?: string;
   studentId: string;
   registeredById: string;
+  tenantId: string;
+}
+
+export interface UpdatePaymentData {
+  amount?: number;
+  paymentDate?: Date;
+  method?: PaymentMethod;
+  reference?: string;
+  comments?: string;
 }
 
 export interface PaymentWithRelations {
@@ -38,6 +48,10 @@ export interface PaymentWithRelations {
     id: string;
     fullName: string;
     documentNumber: string;
+    phone: string | null;
+    program: {
+      name: string;
+    };
   };
   registeredBy: {
     id: string;

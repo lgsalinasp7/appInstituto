@@ -1,30 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PaymentService } from "@/modules/payments";
+import { z } from "zod";
 
-interface Params {
-  params: Promise<{ id: string }>;
-}
+const updatePaymentSchema = z.object({
+  amount: z.number().optional(),
+  paymentDate: z.string().transform(str => new Date(str)).optional(),
+  method: z.enum(["BANCOLOMBIA", "NEQUI", "DAVIPLATA", "EFECTIVO", "OTRO"]).optional(),
+  reference: z.string().optional(),
+  comments: z.string().optional(),
+});
 
-export async function GET(request: NextRequest, { params }: Params) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id } = await params;
-    const payment = await PaymentService.getPaymentById(id);
+    const body = await request.json();
+    const validationResult = updatePaymentSchema.safeParse(body);
 
-    if (!payment) {
+    if (!validationResult.success) {
       return NextResponse.json(
-        { success: false, error: "Pago no encontrado" },
-        { status: 404 }
+        {
+          success: false,
+          error: "Datos inválidos",
+          details: validationResult.error.flatten().fieldErrors,
+        },
+        { status: 400 }
       );
     }
 
+    const updatedPayment = await PaymentService.updatePayment(params.id, validationResult.data);
+
     return NextResponse.json({
       success: true,
-      data: payment,
+      data: updatedPayment,
+      message: "Pago actualizado exitosamente",
     });
   } catch (error) {
-    console.error("Error fetching payment:", error);
+    console.error("Error updating payment:", error);
     return NextResponse.json(
-      { success: false, error: "Error al obtener pago" },
+      { success: false, error: "Error al actualizar pago" },
       { status: 500 }
     );
   }

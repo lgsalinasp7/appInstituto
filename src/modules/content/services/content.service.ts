@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { getCurrentTenantId } from "@/lib/tenant";
 import type {
   CreateContentData,
   UpdateContentData,
@@ -9,6 +10,17 @@ import type {
 
 export class ContentService {
   static async getContentsByProgram(programId: string): Promise<AcademicContent[]> {
+    const tenantId = await getCurrentTenantId() as string;
+
+    // Verificar que el programa pertenece al tenant
+    const program = await prisma.program.findFirst({
+      where: { id: programId, tenantId }
+    });
+
+    if (!program) {
+      throw new Error("Programa no encontrado o no pertenece a este instituto");
+    }
+
     const contents = await prisma.academicContent.findMany({
       where: { programId },
       orderBy: { orderIndex: "asc" },
@@ -32,6 +44,17 @@ export class ContentService {
   }
 
   static async createContent(data: CreateContentData): Promise<AcademicContent> {
+    const tenantId = await getCurrentTenantId() as string;
+
+    // Verificar que el programa pertenece al tenant
+    const program = await prisma.program.findFirst({
+      where: { id: data.programId, tenantId }
+    });
+
+    if (!program) {
+      throw new Error("Programa no encontrado o no pertenece a este instituto");
+    }
+
     const content = await prisma.academicContent.create({
       data: {
         name: data.name,
@@ -92,6 +115,17 @@ export class ContentService {
   }
 
   static async deliverContent(data: DeliverContentData) {
+    const tenantId = await getCurrentTenantId() as string;
+
+    // Verificar que el estudiante pertenece al tenant
+    const student = await prisma.student.findFirst({
+      where: { id: data.studentId, tenantId }
+    });
+
+    if (!student) {
+      throw new Error("Estudiante no encontrado o no pertenece a este instituto");
+    }
+
     const existingDelivery = await prisma.contentDelivery.findFirst({
       where: {
         studentId: data.studentId,
@@ -123,8 +157,10 @@ export class ContentService {
   }
 
   static async getStudentContentStatus(studentId: string): Promise<StudentContentStatus | null> {
-    const student = await prisma.student.findUnique({
-      where: { id: studentId },
+    const tenantId = await getCurrentTenantId() as string;
+
+    const student = await prisma.student.findFirst({
+      where: { id: studentId, tenantId },
       include: {
         program: {
           select: { id: true, name: true },
@@ -217,8 +253,11 @@ export class ContentService {
   }
 
   static async getPendingDeliveries(advisorId?: string) {
+    const tenantId = await getCurrentTenantId() as string;
+
     const students = await prisma.student.findMany({
       where: {
+        tenantId,
         status: "MATRICULADO",
         ...(advisorId && { advisorId }),
       },

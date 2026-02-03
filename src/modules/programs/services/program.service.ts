@@ -1,9 +1,14 @@
 import prisma from "@/lib/prisma";
+import { getCurrentTenantId } from "@/lib/tenant";
 import type { CreateProgramData, UpdateProgramData, Program, ProgramsListResponse } from "../types";
 
 export class ProgramService {
   static async getPrograms(includeInactive = false): Promise<ProgramsListResponse> {
-    const where = includeInactive ? {} : { isActive: true };
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return { programs: [], total: 0 };
+    }
+    const where = includeInactive ? { tenantId } : { isActive: true, tenantId };
 
     const [programs, total] = await Promise.all([
       prisma.program.findMany({
@@ -38,8 +43,10 @@ export class ProgramService {
   }
 
   static async getProgramById(id: string): Promise<Program | null> {
-    const program = await prisma.program.findUnique({
-      where: { id },
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) return null;
+    const program = await prisma.program.findFirst({
+      where: { id, tenantId },
       include: {
         _count: {
           select: {
@@ -67,8 +74,12 @@ export class ProgramService {
   }
 
   static async createProgram(data: CreateProgramData): Promise<Program> {
-    const existing = await prisma.program.findUnique({
-      where: { name: data.name },
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      throw new Error("No se puede crear programa: No hay institución seleccionada. Accede desde un subdominio válido.");
+    }
+    const existing = await prisma.program.findFirst({
+      where: { name: data.name, tenantId },
     });
 
     if (existing) {
@@ -83,6 +94,7 @@ export class ProgramService {
         matriculaValue: data.matriculaValue,
         modulesCount: data.modulesCount,
         isActive: data.isActive ?? true,
+        tenantId,
       },
     });
 
@@ -100,10 +112,25 @@ export class ProgramService {
   }
 
   static async updateProgram(id: string, data: UpdateProgramData): Promise<Program> {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      throw new Error("No se puede actualizar programa: No hay institución seleccionada.");
+    }
+
+    // Verificar pertenencia al tenant
+    const existingProgram = await prisma.program.findFirst({
+      where: { id, tenantId }
+    });
+
+    if (!existingProgram) {
+      throw new Error("Programa no encontrado o no pertenece a este instituto");
+    }
+
     if (data.name) {
       const existing = await prisma.program.findFirst({
         where: {
           name: data.name,
+          tenantId,
           NOT: { id },
         },
       });
@@ -135,8 +162,12 @@ export class ProgramService {
   }
 
   static async deleteProgram(id: string): Promise<void> {
-    const program = await prisma.program.findUnique({
-      where: { id },
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      throw new Error("No se puede eliminar programa: No hay institución seleccionada.");
+    }
+    const program = await prisma.program.findFirst({
+      where: { id, tenantId },
       include: {
         _count: {
           select: { students: true },

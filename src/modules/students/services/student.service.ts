@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { getCurrentTenantId } from "@/lib/tenant";
 import type {
   CreateStudentData,
   UpdateStudentData,
@@ -12,7 +13,10 @@ export class StudentService {
   static async getStudents(filters: StudentFilters): Promise<StudentsListResponse> {
     const { search, status, programId, advisorId, page = 1, limit = 10 } = filters;
 
-    const where: Prisma.StudentWhereInput = {};
+    const tenantId = await getCurrentTenantId() as string;
+    const where: Prisma.StudentWhereInput = {
+      tenantId
+    };
 
     if (search) {
       where.OR = [
@@ -103,8 +107,9 @@ export class StudentService {
   }
 
   static async getStudentById(id: string): Promise<StudentWithRelations | null> {
-    const student = await prisma.student.findUnique({
-      where: { id },
+    const tenantId = await getCurrentTenantId() as string;
+    const student = await prisma.student.findFirst({
+      where: { id, tenantId },
       include: {
         program: {
           select: { id: true, name: true },
@@ -157,8 +162,9 @@ export class StudentService {
   }
 
   static async createStudent(data: CreateStudentData) {
-    const existingStudent = await prisma.student.findUnique({
-      where: { documentNumber: data.documentNumber },
+    const tenantId = await getCurrentTenantId() as string;
+    const existingStudent = await prisma.student.findFirst({
+      where: { documentNumber: data.documentNumber, tenantId },
     });
 
     if (existingStudent) {
@@ -166,8 +172,8 @@ export class StudentService {
     }
 
     // Obtener el programa para calcular valores
-    const program = await prisma.program.findUnique({
-      where: { id: data.programId },
+    const program = await prisma.program.findFirst({
+      where: { id: data.programId, tenantId },
     });
 
     if (!program) {
@@ -208,6 +214,7 @@ export class StudentService {
           firstCommitmentDate: data.firstCommitmentDate,
           currentModule: 0,
           matriculaPaid: true, // ✅ Ya pagó la matrícula
+          tenantId,
         },
         include: {
           program: {
@@ -232,6 +239,7 @@ export class StudentService {
           moduleNumber: null, // No aplica para matrícula
           receiptNumber: receiptNumber,
           registeredById: data.advisorId,
+          tenantId,
         },
       });
 
@@ -243,6 +251,7 @@ export class StudentService {
           scheduledDate: data.firstCommitmentDate,
           moduleNumber: 1,
           status: "PENDIENTE",
+          tenantId,
         },
       });
 
@@ -286,6 +295,17 @@ export class StudentService {
   }
 
   static async updateStudent(id: string, data: UpdateStudentData) {
+    const tenantId = await getCurrentTenantId() as string;
+
+    // Verificamos que el estudiante existe y pertenece al tenant antes de actualizar
+    const existing = await prisma.student.findFirst({
+      where: { id, tenantId }
+    });
+
+    if (!existing) {
+      throw new Error("Estudiante no encontrado o no pertenece a este instituto");
+    }
+
     const student = await prisma.student.update({
       where: { id },
       data: {
@@ -307,10 +327,21 @@ export class StudentService {
   }
 
   static async deleteStudent(id: string) {
+    const tenantId = await getCurrentTenantId() as string;
+
     await prisma.$transaction(async (tx) => {
+      // 0. Verificar pertenencia al tenant
+      const existing = await tx.student.findFirst({
+        where: { id, tenantId }
+      });
+
+      if (!existing) {
+        throw new Error("Estudiante no encontrado o no pertenece a este instituto");
+      }
+
       // 1. Obtener todos los pagos del estudiante para borrar sus recibos
       const payments = await tx.payment.findMany({
-        where: { studentId: id },
+        where: { studentId: id, tenantId },
         select: { id: true },
       });
       const paymentIds = payments.map((p) => p.id);
@@ -324,17 +355,17 @@ export class StudentService {
 
       // 3. Eliminar pagos
       await tx.payment.deleteMany({
-        where: { studentId: id },
+        where: { studentId: id, tenantId },
       });
 
       // 4. Eliminar compromisos (cuotas)
       await tx.paymentCommitment.deleteMany({
-        where: { studentId: id },
+        where: { studentId: id, tenantId },
       });
 
       // 5. Eliminar entregas de contenido
       await tx.contentDelivery.deleteMany({
-        where: { studentId: id },
+        where: { studentId: id }, // contentDelivery doesn't have tenantId in schema, but it's linked to student
       });
 
       // 6. Finalmente, eliminar al estudiante
@@ -345,10 +376,12 @@ export class StudentService {
   }
 
   static async getStudentPaymentsSummary(studentId: string) {
-    const student = await prisma.student.findUnique({
-      where: { id: studentId },
+    const tenantId = await getCurrentTenantId() as string;
+    const student = await prisma.student.findFirst({
+      where: { id: studentId, tenantId },
       include: {
         payments: {
+          where: { tenantId },
           orderBy: { paymentDate: "desc" },
           include: {
             registeredBy: {
@@ -390,15 +423,16 @@ export class StudentService {
   }
 
   static async getMatriculaReceipt(studentId: string) {
-    const student = await prisma.student.findUnique({
-      where: { id: studentId },
+    const tenantId = await getCurrentTenantId() as string;
+    const student = await prisma.student.findFirst({
+      where: { id: studentId, tenantId },
       include: {
         program: true,
         advisor: {
           select: { id: true, name: true, email: true },
         },
         payments: {
-          where: { paymentType: "MATRICULA" },
+          where: { paymentType: "MATRICULA", tenantId },
           include: {
             registeredBy: {
               select: { name: true, email: true },
@@ -408,7 +442,7 @@ export class StudentService {
           orderBy: { paymentDate: "desc" },
         },
         commitments: {
-          where: { moduleNumber: 1 },
+          where: { moduleNumber: 1, tenantId },
           take: 1,
         },
       },

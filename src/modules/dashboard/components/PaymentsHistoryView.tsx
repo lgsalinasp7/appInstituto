@@ -141,7 +141,7 @@ export function PaymentsHistoryView({ advisorId: _advisorId }: PaymentsHistoryVi
             <CreditCard size={24} />
             <span className="text-sm font-medium opacity-90">Total Recaudado</span>
           </div>
-          <p className="text-3xl font-bold">${totalCollected.toLocaleString()}</p>
+          <p className="text-xl font-bold">${totalCollected.toLocaleString()}</p>
           <p className="text-sm opacity-75 mt-1">{stats?.paymentsCount || 0} pagos registrados</p>
         </div>
 
@@ -288,7 +288,7 @@ export function PaymentsHistoryView({ advisorId: _advisorId }: PaymentsHistoryVi
                                 paymentDate: payment.paymentDate ? new Date(payment.paymentDate).toISOString() : new Date().toISOString(),
                                 method: payment.method,
                                 reference: payment.reference || "",
-                                programName: "Programa", // Fixed for now, add program to PaymentWithRelations if needed
+                                programName: payment.student.program.name,
                               }
                             )}
                             className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
@@ -368,7 +368,7 @@ export function PaymentsHistoryView({ advisorId: _advisorId }: PaymentsHistoryVi
                             paymentDate: payment.paymentDate ? new Date(payment.paymentDate).toISOString() : new Date().toISOString(),
                             method: payment.method,
                             reference: payment.reference || "",
-                            programName: "Programa",
+                            programName: payment.student.program.name,
                           }
                         )}
                         className="p-2.5 bg-green-50 text-green-600 rounded-xl"
@@ -480,17 +480,137 @@ function PaymentDetailsModal({ payment, onClose, onEdit }: { payment: Payment, o
   );
 }
 
+import { Loader2 } from "lucide-react";
+
 function EditPaymentModal({ payment, onClose, onSave }: { payment: Payment, onClose: () => void, onSave: () => void }) {
-  // Placeholder implementation for Edit
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    amount: payment.amount,
+    paymentDate: new Date(payment.paymentDate).toISOString().split('T')[0],
+    method: payment.method,
+    reference: payment.reference || "",
+    comments: payment.comments || "",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/payments/${payment.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        toast.success("Pago actualizado correctamente");
+        onSave();
+      } else {
+        toast.error(result.error || "Error al actualizar pago");
+      }
+    } catch (error) {
+      console.error("Error updating payment:", error);
+      toast.error("Error de conexión");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl p-6">
-        <h2>Editar Pago (Funcionalidad Completa Pendiente)</h2>
-        <div className="mt-4 flex gap-2">
-          <button onClick={onSave} className="px-4 py-2 bg-primary text-white rounded-lg">Guardar Simulacion</button>
-          <button onClick={onClose} className="px-4 py-2 border rounded-lg">Cancelar</button>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white relative">
+          <button onClick={onClose} className="absolute right-4 top-4 text-white/70 hover:text-white transition-colors">
+            <X size={24} />
+          </button>
+          <h2 className="text-xl font-bold">Editar Pago</h2>
+          <p className="text-orange-100 text-xs font-medium uppercase tracking-wider">{payment.receiptNumber}</p>
         </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <label className="text-xs font-black text-[#1e3a5f] uppercase mb-1.5 block">Monto</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                <input
+                  type="number"
+                  required
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
+                  className="w-full pl-8 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all font-bold text-[#1e3a5f]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-black text-[#1e3a5f] uppercase mb-1.5 block">Fecha</label>
+              <input
+                type="date"
+                required
+                value={formData.paymentDate}
+                onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}
+                className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-black text-[#1e3a5f] uppercase mb-1.5 block">Método</label>
+              <select
+                value={formData.method}
+                onChange={(e) => setFormData({ ...formData, method: e.target.value as any })}
+                className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-sm"
+              >
+                <option value="BANCOLOMBIA">Bancolombia</option>
+                <option value="NEQUI">Nequi</option>
+                <option value="DAVIPLATA">Daviplata</option>
+                <option value="EFECTIVO">Efectivo</option>
+                <option value="OTRO">Otro</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-black text-[#1e3a5f] uppercase mb-1.5 block">Referencia</label>
+            <input
+              type="text"
+              value={formData.reference}
+              onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
+              placeholder="Ej: Código de transferencia"
+              className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-black text-[#1e3a5f] uppercase mb-1.5 block">Comentarios</label>
+            <textarea
+              value={formData.comments}
+              onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
+              rows={2}
+              className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-sm resize-none"
+            />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition-all disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-4 py-2.5 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 shadow-lg shadow-orange-500/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {loading ? <Loader2 size={18} className="animate-spin" /> : "Guardar Cambios"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
-  )
+  );
 }

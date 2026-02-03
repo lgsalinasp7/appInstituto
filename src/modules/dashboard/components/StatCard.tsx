@@ -46,7 +46,7 @@ export function StatCard({
       <h3 className="text-gray-500 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider line-clamp-1">
         {title}
       </h3>
-      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-primary mt-0.5 sm:mt-1 tracking-tight truncate" title={String(value)}>
+      <p className="text-base sm:text-lg lg:text-xl font-bold text-primary mt-0.5 sm:mt-1 tracking-tight truncate" title={String(value)}>
         {value}
       </p>
     </div>

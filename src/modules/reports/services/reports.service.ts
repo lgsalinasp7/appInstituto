@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { getCurrentTenantId } from "@/lib/tenant";
 import type {
   ReportFilters,
   FinancialReport,
@@ -14,8 +15,9 @@ import { Prisma } from "@prisma/client";
 export class ReportsService {
   static async getFinancialReport(filters: ReportFilters): Promise<FinancialReport> {
     const { advisorId, startDate, endDate } = filters;
+    const tenantId = await getCurrentTenantId() as string;
 
-    const where: Prisma.PaymentWhereInput = {};
+    const where: Prisma.PaymentWhereInput = { tenantId };
 
     if (advisorId) {
       where.registeredById = advisorId;
@@ -42,6 +44,7 @@ export class ReportsService {
       }),
       prisma.paymentCommitment.aggregate({
         where: {
+          tenantId,
           status: { not: "PAGADO" },
           ...(advisorId && { student: { advisorId } }),
         },
@@ -81,8 +84,11 @@ export class ReportsService {
   }
 
   static async getAdvisorReports(_filters?: ReportFilters): Promise<AdvisorReport[]> {
+    const tenantId = await getCurrentTenantId() as string;
+
     const advisors = await prisma.user.findMany({
       where: {
+        tenantId,
         role: {
           name: { in: ["ADMINISTRADOR", "VENTAS"] },
         },
@@ -155,8 +161,10 @@ export class ReportsService {
   }
 
   static async getProgramReports(): Promise<ProgramReport[]> {
+    const tenantId = await getCurrentTenantId() as string;
+
     const programs = await prisma.program.findMany({
-      where: { isActive: true },
+      where: { tenantId, isActive: true },
       include: {
         students: {
           include: {
@@ -214,15 +222,20 @@ export class ReportsService {
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
+    const tenantId = await getCurrentTenantId() as string;
+
     const studentWhere: Prisma.StudentWhereInput = {
+      tenantId,
       ...(advisorId && { advisorId }),
       ...(programId && { programId }),
     };
     const paymentWhere: Prisma.PaymentWhereInput = {
+      tenantId,
       ...(advisorId && { registeredById: advisorId }),
       ...(programId && { student: { programId } }),
     };
     const commitmentWhere = {
+      tenantId,
       ...(advisorId && { student: { advisorId } }),
       ...(programId && { student: { programId } }),
     };
@@ -282,6 +295,7 @@ export class ReportsService {
       // 9. Prospectos
       prisma.prospect.count({
         where: {
+          tenantId,
           ...(advisorId && { advisorId }),
           ...(programId && { programId }),
         },
@@ -289,6 +303,7 @@ export class ReportsService {
       // 10. Cerrados
       prisma.prospect.count({
         where: {
+          tenantId,
           status: "CERRADO",
           ...(advisorId && { advisorId }),
           ...(programId && { programId }),
@@ -346,7 +361,10 @@ export class ReportsService {
       groupFormat = "week";
     }
 
+    const tenantId = await getCurrentTenantId() as string;
+
     const where: Prisma.PaymentWhereInput = {
+      tenantId,
       paymentDate: { gte: startDate },
     };
 
@@ -399,10 +417,12 @@ export class ReportsService {
 
   static async getPortfolioAging(): Promise<PortfolioAgingReport> {
     const now = new Date();
+    const tenantId = await getCurrentTenantId() as string;
 
     // Traer todos los compromisos pendientes vencidos
     const overdueCommitments = await prisma.paymentCommitment.findMany({
       where: {
+        tenantId,
         status: "PENDIENTE",
         scheduledDate: {
           lt: now

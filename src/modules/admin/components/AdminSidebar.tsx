@@ -17,30 +17,42 @@ const navItems = [
     href: "/admin",
     icon: "📊",
     description: "Resumen del sistema",
+    superAdminOnly: false,
+  },
+  {
+    title: "Empresas",
+    href: "/admin/empresas",
+    icon: "🏢",
+    description: "Gestionar tenants",
+    superAdminOnly: true,
   },
   {
     title: "Usuarios",
     href: "/admin/users",
     icon: "👥",
     description: "Gestionar usuarios",
+    superAdminOnly: false,
   },
   {
     title: "Roles",
     href: "/admin/roles",
     icon: "🔐",
     description: "Permisos y roles",
+    superAdminOnly: false,
   },
   {
     title: "Módulos",
     href: "/admin/content",
     icon: "📚",
     description: "Contenido y entregas",
+    superAdminOnly: false,
   },
   {
     title: "Auditoría",
     href: "/admin/audit",
     icon: "📋",
     description: "Registro de actividad",
+    superAdminOnly: false,
   },
 ];
 
@@ -51,6 +63,11 @@ export function AdminSidebar() {
   // Filter items based on role - Only SUPERADMIN and ADMINISTRADOR can access admin panel
   const filteredNavItems = navItems.filter((item) => {
     const roleName = user?.role?.name?.toUpperCase() || "";
+
+    // Super admin only items
+    if (item.superAdminOnly) {
+      return roleName === "SUPERADMIN";
+    }
 
     // Only SUPERADMIN and ADMINISTRADOR can see admin items
     if (roleName === "SUPERADMIN" || roleName === "ADMINISTRADOR") {

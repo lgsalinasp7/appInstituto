@@ -25,6 +25,12 @@ export interface AuthUser {
     permissions: string[];
   };
   invitationLimit: number;
+  tenantId: string;
+  tenant?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
 }
 
 export interface AuthSession {

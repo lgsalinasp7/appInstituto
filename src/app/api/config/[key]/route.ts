@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getCurrentTenantId } from "@/lib/tenant";
 
 export async function GET(
     request: Request,
@@ -7,8 +8,9 @@ export async function GET(
 ) {
     try {
         const { key } = await params;
-        const config = await prisma.systemConfig.findUnique({
-            where: { key },
+        const tenantId = await getCurrentTenantId();
+        const config = await prisma.systemConfig.findFirst({
+            where: { key, tenantId },
         });
 
         if (!config) {

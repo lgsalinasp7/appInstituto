@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { getCurrentTenantId } from "@/lib/tenant";
 import type {
   CreateProspectData,
   UpdateProspectData,
@@ -12,8 +13,11 @@ import { Prisma } from "@prisma/client";
 export class ProspectService {
   static async getProspects(filters: ProspectFilters): Promise<ProspectsListResponse> {
     const { search, status, programId, advisorId, page = 1, limit = 10 } = filters;
+    const tenantId = await getCurrentTenantId() as string;
 
-    const where: Prisma.ProspectWhereInput = {};
+    const where: Prisma.ProspectWhereInput = {
+      tenantId
+    };
 
     if (search) {
       where.OR = [
@@ -78,8 +82,9 @@ export class ProspectService {
   }
 
   static async getProspectById(id: string): Promise<ProspectWithRelations | null> {
-    const prospect = await prisma.prospect.findUnique({
-      where: { id },
+    const tenantId = await getCurrentTenantId() as string;
+    const prospect = await prisma.prospect.findFirst({
+      where: { id, tenantId },
       include: {
         program: {
           select: { id: true, name: true },
@@ -109,6 +114,7 @@ export class ProspectService {
   }
 
   static async createProspect(data: CreateProspectData) {
+    const tenantId = await getCurrentTenantId() as string;
     const prospect = await prisma.prospect.create({
       data: {
         name: data.name,
@@ -118,6 +124,7 @@ export class ProspectService {
         observations: data.observations || null,
         programId: data.programId || null,
         advisorId: data.advisorId,
+        tenantId,
       },
       include: {
         program: {
@@ -133,6 +140,17 @@ export class ProspectService {
   }
 
   static async updateProspect(id: string, data: UpdateProspectData) {
+    const tenantId = await getCurrentTenantId() as string;
+
+    // Verificar pertenencia
+    const existing = await prisma.prospect.findFirst({
+      where: { id, tenantId }
+    });
+
+    if (!existing) {
+      throw new Error("Prospecto no encontrado o no pertenece a este instituto");
+    }
+
     const prospect = await prisma.prospect.update({
       where: { id },
       data: {
@@ -154,6 +172,17 @@ export class ProspectService {
   }
 
   static async deleteProspect(id: string) {
+    const tenantId = await getCurrentTenantId() as string;
+
+    // Verificar pertenencia
+    const existing = await prisma.prospect.findFirst({
+      where: { id, tenantId }
+    });
+
+    if (!existing) {
+      throw new Error("Prospecto no encontrado o no pertenece a este instituto");
+    }
+
     await prisma.prospect.delete({
       where: { id },
     });
@@ -170,8 +199,9 @@ export class ProspectService {
     initialPayment: number;
     totalProgramValue: number;
   }) {
-    const prospect = await prisma.prospect.findUnique({
-      where: { id: prospectId },
+    const tenantId = await getCurrentTenantId() as string;
+    const prospect = await prisma.prospect.findFirst({
+      where: { id: prospectId, tenantId },
     });
 
     if (!prospect) {
@@ -200,6 +230,7 @@ export class ProspectService {
           status: "MATRICULADO",
           programId: prospect.programId!,
           advisorId: prospect.advisorId,
+          tenantId,
         },
       });
 
@@ -215,7 +246,11 @@ export class ProspectService {
   }
 
   static async getStats(advisorId?: string): Promise<ProspectStats> {
-    const where: Prisma.ProspectWhereInput = advisorId ? { advisorId } : {};
+    const tenantId = await getCurrentTenantId() as string;
+    const where: Prisma.ProspectWhereInput = {
+      tenantId,
+      ...(advisorId && { advisorId })
+    };
 
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);

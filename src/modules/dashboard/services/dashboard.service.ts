@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { getCurrentTenantId } from "@/lib/tenant";
 
 export interface DashboardStats {
   todayRevenue: number;
@@ -13,6 +14,27 @@ export interface DashboardStats {
 
 export class DashboardService {
   static async getDashboardStats(): Promise<DashboardStats> {
+    const tenantId = await getCurrentTenantId();
+
+    // Si no hay tenant (acceso sin subdominio), retornar stats vacías
+    if (!tenantId) {
+      return {
+        todayRevenue: 0,
+        monthlyRevenue: 0,
+        monthlyGoal: 0,
+        overdueAmount: 0,
+        activeStudents: 0,
+        revenueTrend: 0,
+        revenueChart: [
+          { name: "Semana 1", total: 0 },
+          { name: "Semana 2", total: 0 },
+          { name: "Semana 3", total: 0 },
+          { name: "Semana 4", total: 0 },
+        ],
+        methodStats: []
+      };
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -38,6 +60,7 @@ export class DashboardService {
       // 1. Recaudo de hoy
       prisma.payment.aggregate({
         where: {
+          tenantId,
           paymentDate: {
             gte: today,
             lt: tomorrow,
@@ -48,6 +71,7 @@ export class DashboardService {
       // 2. Recaudo del mes
       prisma.payment.aggregate({
         where: {
+          tenantId,
           paymentDate: {
             gte: startOfMonth,
           }
@@ -57,6 +81,7 @@ export class DashboardService {
       // 3. Cartera en mora (Compromisos vencidos)
       prisma.paymentCommitment.aggregate({
         where: {
+          tenantId,
           status: "PENDIENTE",
           scheduledDate: {
             lt: today
@@ -66,16 +91,17 @@ export class DashboardService {
       }),
       // 4. Estudiantes activos
       prisma.student.count({
-        where: { status: "MATRICULADO" }
+        where: { tenantId, status: "MATRICULADO" }
       }),
       // 5. Meta mensual de SystemConfig
-      prisma.systemConfig.findUnique({
-        where: { key: "MONTHLY_GOAL" }
+      prisma.systemConfig.findFirst({
+        where: { key: "MONTHLY_GOAL", tenantId }
       }),
       // 6. Stats por método de pago (Mes actual)
       prisma.payment.groupBy({
         by: ['method'],
         where: {
+          tenantId,
           paymentDate: {
             gte: startOfMonth,
           }
@@ -90,6 +116,7 @@ export class DashboardService {
       // 7. Historial de pagos para gráfico (Últimas 4 semanas)
       prisma.payment.findMany({
         where: {
+          tenantId,
           paymentDate: {
             gte: fourWeeksAgo
           }

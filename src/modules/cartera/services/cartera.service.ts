@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { getCurrentTenantId } from "@/lib/tenant";
 import type {
   CreateCommitmentData,
   UpdateCommitmentData,
@@ -13,8 +14,9 @@ import { Prisma } from "@prisma/client";
 export class CarteraService {
   static async getCommitments(filters: CarteraFilters) {
     const { advisorId, status, startDate, endDate, page = 1, limit = 10 } = filters;
+    const tenantId = await getCurrentTenantId() as string;
 
-    const where: Prisma.PaymentCommitmentWhereInput = {};
+    const where: Prisma.PaymentCommitmentWhereInput = { tenantId };
 
     if (status) {
       where.status = status;
@@ -83,12 +85,14 @@ export class CarteraService {
   }
 
   static async createCommitment(data: CreateCommitmentData) {
+    const tenantId = await getCurrentTenantId() as string;
     const commitment = await prisma.paymentCommitment.create({
       data: {
         scheduledDate: data.scheduledDate,
         amount: data.amount,
         comments: data.comments || null,
         studentId: data.studentId,
+        tenantId,
       },
       include: {
         student: {
@@ -110,6 +114,17 @@ export class CarteraService {
   }
 
   static async updateCommitment(id: string, data: UpdateCommitmentData) {
+    const tenantId = await getCurrentTenantId() as string;
+
+    // Verificar pertenencia al tenant
+    const existing = await prisma.paymentCommitment.findFirst({
+      where: { id, tenantId }
+    });
+
+    if (!existing) {
+      throw new Error("Compromiso no encontrado o no pertenece a este instituto");
+    }
+
     const commitment = await prisma.paymentCommitment.update({
       where: { id },
       data: {
@@ -158,7 +173,10 @@ export class CarteraService {
     const nextWeek = new Date(today);
     nextWeek.setDate(nextWeek.getDate() + 7);
 
+    const tenantId = await getCurrentTenantId() as string;
+
     const where: Prisma.PaymentCommitmentWhereInput = {
+      tenantId,
       status: { not: "PAGADO" },
     };
 
@@ -231,7 +249,10 @@ export class CarteraService {
     const nextWeek = new Date(today);
     nextWeek.setDate(nextWeek.getDate() + 7);
 
+    const tenantId = await getCurrentTenantId() as string;
+
     const baseWhere: Prisma.PaymentCommitmentWhereInput = {
+      tenantId,
       status: { not: "PAGADO" },
     };
 
@@ -282,7 +303,10 @@ export class CarteraService {
   }
 
   static async getStudentsWithDebt(advisorId?: string): Promise<StudentDebt[]> {
+    const tenantId = await getCurrentTenantId() as string;
+
     const where: Prisma.StudentWhereInput = {
+      tenantId,
       status: "MATRICULADO",
     };
 

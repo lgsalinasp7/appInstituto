@@ -9,10 +9,10 @@ function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
-    console.warn("⚠️ DATABASE_URL no encontrada en el entorno. Prisma podría fallar.");
+    console.warn("DATABASE_URL no encontrada en el entorno. Prisma podría fallar.");
   }
 
-  console.log("🛠️ Inicializando Prisma Client 6 (Estandar)...");
+  console.log("Inicializando Prisma Client 6 (Estandar)...");
 
   return new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],

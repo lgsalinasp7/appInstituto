@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { getCurrentTenantId } from "@/lib/tenant";
 import type {
   CreatePaymentData,
   PaymentFilters,
@@ -6,6 +7,7 @@ import type {
   PaymentsListResponse,
   PaymentStats,
   PaymentMethod,
+  UpdatePaymentData,
 } from "../types";
 import { Prisma } from "@prisma/client";
 
@@ -38,7 +40,9 @@ export class PaymentService {
   static async getPayments(filters: PaymentFilters): Promise<PaymentsListResponse> {
     const { studentId, advisorId, method, startDate, endDate, page = 1, limit = 10 } = filters;
 
-    const where: Prisma.PaymentWhereInput = {};
+    const where: Prisma.PaymentWhereInput = {
+      tenantId: filters.tenantId
+    };
 
     if (studentId) {
       where.studentId = studentId;
@@ -75,7 +79,13 @@ export class PaymentService {
         where,
         include: {
           student: {
-            select: { id: true, fullName: true, documentNumber: true },
+            select: {
+              id: true,
+              fullName: true,
+              documentNumber: true,
+              phone: true,
+              program: { select: { name: true } }
+            },
           },
           registeredBy: {
             select: { id: true, name: true, email: true },
@@ -115,11 +125,17 @@ export class PaymentService {
   }
 
   static async getPaymentById(id: string): Promise<PaymentWithRelations | null> {
-    const payment = await prisma.payment.findUnique({
-      where: { id },
+    const payment = await prisma.payment.findFirst({
+      where: { id, tenantId: await getCurrentTenantId() as string },
       include: {
         student: {
-          select: { id: true, fullName: true, documentNumber: true },
+          select: {
+            id: true,
+            fullName: true,
+            documentNumber: true,
+            phone: true,
+            program: { select: { name: true } }
+          },
         },
         registeredBy: {
           select: { id: true, name: true, email: true },
@@ -151,8 +167,8 @@ export class PaymentService {
     const receiptNumber = await this.generateReceiptNumber();
 
     // 1. Obtener estudiante y programa
-    const student = await prisma.student.findUnique({
-      where: { id: data.studentId },
+    const student = await prisma.student.findFirst({
+      where: { id: data.studentId, tenantId: data.tenantId },
       include: { program: true },
     });
 
@@ -361,6 +377,7 @@ export class PaymentService {
           registeredById: data.registeredById,
           paymentType,
           moduleNumber,
+          tenantId: data.tenantId,
         },
         include: {
           student: {
@@ -388,7 +405,9 @@ export class PaymentService {
     startDate?: Date;
     endDate?: Date
   }): Promise<PaymentStats> {
-    const where: Prisma.PaymentWhereInput = {};
+    const where: Prisma.PaymentWhereInput = {
+      tenantId: await getCurrentTenantId() as string
+    };
 
     if (filters.advisorId) {
       where.registeredById = filters.advisorId;
@@ -462,8 +481,9 @@ export class PaymentService {
     sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
 
     // 1. Total Pendiente (All pending commitments)
+    const tenantId = await getCurrentTenantId() as string;
     const totalPending = await prisma.paymentCommitment.aggregate({
-      where: { status: { not: "PAGADO" } }, // PENDIENTE or VENCIDO (if exists) or just check status != PAGADO
+      where: { status: { not: "PAGADO" }, tenantId }, // Fixed: added tenantId
       _sum: { amount: true },
     });
 
@@ -471,7 +491,8 @@ export class PaymentService {
     const overdue = await prisma.paymentCommitment.aggregate({
       where: {
         status: { not: "PAGADO" },
-        scheduledDate: { lt: today }
+        scheduledDate: { lt: today },
+        tenantId
       },
       _sum: { amount: true },
       _count: true
@@ -481,7 +502,8 @@ export class PaymentService {
     const dueToday = await prisma.paymentCommitment.aggregate({
       where: {
         status: { not: "PAGADO" },
-        scheduledDate: { gte: today, lt: tomorrow }
+        scheduledDate: { gte: today, lt: tomorrow },
+        tenantId
       },
       _sum: { amount: true },
       _count: true
@@ -491,7 +513,8 @@ export class PaymentService {
     const upcoming = await prisma.paymentCommitment.aggregate({
       where: {
         status: { not: "PAGADO" },
-        scheduledDate: { gte: tomorrow, lte: sevenDaysLater }
+        scheduledDate: { gte: tomorrow, lte: sevenDaysLater },
+        tenantId
       },
       _sum: { amount: true },
       _count: true
@@ -515,7 +538,8 @@ export class PaymentService {
       commitments: {
         some: {
           status: { not: "PAGADO" }
-        }
+        },
+        tenantId: await getCurrentTenantId() as string
       }
     };
 
@@ -603,7 +627,7 @@ export class PaymentService {
 
     const paymentsSum = await prisma.payment.groupBy({
       by: ['studentId'],
-      where: { studentId: { in: studentIds } },
+      where: { studentId: { in: studentIds }, tenantId: await getCurrentTenantId() as string },
       _sum: { amount: true }
     });
 
@@ -615,12 +639,33 @@ export class PaymentService {
         return {
           ...d,
           totalPaid: paid,
-          remainingBalance: d.totalProgramValue - paid
+          remainingBalance: Number(d.totalProgramValue) - (paid as number)
         };
       }),
       total,
       page,
       totalPages: Math.ceil(total / limit)
     };
+  }
+
+  static async updatePayment(id: string, data: UpdatePaymentData) {
+    return await prisma.payment.update({
+      where: { id },
+      data: {
+        amount: data.amount,
+        paymentDate: data.paymentDate,
+        method: data.method,
+        reference: data.reference,
+        comments: data.comments,
+      },
+      include: {
+        student: {
+          select: { id: true, fullName: true, documentNumber: true, phone: true, program: { select: { name: true } } },
+        },
+        registeredBy: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
   }
 }

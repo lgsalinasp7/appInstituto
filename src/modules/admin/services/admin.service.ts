@@ -4,6 +4,7 @@
  */
 
 import prisma from "@/lib/prisma";
+import { getCurrentTenantId } from "@/lib/tenant";
 import type {
   Role,
   CreateRoleData,
@@ -21,7 +22,10 @@ export class AdminService {
    * Get all roles
    */
   static async getRoles(): Promise<Role[]> {
+    const tenantId = await getCurrentTenantId() as string;
+
     const roles = await prisma.role.findMany({
+      where: { tenantId },
       include: {
         _count: {
           select: { users: true },
@@ -37,8 +41,10 @@ export class AdminService {
    * Get role by ID
    */
   static async getRoleById(id: string): Promise<Role | null> {
-    const role = await prisma.role.findUnique({
-      where: { id },
+    const tenantId = await getCurrentTenantId() as string;
+
+    const role = await prisma.role.findFirst({
+      where: { id, tenantId },
       include: {
         _count: {
           select: { users: true },
@@ -53,11 +59,14 @@ export class AdminService {
    * Create a new role
    */
   static async createRole(data: CreateRoleData): Promise<Role> {
+    const tenantId = await getCurrentTenantId() as string;
+
     const role = await prisma.role.create({
       data: {
         name: data.name,
         description: data.description,
         permissions: data.permissions,
+        tenantId,
       },
       include: {
         _count: {
@@ -73,6 +82,17 @@ export class AdminService {
    * Update an existing role
    */
   static async updateRole(id: string, data: UpdateRoleData): Promise<Role | null> {
+    const tenantId = await getCurrentTenantId() as string;
+
+    // Verificar pertenencia
+    const existing = await prisma.role.findFirst({
+      where: { id, tenantId }
+    });
+
+    if (!existing) {
+      throw new Error("Rol no encontrado o no pertenece a este instituto");
+    }
+
     const role = await prisma.role.update({
       where: { id },
       data,
@@ -90,6 +110,17 @@ export class AdminService {
    * Delete a role
    */
   static async deleteRole(id: string): Promise<void> {
+    const tenantId = await getCurrentTenantId() as string;
+
+    // Verificar pertenencia
+    const existing = await prisma.role.findFirst({
+      where: { id, tenantId }
+    });
+
+    if (!existing) {
+      throw new Error("Rol no encontrado o no pertenece a este instituto");
+    }
+
     await prisma.role.delete({
       where: { id },
     });
@@ -150,7 +181,10 @@ export class AdminService {
    * Get all invitations
    */
   static async getInvitations() {
+    const tenantId = await getCurrentTenantId() as string;
+
     return prisma.invitation.findMany({
+      where: { tenantId },
       include: {
         role: {
           select: {
@@ -178,6 +212,26 @@ export class AdminService {
    * Change user role
    */
   static async changeUserRole(userId: string, roleId: string) {
+    const tenantId = await getCurrentTenantId() as string;
+
+    // Verificar que el usuario pertenece al tenant
+    const user = await prisma.user.findFirst({
+      where: { id: userId, tenantId }
+    });
+
+    if (!user) {
+      throw new Error("Usuario no encontrado o no pertenece a este instituto");
+    }
+
+    // Verificar que el rol pertenece al tenant
+    const role = await prisma.role.findFirst({
+      where: { id: roleId, tenantId }
+    });
+
+    if (!role) {
+      throw new Error("Rol no encontrado o no pertenece a este instituto");
+    }
+
     return prisma.user.update({
       where: { id: userId },
       data: { roleId },
@@ -191,10 +245,16 @@ export class AdminService {
    * Get system statistics for admin
    */
   static async getSystemStats() {
+    const tenantId = await getCurrentTenantId();
+
+    // Si no hay tenant (SUPERADMIN sin subdominio), mostrar stats globales
+    const tenantFilter = tenantId ? { tenantId } : {};
+    const userTenantFilter = tenantId ? { user: { tenantId } } : {};
+
     const [usersCount, rolesCount, sessionsCount, logsCount] = await Promise.all([
-      prisma.user.count(),
-      prisma.role.count(),
-      prisma.session.count(),
+      prisma.user.count({ where: tenantFilter }),
+      prisma.role.count({ where: tenantFilter }),
+      prisma.session.count({ where: userTenantFilter }),
       prisma.auditLog.count(),
     ]);
 
