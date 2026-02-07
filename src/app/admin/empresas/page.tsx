@@ -7,6 +7,7 @@ import { Suspense } from "react";
 import { TenantsService } from "@/modules/tenants";
 import { TenantsListView } from "@/modules/tenants/components/TenantsListView";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -36,16 +37,12 @@ export default async function EmpresasPage({
   ];
 
   return (
-    <div className="space-y-14 animate-fade-in-up">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tighter text-white">
-          Gestión de <span className="text-gradient">Empresas</span>
-        </h1>
-        <p className="text-slate-400 mt-4 text-lg font-medium">
-          Administra los tenants, organizaciones y el ecosistema empresarial.
-        </p>
-      </div>
+      <DashboardHeader
+        title="Gestión de Empresas"
+        subtitle="Tenants y Organizaciones"
+      />
 
       {/* Stats Grid */}
       <div className="grid gap-6 grid-cols-2 lg:grid-cols-5 animate-fade-in-up animation-delay-100">

@@ -420,7 +420,7 @@ export function UsersManager() {
                                                         <button onClick={() => handleEditUser(u.id)} className="p-2 text-primary bg-blue-50 rounded-lg">
                                                             <Pencil size={16} />
                                                         </button>
-                                                        {isSuperAdmin && u.role.name !== "SUPERADMIN" && (
+                                                        {(isSuperAdmin || isAdmin) && u.role.name !== "SUPERADMIN" && u.id !== currentUser?.id && (
                                                             <button onClick={() => handleDeleteUser(u.id)} className="p-2 text-red-400 bg-red-50 rounded-lg">
                                                                 <Trash2 size={16} />
                                                             </button>
@@ -565,7 +565,7 @@ export function UsersManager() {
                                                             <button onClick={() => handleEditUser(u.id)} className="p-2 text-primary hover:bg-blue-50 rounded-xl">
                                                                 <Pencil size={16} />
                                                             </button>
-                                                            {isSuperAdmin && u.role.name !== "SUPERADMIN" && (
+                                                            {(isSuperAdmin || isAdmin) && u.role.name !== "SUPERADMIN" && u.id !== currentUser?.id && (
                                                                 <button onClick={() => handleDeleteUser(u.id)} className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl">
                                                                     <Trash2 size={16} />
                                                                 </button>

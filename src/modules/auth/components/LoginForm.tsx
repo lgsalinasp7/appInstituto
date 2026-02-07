@@ -1,15 +1,11 @@
-"use client";
-
-/**
- * Login Form Component
- * Formulario de inicio de sesión con diseño glassmorphism premium (Dark Mode)
- */
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import Image from "next/image";
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
+import { useBranding } from "@/components/providers/BrandingContext";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +27,8 @@ interface LoginFormProps {
 export function LoginForm({ onSubmit }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const branding = useBranding();
+  const isDark = branding.darkMode !== false;
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -51,40 +49,89 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
 
   return (
     <div className="relative w-full">
-      {/* Container - Removed white bg, using transparent to let parent handling or subtle dark */}
-      <div className="relative">
-        <div className="pt-2 pb-6 px-2 text-center relative">
-          <h1 className="text-2xl font-bold text-white mb-2">
+      <div className={cn(
+        "relative p-8 rounded-[2rem] border transition-all duration-300 shadow-2xl overflow-hidden",
+        isDark
+          ? "bg-slate-900/50 backdrop-blur-xl border-slate-800 hover:border-cyan-500/30 shadow-cyan-900/10"
+          : "bg-white border-gray-100/80 hover:border-blue-500/20 shadow-blue-900/5"
+      )}>
+        {/* Glow effect for dark mode or subtle tint for light */}
+        <div className={cn(
+          "absolute -top-24 -right-24 w-48 h-48 rounded-full blur-[80px] pointer-events-none transition-opacity duration-500",
+          isDark ? "bg-cyan-500/10 opacity-100" : "bg-blue-500/5 opacity-50"
+        )} />
+
+        <div className="pt-2 pb-8 px-2 text-center relative z-10 flex flex-col items-center">
+          {/* Logo del tenant solicitado por Edutec */}
+          {branding.logoUrl && (
+            <div className="relative w-20 h-20 mb-6 group">
+              <div className={cn(
+                "absolute inset-[-10px] rounded-full blur-2xl opacity-0 group-hover:opacity-40 transition-opacity duration-500",
+                isDark ? "bg-cyan-500" : "bg-blue-500"
+              )} />
+              <div className={cn(
+                "relative h-full w-full p-2.5 rounded-2xl flex items-center justify-center transition-all duration-300",
+                isDark ? "bg-slate-950/40 border border-white/5" : "bg-blue-50/30 border border-blue-100/50"
+              )}>
+                <Image
+                  src={branding.logoUrl}
+                  alt={branding.tenantName}
+                  fill
+                  className="object-contain p-2"
+                  priority
+                />
+              </div>
+            </div>
+          )}
+
+          <h1 className={cn(
+            "text-2xl font-black mb-1.5 tracking-tighter",
+            isDark ? "text-white" : "text-slate-900"
+          )}>
             ¡Bienvenido de nuevo!
           </h1>
-          <p className="text-sm text-slate-400">
-            Ingresa tus credenciales para continuar
+          <p className={cn(
+            "text-sm font-semibold",
+            isDark ? "text-slate-400" : "text-slate-500"
+          )}>
+            Accede al portal de {branding.tenantName}
           </p>
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="relative z-10">
             <div className="space-y-5">
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-slate-300 font-medium text-sm ml-1">
+                    <FormLabel className={cn(
+                      "font-bold text-[10px] uppercase tracking-widest ml-1 transition-colors",
+                      isDark ? "text-slate-500" : "text-slate-400"
+                    )}>
                       Correo electrónico
                     </FormLabel>
                     <FormControl>
                       <div className="relative group">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
+                        <Mail className={cn(
+                          "absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors duration-300",
+                          isDark ? "text-slate-600 group-focus-within:text-cyan-400" : "text-slate-400 group-focus-within:text-blue-500"
+                        )} />
                         <Input
                           type="email"
                           placeholder="tu@email.com"
-                          className="pl-12 h-12 bg-slate-950/50 border border-slate-700/50 rounded-xl focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/10 text-white transition-all placeholder:text-slate-600"
+                          className={cn(
+                            "pl-12 h-13 rounded-xl transition-all duration-300 font-bold text-sm",
+                            isDark
+                              ? "bg-slate-950/50 border-slate-700/50 text-white placeholder:text-slate-700 focus:border-cyan-500/50 focus:ring-cyan-500/10"
+                              : "bg-slate-50/50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500/50 focus:ring-blue-500/5"
+                          )}
                           {...field}
                         />
                       </div>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="font-bold text-xs" />
                   </FormItem>
                 )}
               />
@@ -95,68 +142,78 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <div className="flex items-center justify-between ml-1">
-                      <FormLabel className="text-slate-300 font-medium text-sm">
+                      <FormLabel className={cn(
+                        "font-bold text-[10px] uppercase tracking-widest transition-colors",
+                        isDark ? "text-slate-500" : "text-slate-400"
+                      )}>
                         Contraseña
                       </FormLabel>
                       <Link
                         href="/auth/forgot-password"
-                        className="text-xs text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
+                        className={cn(
+                          "text-[10px] font-black uppercase tracking-widest transition-colors",
+                          isDark ? "text-cyan-400 hover:text-cyan-300" : "text-blue-600 hover:text-blue-700"
+                        )}
                       >
                         ¿Olvidaste tu contraseña?
                       </Link>
                     </div>
                     <FormControl>
                       <div className="relative group">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
+                        <Lock className={cn(
+                          "absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors duration-300",
+                          isDark ? "text-slate-600 group-focus-within:text-cyan-400" : "text-slate-400 group-focus-within:text-blue-500"
+                        )} />
                         <Input
                           type={showPassword ? "text" : "password"}
                           placeholder="••••••••"
-                          className="pl-12 pr-12 h-12 bg-slate-950/50 border border-slate-700/50 rounded-xl focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/10 text-white transition-all placeholder:text-slate-600"
+                          className={cn(
+                            "pl-12 pr-12 h-13 rounded-xl transition-all duration-300 font-bold text-sm",
+                            isDark
+                              ? "bg-slate-950/50 border-slate-700/50 text-white placeholder:text-slate-700 focus:border-cyan-500/50 focus:ring-cyan-500/10"
+                              : "bg-slate-50/50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500/50 focus:ring-blue-500/5"
+                          )}
                           {...field}
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+                          className={cn(
+                            "absolute right-4 top-1/2 -translate-y-1/2 transition-colors",
+                            isDark ? "text-slate-500 hover:text-white" : "text-slate-400 hover:text-slate-600"
+                          )}
                         >
                           {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                         </button>
                       </div>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="font-bold text-xs" />
                   </FormItem>
                 )}
               />
 
               <Button
                 type="submit"
-                className="w-full h-12 mt-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(8,145,178,0.3)] hover:shadow-[0_0_25px_rgba(8,145,178,0.5)] transition-all duration-300 group"
+                className={cn(
+                  "w-full h-13 mt-6 font-black rounded-2xl transition-all duration-500 group shadow-xl uppercase tracking-widest text-xs",
+                  isDark
+                    ? "bg-gradient-to-r from-cyan-600 to-blue-600 hover:scale-[1.02] text-white shadow-cyan-900/20 active:scale-[0.98]"
+                    : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white hover:scale-[1.02] shadow-blue-900/10 active:scale-[0.98]"
+                )}
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <span className="flex items-center gap-2">
-                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                        fill="none"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                      />
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
                     Verificando...
                   </span>
                 ) : (
                   <span className="flex items-center justify-center gap-2">
                     Ingresar al Portal
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </span>
                 )}
               </Button>

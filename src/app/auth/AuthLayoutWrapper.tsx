@@ -47,18 +47,25 @@ export default async function AuthLayoutWrapper({
   const branding = tenant
     ? await getTenantBrandingCached(tenant.id)
     : {
-        logoUrl: null,
-        primaryColor: "#1e3a5f",
-        secondaryColor: "#3b82f6",
-        accentColor: "#10b981",
-        loginBgGradient: "linear-gradient(135deg, #0f2847 0%, #1e3a5f 50%, #2d4a6f 100%)",
-        footerText: null,
-      };
+      logoUrl: null,
+      primaryColor: "#1e3a5f",
+      secondaryColor: "#3b82f6",
+      accentColor: "#10b981",
+      loginBgGradient: "linear-gradient(135deg, #0f2847 0%, #1e3a5f 50%, #2d4a6f 100%)",
+      footerText: null,
+      darkMode: true,
+    };
 
   const tenantName = tenant?.name || "Plataforma Educativa";
 
   return (
-    <AuthLayoutClient branding={branding} tenantName={tenantName}>
+    <AuthLayoutClient
+      branding={{
+        ...branding,
+        darkMode: tenant ? branding.darkMode : true
+      }}
+      tenantName={tenantName}
+    >
       {children}
     </AuthLayoutClient>
   );

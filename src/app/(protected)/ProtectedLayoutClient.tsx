@@ -5,6 +5,8 @@ import { MobileHeader } from "@/modules/dashboard/components/MobileHeader";
 import { MobileSidebar } from "@/modules/dashboard/components/MobileSidebar";
 import { AuthGuard } from "@/components/auth";
 import { useState } from "react";
+import { useBranding } from "@/components/providers/BrandingContext";
+import { cn } from "@/lib/utils";
 
 export default function ProtectedLayoutClient({
   children,
@@ -12,15 +14,26 @@ export default function ProtectedLayoutClient({
   children: React.ReactNode;
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const branding = useBranding();
+  const isDark = branding.darkMode !== false;
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-slate-950 flex font-sans text-slate-200 relative overflow-hidden">
+      <div className={cn(
+        "min-h-screen flex font-sans relative overflow-hidden transition-colors duration-500",
+        isDark ? "bg-slate-950 text-slate-200" : "bg-white text-slate-900"
+      )}>
         <div className="grain-overlay" />
 
         {/* Decorative Background Glows */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-[120px] pointer-events-none -z-10" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none -z-10" />
+        <div className={cn(
+          "absolute top-0 right-0 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none -z-10 transition-opacity duration-500",
+          isDark ? "bg-cyan-500/5 opacity-100" : "bg-blue-500/5 opacity-40"
+        )} />
+        <div className={cn(
+          "absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none -z-10 transition-opacity duration-500",
+          isDark ? "bg-blue-600/5 opacity-100" : "bg-cyan-500/5 opacity-40"
+        )} />
 
         <MobileHeader
           isMenuOpen={isMobileMenuOpen}

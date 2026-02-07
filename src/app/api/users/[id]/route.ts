@@ -28,39 +28,39 @@ export const GET = withTenantAuth(async (request: NextRequest, user, tenantId, c
   const { id } = await context!.params;
 
   const targetUser = await prisma.user.findUnique({
-    where: { 
+    where: {
       id,
       tenantId, // Verificar que pertenece al tenant
     },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        image: true,
-        isActive: true,
-        invitationLimit: true,
-        createdAt: true,
-        role: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-          },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      image: true,
+      isActive: true,
+      invitationLimit: true,
+      createdAt: true,
+      role: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
         },
       },
-    });
+    },
+  });
 
-    if (!targetUser) {
-      return NextResponse.json(
-        { success: false, error: "Usuario no encontrado" },
-        { status: 404 }
-      );
-    }
+  if (!targetUser) {
+    return NextResponse.json(
+      { success: false, error: "Usuario no encontrado" },
+      { status: 404 }
+    );
+  }
 
-    return NextResponse.json({
-      success: true,
-      data: targetUser,
-    });
+  return NextResponse.json({
+    success: true,
+    data: targetUser,
+  });
 });
 
 /**
@@ -86,7 +86,7 @@ export const PUT = withTenantAuthAndCSRF(async (request: NextRequest, user, tena
 
   // Check if user exists
   const existingUser = await prisma.user.findUnique({
-    where: { 
+    where: {
       id,
       tenantId, // Verificar que pertenece al tenant
     },
@@ -158,7 +158,7 @@ export const DELETE = withTenantAuthAndCSRF(async (request: NextRequest, user, t
 
   // Check if user exists
   const targetUser = await prisma.user.findUnique({
-    where: { 
+    where: {
       id,
       tenantId, // Verificar que pertenece al tenant
     },
@@ -177,6 +177,25 @@ export const DELETE = withTenantAuthAndCSRF(async (request: NextRequest, user, t
     return NextResponse.json(
       { success: false, error: "No se puede eliminar usuarios SUPERADMIN" },
       { status: 403 }
+    );
+  }
+
+  // Permission check: Only SUPERADMIN or tenant ADMINISTRADOR
+  const isSuperAdmin = user.role?.name === "SUPERADMIN";
+  const isAdmin = user.role?.name === "ADMINISTRADOR";
+
+  if (!isSuperAdmin && !isAdmin) {
+    return NextResponse.json(
+      { success: false, error: "No tiene permisos para eliminar usuarios" },
+      { status: 403 }
+    );
+  }
+
+  // Prevent users from deleting themselves
+  if (user.id === id) {
+    return NextResponse.json(
+      { success: false, error: "No puedes eliminar tu propia cuenta" },
+      { status: 400 }
     );
   }
 

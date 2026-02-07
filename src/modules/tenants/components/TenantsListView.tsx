@@ -19,9 +19,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, ExternalLink, Users, GraduationCap, Shield, MoreVertical, Loader2, X } from "lucide-react";
+import { Search, Plus, ExternalLink, Users, GraduationCap, Shield, MoreVertical, Loader2, X, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Tenant, TenantStatus } from "../types";
+import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 
 interface TenantsListViewProps {
   tenants: Tenant[];

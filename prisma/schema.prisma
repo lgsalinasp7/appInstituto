@@ -8,32 +8,30 @@ datasource db {
 }
 
 model Tenant {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique // The subdomain (e.g., 'edutec')
-  domain    String?  @unique // Optional custom domain
-  status    String   @default("ACTIVO") // ACTIVO, PENDIENTE, SUSPENDIDO, CANCELADO
-  plan      String   @default("BASICO") // BASICO, PROFESIONAL, EMPRESARIAL
-  email     String?  // Contact email for the tenant
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  users     User[]
-  students  Student[]
-  programs  Program[]
-  payments  Payment[]
-  prospects Prospect[]
-  roles     Role[]
+  id          String              @id @default(cuid())
+  name        String
+  slug        String              @unique
+  domain      String?             @unique
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  email       String?
+  plan        String              @default("BASICO")
+  status      String              @default("ACTIVO")
   invitations Invitation[]
+  payments    Payment[]
   commitments PaymentCommitment[]
+  programs    Program[]
+  prospects   Prospect[]
+  receipts    Receipt[]
+  roles       Role[]
+  students    Student[]
   configs     SystemConfig[]
   branding    TenantBranding?
-  receipts    Receipt[]
+  users       User[]
 
   @@index([slug])
   @@index([status])
 }
-
 
 model User {
   id                 String        @id @default(cuid())
@@ -45,10 +43,10 @@ model User {
   isActive           Boolean       @default(true)
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
-  roleId             String?       // Opcional para usuarios de plataforma
-  tenantId           String?       // Opcional - null significa usuario de plataforma
-  platformRole       PlatformRole? // Rol de plataforma para usuarios sin tenant
+  roleId             String?
   invitationLimit    Int           @default(0)
+  tenantId           String?
+  platformRole       PlatformRole?
   sentInvitations    Invitation[]  @relation("SentInvitations")
   registeredPayments Payment[]
   profile            Profile?
@@ -57,7 +55,6 @@ model User {
   students           Student[]
   role               Role?         @relation(fields: [roleId], references: [id])
   tenant             Tenant?       @relation(fields: [tenantId], references: [id])
-
 
   @@index([email])
   @@index([roleId])
@@ -72,10 +69,10 @@ model Role {
   permissions String[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-  invitations Invitation[]
-  users       User[]
   tenantId    String
+  invitations Invitation[]
   tenant      Tenant       @relation(fields: [tenantId], references: [id])
+  users       User[]
 
   @@unique([name, tenantId])
   @@index([name])
@@ -124,11 +121,11 @@ model AuditLog {
   entity    String
   entityId  String?
   userId    String?
-  tenantId  String?  // Opcional para auditoría de plataforma
   metadata  Json?
   ipAddress String?
   userAgent String?
   createdAt DateTime @default(now())
+  tenantId  String?
 
   @@index([action])
   @@index([entity])
@@ -148,9 +145,8 @@ model Program {
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   tenantId         String
-  tenant           Tenant            @relation(fields: [tenantId], references: [id])
   academicContents AcademicContent[]
-
+  tenant           Tenant            @relation(fields: [tenantId], references: [id])
   prospects        Prospect[]
   students         Student[]
 
@@ -181,15 +177,15 @@ model Student {
   matriculaPaid       Boolean             @default(false)
   programId           String
   advisorId           String
-  tenantId            String
-  tenant              Tenant              @relation(fields: [tenantId], references: [id])
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
+  tenantId            String
   contentDeliveries   ContentDelivery[]
   payments            Payment[]
   commitments         PaymentCommitment[]
   advisor             User                @relation(fields: [advisorId], references: [id])
   program             Program             @relation(fields: [programId], references: [id])
+  tenant              Tenant              @relation(fields: [tenantId], references: [id])
 
   @@unique([documentNumber, tenantId])
   @@index([documentNumber])
@@ -214,11 +210,11 @@ model Payment {
   moduleNumber   Int?
   studentId      String
   registeredById String
-  tenantId       String
   createdAt      DateTime      @default(now())
-  tenant         Tenant        @relation(fields: [tenantId], references: [id])
+  tenantId       String
   registeredBy   User          @relation(fields: [registeredById], references: [id])
   student        Student       @relation(fields: [studentId], references: [id])
+  tenant         Tenant        @relation(fields: [tenantId], references: [id])
   receipt        Receipt?
 
   @@unique([receiptNumber, tenantId])
@@ -257,9 +253,9 @@ model PaymentCommitment {
   moduleNumber      Int              @default(1)
   notificationsSent Json?
   studentId         String
-  tenantId          String?
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
+  tenantId          String?
   student           Student          @relation(fields: [studentId], references: [id])
   tenant            Tenant?          @relation(fields: [tenantId], references: [id])
 
@@ -279,12 +275,12 @@ model Prospect {
   observations String?
   programId    String?
   advisorId    String
-  tenantId     String
   createdAt    DateTime       @default(now())
-  tenant       Tenant         @relation(fields: [tenantId], references: [id])
   updatedAt    DateTime       @updatedAt
+  tenantId     String
   advisor      User           @relation(fields: [advisorId], references: [id])
   program      Program?       @relation(fields: [programId], references: [id])
+  tenant       Tenant         @relation(fields: [tenantId], references: [id])
 
   @@index([status])
   @@index([advisorId])
@@ -323,9 +319,9 @@ model SystemConfig {
   id        String   @id @default(cuid())
   key       String
   value     String
-  tenantId  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  tenantId  String?
   tenant    Tenant?  @relation(fields: [tenantId], references: [id])
 
   @@unique([key, tenantId])
@@ -344,9 +340,9 @@ model Invitation {
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
   tenantId  String
-  tenant    Tenant           @relation(fields: [tenantId], references: [id])
   inviter   User             @relation("SentInvitations", fields: [inviterId], references: [id])
   role      Role             @relation(fields: [roleId], references: [id])
+  tenant    Tenant           @relation(fields: [tenantId], references: [id])
 
   @@index([email])
   @@index([token])
@@ -356,7 +352,6 @@ model Invitation {
 model TenantBranding {
   id              String   @id @default(cuid())
   tenantId        String   @unique
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   logoUrl         String?
   faviconUrl      String?
   primaryColor    String   @default("#1e3a5f")
@@ -366,10 +361,11 @@ model TenantBranding {
   loginBgImage    String?
   loginBgGradient String?
   footerText      String?
-  customCss       String?  @db.Text
+  customCss       String?
   darkMode        Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
 }

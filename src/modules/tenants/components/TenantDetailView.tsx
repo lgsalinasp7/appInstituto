@@ -13,17 +13,35 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import {
+  ArrowLeft,
+  Globe,
+  Shield,
+  Users,
+  History,
+  Settings,
+  Clipboard,
+  Eye,
+  EyeOff,
+  RefreshCw,
+  ExternalLink,
+  GraduationCap,
+  CreditCard,
+  Target
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { TenantWithDetails, TenantStatus, TenantUser } from "../types";
+import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 
 interface TenantDetailViewProps {
   tenant: TenantWithDetails;
 }
 
-const statusColors: Record<TenantStatus, string> = {
-  ACTIVO: "bg-green-100 text-green-700 border-green-200",
-  PENDIENTE: "bg-amber-100 text-amber-700 border-amber-200",
-  SUSPENDIDO: "bg-red-100 text-red-700 border-red-200",
-  CANCELADO: "bg-gray-100 text-gray-500 border-gray-200",
+const statusThemes: Record<TenantStatus, { color: string; bg: string; border: string; glow: string }> = {
+  ACTIVO: { color: "text-green-400", bg: "bg-green-400/10", border: "border-green-400/20", glow: "shadow-[0_0_8px_rgba(74,222,128,0.3)]" },
+  PENDIENTE: { color: "text-amber-400", bg: "bg-amber-400/10", border: "border-amber-400/20", glow: "shadow-[0_0_8px_rgba(251,191,36,0.3)]" },
+  SUSPENDIDO: { color: "text-red-400", bg: "bg-red-400/10", border: "border-red-400/20", glow: "shadow-[0_0_8px_rgba(248,113,113,0.3)]" },
+  CANCELADO: { color: "text-slate-400", bg: "bg-slate-400/10", border: "border-slate-400/20", glow: "" },
 };
 
 const statusLabels: Record<TenantStatus, string> = {
@@ -89,311 +107,327 @@ export function TenantDetailView({ tenant }: TenantDetailViewProps) {
     navigator.clipboard.writeText(text);
   };
 
+  const theme = statusThemes[tenant.status] || statusThemes.ACTIVO;
+
   return (
-    <div className="space-y-6">
-      {/* Back Button */}
-      <Link
-        href="/admin/empresas"
-        className="inline-flex items-center gap-2 text-sm text-[#64748b] hover:text-[#1e3a5f] transition-colors"
-      >
-        <span>←</span>
-        <span>Volver a Empresas</span>
-      </Link>
-
+    <div className="space-y-6 sm:space-y-10">
       {/* Header */}
-      <div className="flex items-start justify-between animate-fade-in-up">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold text-[#1e3a5f]">{tenant.name}</h1>
-            <Badge className={`${statusColors[tenant.status]} border`}>
-              {statusLabels[tenant.status]}
-            </Badge>
-          </div>
-          <p className="text-[#64748b] mt-1">{tenantUrl}</p>
-        </div>
-        <div className="flex gap-2">
-          {tenant.status === "ACTIVO" ? (
-            <Button
-              variant="outline"
-              className="text-red-600 border-red-200 hover:bg-red-50"
-              onClick={handleSuspend}
-            >
-              Suspender
-            </Button>
-          ) : tenant.status === "SUSPENDIDO" ? (
-            <Button
-              variant="outline"
-              className="text-green-600 border-green-200 hover:bg-green-50"
-              onClick={handleActivate}
-            >
-              Activar
-            </Button>
-          ) : null}
-          <Button variant="outline">Editar</Button>
-        </div>
-      </div>
+      <DashboardHeader
+        title={tenant.name}
+        subtitle="Detalles de la Organización"
+      >
+        <Link href="/admin/empresas">
+          <Button
+            variant="ghost"
+            className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-cyan-400 transition-colors"
+          >
+            <ArrowLeft size={16} /> Volver
+          </Button>
+        </Link>
+      </DashboardHeader>
 
-      {/* Quick Stats */}
-      <div className="grid gap-4 md:grid-cols-3 animate-fade-in-up animation-delay-100">
-        <Card className="shadow-instituto border-0">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <div
-                className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                  tenant.status === "ACTIVO"
-                    ? "bg-green-100"
-                    : tenant.status === "SUSPENDIDO"
-                    ? "bg-red-100"
-                    : "bg-gray-100"
-                }`}
-              >
-                <span className="text-xl">
-                  {tenant.status === "ACTIVO"
-                    ? "✓"
-                    : tenant.status === "SUSPENDIDO"
-                    ? "⚠"
-                    : "○"}
-                </span>
-              </div>
-              <div>
-                <p className="text-xs text-[#64748b] uppercase">Estado</p>
-                <p className="text-lg font-semibold text-[#1e3a5f]">
+      {/* Main Info Header Card */}
+      <div className="glass-card p-8 rounded-[2.5rem] border border-white/5 relative overflow-hidden animate-fade-in-up">
+        {/* Background Glow */}
+        <div className={cn(
+          "absolute -right-24 -top-24 w-64 h-64 rounded-full blur-[100px] opacity-10",
+          theme.bg.split(' ')[0]
+        )} />
+
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+          <div className="flex items-center gap-6">
+            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 flex items-center justify-center text-4xl shadow-2xl">
+              🏢
+            </div>
+            <div>
+              <div className="flex items-center gap-4">
+                <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tighter">
+                  {tenant.name}
+                </h1>
+                <div className={cn(
+                  "text-[10px] uppercase font-black tracking-[0.2em] px-3 py-1.5 rounded-xl border transition-all",
+                  theme.color, theme.bg, theme.border, theme.glow
+                )}>
                   {statusLabels[tenant.status]}
-                </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 mt-2 text-slate-500 hover:text-cyan-400 transition-colors">
+                <Globe size={14} />
+                <span className="text-sm font-bold tracking-tight">{tenantUrl}</span>
+                <ExternalLink size={12} className="ml-1 opacity-50" />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card className="shadow-instituto border-0">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                <span className="text-xl">📋</span>
-              </div>
-              <div>
-                <p className="text-xs text-[#64748b] uppercase">Plan</p>
-                <p className="text-lg font-semibold text-[#1e3a5f]">
-                  {tenant.plan}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-instituto border-0">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-                <span className="text-xl">👥</span>
-              </div>
-              <div>
-                <p className="text-xs text-[#64748b] uppercase">Usuarios</p>
-                <p className="text-lg font-semibold text-[#1e3a5f]">
-                  {tenant._count?.users || 0}/5
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          <div className="flex items-center gap-3">
+            {tenant.status === "ACTIVO" ? (
+              <Button
+                variant="outline"
+                className="h-12 px-6 rounded-2xl bg-red-500/5 hover:bg-red-500/10 border-red-500/20 text-red-500 font-bold"
+                onClick={handleSuspend}
+              >
+                Suspender
+              </Button>
+            ) : tenant.status === "SUSPENDIDO" ? (
+              <Button
+                variant="outline"
+                className="h-12 px-6 rounded-2xl bg-green-500/5 hover:bg-green-500/10 border-green-500/20 text-green-500 font-bold"
+                onClick={handleActivate}
+              >
+                Activar
+              </Button>
+            ) : null}
+            <Button className="h-12 px-8 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold border border-white/10">
+              Editar
+            </Button>
+          </div>
+        </div>
       </div>
 
-      {/* Info Cards */}
+      {/* Quick Stats Grid */}
+      <div className="grid gap-6 md:grid-cols-3 animate-fade-in-up animation-delay-100">
+        <div className="glass-card p-6 rounded-[2rem] border border-white/5 relative group overflow-hidden">
+          <div className="flex flex-col gap-4 relative z-10">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Plan Contratado</span>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                <Shield size={18} />
+              </div>
+            </div>
+            <div className="text-2xl font-black text-white tracking-tight">{tenant.plan}</div>
+          </div>
+        </div>
+
+        <div className="glass-card p-6 rounded-[2rem] border border-white/5 relative group overflow-hidden">
+          <div className="flex flex-col gap-4 relative z-10">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Usuarios Activos</span>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <Users size={18} />
+              </div>
+            </div>
+            <div className="flex items-end gap-2">
+              <span className="text-2xl font-black text-white tracking-tight">{tenant._count?.users || 0}</span>
+              <span className="text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-widest">/ 5 máx</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-card p-6 rounded-[2rem] border border-white/5 relative group overflow-hidden">
+          <div className="flex flex-col gap-4 relative z-10">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Alumnos Totales</span>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                <GraduationCap size={18} />
+              </div>
+            </div>
+            <div className="text-2xl font-black text-white tracking-tight">{tenant._count?.students || 0}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Grid of Detailed Info */}
       <div className="grid gap-6 md:grid-cols-2 animate-fade-in-up animation-delay-200">
-        {/* General Info */}
-        <Card className="shadow-instituto border-0">
-          <CardHeader>
-            <CardTitle className="text-[#1e3a5f] text-lg">
-              Información General
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <InfoRow label="Nombre" value={tenant.name} />
-            <InfoRow label="Slug" value={tenant.slug} />
-            <InfoRow label="Email" value={tenant.email || "No definido"} />
-            <InfoRow label="Plan" value={tenant.plan} />
+        {/* General Details */}
+        <div className="glass-card p-8 rounded-[2.5rem] border border-white/5">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-cyan-500 border border-slate-800">
+              <Target size={18} />
+            </div>
+            <h3 className="text-lg font-bold text-white tracking-tight">Información de Negocio</h3>
+          </div>
+          <div className="space-y-4">
+            <InfoRow label="Nombre legal" value={tenant.name} />
+            <InfoRow label="Identificador slug" value={tenant.slug} />
+            <InfoRow label="Email de contacto" value={tenant.email || "No definido"} />
+            <InfoRow label="Plan asignado" value={tenant.plan} />
             <InfoRow
-              label="Fecha de creación"
+              label="Fecha de registro"
               value={new Date(tenant.createdAt).toLocaleDateString("es-CO", {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
               })}
             />
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Technical Info */}
-        <Card className="shadow-instituto border-0">
-          <CardHeader>
-            <CardTitle className="text-[#1e3a5f] text-lg">
-              Información Técnica
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <InfoRow label="ID" value={tenant.id} copyable />
+        {/* Technical Details */}
+        <div className="glass-card p-8 rounded-[2.5rem] border border-white/5">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-purple-500 border border-slate-800">
+              <Globe size={18} />
+            </div>
+            <h3 className="text-lg font-bold text-white tracking-tight">Información Técnica</h3>
+          </div>
+          <div className="space-y-4">
+            <InfoRow label="ID de sistema" value={tenant.id} copyable />
             <InfoRow
-              label="Dominio personalizado"
+              label="Hostname personalizado"
               value={tenant.domain || "No configurado"}
             />
-            <InfoRow label="Estudiantes" value={`${tenant._count?.students || 0}`} />
-            <InfoRow label="Pagos" value={`${tenant._count?.payments || 0}`} />
-          </CardContent>
-        </Card>
+            <InfoRow label="Volumen de alumnos" value={`${tenant._count?.students || 0}`} />
+            <InfoRow label="Transacciones POS" value={`${tenant._count?.payments || 0}`} />
+          </div>
+        </div>
       </div>
 
-      {/* Credentials Section */}
-      <Card className="shadow-instituto border-0 animate-fade-in-up animation-delay-300">
-        <CardHeader>
-          <CardTitle className="text-[#1e3a5f] text-lg">
-            Credenciales de Acceso
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <label className="text-xs text-[#64748b] uppercase">URL</label>
-              <div className="flex gap-2">
-                <Input value={tenantUrl} readOnly className="bg-gray-50" />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => copyToClipboard(tenantUrl)}
-                  title="Copiar URL"
-                >
-                  📋
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => window.open(tenantUrl, "_blank")}
-                  title="Abrir en nueva pestaña"
-                >
-                  🔗
-                </Button>
-              </div>
-            </div>
+      {/* Credentials Area */}
+      <div className="glass-card p-8 rounded-[2.5rem] border border-white/5 animate-fade-in-up animation-delay-300">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-amber-500 border border-slate-800">
+            <Shield size={18} />
+          </div>
+          <h3 className="text-lg font-bold text-white tracking-tight">Credenciales de Acceso</h3>
+        </div>
 
-            <div className="space-y-2">
-              <label className="text-xs text-[#64748b] uppercase">
-                Usuario Principal
-              </label>
-              <div className="flex gap-2">
-                <Input
-                  value={tenant.adminUser?.email || tenant.email || "No definido"}
-                  readOnly
-                  className="bg-gray-50"
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() =>
-                    copyToClipboard(
-                      tenant.adminUser?.email || tenant.email || ""
-                    )
-                  }
-                  title="Copiar email"
-                >
-                  📋
-                </Button>
-              </div>
+        <div className="grid gap-8 md:grid-cols-3">
+          <div className="space-y-3">
+            <label className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Dashboard URL</label>
+            <div className="flex gap-2">
+              <Input value={tenantUrl} readOnly className="bg-slate-900/50 border-slate-800 h-12 rounded-xl text-white font-medium focus:ring-0" />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => copyToClipboard(tenantUrl)}
+                className="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-400"
+              >
+                <Clipboard size={18} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => window.open(tenantUrl, "_blank")}
+                className="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-400"
+              >
+                <ExternalLink size={18} />
+              </Button>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <label className="text-xs text-[#64748b] uppercase">
-                Password Temporal
-              </label>
-              <div className="flex gap-2">
+          <div className="space-y-3">
+            <label className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 ml-1">
+              Admin Principal
+            </label>
+            <div className="flex gap-2">
+              <Input
+                value={tenant.adminUser?.email || tenant.email || "No definido"}
+                readOnly
+                className="bg-slate-900/50 border-slate-800 h-12 rounded-xl text-white font-medium focus:ring-0"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() =>
+                  copyToClipboard(
+                    tenant.adminUser?.email || tenant.email || ""
+                  )
+                }
+                className="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-400"
+              >
+                <Clipboard size={18} />
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <label className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 ml-1">
+              Password Temporal
+            </label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
                 <Input
                   type={showPassword ? "text" : "password"}
                   value={tempPassword || "••••••••"}
                   readOnly
-                  className="bg-gray-50"
+                  className="bg-slate-900/50 border-slate-800 h-12 rounded-xl text-white font-medium pr-12 focus:ring-0"
                 />
-                <Button
-                  variant="outline"
-                  size="icon"
+                <button
                   onClick={() => setShowPassword(!showPassword)}
-                  title={showPassword ? "Ocultar" : "Mostrar"}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
                 >
-                  {showPassword ? "🙈" : "👁"}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleResetPassword}
-                  disabled={resettingPassword}
-                  title="Resetear contraseña"
-                >
-                  🔄
-                </Button>
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleResetPassword}
+                disabled={resettingPassword}
+                className="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-400"
+              >
+                {resettingPassword ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
+              </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Tabs Section */}
-      <Card className="shadow-instituto border-0 animate-fade-in-up animation-delay-400">
+      {/* Detailed Tabs Area */}
+      <div className="glass-card rounded-[2.5rem] border border-white/5 overflow-hidden animate-fade-in-up animation-delay-400">
         <Tabs defaultValue="usuarios" className="w-full">
-          <CardHeader className="border-b pb-0">
-            <TabsList className="h-auto p-0 bg-transparent">
+          <div className="px-8 pt-4 border-b border-white/5 bg-slate-900/40">
+            <TabsList className="h-auto p-0 bg-transparent gap-8">
               <TabsTrigger
                 value="usuarios"
-                className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-3"
+                className="data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 data-[state=active]:border-b-2 data-[state=active]:border-cyan-400 rounded-none px-0 py-4 text-slate-500 font-bold tracking-tight transition-all flex items-center gap-2"
               >
-                Usuarios
+                <Users size={16} /> Usuarios
               </TabsTrigger>
               <TabsTrigger
                 value="ordenes"
-                className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-3"
+                className="data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 data-[state=active]:border-b-2 data-[state=active]:border-cyan-400 rounded-none px-0 py-4 text-slate-500 font-bold tracking-tight transition-all flex items-center gap-2"
               >
-                Órdenes
+                <CreditCard size={16} /> Órdenes
               </TabsTrigger>
               <TabsTrigger
                 value="logs"
-                className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-3"
+                className="data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 data-[state=active]:border-b-2 data-[state=active]:border-cyan-400 rounded-none px-0 py-4 text-slate-500 font-bold tracking-tight transition-all flex items-center gap-2"
               >
-                Logs
+                <History size={16} /> Logs de Auditoría
               </TabsTrigger>
               <TabsTrigger
                 value="configuracion"
-                className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-3"
+                className="data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 data-[state=active]:border-b-2 data-[state=active]:border-cyan-400 rounded-none px-0 py-4 text-slate-500 font-bold tracking-tight transition-all flex items-center gap-2"
               >
-                Configuración
+                <Settings size={16} /> Configuración Plan
               </TabsTrigger>
             </TabsList>
-          </CardHeader>
+          </div>
 
-          <TabsContent value="usuarios" className="m-0">
-            <CardContent className="pt-6">
+          <TabsContent value="usuarios" className="m-0 focus-visible:ring-0">
+            <div className="p-8">
               <UsersTab users={tenant.users} />
-            </CardContent>
+            </div>
           </TabsContent>
 
-          <TabsContent value="ordenes" className="m-0">
-            <CardContent className="pt-6">
-              <div className="text-center py-8 text-[#64748b]">
-                <p>No hay órdenes registradas</p>
+          <TabsContent value="ordenes" className="m-0 focus-visible:ring-0">
+            <div className="p-20 text-center">
+              <div className="w-16 h-16 rounded-3xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-700 mx-auto mb-4 opacity-20">
+                <CreditCard size={32} />
               </div>
-            </CardContent>
+              <h4 className="text-slate-300 font-bold">Sin órdenes de facturación</h4>
+              <p className="text-slate-500 text-sm mt-1">Este tenant no ha generado cargos adicionales.</p>
+            </div>
           </TabsContent>
 
-          <TabsContent value="logs" className="m-0">
-            <CardContent className="pt-6">
-              <div className="text-center py-8 text-[#64748b]">
-                <p>No hay logs disponibles</p>
+          <TabsContent value="logs" className="m-0 focus-visible:ring-0">
+            <div className="p-20 text-center">
+              <div className="w-16 h-16 rounded-3xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-700 mx-auto mb-4 opacity-20">
+                <History size={32} />
               </div>
-            </CardContent>
+              <h4 className="text-slate-300 font-bold">Sin actividad reciente</h4>
+              <p className="text-slate-500 text-sm mt-1">Los eventos de auditoría aparecerán aquí.</p>
+            </div>
           </TabsContent>
 
-          <TabsContent value="configuracion" className="m-0">
-            <CardContent className="pt-6">
+          <TabsContent value="configuracion" className="m-0 focus-visible:ring-0">
+            <div className="p-8">
               <ConfigurationTab tenant={tenant} />
-            </CardContent>
+            </div>
           </TabsContent>
         </Tabs>
-      </Card>
+      </div>
     </div>
   );
 }
@@ -412,19 +446,19 @@ function InfoRow({
   };
 
   return (
-    <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-      <span className="text-sm text-[#64748b]">{label}</span>
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-medium text-[#1e3a5f] truncate max-w-[200px]">
+    <div className="flex items-center justify-between py-3.5 border-b border-white/5 last:border-0 group/row">
+      <span className="text-sm font-bold text-slate-500 uppercase tracking-widest text-[10px]">{label}</span>
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-bold text-slate-300 truncate max-w-[250px] tracking-tight">
           {value}
         </span>
         {copyable && (
           <button
             onClick={handleCopy}
-            className="text-[#64748b] hover:text-[#1e3a5f] transition-colors"
+            className="p-1 px-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-500 hover:text-cyan-400 transition-all opacity-0 group-hover/row:opacity-100 shadow-sm"
             title="Copiar"
           >
-            📋
+            <Clipboard size={14} />
           </button>
         )}
       </div>
@@ -435,8 +469,9 @@ function InfoRow({
 function UsersTab({ users }: { users: TenantUser[] }) {
   if (users.length === 0) {
     return (
-      <div className="text-center py-8 text-[#64748b]">
-        <p>No hay usuarios registrados</p>
+      <div className="text-center py-12">
+        <Users className="w-12 h-12 text-slate-800 mx-auto mb-4 opacity-20" />
+        <p className="text-slate-500 font-bold">Sin usuarios administrativos</p>
       </div>
     );
   }
@@ -445,48 +480,48 @@ function UsersTab({ users }: { users: TenantUser[] }) {
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="border-b">
-            <th className="text-left py-3 px-4 text-xs text-[#64748b] uppercase font-medium">
-              Nombre
+          <tr className="border-b border-white/5">
+            <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">
+              Nombre Completo
             </th>
-            <th className="text-left py-3 px-4 text-xs text-[#64748b] uppercase font-medium">
-              Email
+            <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">
+              Email Corporativo
             </th>
-            <th className="text-left py-3 px-4 text-xs text-[#64748b] uppercase font-medium">
-              Rol
+            <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">
+              Rol Asignado
             </th>
-            <th className="text-left py-3 px-4 text-xs text-[#64748b] uppercase font-medium">
-              Estado
+            <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">
+              Status
             </th>
-            <th className="text-left py-3 px-4 text-xs text-[#64748b] uppercase font-medium">
-              Fecha de creación
+            <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">
+              Fecha Alta
             </th>
           </tr>
         </thead>
         <tbody>
           {users.map((user) => (
-            <tr key={user.id} className="border-b last:border-0 hover:bg-gray-50">
-              <td className="py-3 px-4 text-sm text-[#1e3a5f]">
+            <tr key={user.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors group">
+              <td className="py-4 px-4 text-sm font-bold text-white group-hover:text-cyan-400 transition-colors">
                 {user.name || "Sin nombre"}
               </td>
-              <td className="py-3 px-4 text-sm text-[#64748b]">{user.email}</td>
-              <td className="py-3 px-4">
-                <Badge variant="outline" className="text-xs">
+              <td className="py-4 px-4 text-sm font-medium text-slate-400">{user.email}</td>
+              <td className="py-4 px-4 text-sm">
+                <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-500 text-[10px] font-black uppercase tracking-widest">
                   {user.role?.name || "Sin rol"}
-                </Badge>
+                </span>
               </td>
-              <td className="py-3 px-4">
-                <Badge
-                  className={`text-xs ${
-                    user.isActive
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-100 text-gray-500"
-                  }`}
-                >
+              <td className="py-4 px-4">
+                <div className={cn(
+                  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase tracking-widest",
+                  user.isActive
+                    ? "bg-green-500/10 text-green-400 border-green-500/20"
+                    : "bg-slate-900 text-slate-500 border-slate-800"
+                )}>
+                  <div className={cn("w-1.5 h-1.5 rounded-full", user.isActive ? "bg-green-400 animate-pulse" : "bg-slate-500")} />
                   {user.isActive ? "Activo" : "Inactivo"}
-                </Badge>
+                </div>
               </td>
-              <td className="py-3 px-4 text-sm text-[#64748b]">
+              <td className="py-4 px-4 text-sm font-medium text-slate-500">
                 {new Date(user.createdAt).toLocaleDateString("es-CO")}
               </td>
             </tr>
@@ -499,41 +534,56 @@ function UsersTab({ users }: { users: TenantUser[] }) {
 
 function ConfigurationTab({ tenant }: { tenant: TenantWithDetails }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-10 animate-fade-in-up">
       <div>
-        <h3 className="text-sm font-semibold text-[#1e3a5f] mb-4">
-          Límites del Plan
-        </h3>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-[#64748b]">Usuarios máximos</p>
-            <p className="text-lg font-semibold text-[#1e3a5f]">5</p>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center border border-cyan-500/20">
+            <Shield size={16} />
           </div>
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-[#64748b]">Estudiantes máximos</p>
-            <p className="text-lg font-semibold text-[#1e3a5f]">500</p>
+          <h3 className="text-md font-bold text-white tracking-tight">Límites de Infraestructura</h3>
+        </div>
+        <div className="grid gap-6 md:grid-cols-4">
+          <div className="p-6 rounded-[1.5rem] bg-slate-900/50 border border-slate-800">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Suscritos</p>
+            <p className="text-2xl font-black text-white">5/5</p>
+            <div className="w-full bg-slate-800 h-1 mt-3 rounded-full overflow-hidden">
+              <div className="bg-cyan-500 h-full w-full" />
+            </div>
           </div>
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-[#64748b]">Almacenamiento</p>
-            <p className="text-lg font-semibold text-[#1e3a5f]">10 GB</p>
+          <div className="p-6 rounded-[1.5rem] bg-slate-900/50 border border-slate-800">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Estudiantes</p>
+            <p className="text-2xl font-black text-white">{tenant._count?.students || 0}/500</p>
+            <div className="w-full bg-slate-800 h-1 mt-3 rounded-full overflow-hidden">
+              <div className="bg-blue-500 h-full w-1/4" />
+            </div>
           </div>
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-[#64748b]">Soporte</p>
-            <p className="text-lg font-semibold text-[#1e3a5f]">Email</p>
+          <div className="p-6 rounded-[1.5rem] bg-slate-900/50 border border-slate-800">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Storage (Cloud)</p>
+            <p className="text-2xl font-black text-white">0.5 GB/10 GB</p>
+            <div className="w-full bg-slate-800 h-1 mt-3 rounded-full overflow-hidden">
+              <div className="bg-purple-500 h-full w-[5%]" />
+            </div>
+          </div>
+          <div className="p-6 rounded-[1.5rem] bg-slate-900/50 border border-slate-800">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Level Support</p>
+            <p className="text-2xl font-black text-cyan-400">PRIORITY</p>
           </div>
         </div>
       </div>
 
-      <div>
-        <h3 className="text-sm font-semibold text-[#1e3a5f] mb-4">
-          Acciones Avanzadas
-        </h3>
+      <div className="pt-6 border-t border-white/5">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center border border-red-500/20">
+            <Settings size={16} />
+          </div>
+          <h3 className="text-md font-bold text-white tracking-tight">Acciones Críticas</h3>
+        </div>
         <div className="flex gap-4">
-          <Button variant="outline" className="text-amber-600 border-amber-200">
-            Exportar datos
+          <Button variant="outline" className="h-11 rounded-xl bg-slate-900 border-slate-800 text-slate-400 hover:text-white font-bold">
+            Exportar Dataset Completo
           </Button>
-          <Button variant="outline" className="text-red-600 border-red-200">
-            Eliminar tenant
+          <Button variant="outline" className="h-11 rounded-xl bg-red-500/5 border-red-500/20 text-red-500 hover:bg-red-500/10 font-bold">
+            Eliminar Tenant del Ecosistema
           </Button>
         </div>
       </div>
