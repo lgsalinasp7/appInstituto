@@ -72,13 +72,15 @@ export default function AdminLayoutClient({
       )}
 
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block h-full">
+      <div className="hidden lg:block h-full relative z-20">
         <AdminSidebar />
       </div>
 
-      <div className="flex-1 flex flex-col min-w-0 h-full pt-16 lg:pt-0">
+      <div className="flex-1 flex flex-col min-w-0 h-full pt-16 lg:pt-0 relative z-10">
+        <div className="grain-overlay" />
+
         {/* Modern Top Header */}
-        <header className="h-20 hidden lg:flex items-center justify-between px-8 border-b border-slate-800/50 bg-slate-950/50 backdrop-blur-xl sticky top-0 z-40">
+        <header className="h-20 hidden lg:flex items-center justify-between px-8 border-b border-slate-800/50 bg-slate-950/20 backdrop-blur-xl sticky top-0 z-40">
           {/* AI Search Assistant Bar */}
           <div className="flex-1 max-w-2xl">
             <div className="relative group">
@@ -86,10 +88,10 @@ export default function AdminLayoutClient({
               <input
                 type="text"
                 placeholder="Preguntar a IA o buscar funciones..."
-                className="w-full h-11 pl-11 pr-32 bg-slate-900/50 border border-slate-800 rounded-xl focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/5 transition-all outline-none text-sm placeholder:text-slate-600"
+                className="w-full h-11 pl-11 pr-32 bg-slate-900/30 border border-slate-800 rounded-xl focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/5 transition-all outline-none text-sm placeholder:text-slate-600 font-medium"
               />
               <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500/10 text-cyan-400 rounded-lg text-xs font-semibold hover:bg-cyan-500/20 transition-colors border border-cyan-500/20">
+                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500/10 text-cyan-400 rounded-lg text-xs font-bold hover:bg-cyan-500/20 transition-all border border-cyan-500/20 active:scale-95">
                   <Sparkles className="w-3.5 h-3.5" />
                   Ask IA
                 </button>
@@ -100,13 +102,13 @@ export default function AdminLayoutClient({
           {/* Actions & Profile */}
           <div className="flex items-center gap-6 ml-8">
             <div className="flex items-center gap-2">
-              <button className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition-all">
+              <button className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all active:scale-90">
                 <Bell className="w-5 h-5" />
               </button>
-              <button className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition-all">
+              <button className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all active:scale-90">
                 <HelpCircle className="w-5 h-5" />
               </button>
-              <button className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition-all">
+              <button className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all active:scale-90">
                 <Settings className="w-5 h-5" />
               </button>
             </div>
@@ -115,10 +117,10 @@ export default function AdminLayoutClient({
 
             <div className="flex items-center gap-3 pl-2 group cursor-pointer">
               <div className="flex flex-col items-end mr-1">
-                <span className="text-sm font-semibold text-white group-hover:text-cyan-400 transition-colors">{userName}</span>
-                <span className="text-xs text-slate-500">{roleLabel}</span>
+                <span className="text-sm font-bold text-white group-hover:text-cyan-400 transition-colors font-display tracking-tight">{userName}</span>
+                <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider font-display">{roleLabel}</span>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 p-[1px]">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 p-[1px] transition-transform group-hover:scale-110 duration-300">
                 <div className="w-full h-full rounded-[11px] bg-slate-950 flex items-center justify-center">
                   <User className="w-5 h-5 text-cyan-400" />
                 </div>
@@ -128,12 +130,12 @@ export default function AdminLayoutClient({
         </header>
 
         {/* Admin Content Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-10 bg-premium-dark relative overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-10 pt-8 sm:pt-10 lg:pt-12 bg-premium-dark relative overflow-y-auto">
           {/* Background Glows */}
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-[120px] pointer-events-none -z-10" />
-          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none -z-10" />
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none -z-10 animate-pulse" />
+          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none -z-10" />
 
-          <div className="max-w-7xl mx-auto animate-fade-in">
+          <div className="max-w-7xl mx-auto">
             {children}
           </div>
         </main>

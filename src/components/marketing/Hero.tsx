@@ -6,7 +6,7 @@ import { ArrowRight, Code2, BrainCircuit, Rocket } from "lucide-react";
 
 export function Hero() {
     return (
-        <section className="relative min-h-screen flex items-center pt-24 lg:pt-20 overflow-hidden bg-slate-950">
+        <section className="relative min-h-screen flex items-center pt-24 lg:pt-20 overflow-hidden bg-slate-950 [color-scheme:dark]">
             {/* Background Gradients */}
             <div className="absolute top-0 -left-20 w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[128px] mix-blend-screen animate-pulse" />
             <div className="absolute bottom-0 -right-20 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[128px] mix-blend-screen" />
@@ -16,7 +16,7 @@ export function Hero() {
 
             <div className="container relative mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
                 <div className="space-y-8 text-center lg:text-left">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-cyan-400 text-sm font-medium animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-cyan-400 text-sm font-medium animate-in fade-in slide-in-from-bottom-4 duration-700 mt-8 mb-4">
                         <span className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
@@ -24,14 +24,14 @@ export function Hero() {
                         Innovación en cada línea de código
                     </div>
 
-                    <h1 className="text-4xl md:text-7xl font-bold tracking-tight text-white leading-[1.1]">
+                    <h1 className="text-4xl md:text-7xl font-bold tracking-tight text-white leading-[1.1] text-wrap-balance">
                         Transformamos Ideas en <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600">
                             Realidad Digital
                         </span>
                     </h1>
 
-                    <p className="text-xl text-gray-400 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                    <p className="text-xl text-gray-400 max-w-2xl mx-auto lg:mx-0 leading-relaxed text-pretty">
                         Somos una fábrica de software de élite y una academia de Inteligencia Artificial.
                         Construimos el futuro tecnológico de tu empresa con soluciones escalables y diseño premium.
                     </p>
@@ -39,14 +39,14 @@ export function Hero() {
                     <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                         <Button
                             size="lg"
-                            className="bg-cyan-600 hover:bg-cyan-500 text-white text-lg h-14 px-8 rounded-xl shadow-[0_0_30px_rgba(8,145,178,0.4)] transition-all hover:scale-105"
+                            className="bg-cyan-600 hover:bg-cyan-500 text-white text-lg h-14 px-8 rounded-xl shadow-[0_0_30px_rgba(8,145,178,0.4)] transition-[background-color,transform,box-shadow] hover:scale-105 motion-reduce:hover:scale-100"
                         >
                             Iniciar Proyecto <ArrowRight className="ml-2 h-5 w-5" />
                         </Button>
                         <Button
                             size="lg"
                             variant="outline"
-                            className="border-2 border-cyan-400/60 text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-400 text-lg h-14 px-8 rounded-xl backdrop-blur-sm font-semibold transition-all"
+                            className="border-2 border-cyan-400/60 text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-400 text-lg h-14 px-8 rounded-xl backdrop-blur-sm font-semibold transition-[background-color,border-color,color]"
                         >
                             Explorar Academia
                         </Button>
@@ -73,7 +73,7 @@ export function Hero() {
                     <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 to-purple-500/20 rounded-full blur-3xl animate-pulse" />
                     <div className="relative z-10 w-full h-full flex items-center justify-center">
                         {/* Abstract Code visualization */}
-                        <div className="relative w-96 h-96 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 p-6 shadow-2xl rotate-6 hover:rotate-0 transition-transform duration-700">
+                        <div className="relative w-96 h-96 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 p-6 shadow-2xl rotate-6 hover:rotate-0 transition-transform duration-700 motion-reduce:rotate-0">
                             <div className="flex gap-2 mb-4">
                                 <div className="w-3 h-3 rounded-full bg-red-500" />
                                 <div className="w-3 h-3 rounded-full bg-yellow-500" />
@@ -81,7 +81,7 @@ export function Hero() {
                             </div>
                             <div className="space-y-3 font-mono text-sm">
                                 <div className="text-purple-400">const <span className="text-yellow-300">future</span> = await <span className="text-blue-400">KaledSoft</span>.build();</div>
-                                <div className="text-gray-500">// Implementando IA avanzada...</div>
+                                <div className="text-gray-500">// Implementando IA avanzada…</div>
                                 <div className="h-2 w-3/4 bg-white/10 rounded animate-pulse" />
                                 <div className="h-2 w-1/2 bg-white/10 rounded animate-pulse delay-75" />
                                 <div className="h-2 w-2/3 bg-white/10 rounded animate-pulse delay-150" />

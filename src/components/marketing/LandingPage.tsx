@@ -10,21 +10,21 @@ import { Quote } from "lucide-react";
 const testimonials = [
     {
         name: "Maria Fernanda Lopez",
-        role: "Directora Academica",
+        role: "Directora Académica",
         institution: "Instituto EDUTEC",
-        text: "KaledSoft transformo la forma en que gestionamos nuestra institucion. Ahora tenemos control total de pagos y estudiantes en tiempo real.",
+        text: "KaledSoft transformó la forma en que gestionamos nuestra institución. Ahora tenemos control total de pagos y estudiantes en tiempo real.",
     },
     {
         name: "Carlos Andres Rivera",
         role: "Administrador",
-        institution: "Academia Tecnica del Sur",
-        text: "La plataforma es increiblemente intuitiva. Nuestro equipo la adopto en menos de una semana y la productividad aumento un 40%.",
+        institution: "Academia Técnica del Sur",
+        text: "La plataforma es increíblemente intuitiva. Nuestro equipo la adoptó en menos de una semana y la productividad aumentó un 40%.",
     },
     {
         name: "Laura Patricia Gomez",
         role: "Coordinadora de Admisiones",
-        institution: "Centro de Formacion Integral",
-        text: "El seguimiento de prospectos y la automatizacion de comunicaciones nos ayudo a duplicar nuestras matriculas en un semestre.",
+        institution: "Centro de Formación Integral",
+        text: "El seguimiento de prospectos y la automatización de comunicaciones nos ayudó a duplicar nuestras matrículas en un semestre.",
     },
 ];
 
@@ -40,11 +40,11 @@ export default function LandingPage() {
             <section className="py-24 bg-slate-950">
                 <div className="container mx-auto px-6">
                     <div className="text-center mb-16">
-                        <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                        <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 text-wrap-balance">
                             Lo que dicen nuestros clientes
                         </h2>
-                        <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-                            Instituciones educativas que ya confiaron en KaledSoft para transformar su gestion.
+                        <p className="text-xl text-gray-400 max-w-2xl mx-auto text-pretty">
+                            Instituciones educativas que ya confiaron en KaledSoft para transformar su gestión.
                         </p>
                     </div>
 
@@ -52,7 +52,7 @@ export default function LandingPage() {
                         {testimonials.map((t) => (
                             <div
                                 key={t.name}
-                                className="relative p-8 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-cyan-500/30 transition-all"
+                                className="relative p-8 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-cyan-500/30 transition-[border-color,box-shadow,transform] duration-300"
                             >
                                 <Quote className="w-8 h-8 text-cyan-500/30 mb-4" />
                                 <p className="text-gray-300 mb-6 leading-relaxed">
@@ -81,13 +81,13 @@ export default function LandingPage() {
                         Comienza tu prueba gratuita de 14 dias hoy. No requiere tarjeta de credito.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                        <Link 
+                        <Link
                             href="mailto:ventas@kaledsoft.tech?subject=Solicitud%20de%20Demo&body=Hola,%20me%20gustaria%20agendar%20una%20demo%20de%20la%20plataforma."
                             className="bg-white text-cyan-900 hover:bg-gray-100 font-bold py-4 px-8 rounded-xl shadow-xl transition-all hover:scale-105"
                         >
                             Solicitar Demo
                         </Link>
-                        <Link 
+                        <Link
                             href="https://wa.me/573001234567?text=Hola%2C%20me%20interesa%20conocer%20mas%20sobre%20KaledSoft"
                             target="_blank"
                             rel="noopener noreferrer"
@@ -95,7 +95,7 @@ export default function LandingPage() {
                         >
                             Escribir por WhatsApp
                         </Link>
-                        <Link 
+                        <Link
                             href="mailto:ventas@kaledsoft.tech?subject=Consulta%20sobre%20Planes"
                             className="bg-transparent border-2 border-cyan-500 text-cyan-400 hover:bg-cyan-500 hover:text-white font-bold py-4 px-8 rounded-xl transition-all"
                         >

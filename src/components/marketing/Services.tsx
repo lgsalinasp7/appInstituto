@@ -51,10 +51,10 @@ export function Services() {
         <section id="services" className="py-24 bg-slate-900 text-white relative">
             <div className="container mx-auto px-6">
                 <div className="text-center max-w-3xl mx-auto mb-16">
-                    <h2 className="text-3xl md:text-5xl font-bold mb-6">
+                    <h2 className="text-3xl md:text-5xl font-bold mb-6 text-wrap-balance">
                         Nuestros <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">Servicios</span>
                     </h2>
-                    <p className="text-gray-400 text-lg">
+                    <p className="text-gray-400 text-lg text-pretty">
                         Combinamos excelencia técnica con visión de negocio para entregar resultados extraordinarios.
                     </p>
                 </div>
@@ -63,7 +63,7 @@ export function Services() {
                     {services.map((service, index) => (
                         <Card
                             key={index}
-                            className="bg-white/5 border-white/10 hover:border-cyan-500/50 transition-all duration-300 hover:-translate-y-2 group overflow-hidden relative"
+                            className="bg-white/5 border-white/10 hover:border-cyan-500/50 transition-[transform,border-color,box-shadow] duration-300 hover:-translate-y-2 group overflow-hidden relative"
                         >
                             <div className="absolute inset-0 bg-gradient-to-br from-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                             <CardHeader>

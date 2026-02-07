@@ -63,6 +63,7 @@ export function EnrollmentDashboard({ stats }: EnrollmentDashboardProps) {
           trend="up"
           trendValue="+0.0%"
           gradient="from-emerald-500 to-emerald-600"
+          delay={100}
         />
         <StatCard
           title={isVentas ? "Mis Ventas Mes" : "Recaudo del Mes"}
@@ -71,6 +72,7 @@ export function EnrollmentDashboard({ stats }: EnrollmentDashboardProps) {
           trend="up"
           trendValue="+0.0%"
           gradient="from-blue-500 to-blue-600"
+          delay={200}
         />
 
         {(isVentas || isAdmin) && (
@@ -81,6 +83,7 @@ export function EnrollmentDashboard({ stats }: EnrollmentDashboardProps) {
             trend="up"
             trendValue="+0.0%"
             gradient="from-purple-500 to-purple-600"
+            delay={300}
           />
         )}
 
@@ -92,6 +95,7 @@ export function EnrollmentDashboard({ stats }: EnrollmentDashboardProps) {
             trend="down"
             trendValue="-0.0%"
             gradient="from-orange-500 to-orange-600"
+            delay={400}
           />
         )}
 
@@ -103,6 +107,7 @@ export function EnrollmentDashboard({ stats }: EnrollmentDashboardProps) {
             trend="up"
             trendValue="+0.0%"
             gradient="from-primary to-primary-light"
+            delay={500}
           />
         )}
       </div>

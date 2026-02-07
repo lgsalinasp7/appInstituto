@@ -28,16 +28,16 @@ export function NavBar() {
         </div>
 
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
-          <Link href="#services" className="hover:text-cyan-400 transition-colors">
+          <Link href="#services" className="hover:text-cyan-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-lg transition-colors">
             Servicios
           </Link>
-          <Link href="#features" className="hover:text-cyan-400 transition-colors">
+          <Link href="#features" className="hover:text-cyan-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-lg transition-colors">
             Funcionalidades
           </Link>
-          <Link href="#pricing" className="hover:text-cyan-400 transition-colors">
+          <Link href="#pricing" className="hover:text-cyan-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-lg transition-colors">
             Precios
           </Link>
-          <Link href="#contact" className="hover:text-cyan-400 transition-colors">
+          <Link href="#contact" className="hover:text-cyan-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-lg transition-colors">
             Contacto
           </Link>
         </div>
@@ -46,7 +46,7 @@ export function NavBar() {
           <Button
             asChild
             variant="ghost"
-            className="text-gray-300 hover:text-white hover:bg-white/10"
+            className="text-gray-300 hover:text-white hover:bg-white/10 transition-[background-color,color]"
           >
             <a href="https://admin.kaledsoft.tech">
               Portal Cliente
@@ -54,7 +54,7 @@ export function NavBar() {
           </Button>
           <Button
             asChild
-            className="bg-cyan-600 hover:bg-cyan-500 text-white border-0 shadow-[0_0_15px_rgba(8,145,178,0.5)]"
+            className="bg-cyan-600 hover:bg-cyan-500 text-white border-0 shadow-[0_0_15px_rgba(8,145,178,0.5)] transition-[background-color,transform,shadow]"
           >
             <Link href="#contact">
               Cotizar Proyecto
@@ -64,8 +64,9 @@ export function NavBar() {
 
         {/* Mobile Menu Toggle */}
         <button
-          className="md:hidden p-2 text-gray-300 hover:text-white"
+          className="md:hidden p-2 text-gray-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-lg"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
+          aria-label={isMenuOpen ? "Cerrar menú" : "Abrir menú"}
         >
           {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>

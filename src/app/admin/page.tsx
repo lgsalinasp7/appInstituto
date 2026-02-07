@@ -78,11 +78,11 @@ export default async function AdminDashboardPage() {
   ];
 
   return (
-    <div className="space-y-16 animate-fade-in">
+    <div className="space-y-16">
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="animate-fade-in-up">
-          <h1 className="text-4xl font-black text-white tracking-tighter leading-none">
+        <div className="animate-in fade-in slide-in-from-bottom-6 duration-1000 ease-out pt-8 sm:pt-12">
+          <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tighter leading-none font-display">
             Hola, <span className="text-gradient">Admin</span>
           </h1>
           <p className="text-slate-400 mt-4 flex items-center gap-3 text-lg font-medium">
@@ -99,22 +99,25 @@ export default async function AdminDashboardPage() {
           return (
             <div
               key={stat.title}
-              className="glass-card rounded-[2.5rem] p-8 hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 animate-fade-in-up relative overflow-hidden"
-              style={{ animationDelay: `${index * 100}ms` }}
+              className="glass-card rounded-[2.5rem] p-8 hover:scale-[1.02] hover:-translate-y-1 transition-[transform,box-shadow,border-color] duration-500 animate-in fade-in slide-in-from-bottom-8 fill-mode-both group"
+              style={{ animationDelay: `${index * 150}ms` }}
             >
-              <div className="flex items-center justify-between mb-6">
-                <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center border border-white/5", stat.bg, stat.color)}>
+              {/* Card Glow Effect Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/0 via-cyan-500/0 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+              <div className="flex items-center justify-between mb-6 relative z-10">
+                <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center border border-white/5 transition-transform group-hover:scale-110 duration-500", stat.bg, stat.color)}>
                   <Icon className="w-7 h-7" />
                 </div>
                 <div className="flex flex-col items-end">
-                  <span className="text-[10px] font-black text-white px-2 py-1 bg-white/5 border border-white/10 rounded-lg tracking-widest uppercase">
+                  <span className="text-[10px] font-bold text-white px-2 py-1 bg-white/5 border border-white/10 rounded-lg tracking-widest uppercase">
                     Live
                   </span>
                 </div>
               </div>
-              <div className="space-y-2">
-                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest leading-none">{stat.title}</p>
-                <div className="text-4xl font-black text-white tracking-tighter">{stat.value}</div>
+              <div className="space-y-2 relative z-10">
+                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest leading-none font-display">{stat.title}</p>
+                <div className="text-4xl font-bold text-white tracking-tighter font-display">{stat.value}</div>
                 <p className="text-xs font-medium text-slate-500 pt-1">{stat.subtitle}</p>
               </div>
             </div>

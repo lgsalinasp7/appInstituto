@@ -1,11 +1,11 @@
 "use client";
 
-import { 
-  Users, 
-  DollarSign, 
-  FileText, 
-  BarChart3, 
-  Shield, 
+import {
+  Users,
+  DollarSign,
+  FileText,
+  BarChart3,
+  Shield,
   Zap,
   Bell,
   Cloud,
@@ -83,10 +83,10 @@ export function Features() {
     <section id="features" className="py-24 bg-slate-900">
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 text-wrap-balance">
             Todo lo que necesitas en una sola plataforma
           </h2>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-400 max-w-2xl mx-auto text-pretty">
             Funcionalidades potentes y fáciles de usar, diseñadas específicamente para instituciones educativas.
           </p>
         </div>
@@ -97,9 +97,9 @@ export function Features() {
             return (
               <div
                 key={feature.title}
-                className="group p-6 rounded-xl bg-slate-800/50 border border-slate-700 hover:border-cyan-500 transition-all hover:shadow-lg hover:shadow-cyan-500/10"
+                className="group p-6 rounded-xl bg-slate-800/50 border border-slate-700 hover:border-cyan-500 transition-[border-color,box-shadow,transform] duration-300 hover:shadow-lg hover:shadow-cyan-500/10"
               >
-                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <Icon className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>

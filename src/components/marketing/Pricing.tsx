@@ -65,10 +65,10 @@ export function Pricing() {
     <section id="pricing" className="py-24 bg-slate-950">
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 text-wrap-balance">
             Planes que se adaptan a tu institución
           </h2>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-400 max-w-2xl mx-auto text-pretty">
             Elige el plan perfecto para tu negocio. Todos incluyen 14 días de prueba gratis, sin tarjeta de crédito.
           </p>
         </div>
@@ -77,9 +77,9 @@ export function Pricing() {
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`relative rounded-2xl p-8 transition-all ${plan.highlighted
-                  ? "bg-gradient-to-br from-cyan-900/40 to-blue-900/40 border-2 border-cyan-500 md:scale-105"
-                  : "bg-slate-900/50 border border-slate-800"
+              className={`relative rounded-2xl p-8 transition-[transform,border-color,box-shadow,background-color] duration-300 ${plan.highlighted
+                ? "bg-gradient-to-br from-cyan-900/40 to-blue-900/40 border-2 border-cyan-500 md:scale-105"
+                : "bg-slate-900/50 border border-slate-800"
                 }`}
             >
               {plan.highlighted && (
@@ -113,9 +113,9 @@ export function Pricing() {
                   ? "mailto:ventas@kaledsoft.tech?subject=Plan%20Empresarial"
                   : "mailto:ventas@kaledsoft.tech?subject=Solicitud%20Plan%20" + encodeURIComponent(plan.name)
                 }
-                className={`block w-full py-4 px-6 rounded-xl font-bold text-center transition-all ${plan.highlighted
-                    ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:shadow-lg hover:shadow-cyan-500/50"
-                    : "bg-slate-800 text-white hover:bg-slate-700"
+                className={`block w-full py-4 px-6 rounded-xl font-bold text-center transition-[background-color,box-shadow] duration-300 ${plan.highlighted
+                  ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:shadow-lg hover:shadow-cyan-500/50"
+                  : "bg-slate-800 text-white hover:bg-slate-700"
                   }`}
               >
                 {plan.cta}

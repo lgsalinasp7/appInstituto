@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 // Contextos de la aplicación
 type AppContext = 'landing' | 'admin' | 'tenant';
 
-export async function middleware(req: NextRequest) {
+export default async function proxy(req: NextRequest) {
     const hostname = req.headers.get('host') || '';
     const pathname = req.nextUrl.pathname;
 
@@ -45,7 +45,7 @@ export async function middleware(req: NextRequest) {
         if (!isPublicPath) {
             // Verificar sesión para rutas protegidas admin
             const sessionToken = req.cookies.get('session_token')?.value;
-            
+
             if (!sessionToken) {
                 // Redirigir a login admin
                 return NextResponse.redirect(new URL('/login', req.url));
@@ -78,7 +78,7 @@ export async function middleware(req: NextRequest) {
         if (!isPublicPath) {
             // Verificar sesión para rutas protegidas del tenant
             const sessionToken = req.cookies.get('session_token')?.value;
-            
+
             if (!sessionToken) {
                 // Redirigir a login del tenant
                 return NextResponse.redirect(new URL('/auth/login', req.url));
