@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PaymentService } from "@/modules/payments";
 import { z } from "zod";
+import { withTenantAuthAndCSRF } from "@/lib/api-auth";
 
 const updatePaymentSchema = z.object({
   amount: z.number().optional(),
@@ -10,37 +11,32 @@ const updatePaymentSchema = z.object({
   comments: z.string().optional(),
 });
 
-export async function PUT(
+export const PUT = withTenantAuthAndCSRF(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const body = await request.json();
-    const validationResult = updatePaymentSchema.safeParse(body);
+  user,
+  tenantId,
+  context?: { params: Promise<Record<string, string>> }
+) => {
+  const { id } = await context!.params;
+  const body = await request.json();
+  const validationResult = updatePaymentSchema.safeParse(body);
 
-    if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Datos inválidos",
-          details: validationResult.error.flatten().fieldErrors,
-        },
-        { status: 400 }
-      );
-    }
-
-    const updatedPayment = await PaymentService.updatePayment(params.id, validationResult.data);
-
-    return NextResponse.json({
-      success: true,
-      data: updatedPayment,
-      message: "Pago actualizado exitosamente",
-    });
-  } catch (error) {
-    console.error("Error updating payment:", error);
+  if (!validationResult.success) {
     return NextResponse.json(
-      { success: false, error: "Error al actualizar pago" },
-      { status: 500 }
+      {
+        success: false,
+        error: "Datos inválidos",
+        details: validationResult.error.flatten().fieldErrors,
+      },
+      { status: 400 }
     );
   }
-}
+
+  const updatedPayment = await PaymentService.updatePayment(id, validationResult.data);
+
+  return NextResponse.json({
+    success: true,
+    data: updatedPayment,
+    message: "Pago actualizado exitosamente",
+  });
+});

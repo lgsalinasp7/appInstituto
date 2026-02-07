@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { randomUUID } from "crypto";
 import { addHours } from "date-fns";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { checkRateLimitByEmail, RATE_LIMIT_CONFIGS } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
     try {
@@ -12,6 +13,28 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(
                 { success: false, error: "El correo electrónico es requerido" },
                 { status: 400 }
+            );
+        }
+
+        // Aplicar rate limiting por email
+        const rateLimit = checkRateLimitByEmail(email, RATE_LIMIT_CONFIGS.RESET_PASSWORD, "forgot-password");
+        
+        if (!rateLimit.allowed) {
+            const resetIn = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
+            return NextResponse.json(
+                { 
+                    success: false, 
+                    error: `Demasiados intentos. Por favor, intente nuevamente en ${resetIn} segundos.` 
+                },
+                { 
+                    status: 429,
+                    headers: {
+                        "X-RateLimit-Limit": RATE_LIMIT_CONFIGS.RESET_PASSWORD.maxRequests.toString(),
+                        "X-RateLimit-Remaining": "0",
+                        "X-RateLimit-Reset": rateLimit.resetAt.toString(),
+                        "Retry-After": Math.ceil(resetIn).toString(),
+                    }
+                }
             );
         }
 

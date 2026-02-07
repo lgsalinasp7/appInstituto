@@ -535,11 +535,11 @@ export class PaymentService {
     // If search provided, filter by student name/doc
 
     const where: Prisma.StudentWhereInput = {
+      tenantId: await getCurrentTenantId() as string,
       commitments: {
         some: {
           status: { not: "PAGADO" }
-        },
-        tenantId: await getCurrentTenantId() as string
+        }
       }
     };
 

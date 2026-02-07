@@ -12,7 +12,7 @@ interface ReceiptData {
 }
 
 export function generateReceiptMessage(data: ReceiptData): string {
-  const institutionName = data.institutionName || "EDUTEC";
+  const institutionName = data.institutionName || "Plataforma";
   const formattedDate = new Date(data.paymentDate).toLocaleDateString("es-CO", {
     weekday: "long",
     year: "numeric",
@@ -142,7 +142,7 @@ interface ReminderData {
 }
 
 export function generatePaymentReminderMessage(data: ReminderData): string {
-  const institutionName = data.institutionName || "EDUTEC";
+  const institutionName = data.institutionName || "Plataforma";
   const formattedDate = new Date(data.dueDate).toLocaleDateString("es-CO", {
     weekday: "long",
     year: "numeric",

@@ -7,6 +7,7 @@
 
 import Image from "next/image";
 import { Menu, Bell, X } from "lucide-react";
+import { useBranding } from "@/components/providers/BrandingContext";
 
 interface MobileHeaderProps {
   isMenuOpen: boolean;
@@ -14,6 +15,8 @@ interface MobileHeaderProps {
 }
 
 export function MobileHeader({ isMenuOpen, onMenuToggle }: MobileHeaderProps) {
+  const branding = useBranding();
+
   return (
     <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-b border-gray-200 shadow-sm">
       <div className="flex items-center justify-between px-4 h-16">
@@ -21,19 +24,19 @@ export function MobileHeader({ isMenuOpen, onMenuToggle }: MobileHeaderProps) {
         <div className="flex items-center gap-3">
           <div className="relative w-10 h-10">
             <Image
-              src="/logo-instituto.png"
-              alt="Logo"
+              src={branding.logoUrl || "/logo-instituto.png"}
+              alt={branding.tenantName}
               fill
               className="object-contain"
               priority
             />
           </div>
           <div className="flex flex-col">
-            <span className="font-black text-[#1e3a5f] text-base leading-none tracking-tighter">
-              EDUTEC
+            <span className="font-black text-base leading-none tracking-tighter" style={{ color: branding.primaryColor }}>
+              {branding.tenantName}
             </span>
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-              Institución
+              Gestion
             </span>
           </div>
         </div>

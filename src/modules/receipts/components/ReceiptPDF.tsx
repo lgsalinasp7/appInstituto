@@ -268,6 +268,12 @@ export interface ReceiptPDFData {
     name: string;
   };
   balanceAfter?: number;
+  /** Datos del tenant para personalizar el recibo */
+  tenant?: {
+    name: string;
+    address?: string;
+    phone?: string;
+  };
 }
 
 function formatDateParts(date: Date) {
@@ -301,14 +307,14 @@ export function ReceiptPDF({ data }: { data: ReceiptPDFData }) {
                   For now, text fallback is safer if image path is tricky in dev vs prod without proper setup.
                   But let's try assuming standard access or just Text. */}
               <View style={styles.titleContainer}>
-                <Text style={styles.titleMain}>Educación Técnica Para el Trabajo</Text>
-                <Text style={styles.titleSub}>y Desarrollo Humano EDUTEC</Text>
-                <Text style={styles.address}>
-                  Cra. 31B No. 50-89 Cuatro Vientos Frente al colegio Bilingue
-                </Text>
-                <Text style={styles.address}>
-                  316 5128182 - 314 6379067 - 324 3419696 - 322 4976030 - 301 4179786
-                </Text>
+                <Text style={styles.titleMain}>{data.tenant?.name || "Institucion Educativa"}</Text>
+                <Text style={styles.titleSub}>Recibo de Pago</Text>
+                {data.tenant?.address && (
+                  <Text style={styles.address}>{data.tenant.address}</Text>
+                )}
+                {data.tenant?.phone && (
+                  <Text style={styles.address}>{data.tenant.phone}</Text>
+                )}
               </View>
             </View>
             <View style={styles.headerRight}>

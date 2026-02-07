@@ -8,8 +8,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Logo } from "@/components/brand";
+import { headers } from "next/headers";
+import LandingPage from "@/components/marketing/LandingPage";
 
-export default function HomePage() {
+function TenantWelcome() {
   return (
     <main className="min-h-screen flex flex-col">
       {/* Hero Section */}
@@ -40,9 +42,7 @@ export default function HomePage() {
               >
                 <Link href="/auth/login">Iniciar Sesión</Link>
               </Button>
-
             </div>
-
           </CardContent>
         </Card>
       </div>
@@ -53,4 +53,17 @@ export default function HomePage() {
       </footer>
     </main>
   );
+}
+
+export default async function HomePage() {
+  const headerList = await headers();
+  const tenantSlug = headerList.get("x-tenant-slug");
+
+  // If there is a tenant slug header (set by middleware), show the Tenant App
+  if (tenantSlug) {
+    return <TenantWelcome />;
+  }
+
+  // Otherwise, render the KaledSoft Landing Page
+  return <LandingPage />;
 }

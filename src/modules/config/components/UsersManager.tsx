@@ -72,8 +72,8 @@ export function UsersManager() {
         variant: "default",
     });
 
-    const isSuperAdmin = currentUser?.role.name === "SUPERADMIN";
-    const isAdmin = currentUser?.role.name === "ADMINISTRADOR";
+    const isSuperAdmin = currentUser?.role?.name === "SUPERADMIN";
+    const isAdmin = currentUser?.role?.name === "ADMINISTRADOR";
     const canAccessUsers = isSuperAdmin || isAdmin;
 
     // Fetch users from API

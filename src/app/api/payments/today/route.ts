@@ -1,19 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PaymentService } from "@/modules/payments";
+import { withTenantAuth } from "@/lib/api-auth";
 
-export async function GET() {
-  try {
-    const result = await PaymentService.getTodayPayments();
+export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) => {
+  const result = await PaymentService.getTodayPayments();
 
-    return NextResponse.json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
-    console.error("Error fetching today payments:", error);
-    return NextResponse.json(
-      { success: false, error: "Error al obtener pagos del día" },
-      { status: 500 }
-    );
-  }
-}
+  return NextResponse.json({
+    success: true,
+    data: result,
+  });
+});

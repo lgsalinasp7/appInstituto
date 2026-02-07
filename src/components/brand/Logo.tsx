@@ -2,7 +2,7 @@
 
 /**
  * Logo Component
- * Componente del logo institucional "Educamos con Valores"
+ * Componente del logo dinámico con soporte para branding personalizado
  */
 
 import Image from "next/image";
@@ -14,6 +14,9 @@ interface LogoProps {
   showText?: boolean;
   variant?: "full" | "icon";
   theme?: "light" | "dark";
+  logoUrl?: string | null;
+  brandName?: string;
+  tagline?: string | null;
 }
 
 const sizes = {
@@ -29,15 +32,19 @@ export function Logo({
   showText = true,
   variant = "full",
   theme = "light",
+  logoUrl,
+  brandName = "Plataforma",
+  tagline,
 }: LogoProps) {
   const sizeConfig = sizes[size];
   const isDark = theme === "dark";
+  const imageSrc = logoUrl || "/logo-instituto.png";
 
   return (
     <div className={cn("flex items-center gap-3", className)}>
       <Image
-        src="/logo-instituto.png"
-        alt="Educamos con Valores"
+        src={imageSrc}
+        alt={brandName}
         width={sizeConfig.width}
         height={sizeConfig.height}
         className="object-contain"
@@ -53,14 +60,16 @@ export function Logo({
               isDark ? "text-white" : "text-[#1e3a5f]"
             )}
           >
-            EDUTEC
+            {brandName}
           </span>
-          <span className={cn(
-            "text-[10px] font-bold leading-tight uppercase tracking-widest",
-            isDark ? "text-white/70" : "text-gray-400"
-          )}>
-            Educamos con Valores
-          </span>
+          {tagline && (
+            <span className={cn(
+              "text-[10px] font-bold leading-tight uppercase tracking-widest",
+              isDark ? "text-white/70" : "text-gray-400"
+            )}>
+              {tagline}
+            </span>
+          )}
         </div>
       )}
     </div>

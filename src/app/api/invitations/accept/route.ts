@@ -114,7 +114,7 @@ export async function POST(request: Request) {
         {
           success: false,
           error: "Datos inválidos",
-          details: validation.error.errors,
+          details: validation.error.issues,
         },
         { status: 400 }
       );
@@ -196,7 +196,7 @@ export async function POST(request: Request) {
         id: result.id,
         email: result.email,
         name: result.name,
-        role: result.role.name,
+        role: result.role?.name || "Sin rol",
       },
     });
   } catch (error) {

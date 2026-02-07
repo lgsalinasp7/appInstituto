@@ -1,31 +1,23 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { StudentService } from "@/modules/students/services/student.service";
+import { withTenantAuth } from "@/lib/api-auth";
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
+export const GET = withTenantAuth(async (
+  request: NextRequest,
+  user,
+  tenantId,
+  context?: { params: Promise<Record<string, string>> }
+) => {
+  const { id } = await context!.params;
 
-    if (!id) {
-      return NextResponse.json(
-        { success: false, error: "ID de estudiante requerido" },
-        { status: 400 }
-      );
-    }
-
-    const receiptData = await StudentService.getMatriculaReceipt(id);
-
-    return NextResponse.json({ success: true, data: receiptData });
-  } catch (error) {
-    console.error("Error fetching matricula receipt:", error);
-
-    const errorMessage = error instanceof Error ? error.message : "Error al obtener el recibo de matrícula";
-
+  if (!id) {
     return NextResponse.json(
-      { success: false, error: errorMessage },
-      { status: error instanceof Error && error.message.includes("no encontr") ? 404 : 500 }
+      { success: false, error: "ID de estudiante requerido" },
+      { status: 400 }
     );
   }
-}
+
+  const receiptData = await StudentService.getMatriculaReceipt(id);
+
+  return NextResponse.json({ success: true, data: receiptData });
+});

@@ -29,8 +29,8 @@ export default function UsersClient({ initialUsers, initialInvitations }: UsersC
         return u.name?.toLowerCase().includes(searchLower) || u.email.toLowerCase().includes(searchLower);
     });
 
-    const canInvite = currentUser?.role.name === "SUPERADMIN" || (currentUser?.role.name === "ADMINISTRADOR" && (currentUser?.invitationLimit || 0) > 0);
-    const isSuperAdmin = currentUser?.role.name === "SUPERADMIN";
+    const canInvite = currentUser?.role?.name === "SUPERADMIN" || (currentUser?.role?.name === "ADMINISTRADOR" && (currentUser?.invitationLimit || 0) > 0);
+    const isSuperAdmin = currentUser?.role?.name === "SUPERADMIN";
 
     const handleLimitChange = (userId: string, newLimit: string) => {
         const limit = parseInt(newLimit);

@@ -151,11 +151,14 @@ export class AuthService {
       email: user.email,
       name: user.name,
       image: user.image,
-      role: {
-        id: user.role.id,
-        name: user.role.name,
-        permissions: user.role.permissions,
-      },
+      role: user.role
+        ? {
+            id: user.role.id,
+            name: user.role.name,
+            permissions: user.role.permissions,
+          }
+        : null,
+      platformRole: user.platformRole,
       invitationLimit: user.invitationLimit,
       tenantId: user.tenantId,
       tenant: user.tenant ? {

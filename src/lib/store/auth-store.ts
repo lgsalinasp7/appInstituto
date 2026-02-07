@@ -9,11 +9,13 @@ export interface AuthUser {
     email: string;
     name: string | null;
     image: string | null;
+    tenantId: string | null;
+    platformRole: string | null;
     role: {
         id: string;
         name: string;
         permissions: string[];
-    };
+    } | null;
     invitationLimit: number;
 }
 

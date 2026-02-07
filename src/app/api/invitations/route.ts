@@ -3,16 +3,17 @@
  * Handles invitation creation and listing
  */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { randomUUID } from "crypto";
 import { addDays } from "date-fns";
 import { sendInvitationEmail } from "@/lib/email";
 import { z } from "zod";
+import { withTenantAuth, withTenantAuthAndCSRF } from "@/lib/api-auth";
 
 // Validation schema for creating invitation
 const createInvitationSchema = z.object({
-  email: z.string().email("Email inválido"),
+  email: z.email("Email invalido"),
   roleId: z.string().min(1, "Rol requerido"),
   inviterId: z.string().min(1, "Invitador requerido"),
 });
@@ -21,62 +22,56 @@ const createInvitationSchema = z.object({
  * GET /api/invitations
  * List all invitations, optionally filtered by inviterId
  */
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const inviterId = searchParams.get("inviterId");
-    const status = searchParams.get("status");
+export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) => {
+  const { searchParams } = new URL(request.url);
+  const inviterId = searchParams.get("inviterId");
+  const status = searchParams.get("status");
 
-    const where: Record<string, unknown> = {};
+  const where: Record<string, unknown> = {
+    tenantId, // Filtrar por tenant
+  };
 
-    if (inviterId) {
-      where.inviterId = inviterId;
-    }
-
-    if (status) {
-      where.status = status;
-    }
-
-    const invitations = await prisma.invitation.findMany({
-      where,
-      include: {
-        role: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        inviter: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: invitations,
-    });
-  } catch (error) {
-    console.error("Error listing invitations:", error);
-    return NextResponse.json(
-      { success: false, error: "Error al obtener invitaciones" },
-      { status: 500 }
-    );
+  if (inviterId) {
+    where.inviterId = inviterId;
   }
-}
+
+  if (status) {
+    where.status = status;
+  }
+
+  const invitations = await prisma.invitation.findMany({
+    where,
+    include: {
+      role: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      inviter: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return NextResponse.json({
+    success: true,
+    data: invitations,
+  });
+});
 
 /**
  * POST /api/invitations
  * Create a new invitation and send email
  */
-export async function POST(request: Request) {
+export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, tenantId) => {
   try {
     const body = await request.json();
 
@@ -110,7 +105,7 @@ export async function POST(request: Request) {
 
     // Check if inviter has permission (SUPERADMIN or ADMINISTRADOR)
     const allowedRoles = ["SUPERADMIN", "ADMINISTRADOR"];
-    if (!allowedRoles.includes(inviter.role.name)) {
+    if (!inviter.role || !allowedRoles.includes(inviter.role.name)) {
       return NextResponse.json(
         { success: false, error: "No tienes permisos para enviar invitaciones" },
         { status: 403 }
@@ -118,7 +113,7 @@ export async function POST(request: Request) {
     }
 
     // Check invitation limit for ADMINISTRADOR
-    if (inviter.role.name === "ADMINISTRADOR") {
+    if (inviter.role?.name === "ADMINISTRADOR") {
       // Count total occupied seats (Pending invitations + Accepted/Joined users) for THIS admin
       const totalOccupiedSeats = await prisma.invitation.count({
         where: {
@@ -186,6 +181,7 @@ export async function POST(request: Request) {
         email,
         roleId,
         inviterId,
+        tenantId, // Agregar tenantId
         token,
         expiresAt: addDays(new Date(), 7),
         status: "PENDING",
@@ -240,4 +236,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+});

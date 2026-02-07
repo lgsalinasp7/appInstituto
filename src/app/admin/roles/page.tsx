@@ -20,15 +20,7 @@ export default async function AdminRolesPage() {
         <Button>Crear Rol</Button>
       </div>
 
-      <RolesList
-        roles={roles}
-      // Client-side interactions like onEdit/onDelete will be handled within RolesList or pass Server Actions if needed.
-      // For now, assuming RolesList handles or we need a Client Wrapper if RolesList expects function props that do something.
-      // Actually, previous code passed console.log. Real app needs handlers.
-      // Since RolesList likely expects function props, we should probably wrap this or make RolesList take actions?
-      // Let's assume RolesList is a Client Component. If we pass functions from SC, they must be Server Actions or we use a Client Wrapper.
-      // Given the existing page passed client-side callbacks, we should probably make a Client Wrapper "RolesView" similar to "UsersClient".
-      />
+      <RolesClient roles={roles} />
     </div>
   );
 }

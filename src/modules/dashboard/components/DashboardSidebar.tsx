@@ -16,6 +16,7 @@ import {
   Settings
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { useBranding } from "@/components/providers/BrandingContext";
 
 const navItems = [
   { href: "/dashboard", label: "Panel de Control", icon: TrendingUp },
@@ -32,6 +33,7 @@ const adminOnlyItems = [
 export function DashboardSidebar() {
   const pathname = usePathname();
   const { user } = useAuthStore();
+  const branding = useBranding();
 
   // Filter items based on role
   const filteredNavItems = navItems.filter((item) => {
@@ -68,11 +70,11 @@ export function DashboardSidebar() {
       <div className="p-6 border-b border-gray-100">
         <div className="flex items-center gap-3">
           <div className="relative w-10 h-10 p-1.5 bg-white rounded-xl shadow-md border border-gray-50 flex items-center justify-center">
-            <Image src="/logo-instituto.png" alt="Logo" width={32} height={32} className="object-contain" />
+            <Image src={branding.logoUrl || "/logo-instituto.png"} alt={branding.tenantName} width={32} height={32} className="object-contain" />
           </div>
           <div className="flex flex-col">
-            <span className="font-black text-[#1e3a5f] text-lg leading-none tracking-tighter">EDUTEC</span>
-            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Gestión v1.0</span>
+            <span className="font-black text-lg leading-none tracking-tighter" style={{ color: branding.primaryColor }}>{branding.tenantName}</span>
+            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Gestion v1.0</span>
           </div>
         </div>
       </div>

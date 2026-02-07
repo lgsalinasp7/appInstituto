@@ -39,6 +39,7 @@ export class ReceiptService {
         data: {
           receiptNumber: payment.receiptNumber,
           paymentId: payment.id,
+          tenantId: payment.tenantId,
         },
       });
     }
@@ -76,7 +77,7 @@ export class ReceiptService {
   }
 
   static async getReceiptByNumber(receiptNumber: string): Promise<ReceiptData | null> {
-    const receipt = await prisma.receipt.findUnique({
+    const receipt = await prisma.receipt.findFirst({
       where: { receiptNumber },
       include: {
         payment: {
@@ -175,7 +176,7 @@ Total Pagado: $${receipt.balance.totalPaid.toLocaleString()}
 Saldo Pendiente: $${receipt.balance.remainingBalance.toLocaleString()}
 
 ━━━━━━━━━━━━━━━━
-*EDUTEC* - _Educamos con Valores_
+_Recibo generado por la plataforma_
     `.trim();
 
     return encodeURIComponent(message);

@@ -48,7 +48,7 @@ export function UserCard({ user, onClick }: UserCardProps) {
           <Badge variant={user.isActive ? "default" : "secondary"}>
             {user.isActive ? "Activo" : "Inactivo"}
           </Badge>
-          <Badge variant="outline">{user.role.name}</Badge>
+          <Badge variant="outline">{user.role?.name || user.platformRole || "Sin rol"}</Badge>
         </div>
       </CardHeader>
       {user.profile?.bio && (

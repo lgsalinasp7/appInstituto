@@ -1,10 +1,33 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { AuthService } from "@/modules/auth/services/auth.service";
 import { registerSchema } from "@/modules/auth/schemas";
+import { checkRateLimit, RATE_LIMIT_CONFIGS, RateLimitError } from "@/lib/rate-limit";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    // Aplicar rate limiting
+    const rateLimit = checkRateLimit(request, RATE_LIMIT_CONFIGS.REGISTER, "register");
+    
+    if (!rateLimit.allowed) {
+      const resetIn = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `Demasiados intentos de registro. Por favor, intente nuevamente en ${resetIn} segundos.` 
+        },
+        { 
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": RATE_LIMIT_CONFIGS.REGISTER.maxRequests.toString(),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": rateLimit.resetAt.toString(),
+            "Retry-After": Math.ceil(resetIn).toString(),
+          }
+        }
+      );
+    }
+
     const body = await request.json();
 
     // Validate request body
@@ -15,7 +38,7 @@ export async function POST(request: Request) {
 
     if (!validation.success) {
       return NextResponse.json(
-        { success: false, error: validation.error.errors[0].message },
+        { success: false, error: validation.error.issues[0].message },
         { status: 400 }
       );
     }

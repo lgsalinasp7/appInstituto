@@ -1,23 +1,21 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { withTenantAuthAndCSRF } from "@/lib/api-auth";
 
-export async function POST(request: Request) {
-    try {
-        const { key, value } = await request.json();
+export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, tenantId) => {
+  const { key, value } = await request.json();
 
-        if (!key || value === undefined) {
-            return NextResponse.json({ success: false, error: "Key and value are required" }, { status: 400 });
-        }
+  if (!key || value === undefined) {
+    return NextResponse.json({ success: false, error: "Key and value are required" }, { status: 400 });
+  }
 
-        const config = await prisma.systemConfig.upsert({
-            where: { key },
-            update: { value },
-            create: { key, value },
-        });
+  const config = await prisma.systemConfig.upsert({
+    where: { 
+      key_tenantId: { key, tenantId },
+    },
+    update: { value },
+    create: { key, value, tenantId },
+  });
 
-        return NextResponse.json({ success: true, data: config });
-    } catch (error) {
-        console.error("Error updating config:", error);
-        return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
-    }
-}
+  return NextResponse.json({ success: true, data: config });
+});

@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ProgramService } from "@/modules/programs";
 import { z } from "zod";
-
-interface Params {
-  params: Promise<{ id: string }>;
-}
+import { withTenantAuth, withTenantAuthAndCSRF } from "@/lib/api-auth";
 
 const updateProgramSchema = z.object({
   name: z.string().min(2).optional(),
@@ -15,9 +12,10 @@ const updateProgramSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-export async function GET(request: NextRequest, { params }: Params) {
+export const GET = withTenantAuth(async (request, user, tenantId, context) => {
+  const { id } = await context!.params;
+
   try {
-    const { id } = await params;
     const program = await ProgramService.getProgramById(id);
 
     if (!program) {
@@ -38,11 +36,12 @@ export async function GET(request: NextRequest, { params }: Params) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function PUT(request: NextRequest, { params }: Params) {
+export const PUT = withTenantAuthAndCSRF(async (request, user, tenantId, context) => {
+  const { id } = await context!.params;
+
   try {
-    const { id } = await params;
     const body = await request.json();
 
     const validationResult = updateProgramSchema.safeParse(body);
@@ -51,7 +50,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
       return NextResponse.json(
         {
           success: false,
-          error: "Datos inválidos",
+          error: "Datos invalidos",
           details: validationResult.error.flatten().fieldErrors,
         },
         { status: 400 }
@@ -67,43 +66,20 @@ export async function PUT(request: NextRequest, { params }: Params) {
     });
   } catch (error) {
     console.error("Error updating program:", error);
-
-    if (error instanceof Error && error.message.includes("nombre")) {
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 409 }
-      );
-    }
-
     return NextResponse.json(
       { success: false, error: "Error al actualizar programa" },
       { status: 500 }
     );
   }
-}
+});
 
-export async function DELETE(request: NextRequest, { params }: Params) {
-  try {
-    const { id } = await params;
-    await ProgramService.deleteProgram(id);
+export const DELETE = withTenantAuthAndCSRF(async (request, user, tenantId, context) => {
+  const { id } = await context!.params;
 
-    return NextResponse.json({
-      success: true,
-      message: "Programa eliminado exitosamente",
-    });
-  } catch (error) {
-    console.error("Error deleting program:", error);
+  await ProgramService.deleteProgram(id);
 
-    if (error instanceof Error && error.message.includes("estudiantes")) {
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { success: false, error: "Error al eliminar programa" },
-      { status: 500 }
-    );
-  }
-}
+  return NextResponse.json({
+    success: true,
+    message: "Programa eliminado exitosamente",
+  });
+});

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ProspectService } from "@/modules/prospects";
 import { z } from "zod";
+import { withTenantAuthAndCSRF } from "@/lib/api-auth";
 
 interface Params {
-  params: Promise<{ id: string }>;
+  params: Promise<Record<string, string>>;
 }
 
 const convertSchema = z.object({
@@ -12,50 +13,34 @@ const convertSchema = z.object({
   address: z.string().optional(),
   guardianName: z.string().optional(),
   guardianPhone: z.string().optional(),
-  guardianEmail: z.string().email().optional().or(z.literal("")),
+  guardianEmail: z.email().optional().or(z.literal("")),
   enrollmentDate: z.coerce.date(),
   initialPayment: z.coerce.number().min(0),
   totalProgramValue: z.coerce.number().positive(),
 });
 
-export async function POST(request: NextRequest, { params }: Params) {
-  try {
-    const { id } = await params;
-    const body = await request.json();
+export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, tenantId, context?: { params: Promise<Record<string, string>> }) => {
+  const { id } = await context!.params;
+  const body = await request.json();
 
-    const validationResult = convertSchema.safeParse(body);
+  const validationResult = convertSchema.safeParse(body);
 
-    if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Datos inválidos",
-          details: validationResult.error.flatten().fieldErrors,
-        },
-        { status: 400 }
-      );
-    }
-
-    const student = await ProspectService.convertToStudent(id, validationResult.data);
-
-    return NextResponse.json({
-      success: true,
-      data: student,
-      message: "Prospecto convertido a estudiante exitosamente",
-    });
-  } catch (error) {
-    console.error("Error converting prospect:", error);
-
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 400 }
-      );
-    }
-
+  if (!validationResult.success) {
     return NextResponse.json(
-      { success: false, error: "Error al convertir prospecto" },
-      { status: 500 }
+      {
+        success: false,
+        error: "Datos inválidos",
+        details: validationResult.error.flatten().fieldErrors,
+      },
+      { status: 400 }
     );
   }
-}
+
+  const student = await ProspectService.convertToStudent(id, validationResult.data);
+
+  return NextResponse.json({
+    success: true,
+    data: student,
+    message: "Prospecto convertido a estudiante exitosamente",
+  });
+});

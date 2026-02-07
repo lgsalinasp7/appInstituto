@@ -49,7 +49,7 @@ export default function ProfilePage() {
             <div className="text-center">
               <p className="font-bold text-lg text-primary">{user.name || "Usuario"}</p>
               <Badge variant="outline" className="mt-2">
-                {user.role.name === "SUPERADMIN" ? "Superadministrador" : user.role.name}
+                {user.role?.name === "SUPERADMIN" ? "Superadministrador" : (user.role?.name || user.platformRole || "Plataforma")}
               </Badge>
             </div>
           </CardContent>
@@ -85,12 +85,12 @@ export default function ProfilePage() {
                 </Label>
                 <Input
                   id="role"
-                  value={user.role.name === "SUPERADMIN" ? "Superadministrador" : user.role.name}
+                  value={user.role?.name === "SUPERADMIN" ? "Superadministrador" : (user.role?.name || user.platformRole || "Plataforma")}
                   disabled
                 />
               </div>
 
-              {user.role.name === "ADMINISTRADOR" && (
+              {user.role?.name === "ADMINISTRADOR" && (
                 <div className="space-y-2">
                   <Label htmlFor="invitationLimit" className="flex items-center gap-2">
                     <Calendar size={16} />

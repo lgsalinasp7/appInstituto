@@ -23,9 +23,10 @@ export interface AuthUser {
     id: string;
     name: string;
     permissions: string[];
-  };
+  } | null;
+  platformRole: string | null;
   invitationLimit: number;
-  tenantId: string;
+  tenantId: string | null;
   tenant?: {
     id: string;
     name: string;

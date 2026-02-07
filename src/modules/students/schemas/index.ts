@@ -34,7 +34,7 @@ export const createStudentSchema = z.object({
 
   // Datos del pago de matrícula (NUEVO)
   paymentMethod: z.nativeEnum(PaymentMethod, {
-    errorMap: () => ({ message: "Debe seleccionar un método de pago" }),
+    error: "Debe seleccionar un método de pago",
   }),
   paymentReference: z.string().optional(),
 });

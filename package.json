@@ -10,7 +10,9 @@
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:migrate": "prisma migrate dev",
+    "db:seed-migration": "tsx prisma/seed-migration.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -41,7 +43,7 @@
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.1",
     "recharts": "^3.7.0",
-    "resend": "^6.9.0",
+    "resend": "^6.9.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "ws": "^8.19.0",

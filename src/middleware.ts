@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(req: NextRequest) {
+// Contextos de la aplicación
+type AppContext = 'landing' | 'admin' | 'tenant';
+
+export async function middleware(req: NextRequest) {
     const hostname = req.headers.get('host') || '';
     const pathname = req.nextUrl.pathname;
 
@@ -9,11 +12,11 @@ export function middleware(req: NextRequest) {
     const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'kaledsoft.tech';
     const isDevelopment = process.env.NODE_ENV === 'development';
 
-    // Handle local development subdomains (e.g., edutec.localhost:3000)
+    // Extraer subdomain
     let subdomain = '';
     if (isDevelopment) {
-        if (hostname.includes('.localhost:')) {
-            subdomain = hostname.split('.localhost:')[0];
+        if (hostname.includes('.localhost:') || hostname.includes('.localhost')) {
+            subdomain = hostname.split('.localhost')[0];
         }
     } else {
         if (hostname.endsWith(`.${rootDomain}`)) {
@@ -21,13 +24,37 @@ export function middleware(req: NextRequest) {
         }
     }
 
-    // If we have a subdomain and it's not 'www', treat it as a tenant
-    if (subdomain && subdomain !== 'www') {
-        // Add the tenant subdomain to a custom header for use in Server actions/API
-        const requestHeaders = new Headers(req.headers);
-        requestHeaders.set('x-tenant-slug', subdomain);
+    // Determinar el contexto
+    let context: AppContext = 'landing';
+    if (subdomain === 'admin') {
+        context = 'admin';
+    } else if (subdomain && subdomain !== 'www') {
+        context = 'tenant';
+    }
 
-        // Continue with the modified headers
+    // Crear headers personalizados
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set('x-context', context);
+
+    // CONTEXTO: ADMIN
+    if (context === 'admin') {
+        // Rutas que no requieren autenticación
+        const publicAdminPaths = ['/login', '/forgot-password', '/reset-password'];
+        const isPublicPath = publicAdminPaths.some(path => pathname.startsWith(path));
+
+        if (!isPublicPath) {
+            // Verificar sesión para rutas protegidas admin
+            const sessionToken = req.cookies.get('session_token')?.value;
+            
+            if (!sessionToken) {
+                // Redirigir a login admin
+                return NextResponse.redirect(new URL('/login', req.url));
+            }
+
+            // Validar sesión y platformRole (se hace en los handlers de ruta)
+            // Aquí solo verificamos que existe la cookie
+        }
+
         return NextResponse.next({
             request: {
                 headers: requestHeaders,
@@ -35,7 +62,43 @@ export function middleware(req: NextRequest) {
         });
     }
 
-    return NextResponse.next();
+    // CONTEXTO: TENANT
+    if (context === 'tenant') {
+        requestHeaders.set('x-tenant-slug', subdomain);
+
+        // NOTA: La validación de existencia y estado del tenant se hace en:
+        // 1. API routes: usando withTenantAuth() que valida el tenant
+        // 2. Pages: usando getTenantFromHeaders() en los layouts/pages
+        // No se hace en middleware porque requiere Prisma (incompatible con Edge Runtime)
+
+        // Rutas públicas del tenant (login, registro, etc.)
+        const publicTenantPaths = ['/auth', '/login', '/register', '/forgot-password', '/reset-password', '/suspended'];
+        const isPublicPath = publicTenantPaths.some(path => pathname.startsWith(path));
+
+        if (!isPublicPath) {
+            // Verificar sesión para rutas protegidas del tenant
+            const sessionToken = req.cookies.get('session_token')?.value;
+            
+            if (!sessionToken) {
+                // Redirigir a login del tenant
+                return NextResponse.redirect(new URL('/auth/login', req.url));
+            }
+        }
+
+        return NextResponse.next({
+            request: {
+                headers: requestHeaders,
+            },
+        });
+    }
+
+    // CONTEXTO: LANDING
+    // Landing page pública - no requiere validación
+    return NextResponse.next({
+        request: {
+            headers: requestHeaders,
+        },
+    });
 }
 
 // Run middleware on ALL paths including API routes (needed for multi-tenancy)

@@ -4,13 +4,30 @@ import { WhatsAppService } from "@/modules/whatsapp/services/whatsapp.service";
 import { generatePaymentReminderMessage } from "@/modules/dashboard/utils/whatsapp";
 import { addDays, isSameDay, startOfDay } from "date-fns";
 
+/**
+ * Cron Job: Payment Notifications
+ * Protección: Requiere header Authorization: Bearer ${CRON_SECRET}
+ * Este endpoint NO usa autenticación de usuario, sino validación por token secreto.
+ */
 export async function GET(request: NextRequest) {
-    // Simple security check for Vercel Cron
-    // In production, check for CRON_SECRET or similar header
+    // CRITICAL: Validar CRON_SECRET siempre
     const authHeader = request.headers.get("authorization");
-    if (process.env.NODE_ENV === "production" && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-        // Note: If CRON_SECRET is not set, we might be exposed. 
-        // But for now let's proceed to allow testing if not in production.
+    const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
+    
+    if (!process.env.CRON_SECRET) {
+        console.error("[CRON] CRON_SECRET no está configurado. Rechazando por seguridad.");
+        return NextResponse.json(
+            { success: false, error: "Servicio no configurado" },
+            { status: 503 }
+        );
+    }
+
+    if (authHeader !== expectedAuth) {
+        console.error("[CRON] Intento de acceso no autorizado");
+        return NextResponse.json(
+            { success: false, error: "No autorizado" },
+            { status: 401 }
+        );
     }
 
     try {

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ContentService } from "@/modules/content";
 import { z } from "zod";
+import { withTenantAuthAndCSRF } from "@/lib/api-auth";
 
 interface Params {
-  params: Promise<{ id: string }>;
+  params: Promise<Record<string, string>>;
 }
 
 const updateContentSchema = z.object({
@@ -12,54 +13,38 @@ const updateContentSchema = z.object({
   orderIndex: z.coerce.number().int().min(1).optional(),
 });
 
-export async function PATCH(request: NextRequest, { params }: Params) {
-  try {
-    const { id } = await params;
-    const body = await request.json();
+export const PATCH = withTenantAuthAndCSRF(async (request: NextRequest, user, tenantId, context?: { params: Promise<Record<string, string>> }) => {
+  const { id } = await context!.params;
+  const body = await request.json();
 
-    const validationResult = updateContentSchema.safeParse(body);
+  const validationResult = updateContentSchema.safeParse(body);
 
-    if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Datos inválidos",
-          details: validationResult.error.flatten().fieldErrors,
-        },
-        { status: 400 }
-      );
-    }
-
-    const content = await ContentService.updateContent(id, validationResult.data);
-
-    return NextResponse.json({
-      success: true,
-      data: content,
-      message: "Contenido actualizado exitosamente",
-    });
-  } catch (error) {
-    console.error("Error updating content:", error);
+  if (!validationResult.success) {
     return NextResponse.json(
-      { success: false, error: "Error al actualizar contenido" },
-      { status: 500 }
+      {
+        success: false,
+        error: "Datos inválidos",
+        details: validationResult.error.flatten().fieldErrors,
+      },
+      { status: 400 }
     );
   }
-}
 
-export async function DELETE(request: NextRequest, { params }: Params) {
-  try {
-    const { id } = await params;
-    await ContentService.deleteContent(id);
+  const content = await ContentService.updateContent(id, validationResult.data);
 
-    return NextResponse.json({
-      success: true,
-      message: "Contenido eliminado exitosamente",
-    });
-  } catch (error) {
-    console.error("Error deleting content:", error);
-    return NextResponse.json(
-      { success: false, error: "Error al eliminar contenido" },
-      { status: 500 }
-    );
-  }
-}
+  return NextResponse.json({
+    success: true,
+    data: content,
+    message: "Contenido actualizado exitosamente",
+  });
+});
+
+export const DELETE = withTenantAuthAndCSRF(async (request: NextRequest, user, tenantId, context?: { params: Promise<Record<string, string>> }) => {
+  const { id } = await context!.params;
+  await ContentService.deleteContent(id);
+
+  return NextResponse.json({
+    success: true,
+    message: "Contenido eliminado exitosamente",
+  });
+});

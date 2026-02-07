@@ -1,84 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ProspectService } from "@/modules/prospects";
 import { updateProspectSchema } from "@/modules/prospects/schemas";
+import { withTenantAuth, withTenantAuthAndCSRF } from "@/lib/api-auth";
 
 interface Params {
-  params: Promise<{ id: string }>;
+  params: Promise<Record<string, string>>;
 }
 
-export async function GET(request: NextRequest, { params }: Params) {
-  try {
-    const { id } = await params;
-    const prospect = await ProspectService.getProspectById(id);
+export const GET = withTenantAuth(async (request: NextRequest, user, tenantId, context?: { params: Promise<Record<string, string>> }) => {
+  const { id } = await context!.params;
+  const prospect = await ProspectService.getProspectById(id);
 
-    if (!prospect) {
-      return NextResponse.json(
-        { success: false, error: "Prospecto no encontrado" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: prospect,
-    });
-  } catch (error) {
-    console.error("Error fetching prospect:", error);
+  if (!prospect) {
     return NextResponse.json(
-      { success: false, error: "Error al obtener prospecto" },
-      { status: 500 }
+      { success: false, error: "Prospecto no encontrado" },
+      { status: 404 }
     );
   }
-}
 
-export async function PATCH(request: NextRequest, { params }: Params) {
-  try {
-    const { id } = await params;
-    const body = await request.json();
+  return NextResponse.json({
+    success: true,
+    data: prospect,
+  });
+});
 
-    const validationResult = updateProspectSchema.safeParse(body);
+export const PATCH = withTenantAuthAndCSRF(async (request: NextRequest, user, tenantId, context?: { params: Promise<Record<string, string>> }) => {
+  const { id } = await context!.params;
+  const body = await request.json();
 
-    if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Datos inválidos",
-          details: validationResult.error.flatten().fieldErrors,
-        },
-        { status: 400 }
-      );
-    }
+  const validationResult = updateProspectSchema.safeParse(body);
 
-    const prospect = await ProspectService.updateProspect(id, validationResult.data);
-
-    return NextResponse.json({
-      success: true,
-      data: prospect,
-      message: "Prospecto actualizado exitosamente",
-    });
-  } catch (error) {
-    console.error("Error updating prospect:", error);
+  if (!validationResult.success) {
     return NextResponse.json(
-      { success: false, error: "Error al actualizar prospecto" },
-      { status: 500 }
+      {
+        success: false,
+        error: "Datos inválidos",
+        details: validationResult.error.flatten().fieldErrors,
+      },
+      { status: 400 }
     );
   }
-}
 
-export async function DELETE(request: NextRequest, { params }: Params) {
-  try {
-    const { id } = await params;
-    await ProspectService.deleteProspect(id);
+  const prospect = await ProspectService.updateProspect(id, validationResult.data);
 
-    return NextResponse.json({
-      success: true,
-      message: "Prospecto eliminado exitosamente",
-    });
-  } catch (error) {
-    console.error("Error deleting prospect:", error);
-    return NextResponse.json(
-      { success: false, error: "Error al eliminar prospecto" },
-      { status: 500 }
-    );
-  }
-}
+  return NextResponse.json({
+    success: true,
+    data: prospect,
+    message: "Prospecto actualizado exitosamente",
+  });
+});
+
+export const DELETE = withTenantAuthAndCSRF(async (request: NextRequest, user, tenantId, context?: { params: Promise<Record<string, string>> }) => {
+  const { id } = await context!.params;
+  await ProspectService.deleteProspect(id);
+
+  return NextResponse.json({
+    success: true,
+    message: "Prospecto eliminado exitosamente",
+  });
+});

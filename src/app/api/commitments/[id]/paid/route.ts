@@ -1,26 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CarteraService } from "@/modules/cartera";
+import { withTenantAuthAndCSRF } from "@/lib/api-auth";
 
 interface Params {
-  params: Promise<{ id: string }>;
+  params: Promise<Record<string, string>>;
 }
 
-export async function POST(request: NextRequest, { params }: Params) {
-  try {
-    const { id } = await params;
+export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, tenantId, context?: { params: Promise<Record<string, string>> }) => {
+  const { id } = await context!.params;
 
-    const commitment = await CarteraService.markAsPaid(id);
+  const commitment = await CarteraService.markAsPaid(id);
 
-    return NextResponse.json({
-      success: true,
-      data: commitment,
-      message: "Compromiso marcado como pagado",
-    });
-  } catch (error) {
-    console.error("Error marking commitment as paid:", error);
-    return NextResponse.json(
-      { success: false, error: "Error al marcar como pagado" },
-      { status: 500 }
-    );
-  }
-}
+  return NextResponse.json({
+    success: true,
+    data: commitment,
+    message: "Compromiso marcado como pagado",
+  });
+});

@@ -1,32 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ContentService } from "@/modules/content";
+import { withTenantAuth } from "@/lib/api-auth";
 
 interface Params {
-  params: Promise<{ studentId: string }>;
+  params: Promise<Record<string, string>>;
 }
 
-export async function GET(request: NextRequest, { params }: Params) {
-  try {
-    const { studentId } = await params;
+export const GET = withTenantAuth(async (request: NextRequest, user, tenantId, context?: { params: Promise<Record<string, string>> }) => {
+  const { studentId } = await context!.params;
 
-    const status = await ContentService.getStudentContentStatus(studentId);
+  const status = await ContentService.getStudentContentStatus(studentId);
 
-    if (!status) {
-      return NextResponse.json(
-        { success: false, error: "Estudiante no encontrado" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: status,
-    });
-  } catch (error) {
-    console.error("Error fetching student content status:", error);
+  if (!status) {
     return NextResponse.json(
-      { success: false, error: "Error al obtener estado de contenido" },
-      { status: 500 }
+      { success: false, error: "Estudiante no encontrado" },
+      { status: 404 }
     );
   }
-}
+
+  return NextResponse.json({
+    success: true,
+    data: status,
+  });
+});

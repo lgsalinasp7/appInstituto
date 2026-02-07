@@ -3,35 +3,31 @@
  * List available roles
  */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { withTenantAuth } from "@/lib/api-auth";
 
 /**
  * GET /api/roles
- * List all roles
+ * List all roles for the current tenant
  */
-export async function GET() {
-  try {
-    const roles = await prisma.role.findMany({
-      select: {
-        id: true,
-        name: true,
-        description: true,
-      },
-      orderBy: {
-        name: "asc",
-      },
-    });
+export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) => {
+  const roles = await prisma.role.findMany({
+    where: {
+      tenantId, // Filtrar por tenant
+    },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
 
-    return NextResponse.json({
-      success: true,
-      data: roles,
-    });
-  } catch (error) {
-    console.error("Error listing roles:", error);
-    return NextResponse.json(
-      { success: false, error: "Error al obtener roles" },
-      { status: 500 }
-    );
-  }
-}
+  return NextResponse.json({
+    success: true,
+    data: roles,
+  });
+});

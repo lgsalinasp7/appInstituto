@@ -11,10 +11,12 @@ export interface User {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  tenantId: string | null;
+  platformRole: string | null;
   role: {
     id: string;
     name: string;
-  };
+  } | null;
   profile?: UserProfile | null;
   invitationLimit?: number;
 }

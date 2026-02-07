@@ -1,23 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { renderToStream } from "@react-pdf/renderer";
 import React from "react";
 import ReceiptPDF from "@/modules/receipts/components/ReceiptPDF";
+import { withTenantAuth } from "@/lib/api-auth";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export const GET = withTenantAuth(async (request, user, tenantId, context) => {
+  const { id } = await context!.params;
+
   try {
-    const { id } = await params;
-
     // Search by id OR receiptNumber to support both
     const payment = await prisma.payment.findFirst({
       where: {
-        OR: [
-          { id },
-          { receiptNumber: id }
-        ]
+        tenantId,
+        OR: [{ id }, { receiptNumber: id }],
       },
       include: {
         student: {
@@ -37,20 +33,13 @@ export async function GET(
     }
 
     // Calculate balance
-    // Note: This calculates balance NOW, not at the time of payment.
-    // For a receipt, usually "Remaining Balance" means current debt.
     const totalProgramValue = Number(payment.student.totalProgramValue);
     const totalPayments = await prisma.payment.aggregate({
       where: { studentId: payment.student.id },
-      _sum: { amount: true }
+      _sum: { amount: true },
     });
     const totalPaid = Number(totalPayments._sum.amount) || 0;
     const balanceAfter = totalProgramValue - totalPaid;
-
-    // Resolve absolute path to logo
-    const path = require('path');
-    const process = require('process');
-    const logoPath = path.join(process.cwd(), 'public', 'logo-edutec.png');
 
     // Prepare data for PDF
     const pdfData = {
@@ -77,17 +66,17 @@ export async function GET(
       registeredBy: {
         name: payment.registeredBy.name || "Sistema",
       },
-      balanceAfter: balanceAfter,
-      logoSrc: logoPath
+      balanceAfter,
     };
 
     // Render PDF to stream
     const stream = await renderToStream(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       React.createElement(ReceiptPDF, { data: pdfData }) as any
     );
 
     // Return as PDF response
-    return new NextResponse(stream as any, {
+    return new NextResponse(stream as unknown as ReadableStream, {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename=recibo-${payment.receiptNumber}.pdf`,
@@ -100,4 +89,4 @@ export async function GET(
       { status: 500 }
     );
   }
-}
+});

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ContentService } from "@/modules/content";
 import { z } from "zod";
+import { withTenantAuth, withTenantAuthAndCSRF } from "@/lib/api-auth";
 
 const createContentSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
@@ -9,62 +10,46 @@ const createContentSchema = z.object({
   programId: z.string().min(1, "Debe seleccionar un programa"),
 });
 
-export async function GET(request: NextRequest) {
-  try {
-    const searchParams = request.nextUrl.searchParams;
-    const programId = searchParams.get("programId");
+export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) => {
+  const searchParams = request.nextUrl.searchParams;
+  const programId = searchParams.get("programId");
 
-    if (!programId) {
-      return NextResponse.json(
-        { success: false, error: "Se requiere el ID del programa" },
-        { status: 400 }
-      );
-    }
-
-    const contents = await ContentService.getContentsByProgram(programId);
-
-    return NextResponse.json({
-      success: true,
-      data: contents,
-    });
-  } catch (error) {
-    console.error("Error fetching contents:", error);
+  if (!programId) {
     return NextResponse.json(
-      { success: false, error: "Error al obtener contenidos" },
-      { status: 500 }
+      { success: false, error: "Se requiere el ID del programa" },
+      { status: 400 }
     );
   }
-}
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
+  const contents = await ContentService.getContentsByProgram(programId);
 
-    const validationResult = createContentSchema.safeParse(body);
+  return NextResponse.json({
+    success: true,
+    data: contents,
+  });
+});
 
-    if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Datos inválidos",
-          details: validationResult.error.flatten().fieldErrors,
-        },
-        { status: 400 }
-      );
-    }
+export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, tenantId) => {
+  const body = await request.json();
 
-    const content = await ContentService.createContent(validationResult.data);
+  const validationResult = createContentSchema.safeParse(body);
 
-    return NextResponse.json({
-      success: true,
-      data: content,
-      message: "Contenido creado exitosamente",
-    }, { status: 201 });
-  } catch (error) {
-    console.error("Error creating content:", error);
+  if (!validationResult.success) {
     return NextResponse.json(
-      { success: false, error: "Error al crear contenido" },
-      { status: 500 }
+      {
+        success: false,
+        error: "Datos inválidos",
+        details: validationResult.error.flatten().fieldErrors,
+      },
+      { status: 400 }
     );
   }
-}
+
+  const content = await ContentService.createContent(validationResult.data);
+
+  return NextResponse.json({
+    success: true,
+    data: content,
+    message: "Contenido creado exitosamente",
+  }, { status: 201 });
+});

@@ -3,103 +3,94 @@
  * Handles individual invitation operations
  */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { withTenantAuth, withTenantAuthAndCSRF } from "@/lib/api-auth";
 
 interface RouteParams {
-  params: Promise<{ id: string }>;
+  params: Promise<Record<string, string>>;
 }
 
 /**
  * GET /api/invitations/[id]
  * Get a specific invitation by ID
  */
-export async function GET(request: Request, { params }: RouteParams) {
-  try {
-    const { id } = await params;
+export const GET = withTenantAuth(async (request: NextRequest, user, tenantId, context?: { params: Promise<Record<string, string>> }) => {
+  const { id } = await context!.params;
 
-    const invitation = await prisma.invitation.findUnique({
-      where: { id },
-      include: {
-        role: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-          },
-        },
-        inviter: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
+  const invitation = await prisma.invitation.findUnique({
+    where: { 
+      id,
+      tenantId, // Verificar que pertenece al tenant
+    },
+    include: {
+      role: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
         },
       },
-    });
+      inviter: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
 
-    if (!invitation) {
-      return NextResponse.json(
-        { success: false, error: "Invitación no encontrada" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: invitation,
-    });
-  } catch (error) {
-    console.error("Error getting invitation:", error);
+  if (!invitation) {
     return NextResponse.json(
-      { success: false, error: "Error al obtener invitación" },
-      { status: 500 }
+      { success: false, error: "Invitación no encontrada" },
+      { status: 404 }
     );
   }
-}
+
+  return NextResponse.json({
+    success: true,
+    data: invitation,
+  });
+});
 
 /**
  * DELETE /api/invitations/[id]
  * Cancel/delete an invitation
  */
-export async function DELETE(request: Request, { params }: RouteParams) {
-  try {
-    const { id } = await params;
+export const DELETE = withTenantAuthAndCSRF(async (request: NextRequest, user, tenantId, context?: { params: Promise<Record<string, string>> }) => {
+  const { id } = await context!.params;
 
-    // Check if invitation exists
-    const invitation = await prisma.invitation.findUnique({
-      where: { id },
-    });
+  // Check if invitation exists
+  const invitation = await prisma.invitation.findUnique({
+    where: { 
+      id,
+      tenantId, // Verificar que pertenece al tenant
+    },
+  });
 
-    if (!invitation) {
-      return NextResponse.json(
-        { success: false, error: "Invitación no encontrada" },
-        { status: 404 }
-      );
-    }
-
-    // Only allow deleting PENDING invitations
-    if (invitation.status !== "PENDING") {
-      return NextResponse.json(
-        { success: false, error: "Solo se pueden cancelar invitaciones pendientes" },
-        { status: 400 }
-      );
-    }
-
-    // Delete the invitation
-    await prisma.invitation.delete({
-      where: { id },
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: "Invitación cancelada exitosamente",
-    });
-  } catch (error) {
-    console.error("Error deleting invitation:", error);
+  if (!invitation) {
     return NextResponse.json(
-      { success: false, error: "Error al cancelar invitación" },
-      { status: 500 }
+      { success: false, error: "Invitación no encontrada" },
+      { status: 404 }
     );
   }
-}
+
+  // Only allow deleting PENDING invitations
+  if (invitation.status !== "PENDING") {
+    return NextResponse.json(
+      { success: false, error: "Solo se pueden cancelar invitaciones pendientes" },
+      { status: 400 }
+    );
+  }
+
+  // Delete the invitation
+  await prisma.invitation.delete({
+    where: { id },
+  });
+
+  return NextResponse.json({
+    success: true,
+    message: "Invitación cancelada exitosamente",
+  });
+});

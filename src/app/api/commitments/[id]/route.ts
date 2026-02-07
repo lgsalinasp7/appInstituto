@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CarteraService } from "@/modules/cartera";
 import { z } from "zod";
+import { withTenantAuthAndCSRF } from "@/lib/api-auth";
 
 interface Params {
-  params: Promise<{ id: string }>;
+  params: Promise<Record<string, string>>;
 }
 
 const updateCommitmentSchema = z.object({
@@ -14,36 +15,28 @@ const updateCommitmentSchema = z.object({
   comments: z.string().optional(),
 });
 
-export async function PATCH(request: NextRequest, { params }: Params) {
-  try {
-    const { id } = await params;
-    const body = await request.json();
+export const PATCH = withTenantAuthAndCSRF(async (request: NextRequest, user, tenantId, context?: { params: Promise<Record<string, string>> }) => {
+  const { id } = await context!.params;
+  const body = await request.json();
 
-    const validationResult = updateCommitmentSchema.safeParse(body);
+  const validationResult = updateCommitmentSchema.safeParse(body);
 
-    if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Datos inválidos",
-          details: validationResult.error.flatten().fieldErrors,
-        },
-        { status: 400 }
-      );
-    }
-
-    const commitment = await CarteraService.updateCommitment(id, validationResult.data);
-
-    return NextResponse.json({
-      success: true,
-      data: commitment,
-      message: "Compromiso actualizado exitosamente",
-    });
-  } catch (error) {
-    console.error("Error updating commitment:", error);
+  if (!validationResult.success) {
     return NextResponse.json(
-      { success: false, error: "Error al actualizar compromiso" },
-      { status: 500 }
+      {
+        success: false,
+        error: "Datos inválidos",
+        details: validationResult.error.flatten().fieldErrors,
+      },
+      { status: 400 }
     );
   }
-}
+
+  const commitment = await CarteraService.updateCommitment(id, validationResult.data);
+
+  return NextResponse.json({
+    success: true,
+    data: commitment,
+    message: "Compromiso actualizado exitosamente",
+  });
+});

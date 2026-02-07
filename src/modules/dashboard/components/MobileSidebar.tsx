@@ -10,6 +10,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { TrendingUp, Users, CreditCard, FileText, LogOut, Settings, User, X, ShieldCheck } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { useBranding } from "@/components/providers/BrandingContext";
 
 interface MobileSidebarProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ const configItem = { href: "/configuracion", label: "Configuración", icon: Sett
 export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
+  const branding = useBranding();
 
   const roleName = user?.role?.name?.toUpperCase() || "";
   const isAdminSection = pathname.startsWith("/admin");
@@ -87,16 +89,16 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
           <div className="flex items-center gap-3">
             <div className="relative w-10 h-10 p-1.5 bg-white rounded-xl shadow-md border border-gray-100">
               <Image
-                src="/logo-instituto.png"
-                alt="Logo"
+                src={branding.logoUrl || "/logo-instituto.png"}
+                alt={branding.tenantName}
                 fill
                 className="object-contain p-1"
                 priority
               />
             </div>
             <div className="flex flex-col">
-              <span className="font-black text-[#1e3a5f] text-base leading-none tracking-tighter">EDUTEC</span>
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Institución</span>
+              <span className="font-black text-base leading-none tracking-tighter" style={{ color: branding.primaryColor }}>{branding.tenantName}</span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Gestion</span>
             </div>
           </div>
           <button
