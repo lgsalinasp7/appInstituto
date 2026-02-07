@@ -90,11 +90,22 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
 
     const { email, roleId, inviterId } = validation.data;
 
-    // Check if inviter exists and get their info
-    const inviter = await prisma.user.findUnique({
-      where: { id: inviterId },
-      include: { role: true },
-    });
+    // Ejecutar todas las verificaciones independientes en paralelo (eliminando waterfall de 5 queries secuenciales)
+    const [inviter, existingInvitation, existingUser, role] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: inviterId },
+        include: { role: true },
+      }),
+      prisma.invitation.findFirst({
+        where: { email, status: "PENDING" },
+      }),
+      prisma.user.findUnique({
+        where: { email },
+      }),
+      prisma.role.findUnique({
+        where: { id: roleId },
+      }),
+    ]);
 
     if (!inviter) {
       return NextResponse.json(
@@ -112,9 +123,8 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
       );
     }
 
-    // Check invitation limit for ADMINISTRADOR
+    // Check invitation limit for ADMINISTRADOR (requiere query adicional que depende de inviter)
     if (inviter.role?.name === "ADMINISTRADOR") {
-      // Count total occupied seats (Pending invitations + Accepted/Joined users) for THIS admin
       const totalOccupiedSeats = await prisma.invitation.count({
         where: {
           inviterId,
@@ -133,13 +143,6 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
         );
       }
     }
-    // Check if email already has a pending invitation
-    const existingInvitation = await prisma.invitation.findFirst({
-      where: {
-        email,
-        status: "PENDING",
-      },
-    });
 
     if (existingInvitation) {
       return NextResponse.json(
@@ -148,22 +151,12 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
       );
     }
 
-    // Check if email is already registered
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-
     if (existingUser) {
       return NextResponse.json(
         { success: false, error: "Este email ya está registrado en el sistema" },
         { status: 400 }
       );
     }
-
-    // Get role info
-    const role = await prisma.role.findUnique({
-      where: { id: roleId },
-    });
 
     if (!role) {
       return NextResponse.json(

@@ -77,11 +77,10 @@ export function Pricing() {
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`relative rounded-2xl p-8 ${
-                plan.highlighted
-                  ? "bg-gradient-to-br from-cyan-900/40 to-blue-900/40 border-2 border-cyan-500 scale-105"
+              className={`relative rounded-2xl p-8 transition-all ${plan.highlighted
+                  ? "bg-gradient-to-br from-cyan-900/40 to-blue-900/40 border-2 border-cyan-500 md:scale-105"
                   : "bg-slate-900/50 border border-slate-800"
-              }`}
+                }`}
             >
               {plan.highlighted && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
@@ -114,11 +113,10 @@ export function Pricing() {
                   ? "mailto:ventas@kaledsoft.tech?subject=Plan%20Empresarial"
                   : "mailto:ventas@kaledsoft.tech?subject=Solicitud%20Plan%20" + encodeURIComponent(plan.name)
                 }
-                className={`block w-full py-4 px-6 rounded-xl font-bold text-center transition-all ${
-                  plan.highlighted
+                className={`block w-full py-4 px-6 rounded-xl font-bold text-center transition-all ${plan.highlighted
                     ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:shadow-lg hover:shadow-cyan-500/50"
                     : "bg-slate-800 text-white hover:bg-slate-700"
-                }`}
+                  }`}
               >
                 {plan.cta}
               </Link>

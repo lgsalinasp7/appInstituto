@@ -44,7 +44,7 @@ export function Footer() {
                             <li><Link href="#features" className="hover:text-cyan-400 transition-colors">Funcionalidades</Link></li>
                             <li><Link href="#pricing" className="hover:text-cyan-400 transition-colors">Precios</Link></li>
                             <li><Link href="#services" className="hover:text-cyan-400 transition-colors">Servicios</Link></li>
-                            <li><Link href="/auth/login" className="hover:text-cyan-400 transition-colors">Portal Cliente</Link></li>
+                            <li><a href="https://admin.kaledsoft.tech" className="hover:text-cyan-400 transition-colors">Portal Cliente</a></li>
                             <li><Link href="mailto:ventas@kaledsoft.tech?subject=Solicitud%20de%20Demo" className="hover:text-cyan-400 transition-colors">Solicitar Demo</Link></li>
                         </ul>
                     </div>

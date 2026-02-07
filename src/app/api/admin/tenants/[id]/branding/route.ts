@@ -6,7 +6,7 @@
  * Solo accesible por SUPER_ADMIN de la plataforma
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withPlatformAdmin, withCSRF } from "@/lib/api-auth";
 import { logApiStart, logApiSuccess, logApiError } from "@/lib/api-logger";
@@ -61,16 +61,20 @@ export const GET = withPlatformAdmin(
         });
       }
 
-      logApiSuccess(ctx, "admin_obtener_branding", {
-        duration: Date.now() - startTime,
-        resultId: branding.id,
-        metadata: { tenantName: tenant.name, tenantSlug: tenant.slug },
-      });
-
-      return NextResponse.json({
+      const response = NextResponse.json({
         tenant: { id: tenant.id, name: tenant.name, slug: tenant.slug },
         branding,
       });
+
+      after(() => {
+        logApiSuccess(ctx, "admin_obtener_branding", {
+          duration: Date.now() - startTime,
+          resultId: branding.id,
+          metadata: { tenantName: tenant.name, tenantSlug: tenant.slug },
+        });
+      });
+
+      return response;
     } catch (error) {
       logApiError(ctx, "admin_obtener_branding", { error });
       throw error;
@@ -118,19 +122,23 @@ export const PUT = withCSRF(
           },
         });
 
-        logApiSuccess(ctx, "admin_actualizar_branding", {
-          duration: Date.now() - startTime,
-          resultId: branding.id,
-          metadata: {
-            tenantName: tenant.name,
-            updatedFields: Object.keys(data),
-          },
-        });
-
-        return NextResponse.json({
+        const response = NextResponse.json({
           message: "Branding actualizado correctamente",
           branding,
         });
+
+        after(() => {
+          logApiSuccess(ctx, "admin_actualizar_branding", {
+            duration: Date.now() - startTime,
+            resultId: branding.id,
+            metadata: {
+              tenantName: tenant.name,
+              updatedFields: Object.keys(data),
+            },
+          });
+        });
+
+        return response;
       } catch (error) {
         logApiError(ctx, "admin_actualizar_branding", { error });
         throw error;

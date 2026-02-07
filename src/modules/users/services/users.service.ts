@@ -18,9 +18,12 @@ export class UsersService {
    * Get user by ID
    */
   static async getUserById(id: string): Promise<User | null> {
-    const tenantId = await getCurrentTenantId() as string;
+    const tenantId = await getCurrentTenantId();
     const user = await prisma.user.findFirst({
-      where: { id, tenantId },
+      where: {
+        id,
+        ...(tenantId && { tenantId })
+      },
       include: {
         role: {
           select: {
@@ -41,10 +44,10 @@ export class UsersService {
   static async getUsers(params: UsersListParams): Promise<UsersListResponse> {
     const { page = 1, limit = 10, search, roleId, isActive } = params;
     const skip = (page - 1) * limit;
-    const tenantId = await getCurrentTenantId() as string;
+    const tenantId = await getCurrentTenantId();
 
     const where = {
-      tenantId,
+      ...(tenantId && { tenantId }),
       ...(search && {
         OR: [
           { email: { contains: search, mode: "insensitive" as const } },

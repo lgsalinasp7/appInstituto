@@ -6,7 +6,7 @@
  * Usado por Client Components para obtener datos de branding
  */
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withTenantAuth } from "@/lib/api-auth";
 import { logApiStart, logApiSuccess, logApiError } from "@/lib/api-logger";
@@ -57,12 +57,17 @@ export const GET = withTenantAuth(async (request, user, tenantId) => {
       darkMode: branding?.darkMode || false,
     };
 
-    logApiSuccess(ctx, "obtener_branding_tenant", {
-      duration: Date.now() - startTime,
-      metadata: { hasBranding: !!branding, tenantName: tenant?.name },
+    const response = NextResponse.json(result);
+
+    // Logging no bloqueante - se ejecuta después de enviar la respuesta
+    after(() => {
+      logApiSuccess(ctx, "obtener_branding_tenant", {
+        duration: Date.now() - startTime,
+        metadata: { hasBranding: !!branding, tenantName: tenant?.name },
+      });
     });
 
-    return NextResponse.json(result);
+    return response;
   } catch (error) {
     logApiError(ctx, "obtener_branding_tenant", { error });
     throw error;

@@ -9,18 +9,48 @@ import {
     AlertCircle
 } from "lucide-react";
 import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
-import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    Cell,
-    PieChart as RePieChart,
-    Pie
-} from "recharts";
+import dynamic from "next/dynamic";
+
+// Lazy-load recharts (~200KB) - solo se carga cuando el tab lo necesita
+const RechartsBarChart = dynamic(() => import("recharts").then((m) => {
+    const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = m;
+    // eslint-disable-next-line react/display-name
+    return { default: ({ data }: { data: { date: string; amount: number }[] }) => (
+        <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="date" axisLine={false} tickLine={false} fontSize={12} />
+                <YAxis axisLine={false} tickLine={false} fontSize={12} tickFormatter={(v: number) => `$${(v || 0) / 1000}k`} />
+                <Tooltip
+                    contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
+                    formatter={(value) => [`$${(Number(value) || 0).toLocaleString()}`, "Monto"]}
+                />
+                <Bar dataKey="amount" fill="#1e3a5f" radius={[4, 4, 0, 0]} />
+            </BarChart>
+        </ResponsiveContainer>
+    )};
+}), { ssr: false, loading: () => <div className="h-52 sm:h-64 lg:h-80 w-full flex items-center justify-center text-gray-400">Cargando gráfico...</div> });
+
+const RechartsPieChart = dynamic(() => import("recharts").then((m) => {
+    const { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } = m;
+    const COLORS = ["#10b981", "#f59e0b", "#f97316", "#ef4444"];
+    // eslint-disable-next-line react/display-name
+    return { default: ({ data }: { data: { label: string; amount: number }[] }) => (
+        <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+                <Pie data={data} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="amount" nameKey="label">
+                    {data.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                </Pie>
+                <Tooltip
+                    contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
+                    formatter={(value) => [`$${(Number(value) || 0).toLocaleString()}`, "Deuda"]}
+                />
+            </PieChart>
+        </ResponsiveContainer>
+    )};
+}), { ssr: false, loading: () => <div className="h-64 flex items-center justify-center text-gray-400">Cargando gráfico...</div> });
 
 interface DailyRevenue {
     date: string;
@@ -54,7 +84,7 @@ interface AdvisorData {
     revenueThisMonth: number;
 }
 
-const COLORS = ["#10b981", "#f59e0b", "#f97316", "#ef4444"];
+const COLORS_LEGEND = ["#10b981", "#f59e0b", "#f97316", "#ef4444"];
 
 export default function ReportesPage() {
     const [activeTab, setActiveTab] = useState<"financiero" | "cartera" | "asesores">("financiero");
@@ -181,18 +211,7 @@ export default function ReportesPage() {
                                         Ingresos por Día
                                     </h3>
                                     <div className="h-52 sm:h-64 lg:h-80 w-full">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={financialData.dailyRevenue || []}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                <XAxis dataKey="date" axisLine={false} tickLine={false} fontSize={12} />
-                                                <YAxis axisLine={false} tickLine={false} fontSize={12} tickFormatter={(v: number) => `$${(v || 0) / 1000}k`} />
-                                                <Tooltip
-                                                    contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
-                                                    formatter={(value) => [`$${(Number(value) || 0).toLocaleString()}`, "Monto"]}
-                                                />
-                                                <Bar dataKey="amount" fill="#1e3a5f" radius={[4, 4, 0, 0]} />
-                                            </BarChart>
-                                        </ResponsiveContainer>
+                                        <RechartsBarChart data={financialData.dailyRevenue || []} />
                                     </div>
                                 </div>
                             </div>
@@ -206,35 +225,14 @@ export default function ReportesPage() {
                                         Distribución de Cartera
                                     </h3>
                                     <div className="h-64">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <RePieChart>
-                                                <Pie
-                                                    data={agingData.brackets}
-                                                    cx="50%"
-                                                    cy="50%"
-                                                    innerRadius={60}
-                                                    outerRadius={80}
-                                                    paddingAngle={5}
-                                                    dataKey="amount"
-                                                    nameKey="label"
-                                                >
-                                                    {agingData.brackets.map((_: AgingBracket, index: number) => (
-                                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                                    ))}
-                                                </Pie>
-                                                <Tooltip
-                                                    contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
-                                                    formatter={(value) => [`$${(Number(value) || 0).toLocaleString()}`, "Deuda"]}
-                                                />
-                                            </RePieChart>
-                                        </ResponsiveContainer>
+                                        <RechartsPieChart data={agingData.brackets} />
                                     </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
                                         {agingData.brackets.map((b: AgingBracket, i: number) => (
                                             <div key={b.label} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 border border-transparent hover:border-gray-200 transition-all">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i] }}></div>
+                                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS_LEGEND[i] }}></div>
                                                     <span className="text-xs font-bold text-gray-500 uppercase tracking-tight">{b.label}</span>
                                                 </div>
                                                 <span className="text-xs font-black text-[#1e3a5f]">${b.amount.toLocaleString()}</span>

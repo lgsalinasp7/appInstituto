@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { LoginForm, type LoginFormData } from "@/modules/auth";
 import { loginAction } from "@/modules/auth/actions";
 import { useAuthStore } from "@/lib/store/auth-store";
-import { Shield } from "lucide-react";
+import Image from "next/image";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -30,28 +30,37 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-4">
-      {/* Decorative elements */}
-      <div className="absolute inset-0 opacity-[0.02]" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-      }} />
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Decorative background elements matching landing page */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/10 rounded-full blur-[100px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[100px]" />
+      </div>
 
-      <div className="relative w-full max-w-md">
+      <div className="relative w-full max-w-md z-10">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-500/20 rounded-2xl mb-4 backdrop-blur-sm border border-blue-400/20">
-            <Shield className="w-8 h-8 text-blue-400" />
+        <div className="text-center mb-8 flex flex-col items-center">
+          <div className="relative w-24 h-24 mb-6">
+            <Image
+              src="/kaledsoft-logo-transparent.png"
+              alt="KaledSoft Logo"
+              fill
+              className="object-contain"
+              priority
+            />
           </div>
-          <h1 className="text-2xl font-bold text-white">KaledSoft Admin</h1>
-          <p className="text-sm text-blue-300/70 mt-1">Panel de administracion de plataforma</p>
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600 mb-2">
+            KaledSoft Admin
+          </h1>
+          <p className="text-gray-400">Portal de administración de la plataforma</p>
         </div>
 
-        {/* Login Form */}
-        <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/10 p-6 shadow-2xl">
+        {/* Login Form Container */}
+        <div className="bg-slate-900/50 backdrop-blur-xl rounded-2xl border border-slate-800 p-8 shadow-2xl hover:border-cyan-500/30 transition-all duration-300">
           <LoginForm onSubmit={handleLogin} />
         </div>
 
-        <p className="text-center text-xs text-white/30 mt-6">
+        <p className="text-center text-xs text-gray-500 mt-8">
           Acceso restringido a personal autorizado de KaledSoft
         </p>
       </div>

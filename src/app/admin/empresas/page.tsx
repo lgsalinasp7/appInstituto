@@ -36,35 +36,42 @@ export default async function EmpresasPage({
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-14 animate-fade-in-up">
       {/* Header */}
-      <div className="animate-fade-in-up">
-        <h1 className="text-3xl font-bold text-[#1e3a5f]">Empresas</h1>
-        <p className="text-[#64748b] mt-1">
-          Gestión de tenants y organizaciones
+      <div>
+        <h1 className="text-3xl font-extrabold tracking-tighter text-white">
+          Gestión de <span className="text-gradient">Empresas</span>
+        </h1>
+        <p className="text-slate-400 mt-4 text-lg font-medium">
+          Administra los tenants, organizaciones y el ecosistema empresarial.
         </p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 grid-cols-2 md:grid-cols-5 animate-fade-in-up animation-delay-100">
+      <div className="grid gap-6 grid-cols-2 lg:grid-cols-5 animate-fade-in-up animation-delay-100">
         {statCards.map((stat, index) => (
-          <Card
+          <div
             key={stat.title}
-            className="shadow-instituto border-0"
+            className="glass-card p-6 rounded-[2rem] hover:scale-[1.02] transition-all group relative overflow-hidden"
             style={{ animationDelay: `${index * 50}ms` }}
           >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium text-[#64748b] uppercase">
-                {stat.title}
-              </CardTitle>
-              <div className={`p-1.5 rounded-lg ${stat.color}`}>
-                <span className="text-sm">{stat.icon}</span>
+            {/* Background Glow */}
+            <div className={`absolute -right-4 -top-4 w-16 h-16 rounded-full blur-2xl opacity-10 transition-opacity group-hover:opacity-20 ${stat.color.split(' ')[0]}`} />
+
+            <div className="flex flex-col gap-4 relative z-10">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                  {stat.title}
+                </span>
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm border shadow-sm ${stat.color} border-current/20`}>
+                  {stat.icon}
+                </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-[#1e3a5f]">{stat.value}</div>
-            </CardContent>
-          </Card>
+              <div className="text-3xl font-bold text-white tracking-tight">
+                {stat.value}
+              </div>
+            </div>
+          </div>
         ))}
       </div>
 

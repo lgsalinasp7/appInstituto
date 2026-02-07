@@ -4,6 +4,7 @@
  */
 
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { randomBytes } from "crypto";
 import { UnauthorizedError, ForbiddenError } from "@/lib/errors";
@@ -75,9 +76,10 @@ export async function destroySession(): Promise<void> {
 
 /**
  * Obtiene el usuario autenticado actual desde la sesión
+ * Usa React.cache() para deduplicar dentro del mismo request
  * @returns Usuario autenticado o null si no hay sesión válida
  */
-export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
+export const getCurrentUser = cache(async (): Promise<AuthenticatedUser | null> => {
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
@@ -130,7 +132,7 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
       : null,
     isActive: session.user.isActive,
   };
-}
+});
 
 /**
  * Requiere que exista un usuario autenticado

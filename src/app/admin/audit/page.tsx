@@ -11,26 +11,34 @@ export default async function AdminAuditPage() {
   const { logs } = await AdminService.getAuditLogs({ limit: 100 });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-14 animate-fade-in-up">
+      {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold">Registro de Auditoría</h2>
-        <p className="text-muted-foreground">
-          Historial de todas las acciones del sistema
+        <h1 className="text-3xl font-extrabold tracking-tighter text-white leading-none">
+          Registro de <span className="text-gradient">Auditoría</span>
+        </h1>
+        <p className="text-slate-400 mt-4 text-lg font-medium">
+          Monitorización completa y trazabilidad de todas las acciones del ecosistema.
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtros</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <Input placeholder="Filtrar por acción..." className="max-w-xs" />
-            <Input placeholder="Filtrar por entidad..." className="max-w-xs" />
-            <Input type="date" className="max-w-xs" />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Filter Bar */}
+      <div className="glass-card p-4 rounded-[2rem] border border-white/5 shadow-2xl">
+        <div className="flex flex-col md:flex-row gap-4">
+          <Input
+            placeholder="Filtrar por acción (login, update...)"
+            className="flex-1 bg-slate-950/40 border-white/5 h-12 rounded-xl text-white placeholder:text-slate-500 focus:ring-cyan-500/20"
+          />
+          <Input
+            placeholder="Entidad (User, Tenant...)"
+            className="flex-1 bg-slate-950/40 border-white/5 h-12 rounded-xl text-white placeholder:text-slate-500 focus:ring-cyan-500/20"
+          />
+          <Input
+            type="date"
+            className="w-full md:w-[200px] bg-slate-950/40 border-white/5 h-12 rounded-xl text-white focus:ring-cyan-500/20"
+          />
+        </div>
+      </div>
 
       <AuditLogTable logs={logs} />
     </div>

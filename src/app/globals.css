@@ -149,6 +149,40 @@ body {
 }
 
 /* ============================================
+   UTILIDADES PREMIUM - KALEDSOFT
+   ============================================ */
+
+.bg-premium-dark {
+  background: radial-gradient(circle at top left, #0f172a 0%, #020617 100%);
+  background-attachment: fixed;
+}
+
+.glass-card {
+  @apply bg-slate-900/80 backdrop-blur-2xl border border-white/[0.08] shadow-[0_0_50px_-12px_rgba(0, 0, 0, 0.5)];
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 20px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.glass-card-hover {
+  @apply transition-all duration-300 hover:border-cyan-500/30 hover:shadow-cyan-500/10 hover:shadow-2xl;
+}
+
+.text-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600;
+}
+
+.border-gradient {
+  border-image: linear-gradient(to right, #22d3ee, #2563eb) 1;
+}
+
+.cyan-glow {
+  box-shadow: 0 0 20px rgba(8, 145, 178, 0.15);
+}
+
+.sidebar-active-strip {
+  @apply absolute left-0 w-1 h-6 bg-cyan-500 rounded-r-full;
+}
+
+/* ============================================
    UTILIDADES PERSONALIZADAS
    ============================================ */
 

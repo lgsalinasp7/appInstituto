@@ -7,6 +7,7 @@
  * 3. Inyectar TenantThemeProvider + BrandingProvider
  */
 
+import { cache } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { TenantThemeProvider, getTenantBrandingCached } from "@/components/providers/TenantThemeProvider";
@@ -14,7 +15,8 @@ import { BrandingProvider } from "@/components/providers/BrandingContext";
 import { prisma } from "@/lib/prisma";
 import ProtectedLayoutClient from "./ProtectedLayoutClient";
 
-async function getTenantData() {
+// React.cache() deduplicates within the same request render tree
+const getTenantData = cache(async () => {
   const headersList = await headers();
   const tenantSlug = headersList.get("x-tenant-slug");
 
@@ -26,7 +28,7 @@ async function getTenantData() {
   });
 
   return tenant;
-}
+});
 
 export default async function ProtectedLayoutWrapper({
   children,

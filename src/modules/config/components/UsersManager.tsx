@@ -182,7 +182,7 @@ export function UsersManager() {
             }
 
             // Update local state
-            setUsers(users.map(u =>
+            setUsers(prev => prev.map(u =>
                 u.id === userId ? { ...u, name: editForm.name, email: editForm.email, invitationLimit: editForm.invitationLimit } : u
             ));
             setEditingUserId(null);
@@ -219,7 +219,7 @@ export function UsersManager() {
                 return;
             }
 
-            setUsers(users.filter(u => u.id !== userId));
+            setUsers(prev => prev.filter(u => u.id !== userId));
             toast.success("Usuario eliminado");
         } catch (error) {
             console.error("Error deleting user:", error);
@@ -254,7 +254,7 @@ export function UsersManager() {
                 return;
             }
 
-            setInvitations(invitations.filter(i => i.id !== invitationId));
+            setInvitations(prev => prev.filter(i => i.id !== invitationId));
             toast.success("Invitación cancelada");
         } catch (error) {
             console.error("Error deleting invitation:", error);

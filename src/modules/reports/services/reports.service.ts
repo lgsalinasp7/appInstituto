@@ -29,7 +29,7 @@ export class ReportsService {
       if (endDate) where.paymentDate.lte = endDate;
     }
 
-    const [payments, byMethod, pendingCommitments] = await Promise.all([
+    const [payments, byMethod, pendingCommitments, dailyPayments] = await Promise.all([
       prisma.payment.aggregate({
         where,
         _sum: { amount: true },
@@ -50,15 +50,14 @@ export class ReportsService {
         },
         _sum: { amount: true },
       }),
+      prisma.payment.groupBy({
+        by: ["paymentDate"],
+        where,
+        _sum: { amount: true },
+        _count: true,
+        orderBy: { paymentDate: "asc" },
+      }),
     ]);
-
-    const dailyPayments = await prisma.payment.groupBy({
-      by: ["paymentDate"],
-      where,
-      _sum: { amount: true },
-      _count: true,
-      orderBy: { paymentDate: "asc" },
-    });
 
     const dailyRevenue = dailyPayments.map((d) => ({
       date: d.paymentDate.toISOString().split("T")[0],

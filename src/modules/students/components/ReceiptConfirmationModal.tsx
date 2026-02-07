@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { X, CheckCircle, Download, Send, Calendar, CreditCard } from "lucide-react";
-import { pdf } from "@react-pdf/renderer";
-import { ReceiptPDF, type ReceiptPDFData } from "@/modules/receipts/components/ReceiptPDF";
+import type { ReceiptPDFData } from "@/modules/receipts/components/ReceiptPDF";
 import { toast } from "sonner";
 
 interface ReceiptConfirmationModalProps {
@@ -106,6 +105,11 @@ export function ReceiptConfirmationModal({ isOpen, onClose, data }: ReceiptConfi
         balanceAfter: data.program.totalValue - data.payment.amount,
       };
 
+      // Lazy-load PDF libs (~300KB) solo cuando el usuario descarga
+      const [{ pdf }, { ReceiptPDF }] = await Promise.all([
+        import("@react-pdf/renderer"),
+        import("@/modules/receipts/components/ReceiptPDF"),
+      ]);
       const blob = await pdf(<ReceiptPDF data={receiptData} />).toBlob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");

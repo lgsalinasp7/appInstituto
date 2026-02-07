@@ -5,7 +5,7 @@
  * Displays tenant cards with search and filter functionality
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Search, Plus, ExternalLink, Users, GraduationCap, Shield, MoreVertical, Loader2, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { Tenant, TenantStatus } from "../types";
 
 interface TenantsListViewProps {
@@ -36,11 +38,11 @@ interface TenantsListViewProps {
   };
 }
 
-const statusColors: Record<TenantStatus, string> = {
-  ACTIVO: "bg-green-100 text-green-700 border-green-200",
-  PENDIENTE: "bg-amber-100 text-amber-700 border-amber-200",
-  SUSPENDIDO: "bg-red-100 text-red-700 border-red-200",
-  CANCELADO: "bg-gray-100 text-gray-500 border-gray-200",
+const statusThemes: Record<TenantStatus, { color: string; bg: string; border: string; glow: string }> = {
+  ACTIVO: { color: "text-green-400", bg: "bg-green-400/10", border: "border-green-400/20", glow: "shadow-[0_0_8px_rgba(74,222,128,0.3)]" },
+  PENDIENTE: { color: "text-amber-400", bg: "bg-amber-400/10", border: "border-amber-400/20", glow: "shadow-[0_0_8px_rgba(251,191,36,0.3)]" },
+  SUSPENDIDO: { color: "text-red-400", bg: "bg-red-400/10", border: "border-red-400/20", glow: "shadow-[0_0_8px_rgba(248,113,113,0.3)]" },
+  CANCELADO: { color: "text-slate-400", bg: "bg-slate-400/10", border: "border-slate-400/20", glow: "" },
 };
 
 const statusLabels: Record<TenantStatus, string> = {
@@ -56,14 +58,19 @@ export function TenantsListView({
   filters,
 }: TenantsListViewProps) {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState(filters.search);
   const [status, setStatus] = useState(filters.status);
   const [isCreating, setIsCreating] = useState(false);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
-    if (status) params.set("status", status);
+    if (status && status !== "all") params.set("status", status);
     router.push(`/admin/empresas?${params.toString()}`);
   };
 
@@ -75,7 +82,7 @@ export function TenantsListView({
 
   const handleClearFilters = () => {
     setSearch("");
-    setStatus("");
+    setStatus("all");
     router.push("/admin/empresas");
   };
 
@@ -99,52 +106,66 @@ export function TenantsListView({
     }
   };
 
+  if (!mounted) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 text-cyan-500 animate-spin opacity-20" />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6 animate-fade-in-up animation-delay-200">
-      {/* Search and Filters */}
-      <Card className="shadow-instituto border-0">
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Buscar por nombre, slug o email..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="w-full"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="Estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="ACTIVO">Activos</SelectItem>
-                  <SelectItem value="PENDIENTE">Pendientes</SelectItem>
-                  <SelectItem value="SUSPENDIDO">Suspendidos</SelectItem>
-                  <SelectItem value="CANCELADO">Cancelados</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button onClick={handleSearch} variant="outline">
-                Buscar
-              </Button>
-              {(filters.search || filters.status) && (
-                <Button onClick={handleClearFilters} variant="ghost">
-                  Limpiar
-                </Button>
-              )}
-            </div>
+    <div className="space-y-12 animate-fade-in-up animation-delay-200">
+      {/* Search and Filters Bar */}
+      <div className="flex flex-col lg:flex-row gap-4 items-center justify-between p-3 bg-slate-950/40 border border-white/5 rounded-[2.5rem] glass-card shadow-2xl">
+        <div className="relative flex-1 group w-full">
+          <Search className="absolute left-8 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
+          <Input
+            placeholder="Nombre, slug o email de la organización..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyPress={handleKeyPress}
+            className="w-full bg-transparent border-0 h-16 pl-16 pr-8 focus-visible:ring-0 text-white text-lg placeholder:text-slate-500 font-medium"
+          />
+        </div>
+
+        <div className="flex items-center gap-2 p-2 bg-slate-950/60 rounded-[2rem] w-full lg:w-auto border border-white/5">
+          <Select value={status || "all"} onValueChange={setStatus}>
+            <SelectTrigger className="w-full lg:w-[160px] bg-transparent border-0 h-12 text-slate-300 focus:ring-0">
+              <SelectValue placeholder="Todos los estados" />
+            </SelectTrigger>
+            <SelectContent className="bg-slate-900 border-slate-800 text-slate-300">
+              <SelectItem value="all">Todos los estados</SelectItem>
+              <SelectItem value="ACTIVO">Activos</SelectItem>
+              <SelectItem value="PENDIENTE">Pendientes</SelectItem>
+              <SelectItem value="SUSPENDIDO">Suspendidos</SelectItem>
+              <SelectItem value="CANCELADO">Cancelados</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="w-px h-6 bg-slate-800 mx-1 hidden lg:block" />
+          <Button
+            onClick={handleSearch}
+            className="rounded-xl px-6 h-12 bg-white/5 hover:bg-white/10 text-white font-bold transition-all"
+          >
+            Filtrar
+          </Button>
+          {(filters.search || (filters.status && filters.status !== "all")) && (
             <Button
-              onClick={() => setIsCreating(true)}
-              className="bg-primary hover:bg-primary/90"
+              onClick={handleClearFilters}
+              variant="ghost"
+              className="rounded-xl h-12 px-4 text-slate-500 hover:text-red-400 transition-colors"
             >
-              + Nuevo Tenant
+              <X className="w-4 h-4" />
             </Button>
-          </div>
-        </CardContent>
-      </Card>
+          )}
+          <Button
+            onClick={() => setIsCreating(true)}
+            className="rounded-xl px-6 h-12 bg-gradient-to-r from-cyan-600 to-blue-600 hover:scale-105 transition-all font-bold shadow-lg"
+          >
+            <Plus className="w-4 h-4 mr-2" /> Empresa
+          </Button>
+        </div>
+      </div>
 
       {/* Create Tenant Modal */}
       {isCreating && (
@@ -153,13 +174,13 @@ export function TenantsListView({
 
       {/* Tenants Grid */}
       {tenants.length === 0 ? (
-        <Card className="shadow-instituto border-0">
-          <CardContent className="p-12 text-center">
-            <p className="text-[#64748b]">No se encontraron tenants</p>
-          </CardContent>
-        </Card>
+        <div className="glass-card p-24 text-center rounded-[3rem]">
+          <Search className="w-16 h-16 text-slate-700 mx-auto mb-6 opacity-20" />
+          <h3 className="text-xl font-bold text-slate-300 mb-2">Sin coincidencias</h3>
+          <p className="text-slate-500 max-w-xs mx-auto text-sm font-medium">No logramos encontrar ninguna empresa con los parámetros especificados.</p>
+        </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {tenants.map((tenant) => (
             <TenantCard
               key={tenant.id}
@@ -173,23 +194,27 @@ export function TenantsListView({
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (
-        <div className="flex justify-center gap-2">
+        <div className="flex justify-center gap-3 pt-6">
           {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(
             (page) => (
-              <Button
+              <button
                 key={page}
-                variant={page === pagination.page ? "default" : "outline"}
-                size="sm"
                 onClick={() => {
                   const params = new URLSearchParams();
                   if (filters.search) params.set("search", filters.search);
-                  if (filters.status) params.set("status", filters.status);
+                  if (filters.status && filters.status !== "all") params.set("status", filters.status);
                   params.set("page", page.toString());
                   router.push(`/admin/empresas?${params.toString()}`);
                 }}
+                className={cn(
+                  "w-12 h-12 rounded-2xl font-bold transition-all border",
+                  page === pagination.page
+                    ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)]"
+                    : "bg-slate-900/50 text-slate-500 border-slate-800/50 hover:border-slate-700 hover:text-slate-300"
+                )}
               >
                 {page}
-              </Button>
+              </button>
             )
           )}
         </div>
@@ -208,53 +233,77 @@ function TenantCard({
   onActivate: () => void;
 }) {
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "kaledsoft.tech";
-  const tenantUrl = `https://${tenant.slug}.${rootDomain}`;
+  const tenantUrl = `${tenant.slug}.${rootDomain}`;
+  const theme = statusThemes[tenant.status] || statusThemes.ACTIVO;
 
   return (
-    <Card className="shadow-instituto border-0 hover:shadow-lg transition-shadow">
-      <CardHeader className="pb-3">
+    <div className="glass-card group rounded-[2.5rem] p-8 hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 border border-slate-800/50 hover:border-cyan-500/30 relative">
+      <div className="flex flex-col gap-6 relative z-10">
+        {/* Card Header */}
         <div className="flex items-start justify-between">
-          <div>
-            <CardTitle className="text-lg text-[#1e3a5f]">{tenant.name}</CardTitle>
-            <p className="text-xs text-[#64748b] mt-1">{tenantUrl}</p>
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform shadow-inner">
+              🏢
+            </div>
+            <div>
+              <h3 className="font-bold text-xl text-white group-hover:text-cyan-400 transition-colors tracking-tight leading-tight">
+                {tenant.name}
+              </h3>
+              <div className="flex items-center gap-1.5 mt-1 text-slate-500 transition-colors hover:text-cyan-500 group-last:text-blue-400">
+                <span className="text-xs font-medium tracking-tight whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">
+                  {tenantUrl}
+                </span>
+                <ExternalLink className="w-3 h-3 flex-shrink-0" />
+              </div>
+            </div>
           </div>
-          <Badge className={`${statusColors[tenant.status]} border`}>
+          <div className={cn(
+            "text-[10px] uppercase tracking-widest font-black px-3 py-1.5 rounded-xl border transition-all",
+            theme.color, theme.bg, theme.border, theme.glow
+          )}>
             {statusLabels[tenant.status]}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Tenant Info */}
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <p className="text-[#64748b] text-xs">App</p>
-            <p className="font-medium text-[#1e3a5f]">{tenant.name}</p>
-          </div>
-          <div>
-            <p className="text-[#64748b] text-xs">Plan</p>
-            <p className="font-medium text-[#1e3a5f]">{tenant.plan}</p>
-          </div>
-          <div className="col-span-2">
-            <p className="text-[#64748b] text-xs">Email</p>
-            <p className="font-medium text-[#1e3a5f] truncate">
-              {tenant.email || "No definido"}
-            </p>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="flex gap-4 text-xs text-[#64748b] border-t pt-3">
-          <span>👥 {tenant._count?.users || 0} usuarios</span>
-          <span>🎓 {tenant._count?.students || 0} estudiantes</span>
+        {/* Tenant Info & Stats */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-4 rounded-3xl bg-slate-950/40 border border-slate-800 group-hover:border-slate-700 transition-all">
+            <div className="flex items-center gap-2 mb-1 text-slate-500">
+              <Users className="w-3.5 h-3.5" />
+              <span className="text-[10px] font-bold uppercase tracking-widest">Usuarios</span>
+            </div>
+            <div className="text-lg font-black text-white">{tenant._count?.users || 0}</div>
+          </div>
+          <div className="p-4 rounded-3xl bg-slate-950/40 border border-slate-800 group-hover:border-slate-700 transition-all">
+            <div className="flex items-center gap-2 mb-1 text-slate-500">
+              <GraduationCap className="w-3.5 h-3.5" />
+              <span className="text-[10px] font-bold uppercase tracking-widest">Alumnos</span>
+            </div>
+            <div className="text-lg font-black text-white">{tenant._count?.students || 0}</div>
+          </div>
         </div>
 
-        {/* Actions */}
+        {/* Plan Info */}
+        <div className="flex items-center justify-between p-4 rounded-3xl bg-cyan-500/5 group/plan border border-cyan-500/10 hover:border-cyan-500/30 transition-all">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400">
+              <Shield className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-[9px] font-black uppercase tracking-widest text-cyan-500/50 leading-none mb-0.5">Plan Contratado</div>
+              <div className="text-sm font-bold text-cyan-400">{tenant.plan}</div>
+            </div>
+          </div>
+          <div className="text-[10px] font-bold text-slate-500 italic">MRR: $0.00</div>
+        </div>
+
+        {/* Actions Button Bar */}
         <div className="flex gap-2 pt-2">
           {tenant.status === "ACTIVO" ? (
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
+              className="flex-1 h-11 rounded-2xl bg-slate-900 hover:bg-red-500/10 border-slate-800 hover:border-red-500/30 text-slate-400 hover:text-red-400 font-bold text-xs"
               onClick={onSuspend}
             >
               Suspender
@@ -263,20 +312,24 @@ function TenantCard({
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 text-green-600 border-green-200 hover:bg-green-50"
+              className="flex-1 h-11 rounded-2xl bg-slate-900 hover:bg-green-500/10 border-slate-800 hover:border-green-500/30 text-slate-400 hover:text-green-400 font-bold text-xs"
               onClick={onActivate}
             >
               Activar
             </Button>
           ) : null}
           <Link href={`/admin/empresas/${tenant.id}`} className="flex-1">
-            <Button variant="outline" size="sm" className="w-full">
-              Ver detalle
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full h-11 rounded-2xl bg-slate-900 border-slate-800 hover:border-cyan-500/30 text-slate-400 hover:text-cyan-400 font-bold transition-all text-xs"
+            >
+              Gestionar
             </Button>
           </Link>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 

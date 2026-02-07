@@ -27,15 +27,24 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const AUTH_STORAGE_KEY = "auth_user:v1";
+
 function getStoredUser(): AuthUser | null {
   if (typeof window === "undefined") return null;
-  const storedUser = localStorage.getItem("auth_user");
-  if (storedUser) {
-    try {
+  try {
+    const storedUser = localStorage.getItem(AUTH_STORAGE_KEY);
+    if (storedUser) {
       return JSON.parse(storedUser);
-    } catch {
-      localStorage.removeItem("auth_user");
     }
+    // Migrar desde clave sin versión
+    const legacy = localStorage.getItem("auth_user");
+    if (legacy) {
+      localStorage.removeItem("auth_user");
+      localStorage.setItem(AUTH_STORAGE_KEY, legacy);
+      return JSON.parse(legacy);
+    }
+  } catch {
+    try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch {}
   }
   return null;
 }
@@ -54,11 +63,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
-        localStorage.setItem("auth_user", JSON.stringify(userData));
+        try { localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData)); } catch {}
       } else {
         // Sesión inválida o expirada
         setUser(null);
-        localStorage.removeItem("auth_user");
+        try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch {}
       }
     } catch (error) {
       console.error("Error al validar sesión:", error);
@@ -76,11 +85,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Sincronizar con localStorage cuando cambia el usuario
   useEffect(() => {
-    if (user) {
-      localStorage.setItem("auth_user", JSON.stringify(user));
-    } else {
-      localStorage.removeItem("auth_user");
-    }
+    try {
+      if (user) {
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+      } else {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+      }
+    } catch {}
   }, [user]);
 
   const isPlatformUser = !!user?.platformRole;

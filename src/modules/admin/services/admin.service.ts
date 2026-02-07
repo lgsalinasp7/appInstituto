@@ -5,6 +5,7 @@
 
 import prisma from "@/lib/prisma";
 import { getCurrentTenantId } from "@/lib/tenant";
+import { cache } from "react";
 import type {
   Role,
   CreateRoleData,
@@ -13,7 +14,88 @@ import type {
   AuditLogsResponse,
 } from "../types";
 
+// Const types pattern (typescript skill)
+const PLAN_PRICES = {
+  BASICO: 49,
+  PROFESIONAL: 149,
+  EMPRESARIAL: 499,
+} as const;
+
+type PlanName = keyof typeof PLAN_PRICES;
+
+interface PlatformStats {
+  totalTenants: number;
+  activeTenants: number;
+  trialTenants: number;
+  suspendedTenants: number;
+  cancelledTenants: number;
+  totalUsers: number;
+  mrr: number;
+  churnRate: number;
+  tenantsByPlan: { plan: string; count: number }[];
+  recentTenants: { id: string; name: string; plan: string; status: string; createdAt: Date }[];
+}
+
 export class AdminService {
+  // ==========================================
+  // PLATFORM STATS (SaaS Metrics)
+  // ==========================================
+
+  /**
+   * Get platform-wide SaaS statistics
+   * React.cache() for deduplication within same request (server-cache-react)
+   */
+  static getPlatformStats = cache(async (): Promise<PlatformStats> => {
+    // Promise.all for parallel queries (async-parallel)
+    const [
+      totalTenants,
+      activeTenants,
+      trialTenants,
+      suspendedTenants,
+      cancelledTenants,
+      totalUsers,
+      tenantsByPlan,
+      recentTenants,
+    ] = await Promise.all([
+      prisma.tenant.count(),
+      prisma.tenant.count({ where: { status: "ACTIVO" } }),
+      prisma.tenant.count({ where: { status: "PENDIENTE" } }),
+      prisma.tenant.count({ where: { status: "SUSPENDIDO" } }),
+      prisma.tenant.count({ where: { status: "CANCELADO" } }),
+      prisma.user.count(),
+      prisma.tenant.groupBy({ by: ["plan"], _count: true }),
+      prisma.tenant.findMany({
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        select: { id: true, name: true, plan: true, status: true, createdAt: true },
+      }),
+    ]);
+
+    // Calculate MRR from active tenants by plan
+    const mrr = tenantsByPlan.reduce((sum, group) => {
+      const price = PLAN_PRICES[group.plan as PlanName] ?? 0;
+      return sum + price * group._count;
+    }, 0);
+
+    const churnRate =
+      totalTenants > 0
+        ? Math.round((cancelledTenants / totalTenants) * 100)
+        : 0;
+
+    return {
+      totalTenants,
+      activeTenants,
+      trialTenants,
+      suspendedTenants,
+      cancelledTenants,
+      totalUsers,
+      mrr,
+      churnRate,
+      tenantsByPlan: tenantsByPlan.map((g) => ({ plan: g.plan, count: g._count })),
+      recentTenants,
+    };
+  });
+
   // ==========================================
   // ROLES MANAGEMENT
   // ==========================================
@@ -25,7 +107,9 @@ export class AdminService {
     const tenantId = await getCurrentTenantId() as string;
 
     const roles = await prisma.role.findMany({
-      where: { tenantId },
+      where: {
+        ...(tenantId && { tenantId }),
+      },
       include: {
         _count: {
           select: { users: true },
@@ -44,7 +128,10 @@ export class AdminService {
     const tenantId = await getCurrentTenantId() as string;
 
     const role = await prisma.role.findFirst({
-      where: { id, tenantId },
+      where: {
+        id,
+        ...(tenantId && { tenantId })
+      },
       include: {
         _count: {
           select: { users: true },
@@ -181,10 +268,12 @@ export class AdminService {
    * Get all invitations
    */
   static async getInvitations() {
-    const tenantId = await getCurrentTenantId() as string;
+    const tenantId = await getCurrentTenantId();
 
     return prisma.invitation.findMany({
-      where: { tenantId },
+      where: {
+        ...(tenantId && { tenantId }),
+      },
       include: {
         role: {
           select: {
@@ -248,8 +337,12 @@ export class AdminService {
     const tenantId = await getCurrentTenantId();
 
     // Si no hay tenant (SUPERADMIN sin subdominio), mostrar stats globales
-    const tenantFilter = tenantId ? { tenantId } : {};
-    const userTenantFilter = tenantId ? { user: { tenantId } } : {};
+    const tenantFilter = {
+      ...(tenantId && { tenantId })
+    };
+    const userTenantFilter = {
+      ...(tenantId && { user: { tenantId } })
+    };
 
     const [usersCount, rolesCount, sessionsCount, logsCount] = await Promise.all([
       prisma.user.count({ where: tenantFilter }),

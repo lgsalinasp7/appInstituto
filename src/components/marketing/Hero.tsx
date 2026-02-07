@@ -6,7 +6,7 @@ import { ArrowRight, Code2, BrainCircuit, Rocket } from "lucide-react";
 
 export function Hero() {
     return (
-        <section className="relative min-h-screen flex items-center pt-20 overflow-hidden bg-slate-950">
+        <section className="relative min-h-screen flex items-center pt-24 lg:pt-20 overflow-hidden bg-slate-950">
             {/* Background Gradients */}
             <div className="absolute top-0 -left-20 w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[128px] mix-blend-screen animate-pulse" />
             <div className="absolute bottom-0 -right-20 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[128px] mix-blend-screen" />
@@ -24,7 +24,7 @@ export function Hero() {
                         Innovación en cada línea de código
                     </div>
 
-                    <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white leading-[1.1]">
+                    <h1 className="text-4xl md:text-7xl font-bold tracking-tight text-white leading-[1.1]">
                         Transformamos Ideas en <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600">
                             Realidad Digital

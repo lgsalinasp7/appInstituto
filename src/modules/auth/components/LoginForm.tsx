@@ -2,16 +2,14 @@
 
 /**
  * Login Form Component
- * Formulario de inicio de sesión con diseño glassmorphism premium
+ * Formulario de inicio de sesión con diseño glassmorphism premium (Dark Mode)
  */
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import Image from "next/image";
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
-import { Logo } from "@/components/brand";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,41 +50,36 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
   }
 
   return (
-    <div className="relative">
-      <div className="relative backdrop-blur-xl bg-white/95 rounded-3xl shadow-2xl shadow-black/20 border border-white/20 overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-blue-500 to-primary" />
-
-        <div className="pt-6 pb-4 px-6 text-center relative">
-          <div className="flex justify-center mb-6">
-            <Logo size="lg" />
-          </div>
-
-          <h1 className="text-xl font-bold text-primary mb-1.5">
+    <div className="relative w-full">
+      {/* Container - Removed white bg, using transparent to let parent handling or subtle dark */}
+      <div className="relative">
+        <div className="pt-2 pb-6 px-2 text-center relative">
+          <h1 className="text-2xl font-bold text-white mb-2">
             ¡Bienvenido de nuevo!
           </h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-slate-400">
             Ingresa tus credenciales para continuar
           </p>
         </div>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)}>
-            <div className="px-6 pb-6 space-y-4">
+            <div className="space-y-5">
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-primary font-semibold text-sm">
+                    <FormLabel className="text-slate-300 font-medium text-sm ml-1">
                       Correo electrónico
                     </FormLabel>
                     <FormControl>
                       <div className="relative group">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-primary transition-colors" />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
                         <Input
                           type="email"
                           placeholder="tu@email.com"
-                          className="pl-12 h-12 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-gray-400"
+                          className="pl-12 h-12 bg-slate-950/50 border border-slate-700/50 rounded-xl focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/10 text-white transition-all placeholder:text-slate-600"
                           {...field}
                         />
                       </div>
@@ -101,30 +94,30 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="flex items-center justify-between">
-                      <FormLabel className="text-primary font-semibold text-sm">
+                    <div className="flex items-center justify-between ml-1">
+                      <FormLabel className="text-slate-300 font-medium text-sm">
                         Contraseña
                       </FormLabel>
                       <Link
                         href="/auth/forgot-password"
-                        className="text-xs text-blue-500 hover:text-primary font-medium transition-colors"
+                        className="text-xs text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
                       >
                         ¿Olvidaste tu contraseña?
                       </Link>
                     </div>
                     <FormControl>
                       <div className="relative group">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-primary transition-colors" />
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
                         <Input
                           type={showPassword ? "text" : "password"}
                           placeholder="••••••••"
-                          className="pl-12 pr-12 h-12 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-gray-400"
+                          className="pl-12 pr-12 h-12 bg-slate-950/50 border border-slate-700/50 rounded-xl focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/10 text-white transition-all placeholder:text-slate-600"
                           {...field}
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
                         >
                           {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                         </button>
@@ -137,7 +130,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
 
               <Button
                 type="submit"
-                className="w-full h-12 bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary text-white font-semibold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 group"
+                className="w-full h-12 mt-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(8,145,178,0.3)] hover:shadow-[0_0_25px_rgba(8,145,178,0.5)] transition-all duration-300 group"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -162,7 +155,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
                   </span>
                 ) : (
                   <span className="flex items-center justify-center gap-2">
-                    Iniciar Sesión
+                    Ingresar al Portal
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </span>
                 )}
@@ -170,10 +163,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
             </div>
           </form>
         </Form>
-
       </div>
-
-      <div className="absolute -inset-4 bg-gradient-to-r from-primary/10 via-blue-500/10 to-primary/10 rounded-[32px] blur-2xl -z-10 opacity-60" />
     </div>
   );
 }

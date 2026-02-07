@@ -480,45 +480,34 @@ export class PaymentService {
     const sevenDaysLater = new Date(today);
     sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
 
-    // 1. Total Pendiente (All pending commitments)
     const tenantId = await getCurrentTenantId() as string;
-    const totalPending = await prisma.paymentCommitment.aggregate({
-      where: { status: { not: "PAGADO" }, tenantId }, // Fixed: added tenantId
-      _sum: { amount: true },
-    });
 
-    // 2. Vencidos (Pending and date < today)
-    const overdue = await prisma.paymentCommitment.aggregate({
-      where: {
-        status: { not: "PAGADO" },
-        scheduledDate: { lt: today },
-        tenantId
-      },
-      _sum: { amount: true },
-      _count: true
-    });
-
-    // 3. Vencen Hoy (Pending and date >= today and date < tomorrow)
-    const dueToday = await prisma.paymentCommitment.aggregate({
-      where: {
-        status: { not: "PAGADO" },
-        scheduledDate: { gte: today, lt: tomorrow },
-        tenantId
-      },
-      _sum: { amount: true },
-      _count: true
-    });
-
-    // 4. Próximos 7 días (Pending and date >= tomorrow and date <= 7 days)
-    const upcoming = await prisma.paymentCommitment.aggregate({
-      where: {
-        status: { not: "PAGADO" },
-        scheduledDate: { gte: tomorrow, lte: sevenDaysLater },
-        tenantId
-      },
-      _sum: { amount: true },
-      _count: true
-    });
+    // Ejecutar las 4 consultas en paralelo (eliminando waterfall)
+    const [totalPending, overdue, dueToday, upcoming] = await Promise.all([
+      // 1. Total Pendiente
+      prisma.paymentCommitment.aggregate({
+        where: { status: { not: "PAGADO" }, tenantId },
+        _sum: { amount: true },
+      }),
+      // 2. Vencidos (date < today)
+      prisma.paymentCommitment.aggregate({
+        where: { status: { not: "PAGADO" }, scheduledDate: { lt: today }, tenantId },
+        _sum: { amount: true },
+        _count: true,
+      }),
+      // 3. Vencen Hoy (date >= today and date < tomorrow)
+      prisma.paymentCommitment.aggregate({
+        where: { status: { not: "PAGADO" }, scheduledDate: { gte: today, lt: tomorrow }, tenantId },
+        _sum: { amount: true },
+        _count: true,
+      }),
+      // 4. Próximos 7 días (date >= tomorrow and date <= 7 days)
+      prisma.paymentCommitment.aggregate({
+        where: { status: { not: "PAGADO" }, scheduledDate: { gte: tomorrow, lte: sevenDaysLater }, tenantId },
+        _sum: { amount: true },
+        _count: true,
+      }),
+    ]);
 
     return {
       totalPendingAmount: Number(totalPending._sum.amount) || 0,
