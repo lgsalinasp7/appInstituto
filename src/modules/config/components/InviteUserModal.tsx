@@ -122,18 +122,20 @@ export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAd
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                        <UserPlus size={20} className="text-primary" />
+            <DialogContent className="sm:max-w-md rounded-2xl border-none shadow-2xl p-0 overflow-hidden bg-white">
+                <DialogHeader className="p-6 pb-2">
+                    <DialogTitle className="flex items-center gap-3 text-xl font-bold text-[#1e3a5f]">
+                        <div className="w-10 h-10 rounded-xl bg-[#1e3a5f]/10 flex items-center justify-center text-[#1e3a5f]">
+                            <UserPlus size={20} />
+                        </div>
                         Invitar Nuevo Usuario
                     </DialogTitle>
-                    <DialogDescription>
-                        Envía una invitación por correo electrónico para dar acceso a la plataforma
+                    <DialogDescription className="text-gray-500 pt-2">
+                        Envía una invitación por correo electrónico para dar acceso a la plataforma.
                     </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                <form onSubmit={handleSubmit} className="space-y-4 p-6 pt-2">
                     <div className="space-y-2">
                         <Label htmlFor="email" className="flex items-center gap-2">
                             <Mail size={16} />

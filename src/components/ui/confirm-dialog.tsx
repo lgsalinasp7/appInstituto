@@ -38,7 +38,7 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-[400px] border-none shadow-instituto-lg overflow-hidden p-0 gap-0">
+            <DialogContent className="sm:max-w-[400px] border-none shadow-instituto-lg overflow-hidden p-0 gap-0 rounded-2xl bg-white">
                 <div className={cn(
                     "h-2 w-full",
                     variant === "destructive" ? "bg-red-500" : "bg-primary"

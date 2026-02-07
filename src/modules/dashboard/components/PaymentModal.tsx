@@ -43,7 +43,14 @@ interface PaymentModalProps {
   currentUserId: string;
 }
 
+import { useBranding } from "@/components/providers/BrandingContext";
+import { cn } from "@/lib/utils";
+
+// ... (props definition remains same, not repeated here)
+
 export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserId }: PaymentModalProps) {
+  const branding = useBranding();
+  const isDark = branding.darkMode !== false;
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successData, setSuccessData] = useState<{
@@ -107,7 +114,7 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
       });
 
       reset();
-      
+
       if (onSuccess) {
         onSuccess();
       }
@@ -127,9 +134,15 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
 
   if (successData) {
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-200">
-          <div className="bg-gradient-to-r from-green-500 to-green-600 p-8 text-white text-center">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
+        <div className={cn(
+          "rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border transition-colors",
+          isDark ? "bg-slate-900 border-white/10" : "bg-white border-gray-200"
+        )}>
+          <div className={cn(
+            "p-8 text-white text-center relative",
+            isDark ? "bg-gradient-to-r from-green-600 to-green-700" : "bg-gradient-to-r from-green-500 to-green-600"
+          )}>
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle2 size={40} />
             </div>
@@ -138,14 +151,17 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
           </div>
 
           <div className="p-8 space-y-6">
-            <div className="bg-gray-50 rounded-2xl p-5 space-y-3">
+            <div className={cn(
+              "rounded-2xl p-5 space-y-3",
+              isDark ? "bg-slate-800" : "bg-gray-50"
+            )}>
               <div className="flex justify-between">
                 <span className="text-gray-500">Número de Recibo</span>
-                <span className="font-bold text-primary">{successData.receiptNumber}</span>
+                <span className={cn("font-bold", isDark ? "text-slate-200" : "text-primary")}>{successData.receiptNumber}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Estudiante</span>
-                <span className="font-bold text-primary">{studentName}</span>
+                <span className={cn("font-bold text-right truncate max-w-[150px]", isDark ? "text-slate-200" : "text-primary")}>{studentName}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Nuevo Saldo</span>
@@ -153,12 +169,15 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
               </div>
             </div>
 
-            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+            <div className={cn(
+              "p-4 rounded-xl border",
+              isDark ? "bg-blue-500/10 border-blue-500/20" : "bg-blue-50 border-blue-100"
+            )}>
               <div className="flex items-start gap-3">
                 <Send size={18} className="text-blue-600 mt-0.5" />
                 <div>
-                  <p className="text-sm font-bold text-blue-900">Recibo Generado</p>
-                  <p className="text-xs text-blue-700 mt-1">
+                  <p className={cn("text-sm font-bold", isDark ? "text-blue-400" : "text-blue-900")}>Recibo Generado</p>
+                  <p className={cn("text-xs mt-1", isDark ? "text-blue-300" : "text-blue-700")}>
                     El recibo digital está listo para enviar al estudiante por WhatsApp o correo.
                   </p>
                 </div>
@@ -168,7 +187,12 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
             <div className="flex gap-3">
               <button
                 onClick={handleClose}
-                className="flex-1 py-3.5 bg-gray-100 text-gray-500 font-bold rounded-xl hover:bg-gray-200 transition-all"
+                className={cn(
+                  "flex-1 py-3.5 font-bold rounded-xl transition-all",
+                  isDark
+                    ? "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                )}
               >
                 Cerrar
               </button>
@@ -188,7 +212,10 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
                     }
                   );
                 }}
-                className="flex-1 py-3.5 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition-all flex items-center justify-center gap-2"
+                className={cn(
+                  "flex-1 py-3.5 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2",
+                  isDark ? "bg-green-600 hover:bg-green-700" : "bg-green-500 hover:bg-green-600"
+                )}
               >
                 <Send size={18} />
                 Enviar WhatsApp
@@ -201,9 +228,15 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden border border-gray-200">
-        <div className="bg-gradient-instituto p-8 text-white relative">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
+      <div className={cn(
+        "rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden border transition-colors",
+        isDark ? "bg-slate-900 border-white/10" : "bg-white border-gray-200"
+      )}>
+        <div className={cn(
+          "p-8 text-white relative",
+          isDark ? "bg-gradient-to-br from-cyan-600 to-blue-700" : "bg-gradient-instituto"
+        )}>
           <button
             onClick={handleClose}
             className="absolute right-6 top-6 text-white/70 hover:text-white transition-colors hover:rotate-90 duration-200"
@@ -223,7 +256,10 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-6">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+            <div className={cn(
+              "border px-4 py-3 rounded-xl text-sm flex items-center gap-2",
+              isDark ? "bg-red-500/10 border-red-500/20 text-red-400" : "bg-red-50 border-red-200 text-red-700"
+            )}>
               <AlertCircle size={18} />
               {error}
             </div>
@@ -239,10 +275,15 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
                   $
                 </span>
                 <input
-                  {...register("amount")}
+                  {...register("amount", { valueAsNumber: true })}
                   type="number"
                   placeholder="0"
-                  className="w-full pl-10 pr-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-bold text-primary transition-all"
+                  className={cn(
+                    "w-full pl-10 pr-4 py-3.5 border-2 rounded-xl focus:outline-none focus:ring-2 font-bold transition-all",
+                    isDark
+                      ? "bg-slate-950/50 border-slate-800 text-white focus:ring-cyan-500/20 focus:border-cyan-500"
+                      : "bg-gray-50 border-gray-200 text-primary focus:ring-primary/20 focus:border-primary"
+                  )}
                 />
               </div>
               {errors.amount && (
@@ -255,7 +296,12 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
               </label>
               <select
                 {...register("method")}
-                className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none font-bold text-primary cursor-pointer transition-all"
+                className={cn(
+                  "w-full px-4 py-3.5 border-2 rounded-xl focus:outline-none focus:ring-2 appearance-none font-bold cursor-pointer transition-all",
+                  isDark
+                    ? "bg-slate-950/50 border-slate-800 text-white focus:ring-cyan-500/20 focus:border-cyan-500"
+                    : "bg-gray-50 border-gray-200 text-primary focus:ring-primary/20 focus:border-primary"
+                )}
               >
                 <option value="BANCOLOMBIA">Bancolombia</option>
                 <option value="NEQUI">Nequi</option>
@@ -274,7 +320,12 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
               {...register("reference")}
               type="text"
               placeholder="Ej: REF-123456"
-              className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-semibold transition-all"
+              className={cn(
+                "w-full px-4 py-3.5 border-2 rounded-xl focus:outline-none focus:ring-2 font-semibold transition-all",
+                isDark
+                  ? "bg-slate-950/50 border-slate-800 text-white focus:ring-cyan-500/20 focus:border-cyan-500"
+                  : "bg-gray-50 border-gray-200 focus:ring-primary/20 focus:border-primary"
+              )}
             />
           </div>
 
@@ -286,17 +337,27 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
               {...register("comments")}
               rows={2}
               placeholder="Notas adicionales del pago..."
-              className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none font-medium transition-all"
+              className={cn(
+                "w-full px-4 py-3.5 border-2 rounded-xl focus:outline-none focus:ring-2 resize-none font-medium transition-all",
+                isDark
+                  ? "bg-slate-950/50 border-slate-800 text-white focus:ring-cyan-500/20 focus:border-cyan-500"
+                  : "bg-gray-50 border-gray-200 focus:ring-primary/20 focus:border-primary"
+              )}
             />
           </div>
 
-          {watchAmount > 0 && (
-            <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-5 rounded-2xl border border-primary/10">
-              <h4 className="text-sm font-bold text-primary mb-3">Vista Previa</h4>
+          {(watchAmount || 0) > 0 && (
+            <div className={cn(
+              "p-5 rounded-2xl border bg-gradient-to-r",
+              isDark
+                ? "from-cyan-500/5 to-blue-600/5 border-cyan-500/10"
+                : "from-primary/5 to-primary/10 border-primary/10"
+            )}>
+              <h4 className={cn("text-sm font-bold mb-3", isDark ? "text-cyan-400" : "text-primary")}>Vista Previa</h4>
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Total Programa</p>
-                  <p className="font-bold text-primary">${totalValue.toLocaleString()}</p>
+                  <p className={cn("font-bold", isDark ? "text-slate-200" : "text-primary")}>${totalValue.toLocaleString()}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Ya Pagado</p>
@@ -310,15 +371,18 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
             </div>
           )}
 
-          <div className="bg-primary/5 p-5 rounded-2xl flex items-start gap-3 border border-primary/10">
-            <div className="mt-0.5 p-2 bg-primary rounded-lg shadow-md">
+          <div className={cn(
+            "p-5 rounded-2xl flex items-start gap-3 border",
+            isDark ? "bg-cyan-500/5 border-cyan-500/10" : "bg-primary/5 border-primary/10"
+          )}>
+            <div className={cn("mt-0.5 p-2 rounded-lg shadow-md", isDark ? "bg-cyan-600" : "bg-primary")}>
               <CheckCircle2 size={18} className="text-white" strokeWidth={2.5} />
             </div>
             <div>
-              <p className="text-sm font-bold text-primary">
+              <p className={cn("text-sm font-bold", isDark ? "text-cyan-400" : "text-primary")}>
                 Acciones Automáticas
               </p>
-              <p className="text-xs text-gray-500 mt-1.5 leading-relaxed font-semibold">
+              <p className={cn("text-xs mt-1.5 leading-relaxed font-semibold", isDark ? "text-slate-400" : "text-gray-500")}>
                 Al guardar se generará automáticamente el <strong>Recibo Digital</strong> con
                 número de consecutivo único y se actualizará el saldo del estudiante.
               </p>
@@ -329,7 +393,12 @@ export function PaymentModal({ student, isOpen, onClose, onSuccess, currentUserI
             <button
               type="button"
               onClick={handleClose}
-              className="flex-1 py-3.5 text-gray-500 font-bold hover:bg-gray-100 rounded-xl transition-all border-2 border-gray-200"
+              className={cn(
+                "flex-1 py-3.5 font-bold rounded-xl transition-all border-2",
+                isDark
+                  ? "text-slate-400 border-slate-700 hover:bg-slate-800"
+                  : "text-gray-500 hover:bg-gray-100 border-gray-200"
+              )}
             >
               Cancelar
             </button>

@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { X, User, Phone, Mail, MapPin, GraduationCap, Calendar, DollarSign, CreditCard, UserCheck } from "lucide-react";
 import type { StudentWithRelations } from "../types";
+import { useBranding } from "@/components/providers/BrandingContext";
+import { cn } from "@/lib/utils";
 
 interface PaymentHistory {
   id: string;
@@ -22,6 +24,8 @@ interface StudentDetailModalProps {
 }
 
 export function StudentDetailModal({ studentId, isOpen, onClose, onPaymentClick }: StudentDetailModalProps) {
+  const branding = useBranding();
+  const isDark = branding.darkMode !== false;
   const [student, setStudent] = useState<StudentWithRelations | null>(null);
   const [payments, setPayments] = useState<PaymentHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,9 +64,15 @@ export function StudentDetailModal({ studentId, isOpen, onClose, onPaymentClick 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-2 sm:p-4 animate-fade-in-up overflow-y-auto">
-      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-4xl my-4 sm:my-8 overflow-hidden border border-gray-200">
-        <div className="bg-gradient-instituto p-4 sm:p-6 text-white relative">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-2 sm:p-4 animate-fade-in-up overflow-y-auto">
+      <div className={cn(
+        "rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-4xl my-4 sm:my-8 overflow-hidden border transition-colors",
+        isDark ? "bg-slate-900 border-white/10" : "bg-white border-gray-200"
+      )}>
+        <div className={cn(
+          "p-4 sm:p-6 text-white relative",
+          isDark ? "bg-gradient-to-r from-blue-700 to-slate-800" : "bg-gradient-instituto"
+        )}>
           <button
             onClick={onClose}
             className="absolute right-4 sm:right-6 top-4 sm:top-6 text-white/70 hover:text-white transition-colors hover:rotate-90 duration-200"
@@ -90,13 +100,14 @@ export function StudentDetailModal({ studentId, isOpen, onClose, onPaymentClick 
               </div>
 
               <div className="mt-3 sm:mt-4 flex flex-wrap gap-2 sm:gap-3">
-                <span className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold ${
+                <span className={cn(
+                  "px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold",
                   student.status === "MATRICULADO"
                     ? "bg-green-500/20 text-green-100"
                     : student.status === "PENDIENTE"
-                    ? "bg-yellow-500/20 text-yellow-100"
-                    : "bg-red-500/20 text-red-100"
-                }`}>
+                      ? "bg-yellow-500/20 text-yellow-100"
+                      : "bg-red-500/20 text-red-100"
+                )}>
                   {student.status.replace("_", " ")}
                 </span>
                 <span className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold bg-white/10 text-white truncate max-w-[150px] sm:max-w-none">
@@ -112,83 +123,101 @@ export function StudentDetailModal({ studentId, isOpen, onClose, onPaymentClick 
             <div className="animate-spin w-6 h-6 sm:w-8 sm:h-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
           </div>
         ) : student ? (
-          <div className="p-4 sm:p-6 max-h-[60vh] overflow-y-auto">
+          <div className="p-4 sm:p-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-4 sm:space-y-6">
-                <div className="bg-gray-50 rounded-xl sm:rounded-2xl p-4 sm:p-5">
-                  <h3 className="text-xs sm:text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2 mb-3 sm:mb-4">
+                <div className={cn(
+                  "rounded-xl sm:rounded-2xl p-4 sm:p-5",
+                  isDark ? "bg-slate-800" : "bg-gray-50"
+                )}>
+                  <h3 className={cn(
+                    "text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center gap-2 mb-3 sm:mb-4",
+                    isDark ? "text-slate-200" : "text-primary"
+                  )}>
                     <Phone size={14} className="sm:w-4 sm:h-4" />
                     Contacto
                   </h3>
                   <div className="space-y-2 sm:space-y-3">
                     <div className="flex items-center gap-2 sm:gap-3">
-                      <Phone size={12} className="sm:w-3.5 sm:h-3.5 text-gray-500 flex-shrink-0" />
-                      <span className="text-xs sm:text-sm font-medium">{student.phone}</span>
+                      <Phone size={12} className={cn("sm:w-3.5 sm:h-3.5 flex-shrink-0", isDark ? "text-slate-400" : "text-gray-500")} />
+                      <span className={cn("text-xs sm:text-sm font-medium", isDark ? "text-slate-300" : "text-gray-700")}>{student.phone}</span>
                     </div>
                     {student.email && (
                       <div className="flex items-center gap-2 sm:gap-3">
-                        <Mail size={12} className="sm:w-3.5 sm:h-3.5 text-gray-500 flex-shrink-0" />
-                        <span className="text-xs sm:text-sm font-medium truncate">{student.email}</span>
+                        <Mail size={12} className={cn("sm:w-3.5 sm:h-3.5 flex-shrink-0", isDark ? "text-slate-400" : "text-gray-500")} />
+                        <span className={cn("text-xs sm:text-sm font-medium truncate", isDark ? "text-slate-300" : "text-gray-700")}>{student.email}</span>
                       </div>
                     )}
                     {student.address && (
                       <div className="flex items-center gap-2 sm:gap-3">
-                        <MapPin size={12} className="sm:w-3.5 sm:h-3.5 text-gray-500 flex-shrink-0" />
-                        <span className="text-xs sm:text-sm font-medium">{student.address}</span>
+                        <MapPin size={12} className={cn("sm:w-3.5 sm:h-3.5 flex-shrink-0", isDark ? "text-slate-400" : "text-gray-500")} />
+                        <span className={cn("text-xs sm:text-sm font-medium", isDark ? "text-slate-300" : "text-gray-700")}>{student.address}</span>
                       </div>
                     )}
                   </div>
                 </div>
 
                 {(student.guardianName || student.guardianPhone) && (
-                  <div className="bg-gray-50 rounded-xl sm:rounded-2xl p-4 sm:p-5">
-                    <h3 className="text-xs sm:text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2 mb-3 sm:mb-4">
+                  <div className={cn(
+                    "rounded-xl sm:rounded-2xl p-4 sm:p-5",
+                    isDark ? "bg-slate-800" : "bg-gray-50"
+                  )}>
+                    <h3 className={cn(
+                      "text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center gap-2 mb-3 sm:mb-4",
+                      isDark ? "text-slate-200" : "text-primary"
+                    )}>
                       <UserCheck size={14} className="sm:w-4 sm:h-4" />
                       Acudiente
                     </h3>
                     <div className="space-y-2 sm:space-y-3">
                       {student.guardianName && (
                         <div className="flex items-center gap-2 sm:gap-3">
-                          <User size={12} className="sm:w-3.5 sm:h-3.5 text-gray-500 flex-shrink-0" />
-                          <span className="text-xs sm:text-sm font-medium">{student.guardianName}</span>
+                          <User size={12} className={cn("sm:w-3.5 sm:h-3.5 flex-shrink-0", isDark ? "text-slate-400" : "text-gray-500")} />
+                          <span className={cn("text-xs sm:text-sm font-medium", isDark ? "text-slate-300" : "text-gray-700")}>{student.guardianName}</span>
                         </div>
                       )}
                       {student.guardianPhone && (
                         <div className="flex items-center gap-2 sm:gap-3">
-                          <Phone size={12} className="sm:w-3.5 sm:h-3.5 text-gray-500 flex-shrink-0" />
-                          <span className="text-xs sm:text-sm font-medium">{student.guardianPhone}</span>
+                          <Phone size={12} className={cn("sm:w-3.5 sm:h-3.5 flex-shrink-0", isDark ? "text-slate-400" : "text-gray-500")} />
+                          <span className={cn("text-xs sm:text-sm font-medium", isDark ? "text-slate-300" : "text-gray-700")}>{student.guardianPhone}</span>
                         </div>
                       )}
                       {student.guardianEmail && (
                         <div className="flex items-center gap-2 sm:gap-3">
-                          <Mail size={12} className="sm:w-3.5 sm:h-3.5 text-gray-500 flex-shrink-0" />
-                          <span className="text-xs sm:text-sm font-medium truncate">{student.guardianEmail}</span>
+                          <Mail size={12} className={cn("sm:w-3.5 sm:h-3.5 flex-shrink-0", isDark ? "text-slate-400" : "text-gray-500")} />
+                          <span className={cn("text-xs sm:text-sm font-medium truncate", isDark ? "text-slate-300" : "text-gray-700")}>{student.guardianEmail}</span>
                         </div>
                       )}
                     </div>
                   </div>
                 )}
 
-                <div className="bg-gray-50 rounded-xl sm:rounded-2xl p-4 sm:p-5">
-                  <h3 className="text-xs sm:text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2 mb-3 sm:mb-4">
+                <div className={cn(
+                  "rounded-xl sm:rounded-2xl p-4 sm:p-5",
+                  isDark ? "bg-slate-800" : "bg-gray-50"
+                )}>
+                  <h3 className={cn(
+                    "text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center gap-2 mb-3 sm:mb-4",
+                    isDark ? "text-slate-200" : "text-primary"
+                  )}>
                     <GraduationCap size={14} className="sm:w-4 sm:h-4" />
                     Información Académica
                   </h3>
                   <div className="space-y-2 sm:space-y-3">
                     <div className="flex justify-between gap-2">
-                      <span className="text-xs sm:text-sm text-gray-500">Programa</span>
-                      <span className="text-xs sm:text-sm font-bold text-primary text-right truncate max-w-[150px]">{student.program.name}</span>
+                      <span className={cn("text-xs sm:text-sm", isDark ? "text-slate-400" : "text-gray-500")}>Programa</span>
+                      <span className={cn("text-xs sm:text-sm font-bold text-right truncate max-w-[150px]", isDark ? "text-slate-200" : "text-primary")}>{student.program.name}</span>
                     </div>
                     <div className="flex justify-between gap-2">
-                      <span className="text-xs sm:text-sm text-gray-500">Asesor</span>
-                      <span className="text-xs sm:text-sm font-bold text-primary text-right truncate max-w-[150px]">{student.advisor.name || student.advisor.email}</span>
+                      <span className={cn("text-xs sm:text-sm", isDark ? "text-slate-400" : "text-gray-500")}>Asesor</span>
+                      <span className={cn("text-xs sm:text-sm font-bold text-right truncate max-w-[150px]", isDark ? "text-slate-200" : "text-primary")}>{student.advisor.name || student.advisor.email}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
+                      <span className={cn("text-xs sm:text-sm flex items-center gap-1", isDark ? "text-slate-400" : "text-gray-500")}>
                         <Calendar size={10} className="sm:w-3 sm:h-3" />
                         Matrícula
                       </span>
-                      <span className="text-xs sm:text-sm font-bold text-primary">
+                      <span className={cn("text-xs sm:text-sm font-bold", isDark ? "text-slate-200" : "text-primary")}>
                         {new Date(student.enrollmentDate).toLocaleDateString("es-CO")}
                       </span>
                     </div>
@@ -197,7 +226,10 @@ export function StudentDetailModal({ studentId, isOpen, onClose, onPaymentClick 
               </div>
 
               <div className="space-y-4 sm:space-y-6">
-                <div className="bg-gradient-to-br from-primary to-primary-light rounded-xl sm:rounded-2xl p-4 sm:p-5 text-white">
+                <div className={cn(
+                  "rounded-xl sm:rounded-2xl p-4 sm:p-5 text-white",
+                  isDark ? "bg-gradient-to-br from-blue-900 to-slate-900" : "bg-gradient-to-br from-primary to-primary-light"
+                )}>
                   <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center gap-2 mb-3 sm:mb-4">
                     <DollarSign size={14} className="sm:w-4 sm:h-4" />
                     Resumen Financiero
@@ -232,39 +264,54 @@ export function StudentDetailModal({ studentId, isOpen, onClose, onPaymentClick 
 
                   <button
                     onClick={onPaymentClick}
-                    className="mt-3 sm:mt-4 w-full py-2.5 sm:py-3 bg-white text-primary font-bold rounded-lg sm:rounded-xl hover:bg-gray-100 transition-all flex items-center justify-center gap-2 text-sm"
+                    className={cn(
+                      "mt-3 sm:mt-4 w-full py-2.5 sm:py-3 font-bold rounded-lg sm:rounded-xl transition-all flex items-center justify-center gap-2 text-sm",
+                      isDark ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-white text-primary hover:bg-gray-100"
+                    )}
                   >
                     <CreditCard size={16} className="sm:w-[18px] sm:h-[18px]" />
                     Registrar Pago
                   </button>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl sm:rounded-2xl p-4 sm:p-5">
-                  <h3 className="text-xs sm:text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2 mb-3 sm:mb-4">
+                <div className={cn(
+                  "rounded-xl sm:rounded-2xl p-4 sm:p-5",
+                  isDark ? "bg-slate-800" : "bg-gray-50"
+                )}>
+                  <h3 className={cn(
+                    "text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center gap-2 mb-3 sm:mb-4",
+                    isDark ? "text-slate-200" : "text-primary"
+                  )}>
                     <CreditCard size={14} className="sm:w-4 sm:h-4" />
                     Historial de Pagos ({payments.length})
                   </h3>
 
                   {payments.length === 0 ? (
-                    <p className="text-xs sm:text-sm text-gray-500 text-center py-3 sm:py-4">
+                    <p className={cn("text-xs sm:text-sm text-center py-3 sm:py-4", isDark ? "text-slate-400" : "text-gray-500")}>
                       No hay pagos registrados
                     </p>
                   ) : (
-                    <div className="space-y-2 sm:space-y-3 max-h-40 sm:max-h-48 overflow-y-auto">
+                    <div className="space-y-2 sm:space-y-3 max-h-40 sm:max-h-48 overflow-y-auto custom-scrollbar">
                       {payments.map((payment) => (
-                        <div key={payment.id} className="bg-white p-2.5 sm:p-3 rounded-lg sm:rounded-xl border border-gray-200">
+                        <div key={payment.id} className={cn(
+                          "p-2.5 sm:p-3 rounded-lg sm:rounded-xl border",
+                          isDark ? "bg-slate-700/50 border-slate-600" : "bg-white border-gray-200"
+                        )}>
                           <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
-                              <p className="font-bold text-primary text-sm sm:text-base">${payment.amount.toLocaleString()}</p>
-                              <p className="text-[10px] sm:text-xs text-gray-500">
+                              <p className={cn("font-bold text-sm sm:text-base", isDark ? "text-slate-200" : "text-primary")}>${payment.amount.toLocaleString()}</p>
+                              <p className={cn("text-[10px] sm:text-xs", isDark ? "text-slate-400" : "text-gray-500")}>
                                 {new Date(payment.paymentDate).toLocaleDateString("es-CO")}
                               </p>
                             </div>
-                            <span className="text-[10px] sm:text-xs bg-primary/10 text-primary px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg font-bold flex-shrink-0">
+                            <span className={cn(
+                              "text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg font-bold flex-shrink-0",
+                              isDark ? "bg-blue-500/20 text-blue-200" : "bg-primary/10 text-primary"
+                            )}>
                               {payment.method}
                             </span>
                           </div>
-                          <p className="text-[10px] sm:text-xs text-gray-400 mt-1 truncate">
+                          <p className={cn("text-[10px] sm:text-xs mt-1 truncate", isDark ? "text-slate-500" : "text-gray-400")}>
                             Recibo: {payment.receiptNumber}
                           </p>
                         </div>

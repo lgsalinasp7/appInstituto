@@ -27,7 +27,8 @@ import {
   ExternalLink,
   GraduationCap,
   CreditCard,
-  Target
+  Target,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TenantWithDetails, TenantStatus, TenantUser } from "../types";
