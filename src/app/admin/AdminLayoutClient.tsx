@@ -6,6 +6,7 @@
  */
 
 import { AdminSidebar } from "@/modules/admin";
+import { UserProfileDropdown } from "@/modules/admin/components/UserProfileDropdown";
 import { useState } from "react";
 import {
   Menu,
@@ -15,8 +16,9 @@ import {
   Bell,
   HelpCircle,
   Settings,
-  User
+  User,
 } from "lucide-react";
+import { BrandingProvider } from "@/components/providers/BrandingContext";
 
 interface AdminLayoutClientProps {
   children: React.ReactNode;
@@ -114,18 +116,7 @@ export default function AdminLayoutClient({
             </div>
 
             <div className="h-8 w-[1px] bg-slate-800 mx-2" />
-
-            <div className="flex items-center gap-3 pl-2 group cursor-pointer">
-              <div className="flex flex-col items-end mr-1">
-                <span className="text-sm font-bold text-white group-hover:text-cyan-400 transition-colors font-display tracking-tight">{userName}</span>
-                <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider font-display">{roleLabel}</span>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 p-[1px] transition-transform group-hover:scale-110 duration-300">
-                <div className="w-full h-full rounded-[11px] bg-slate-950 flex items-center justify-center">
-                  <User className="w-5 h-5 text-cyan-400" />
-                </div>
-              </div>
-            </div>
+            <UserProfileDropdown />
           </div>
         </header>
 
@@ -136,7 +127,9 @@ export default function AdminLayoutClient({
           <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none -z-10" />
 
           <div className="max-w-7xl mx-auto">
-            {children}
+            <BrandingProvider branding={{ darkMode: true }}>
+              {children}
+            </BrandingProvider>
           </div>
         </main>
       </div>

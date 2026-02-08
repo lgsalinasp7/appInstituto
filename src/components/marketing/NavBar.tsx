@@ -4,11 +4,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
+import { cn, getAdminUrl } from "@/lib/utils";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 
 export function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const adminUrl = getAdminUrl();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
@@ -48,7 +50,7 @@ export function NavBar() {
             variant="ghost"
             className="text-gray-300 hover:text-white hover:bg-white/10 transition-[background-color,color]"
           >
-            <a href="https://admin.kaledsoft.tech">
+            <a href={adminUrl}>
               Portal Cliente
             </a>
           </Button>
@@ -88,7 +90,7 @@ export function NavBar() {
             Contacto
           </Link>
           <div className="pt-4 border-t border-white/10 space-y-4">
-            <a href="https://admin.kaledsoft.tech" className="block text-center py-3 rounded-xl bg-white/5 text-white font-medium">
+            <a href={adminUrl} className="block text-center py-3 rounded-xl bg-white/5 text-white font-medium">
               Portal Cliente
             </a>
             <Link href="#contact" onClick={() => setIsMenuOpen(false)} className="block text-center py-3 rounded-xl bg-cyan-600 text-white font-bold">

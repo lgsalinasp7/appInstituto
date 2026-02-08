@@ -22,8 +22,6 @@ import {
   Palette,
   BarChart3,
   History,
-  Settings,
-  ChevronLeft,
 } from "lucide-react";
 
 // Const types pattern (typescript skill)
@@ -166,34 +164,8 @@ export function AdminSidebar() {
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="p-3 border-t border-slate-800/50 space-y-0.5">
-        {/* Configuración - solo SUPER_ADMIN */}
-        {platformRole === PLATFORM_ROLES.SUPER_ADMIN ? (
-          <Link
-            href="/admin/configuracion"
-            className={cn(
-              "flex items-center justify-start gap-3 rounded-xl px-2 py-2 text-sm font-medium transition-all duration-300",
-              pathname.startsWith("/admin/configuracion")
-                ? "bg-cyan-500/10 text-cyan-400"
-                : "text-slate-500 hover:bg-slate-900 hover:text-white"
-            )}
-          >
-            <Settings className="w-5 h-5" />
-            <span className="">Configuración</span>
-          </Link>
-        ) : null}
-
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center justify-start gap-3 rounded-xl px-2 py-2 text-sm font-medium text-slate-500 hover:bg-slate-900 hover:text-white transition-all duration-300"
-        >
-          <ChevronLeft className="w-5 h-5" />
-          <span className="">
-            Salir de Admin
-          </span>
-        </button>
-      </div>
+      {/* Footer remove per user request - unified in UserProfileDropdown */}
+      <div className="p-3 border-t border-slate-800/50 space-y-0.5" />
     </aside>
   );
 }

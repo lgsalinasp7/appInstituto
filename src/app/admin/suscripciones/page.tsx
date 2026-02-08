@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import { DollarSign, Building2 } from "lucide-react";
 import { SuscripcionesClient } from "./SuscripcionesClient";
+import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 
 export const metadata: Metadata = {
   title: "Suscripciones | Admin KaledSoft",
@@ -100,10 +101,11 @@ export default async function SuscripcionesPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-white tracking-tight">Suscripciones</h1>
-        <p className="text-slate-400 mt-1">Gestiona los planes y suscripciones de tus empresas</p>
-      </div>
+      <DashboardHeader
+        title="Gestión de"
+        titleHighlight="Suscripciones"
+        subtitle="Gestiona los planes y suscripciones de tus empresas"
+      />
 
       {/* Stat Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

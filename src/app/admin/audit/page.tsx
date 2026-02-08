@@ -1,6 +1,7 @@
 
 import { AdminService } from "@/modules/admin/services/admin.service";
 import { AuditLogTable } from "@/modules/admin";
+import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
@@ -13,14 +14,11 @@ export default async function AdminAuditPage() {
   return (
     <div className="space-y-14 animate-fade-in-up">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tighter text-white leading-none">
-          Registro de <span className="text-gradient">Auditoría</span>
-        </h1>
-        <p className="text-slate-400 mt-4 text-lg font-medium">
-          Monitorización completa y trazabilidad de todas las acciones del ecosistema.
-        </p>
-      </div>
+      <DashboardHeader
+        title="Registro de"
+        titleHighlight="Auditoría"
+        subtitle="Monitorización completa y trazabilidad de todas las acciones del ecosistema."
+      />
 
       {/* Filter Bar */}
       <div className="glass-card p-4 rounded-[2rem] border border-white/5 shadow-2xl">

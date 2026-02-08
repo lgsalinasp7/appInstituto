@@ -28,6 +28,7 @@ const testimonials = [
     },
 ];
 
+// Force rebuild
 export default function LandingPage() {
     return (
         <main className="min-h-screen bg-slate-950 font-sans selection:bg-cyan-500/30">

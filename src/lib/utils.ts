@@ -24,3 +24,10 @@ export function parseCurrency(value: string): number {
   const numeric = value.replace(/\D/g, "");
   return numeric ? parseInt(numeric, 10) : 0;
 }
+
+export function getAdminUrl(): string {
+  if (process.env.NODE_ENV === "development") {
+    return "http://admin.localhost:3000";
+  }
+  return "https://admin.kaledsoft.tech";
+}

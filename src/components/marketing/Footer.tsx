@@ -2,7 +2,11 @@ import Link from "next/link";
 import { Facebook, Twitter, Instagram, Linkedin, Mail, MapPin, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+import { getAdminUrl } from "@/lib/utils";
+
 export function Footer() {
+    const adminUrl = getAdminUrl();
+
     return (
         <footer className="bg-slate-950 text-white border-t border-white/10 pt-16 pb-8">
             <div className="container mx-auto px-6">
@@ -44,7 +48,7 @@ export function Footer() {
                             <li><Link href="#features" className="hover:text-cyan-400 transition-colors duration-300">Funcionalidades</Link></li>
                             <li><Link href="#pricing" className="hover:text-cyan-400 transition-colors duration-300">Precios</Link></li>
                             <li><Link href="#services" className="hover:text-cyan-400 transition-colors duration-300">Servicios</Link></li>
-                            <li><a href="https://admin.kaledsoft.tech" className="hover:text-cyan-400 transition-colors duration-300">Portal Cliente</a></li>
+                            <li><a href={adminUrl} className="hover:text-cyan-400 transition-colors duration-300">Portal Cliente</a></li>
                             <li><Link href="mailto:ventas@kaledsoft.tech?subject=Solicitud%20de%20Demo" className="hover:text-cyan-400 transition-colors duration-300">Solicitar Demo</Link></li>
                         </ul>
                     </div>

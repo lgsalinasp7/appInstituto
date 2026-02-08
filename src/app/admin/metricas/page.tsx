@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import { DollarSign, Building2, Users, GraduationCap } from "lucide-react";
 import { MetricasCharts } from "./MetricasCharts";
+import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 
 export const metadata: Metadata = {
   title: "Métricas | Admin KaledSoft",
@@ -129,12 +130,11 @@ export default async function MetricasPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-white tracking-tight">Métricas de Plataforma</h1>
-        <p className="text-slate-400 mt-1">
-          KPIs, tendencias y análisis del ecosistema KaledSoft
-        </p>
-      </div>
+      <DashboardHeader
+        title="Métricas de"
+        titleHighlight="Plataforma"
+        subtitle="KPIs, tendencias y análisis del ecosistema KaledSoft"
+      />
 
       {/* KPI Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

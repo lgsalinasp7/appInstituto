@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Target, Users, PhoneCall, TrendingUp, Rocket } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 
 export const metadata: Metadata = {
   title: "Leads | Admin KaledSoft",
@@ -30,14 +31,11 @@ export default function LeadsPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Pipeline Comercial</h1>
-          <p className="text-slate-400 mt-1">
-            Gestiona leads y oportunidades de venta de la plataforma
-          </p>
-        </div>
-      </div>
+      <DashboardHeader
+        title="Pipeline"
+        titleHighlight="Comercial"
+        subtitle="Gestiona leads y oportunidades de venta de la plataforma"
+      />
 
       {/* Stat Cards - Placeholder */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

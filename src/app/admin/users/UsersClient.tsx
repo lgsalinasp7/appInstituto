@@ -11,6 +11,7 @@ import { Plus, Search, Mail, UserCheck, Save, Loader2 } from "lucide-react";
 import { type User } from "@/modules/users";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 
 interface UsersClientProps {
     initialUsers: User[];
@@ -65,19 +66,17 @@ export default function UsersClient({ initialUsers, initialInvitations }: UsersC
     return (
         <div className="space-y-12 animate-fade-in-up">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-                <div>
-                    <h2 className="text-3xl font-extrabold tracking-tighter text-white">
-                        Gestión de <span className="text-gradient">Usuarios</span>
-                    </h2>
-                    <p className="text-slate-400 mt-3 text-lg font-medium">Administra los accesos y privilegios del ecosistema.</p>
-                </div>
+            <DashboardHeader
+                title="Gestión de"
+                titleHighlight="Usuarios"
+                subtitle="Administra los accesos y privilegios del ecosistema."
+            >
                 {canInvite && (
                     <Button className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:scale-105 transition-all rounded-2xl px-8 py-7 font-bold shadow-[0_0_30px_rgba(8,145,178,0.3)] border border-white/10">
                         <Plus className="mr-2 h-6 w-6" /> Invitar nuevo usuario
                     </Button>
                 )}
-            </div>
+            </DashboardHeader>
 
             {/* Tabs & Search Unified Bar */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">

@@ -39,10 +39,7 @@ export default async function EmpresasPage({
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <DashboardHeader
-        title="Gestión de Empresas"
-        subtitle="Tenants y Organizaciones"
-      />
+      <DashboardHeader title="Gestión de" titleHighlight="Empresas" subtitle="Administra las empresas registradas en la plataforma" />
 
       {/* Stats Grid */}
       <div className="grid gap-6 grid-cols-2 lg:grid-cols-5 animate-fade-in-up animation-delay-100">
