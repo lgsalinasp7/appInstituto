@@ -150,6 +150,7 @@ export const TenantsService = {
         email,
         plan,
         status: 'ACTIVO',
+        subscriptionEndsAt: data.subscriptionEndsAt || null,
       },
     });
 

@@ -33,6 +33,8 @@ import {
 import { cn } from "@/lib/utils";
 import type { TenantWithDetails, TenantStatus, TenantUser } from "../types";
 import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
+import { TenantEditModal } from "./TenantEditModal";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface TenantDetailViewProps {
   tenant: TenantWithDetails;
@@ -57,51 +59,87 @@ export function TenantDetailView({ tenant }: TenantDetailViewProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [resettingPassword, setResettingPassword] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    type: "suspend" | "activate" | "reset-password" | null;
+    title: string;
+    description: string;
+    action: () => Promise<void>;
+  }>({
+    isOpen: false,
+    type: null,
+    title: "",
+    description: "",
+    action: async () => { },
+  });
 
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "kaledsoft.tech";
   const tenantUrl = `https://${tenant.slug}.${rootDomain}`;
 
-  const handleResetPassword = async () => {
-    if (!confirm("¿Estás seguro de resetear la contraseña del administrador?")) {
-      return;
-    }
-
-    setResettingPassword(true);
+  const executeAction = async () => {
+    if (!confirmDialog.action) return;
     try {
-      const res = await fetch(`/api/admin/tenants/${tenant.id}/reset-password`, {
-        method: "POST",
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        setTempPassword(data.data.tempPassword);
-        setShowPassword(true);
-      }
+      await confirmDialog.action();
     } catch (error) {
-      console.error("Error resetting password:", error);
+      console.error("Error executing action:", error);
     } finally {
-      setResettingPassword(false);
+      setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
     }
   };
 
-  const handleSuspend = async () => {
-    if (!confirm("¿Estás seguro de suspender este tenant?")) return;
+  const handleResetPasswordClick = () => {
+    setConfirmDialog({
+      isOpen: true,
+      type: "reset-password",
+      title: "Resetear Contraseña",
+      description: "¿Estás seguro de resetear la contraseña del administrador? Se generará una nueva contraseña temporal.",
+      action: async () => {
+        setResettingPassword(true);
+        try {
+          const res = await fetch(`/api/admin/tenants/${tenant.id}/reset-password`, {
+            method: "POST",
+          });
+          const data = await res.json();
 
-    try {
-      await fetch(`/api/admin/tenants/${tenant.id}/suspend`, { method: "POST" });
-      router.refresh();
-    } catch (error) {
-      console.error("Error suspending tenant:", error);
-    }
+          if (data.success) {
+            setTempPassword(data.data.tempPassword);
+            setShowPassword(true);
+          }
+        } catch (error) {
+          console.error("Error resetting password:", error);
+        } finally {
+          setResettingPassword(false);
+        }
+      },
+    });
   };
 
-  const handleActivate = async () => {
-    try {
-      await fetch(`/api/admin/tenants/${tenant.id}/activate`, { method: "POST" });
-      router.refresh();
-    } catch (error) {
-      console.error("Error activating tenant:", error);
-    }
+  const handleSuspendClick = () => {
+    setConfirmDialog({
+      isOpen: true,
+      type: "suspend",
+      title: "Suspender Tenant",
+      description: "¿Estás seguro de suspender este tenant? Los usuarios no podrán acceder a la plataforma.",
+      action: async () => {
+        await fetch(`/api/admin/tenants/${tenant.id}/suspend`, { method: "POST" });
+        router.refresh();
+      },
+    });
+  };
+
+  const handleActivateClick = () => {
+    setConfirmDialog({
+      isOpen: true,
+      type: "activate",
+      title: "Activar Tenant",
+      description: "¿Estás seguro de reactivar este tenant? Los usuarios volverán a tener acceso.",
+      action: async () => {
+        await fetch(`/api/admin/tenants/${tenant.id}/activate`, { method: "POST" });
+        router.refresh();
+      },
+    });
   };
 
   const copyToClipboard = (text: string) => {
@@ -165,7 +203,7 @@ export function TenantDetailView({ tenant }: TenantDetailViewProps) {
               <Button
                 variant="outline"
                 className="h-12 px-6 rounded-2xl bg-red-500/5 hover:bg-red-500/10 border-red-500/20 text-red-500 font-bold"
-                onClick={handleSuspend}
+                onClick={handleSuspendClick}
               >
                 Suspender
               </Button>
@@ -173,14 +211,24 @@ export function TenantDetailView({ tenant }: TenantDetailViewProps) {
               <Button
                 variant="outline"
                 className="h-12 px-6 rounded-2xl bg-green-500/5 hover:bg-green-500/10 border-green-500/20 text-green-500 font-bold"
-                onClick={handleActivate}
+                onClick={handleActivateClick}
               >
                 Activar
               </Button>
             ) : null}
-            <Button className="h-12 px-8 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold border border-white/10">
+            {/* Botón Editar logic */}
+            <Button
+              className="h-12 px-8 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold border border-white/10"
+              onClick={() => setIsEditModalOpen(true)}
+            >
               Editar
             </Button>
+            <TenantEditModal
+              tenant={tenant}
+              isOpen={isEditModalOpen}
+              onClose={() => setIsEditModalOpen(false)}
+              onSuccess={() => router.refresh()}
+            />
           </div>
         </div>
       </div>
@@ -249,6 +297,18 @@ export function TenantDetailView({ tenant }: TenantDetailViewProps) {
                 month: "long",
                 day: "numeric",
               })}
+            />
+            <InfoRow
+              label="Vencimiento Suscripción"
+              value={tenant.subscriptionEndsAt
+                ? new Date(tenant.subscriptionEndsAt).toLocaleDateString("es-CO", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })
+                : "Indefinido"
+              }
+              valueClassName={tenant.subscriptionEndsAt && new Date(tenant.subscriptionEndsAt) < new Date() ? "text-red-400" : undefined}
             />
           </div>
         </div>
@@ -353,7 +413,7 @@ export function TenantDetailView({ tenant }: TenantDetailViewProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={handleResetPassword}
+                onClick={handleResetPasswordClick}
                 disabled={resettingPassword}
                 className="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-400"
               >
@@ -429,6 +489,20 @@ export function TenantDetailView({ tenant }: TenantDetailViewProps) {
           </TabsContent>
         </Tabs>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={executeAction}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        variant={confirmDialog.type === "suspend" ? "destructive" : "default"}
+        confirmText={
+          confirmDialog.type === "suspend" ? "Suspender" :
+            confirmDialog.type === "activate" ? "Activar" :
+              "Confirmar"
+        }
+      />
     </div>
   );
 }
@@ -437,10 +511,12 @@ function InfoRow({
   label,
   value,
   copyable = false,
+  valueClassName,
 }: {
   label: string;
   value: string;
   copyable?: boolean;
+  valueClassName?: string;
 }) {
   const handleCopy = () => {
     navigator.clipboard.writeText(value);
@@ -450,7 +526,7 @@ function InfoRow({
     <div className="flex items-center justify-between py-3.5 border-b border-white/5 last:border-0 group/row">
       <span className="text-sm font-bold text-slate-500 uppercase tracking-widest text-[10px]">{label}</span>
       <div className="flex items-center gap-3">
-        <span className="text-sm font-bold text-slate-300 truncate max-w-[250px] tracking-tight">
+        <span className={cn("text-sm font-bold text-slate-300 truncate max-w-[250px] tracking-tight", valueClassName)}>
           {value}
         </span>
         {copyable && (

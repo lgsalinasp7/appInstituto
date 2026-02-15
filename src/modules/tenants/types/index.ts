@@ -13,6 +13,7 @@ export interface Tenant {
   status: TenantStatus;
   plan: string;
   email: string | null;
+  subscriptionEndsAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   _count?: {
@@ -46,6 +47,7 @@ export interface CreateTenantData {
   plan?: string;
   adminName?: string;
   adminPassword?: string;
+  subscriptionEndsAt?: Date;
 }
 
 export interface UpdateTenantData {
@@ -55,6 +57,7 @@ export interface UpdateTenantData {
   status?: TenantStatus;
   plan?: string;
   email?: string;
+  subscriptionEndsAt?: Date;
 }
 
 export interface TenantFilters {

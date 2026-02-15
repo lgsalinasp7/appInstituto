@@ -24,7 +24,7 @@ const getTenantData = cache(async () => {
 
   const tenant = await prisma.tenant.findUnique({
     where: { slug: tenantSlug },
-    select: { id: true, name: true, slug: true, status: true },
+    select: { id: true, name: true, slug: true, status: true, subscriptionEndsAt: true },
   });
 
   return tenant;
@@ -47,8 +47,20 @@ export default async function ProtectedLayoutWrapper({
     redirect("/suspended");
   }
 
+  // Calcular días restantes de suscripción
+  let daysRemaining = Infinity;
+  if (tenant.subscriptionEndsAt) {
+    const now = new Date();
+    const end = new Date(tenant.subscriptionEndsAt);
+    const diffTime = end.getTime() - now.getTime();
+    daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }
+
   // Obtener branding cacheado
   const branding = await getTenantBrandingCached(tenant.id);
+
+  // Importación dinámica para evitar problemas de componentes servidor-cliente
+  const { SubscriptionWarningBanner } = await import("@/components/ui/subscription-banner");
 
   // Inyectar TenantThemeProvider (CSS vars) + BrandingProvider (React Context)
   return (
@@ -65,7 +77,10 @@ export default async function ProtectedLayoutWrapper({
           darkMode: branding.darkMode,
         }}
       >
-        <ProtectedLayoutClient>{children}</ProtectedLayoutClient>
+        <ProtectedLayoutClient>
+          <SubscriptionWarningBanner daysRemaining={daysRemaining} />
+          {children}
+        </ProtectedLayoutClient>
       </BrandingProvider>
     </TenantThemeProvider>
   );

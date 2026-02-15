@@ -59,8 +59,19 @@ export default async function HomePage() {
   const headerList = await headers();
   const tenantSlug = headerList.get("x-tenant-slug");
 
-  // If there is a tenant slug header (set by middleware), show the Tenant App
+  // Si hay un slug de tenant (establecido por el proxy), mostrar la App del Tenant
   if (tenantSlug) {
+    const { prisma } = await import("@/lib/prisma");
+    const tenant = await prisma.tenant.findUnique({
+      where: { slug: tenantSlug },
+      select: { status: true }
+    });
+
+    if (tenant?.status === "SUSPENDIDO" || tenant?.status === "CANCELADO") {
+      const { redirect } = await import("next/navigation");
+      redirect("/suspended");
+    }
+
     return <TenantWelcome />;
   }
 

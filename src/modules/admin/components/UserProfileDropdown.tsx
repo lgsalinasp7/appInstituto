@@ -35,6 +35,17 @@ export function UserProfileDropdown() {
             .slice(0, 2);
     };
 
+    // Debug: Log user role to verify value
+    useEffect(() => {
+        if (user) {
+            console.log('UserProfileDropdown - User role:', {
+                name: user.role?.name,
+                fullRole: user.role,
+                user: user
+            });
+        }
+    }, [user]);
+
     return (
         <div className="relative" ref={dropdownRef}>
             <button
@@ -87,9 +98,9 @@ export function UserProfileDropdown() {
             {isDropdownOpen && (
                 <div
                     className={cn(
-                        "absolute right-0 top-full mt-2 w-56 rounded-2xl border py-2 z-50 animate-in fade-in slide-in-from-top-4 duration-300 shadow-2xl",
+                        "absolute right-0 top-full mt-3 w-64 rounded-2xl border py-2 z-[9999] shadow-2xl",
                         isDark
-                            ? "glass-card border-white/[0.05] bg-slate-950/90 backdrop-blur-xl"
+                            ? "bg-slate-950/95 backdrop-blur-xl border-white/[0.05] shadow-black/80 ring-1 ring-white/5"
                             : "bg-white border-slate-100 shadow-slate-200/50"
                     )}
                 >

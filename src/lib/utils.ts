@@ -27,7 +27,7 @@ export function parseCurrency(value: string): number {
 
 export function getAdminUrl(): string {
   if (process.env.NODE_ENV === "development") {
-    return "http://admin.localhost:3000";
+    return "http://admin.localhost:3000/login";
   }
-  return "https://admin.kaledsoft.tech";
+  return "https://admin.kaledsoft.tech/login";
 }

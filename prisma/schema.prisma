@@ -17,6 +17,7 @@ model Tenant {
   email       String?
   plan        String              @default("BASICO")
   status      String              @default("ACTIVO")
+  subscriptionEndsAt DateTime?
   invitations Invitation[]
   payments    Payment[]
   commitments PaymentCommitment[]
