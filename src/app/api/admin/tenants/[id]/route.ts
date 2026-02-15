@@ -8,8 +8,9 @@ import { withPlatformAdmin } from '@/lib/api-auth';
 import type { UpdateTenantData } from '@/modules/tenants/types';
 
 // PATCH /api/admin/tenants/[id]
-export const PATCH = withPlatformAdmin(['SUPER_ADMIN'], async (request: NextRequest, user, context?: { params: Promise<{ id: string }> }) => {
-  const { id } = await context!.params;
+export const PATCH = withPlatformAdmin(['SUPER_ADMIN'], async (request: NextRequest, user, context: any) => {
+  const params = await context.params;
+  const id = params.id;
   const body = await request.json();
 
   // Validate and sanitize body

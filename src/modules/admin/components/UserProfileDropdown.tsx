@@ -35,17 +35,6 @@ export function UserProfileDropdown() {
             .slice(0, 2);
     };
 
-    // Debug: Log user role to verify value
-    useEffect(() => {
-        if (user) {
-            console.log('UserProfileDropdown - User role:', {
-                name: user.role?.name,
-                fullRole: user.role,
-                user: user
-            });
-        }
-    }, [user]);
-
     return (
         <div className="relative" ref={dropdownRef}>
             <button

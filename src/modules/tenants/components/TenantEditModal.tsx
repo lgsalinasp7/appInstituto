@@ -34,7 +34,7 @@ export function TenantEditModal({ tenant, isOpen, onClose, onSuccess }: TenantEd
         setLoading(true);
 
         try {
-            const res = await fetch(`/api/admin/tenants/${tenant.id}/route`, {
+            const res = await fetch(`/api/admin/tenants/${tenant.id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),

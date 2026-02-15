@@ -7,8 +7,13 @@ export const dynamic = 'force-dynamic'; // Asegurar que no se cachee
 export async function GET(req: NextRequest) {
     // 1. Validar autorización (CRON_SECRET)
     // Vercel envía este header automáticamente cuando ejecuta el cron
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret || typeof cronSecret !== 'string' || cronSecret.length === 0) {
+        console.error('[CRON] CRON_SECRET no está configurado');
+        return new NextResponse('Server configuration error', { status: 500 });
+    }
     const authHeader = req.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (authHeader !== `Bearer ${cronSecret}`) {
         return new NextResponse('Unauthorized', { status: 401 });
     }
 

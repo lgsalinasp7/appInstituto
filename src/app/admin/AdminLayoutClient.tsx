@@ -41,9 +41,8 @@ export default function AdminLayoutClient({
         : "Marketing";
 
   return (
-    <BrandingProvider branding={{ darkMode: true }}>
-      <div className="h-screen flex bg-slate-950 text-slate-200 overflow-hidden">
-        {/* Mobile Header */}
+    <div className="h-screen flex bg-slate-950 text-slate-200 overflow-hidden">
+      {/* Mobile Header */}
         <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800 shadow-lg px-4 h-16 flex items-center justify-between">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -79,6 +78,7 @@ export default function AdminLayoutClient({
           <AdminSidebar />
         </div>
 
+        <BrandingProvider branding={{ darkMode: true }}>
         <div className="flex-1 flex flex-col min-w-0 h-full pt-16 lg:pt-0 relative z-10">
           <div className="grain-overlay" />
 
@@ -132,7 +132,7 @@ export default function AdminLayoutClient({
             </div>
           </main>
         </div>
+        </BrandingProvider>
       </div>
-    </BrandingProvider>
   );
 }

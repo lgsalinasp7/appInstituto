@@ -67,7 +67,12 @@ export default async function HomePage() {
       select: { status: true }
     });
 
-    if (tenant?.status === "SUSPENDIDO" || tenant?.status === "CANCELADO") {
+    // Tenant no encontrado (slug inválido o eliminado) -> mostrar landing
+    if (!tenant) {
+      return <LandingPage />;
+    }
+
+    if (tenant.status === "SUSPENDIDO" || tenant.status === "CANCELADO") {
       const { redirect } = await import("next/navigation");
       redirect("/suspended");
     }
