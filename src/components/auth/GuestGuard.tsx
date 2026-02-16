@@ -58,15 +58,18 @@ export function GuestGuard({ children }: GuestGuardProps) {
       verifySession();
     };
 
+    let fallbackId: ReturnType<typeof setTimeout> | undefined;
     const persist = useAuthStore.persist;
-    if (!persist || persist.hasHydrated()) {
+    if (!persist || typeof persist.hasHydrated !== "function" || persist.hasHydrated()) {
       runCheck();
     } else {
       persist.onFinishHydration(runCheck);
+      fallbackId = setTimeout(runCheck, 300);
     }
 
     return () => {
       clearTimeout(timeoutId);
+      if (fallbackId) clearTimeout(fallbackId);
       controller.abort();
     };
   }, [router]);

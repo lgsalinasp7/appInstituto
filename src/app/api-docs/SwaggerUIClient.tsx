@@ -21,11 +21,12 @@ export default function SwaggerUIClient() {
   // Check if already logged in
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
-      .then(res => res.json())
+      .then(res => (res.ok ? res.json() : Promise.resolve(null)))
       .then(data => {
-        if (data.success && data.data) {
+        // /api/auth/me returns flat object { id, email, name, ... }, not { success, data }
+        if (data?.id || data?.email) {
           setIsLoggedIn(true);
-          setUserName(data.data.name || data.data.email);
+          setUserName(data.name || data.email);
         }
       })
       .catch(() => {});
