@@ -14,7 +14,8 @@
     "db:migrate": "prisma migrate dev",
     "db:seed-migration": "tsx prisma/seed-migration.ts",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

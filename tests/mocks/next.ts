@@ -1,19 +1,21 @@
-import "@testing-library/jest-dom";
 import { vi } from "vitest";
 
-// Mock next/headers for server components and auth
+const mockCookies = vi.fn().mockResolvedValue({
+  get: vi.fn().mockReturnValue(null),
+  set: vi.fn(),
+  delete: vi.fn(),
+});
+
+const mockHeaders = vi.fn().mockResolvedValue({
+  get: vi.fn().mockReturnValue(null),
+  set: vi.fn(),
+});
+
 vi.mock("next/headers", () => ({
-  cookies: vi.fn().mockResolvedValue({
-    get: vi.fn().mockReturnValue(null),
-    set: vi.fn(),
-    delete: vi.fn(),
-  }),
-  headers: vi.fn().mockResolvedValue({
-    get: vi.fn().mockReturnValue(null),
-  }),
+  cookies: mockCookies,
+  headers: mockHeaders,
 }));
 
-// Mock next/navigation for client components with useRouter
 vi.mock("next/navigation", () => ({
   useRouter: vi.fn().mockReturnValue({
     push: vi.fn(),
@@ -26,3 +28,5 @@ vi.mock("next/navigation", () => ({
   usePathname: vi.fn().mockReturnValue("/"),
   useSearchParams: vi.fn().mockReturnValue(new URLSearchParams()),
 }));
+
+export { mockCookies, mockHeaders };

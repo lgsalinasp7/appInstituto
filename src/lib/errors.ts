@@ -167,8 +167,9 @@ export function handleApiError(error: unknown): NextResponse<ErrorResponse> {
   if ((error as any).name === "ZodError") {
     const zodError = error as any;
     const errors: Record<string, string[]> = {};
+    const issues = zodError.issues ?? zodError.errors ?? [];
     
-    zodError.errors?.forEach((err: any) => {
+    issues.forEach((err: any) => {
       const path = err.path.join(".");
       if (!errors[path]) {
         errors[path] = [];
