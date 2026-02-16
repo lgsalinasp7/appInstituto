@@ -45,6 +45,9 @@ export async function createSession(userId: string): Promise<string> {
   });
 
   // Setear cookie httpOnly, secure, sameSite
+  // NO usar domain compartido: admin y tenant deben tener sesiones separadas.
+  // Si usáramos domain=.kaledsoft.tech, al hacer clic en el link del tenant desde
+  // admin se entraría automáticamente con la sesión de admin (incorrecto).
   const cookieOptions: Parameters<Awaited<ReturnType<typeof cookies>>["set"]>[2] = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -53,33 +56,13 @@ export async function createSession(userId: string): Promise<string> {
     path: "/",
   };
 
-  // En producción con subdominios (*.kaledsoft.tech), establecer dominio para que la cookie persista
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN;
-  if (process.env.NODE_ENV === "production" && rootDomain) {
-    cookieOptions.domain = `.${rootDomain}`;
-  }
-
   (await cookies()).set(SESSION_COOKIE_NAME, sessionToken, cookieOptions);
 
   return sessionToken;
 }
 
-function getCookieDeleteOptions(): { path: string; domain?: string } {
-  const opts: { path: string; domain?: string } = { path: "/" };
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN;
-  if (process.env.NODE_ENV === "production" && rootDomain) {
-    opts.domain = `.${rootDomain}`;
-  }
-  return opts;
-}
-
-/**
- * Borra la cookie de sesión. Solo debe llamarse desde Route Handlers o Server Actions,
- * nunca desde Server Components (getCurrentUser).
- */
-export async function clearSessionCookie(): Promise<void> {
-  const cookieStore = await cookies();
-  cookieStore.delete({ name: SESSION_COOKIE_NAME, ...getCookieDeleteOptions() });
+function getCookieDeleteOptions(): { path: string } {
+  return { path: "/" };
 }
 
 /**

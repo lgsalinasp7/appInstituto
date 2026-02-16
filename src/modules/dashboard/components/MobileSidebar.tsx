@@ -10,6 +10,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { TrendingUp, Users, CreditCard, FileText, LogOut, Settings, User, X, ShieldCheck } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { performLogout } from "@/lib/logout";
 import { useBranding } from "@/components/providers/BrandingContext";
 
 interface MobileSidebarProps {
@@ -35,7 +36,7 @@ const configItem = { href: "/configuracion", label: "Configuración", icon: Sett
 
 export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const pathname = usePathname();
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const branding = useBranding();
 
   const roleName = user?.role?.name?.toUpperCase() || "";
@@ -173,9 +174,8 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
           <button
             type="button"
             onClick={() => {
-              logout();
               onClose();
-              window.location.href = "/auth/login";
+              performLogout("/auth/login");
             }}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-all font-bold text-sm mt-2"
           >

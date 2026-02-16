@@ -6,6 +6,7 @@ import { ChevronDown, User, Settings, LogOut } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useBranding } from "@/components/providers/BrandingContext";
 import { cn } from "@/lib/utils";
+import { performLogout } from "@/lib/logout";
 
 interface UserProfileDropdownProps {
     /** Ruta de configuración (tenant: /configuracion, admin: /admin/configuracion) */
@@ -17,7 +18,7 @@ export function UserProfileDropdown({ configHref = "/admin/configuracion" }: Use
     const isDark = branding.darkMode !== false;
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const { user, logout } = useAuthStore();
+    const { user } = useAuthStore();
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -62,7 +63,7 @@ export function UserProfileDropdown({ configHref = "/admin/configuracion" }: Use
                         "text-[10px] uppercase font-bold tracking-wider font-display",
                         isDark ? "text-slate-500" : "text-slate-400"
                     )}>
-                        {user?.role?.name === "SUPERADMIN" ? "Super Admin" : user?.role?.name || "Usuario"}
+                        {user?.role?.name === "SUPERADMIN" ? "Super Admin" : user?.role?.name || (user?.platformRole === "SUPER_ADMIN" ? "Super Admin" : user?.platformRole || "Usuario")}
                     </span>
                 </div>
 
@@ -162,9 +163,7 @@ export function UserProfileDropdown({ configHref = "/admin/configuracion" }: Use
                         <button
                             onClick={() => {
                                 setIsDropdownOpen(false);
-                                logout();
-                                // Force reload or redirect
-                                window.location.href = "/auth/login";
+                                performLogout(configHref?.startsWith("/admin") ? "/login" : "/auth/login");
                             }}
                             className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-500/5 transition-all font-bold font-display"
                         >

@@ -8,10 +8,11 @@
  */
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { performLogout } from "@/lib/logout";
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
@@ -73,14 +74,10 @@ const sections: NavSection[] = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
-  const router = useRouter();
-  // Zustand-5 skill: selector específico
-  const logout = useAuthStore((s) => s.logout);
   const platformRole = useAuthStore((s) => s.user?.platformRole);
 
   const handleLogout = () => {
-    logout();
-    router.push("/auth/login");
+    performLogout("/login");
   };
 
   const isItemVisible = (item: NavItem): boolean => {

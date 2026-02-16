@@ -76,7 +76,9 @@ export function TenantDetailView({ tenant }: TenantDetailViewProps) {
   });
 
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "kaledsoft.tech";
-  const tenantUrl = `https://${tenant.slug}.${rootDomain}`;
+  const tenantBaseUrl = `https://${tenant.slug}.${rootDomain}`;
+  // Link a login para que el admin se autentique con credenciales del tenant, no con sesión de plataforma
+  const tenantLoginUrl = `${tenantBaseUrl}/auth/login`;
 
   const executeAction = async () => {
     if (!confirmDialog.action) return;
@@ -192,7 +194,7 @@ export function TenantDetailView({ tenant }: TenantDetailViewProps) {
               </div>
               <div className="flex items-center gap-2 mt-2 text-slate-500 hover:text-cyan-400 transition-colors">
                 <Globe size={14} />
-                <span className="text-sm font-bold tracking-tight">{tenantUrl}</span>
+                <span className="text-sm font-bold tracking-tight">{tenantBaseUrl}</span>
                 <ExternalLink size={12} className="ml-1 opacity-50" />
               </div>
             </div>
@@ -346,11 +348,11 @@ export function TenantDetailView({ tenant }: TenantDetailViewProps) {
           <div className="space-y-3">
             <label className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Dashboard URL</label>
             <div className="flex gap-2">
-              <Input value={tenantUrl} readOnly className="bg-slate-900/50 border-slate-800 h-12 rounded-xl text-white font-medium focus:ring-0" />
+              <Input value={tenantLoginUrl} readOnly className="bg-slate-900/50 border-slate-800 h-12 rounded-xl text-white font-medium focus:ring-0" />
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => copyToClipboard(tenantUrl)}
+                onClick={() => copyToClipboard(tenantLoginUrl)}
                 className="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-400"
               >
                 <Clipboard size={18} />
@@ -358,7 +360,7 @@ export function TenantDetailView({ tenant }: TenantDetailViewProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => window.open(tenantUrl, "_blank")}
+                onClick={() => window.open(tenantLoginUrl, "_blank")}
                 className="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-400"
               >
                 <ExternalLink size={18} />
