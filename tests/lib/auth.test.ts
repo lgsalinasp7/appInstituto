@@ -1,3 +1,7 @@
+/**
+ * @vitest-environment node
+ * Server-side auth tests need Node.js (crypto, etc.)
+ */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("@/lib/prisma", () => ({

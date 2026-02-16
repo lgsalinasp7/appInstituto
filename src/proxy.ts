@@ -5,7 +5,8 @@ import type { NextRequest } from 'next/server';
 type AppContext = 'landing' | 'admin' | 'tenant';
 
 export default async function proxy(req: NextRequest) {
-    const hostname = req.headers.get('host') || '';
+    // En Vercel, usar x-forwarded-host como fallback (idéntico a host con dominios custom)
+    const hostname = req.headers.get('x-forwarded-host') || req.headers.get('host') || '';
     const pathname = req.nextUrl.pathname;
 
     // Define your domains
@@ -72,7 +73,8 @@ export default async function proxy(req: NextRequest) {
         // No se hace en middleware porque requiere Prisma (incompatible con Edge Runtime)
 
         // Rutas públicas del tenant (login, registro, etc.)
-        const publicTenantPaths = ['/auth', '/login', '/register', '/forgot-password', '/reset-password', '/suspended', '/api-docs', '/api/openapi'];
+        // Incluir /api/auth para que GuestGuard pueda verificar sesión con /api/auth/me (devuelve 401 si no hay sesión)
+        const publicTenantPaths = ['/auth', '/login', '/register', '/forgot-password', '/reset-password', '/suspended', '/api-docs', '/api/openapi', '/api/auth'];
         const isPublicPath = publicTenantPaths.some(path => pathname.startsWith(path));
 
         if (!isPublicPath) {

@@ -14,6 +14,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Fix "No such built-in module: node:*" in Vercel/CI (deps may use node: prefix)
+      "node:crypto": "crypto",
+      "node:buffer": "buffer",
     },
   },
 });

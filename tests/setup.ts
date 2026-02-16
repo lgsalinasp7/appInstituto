@@ -1,6 +1,9 @@
 import "@testing-library/jest-dom";
 import { vi } from "vitest";
 
+// Ensure React development build for tests (act, etc.) - required for Vercel/CI
+process.env.NODE_ENV = "test";
+
 // Mock next/headers for server components and auth
 vi.mock("next/headers", () => ({
   cookies: vi.fn().mockResolvedValue({
