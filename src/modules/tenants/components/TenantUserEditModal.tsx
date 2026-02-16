@@ -110,7 +110,7 @@ export function TenantUserEditModal({
         setShowTempPasswordConfirm(false);
       }
     },
-    [tenantId, user.id, name, email]
+    [tenantId, user.id, name, email, onSuccess, handleOpenChange]
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
