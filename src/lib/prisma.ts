@@ -5,12 +5,11 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient(): PrismaClient {
-  const isDev = process.env.NODE_ENV === "development";
-
   const client = new PrismaClient({
-    log: isDev
-      ? [{ level: "error", emit: "event" }]
-      : [{ level: "error", emit: "stdout" }],
+    // Solo mostrar errores críticos, no warnings de conexión que Prisma maneja automáticamente
+    log: process.env.NODE_ENV === "development" 
+      ? [{ level: "error", emit: "event" }] 
+      : [{ level: "error", emit: "event" }],
     datasources: {
       db: {
         url: process.env.DATABASE_URL,
@@ -19,10 +18,10 @@ function createPrismaClient(): PrismaClient {
     errorFormat: "pretty",
   });
 
-  // En desarrollo: filtrar errores de conexión cerrada (Prisma los maneja automáticamente)
-  // En producción: emit: "stdout" ya envía errores a console; no usar "event" sin suscriptor
-  if (isDev) {
+  // Filtrar errores de conexión cerrada que Prisma maneja automáticamente
+  if (process.env.NODE_ENV === "development") {
     client.$on("error" as never, (e: any) => {
+      // Solo mostrar errores que no sean de conexión cerrada (que Prisma maneja automáticamente)
       if (
         !e.message?.includes("Closed") &&
         e.code !== "P1001" &&
@@ -30,6 +29,7 @@ function createPrismaClient(): PrismaClient {
       ) {
         console.error("Prisma error:", e);
       }
+      // Los errores de conexión cerrada se ignoran porque Prisma los maneja automáticamente
     });
   }
 
