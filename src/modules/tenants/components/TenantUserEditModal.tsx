@@ -53,10 +53,9 @@ export function TenantUserEditModal({
       if (isSubmittingRef.current) return;
       isSubmittingRef.current = true;
       setLoading(true);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
-
         const origin = typeof window !== "undefined" ? window.location.origin : "";
         const res = await fetch(
           `${origin}/api/admin/tenants/${tenantId}/users/${user.id}`,
@@ -72,8 +71,6 @@ export function TenantUserEditModal({
             signal: controller.signal,
           }
         );
-
-        clearTimeout(timeoutId);
 
         let data: { success?: boolean; error?: string; data?: { tempPassword?: string } };
         try {
@@ -135,6 +132,7 @@ export function TenantUserEditModal({
           toast.error(message);
         }
       } finally {
+        clearTimeout(timeoutId);
         isSubmittingRef.current = false;
         setLoading(false);
         setShowTempPasswordConfirm(false);
