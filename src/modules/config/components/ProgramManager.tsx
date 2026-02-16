@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Check, X, BookOpen, Loader2 } from "lucide-react";
+import { Plus, Minus, Edit, Trash2, Check, X, BookOpen, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { formatCurrency, parseCurrency } from "@/lib/utils";
 import type { Program } from "@/modules/programs/types";
 
 interface NewProgramForm {
@@ -218,33 +219,64 @@ export function ProgramManager() {
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Matrícula ($)</label>
-                            <input
-                                type="number"
-                                className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm font-bold text-[#1e3a5f]"
-                                placeholder="0"
-                                value={newProgram.matriculaValue || ""}
-                                onChange={e => setNewProgram({ ...newProgram, matriculaValue: Number(e.target.value) })}
-                            />
+                            <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">$</span>
+                                <input
+                                    type="text"
+                                    className="w-full pl-7 pr-4 py-2 border rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm font-bold text-[#1e3a5f]"
+                                    placeholder="0"
+                                    value={formatCurrency(newProgram.matriculaValue)}
+                                    onChange={e => setNewProgram({ ...newProgram, matriculaValue: parseCurrency(e.target.value) })}
+                                    onFocus={e => e.target.select()}
+                                />
+                            </div>
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Total ($)</label>
-                            <input
-                                type="number"
-                                className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm font-bold text-[#1e3a5f]"
-                                placeholder="0"
-                                value={newProgram.totalValue || ""}
-                                onChange={e => setNewProgram({ ...newProgram, totalValue: Number(e.target.value) })}
-                            />
+                            <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">$</span>
+                                <input
+                                    type="text"
+                                    className="w-full pl-7 pr-4 py-2 border rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm font-bold text-[#1e3a5f]"
+                                    placeholder="0"
+                                    value={formatCurrency(newProgram.totalValue)}
+                                    onChange={e => setNewProgram({ ...newProgram, totalValue: parseCurrency(e.target.value) })}
+                                    onFocus={e => e.target.select()}
+                                />
+                            </div>
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Módulos</label>
-                            <input
-                                type="number"
-                                className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm font-bold text-[#1e3a5f]"
-                                min={1}
-                                value={newProgram.modulesCount}
-                                onChange={e => setNewProgram({ ...newProgram, modulesCount: Number(e.target.value) })}
-                            />
+                            <div className="flex items-center gap-1 border rounded-xl overflow-hidden bg-white focus-within:ring-2 focus-within:ring-primary/20">
+                                <button
+                                    type="button"
+                                    onClick={() => setNewProgram({ ...newProgram, modulesCount: Math.max(1, newProgram.modulesCount - 1) })}
+                                    className="p-2.5 bg-gray-100 hover:bg-gray-200 text-[#1e3a5f] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    disabled={newProgram.modulesCount <= 1}
+                                    aria-label="Disminuir módulos"
+                                >
+                                    <Minus size={16} />
+                                </button>
+                                <input
+                                    type="number"
+                                    min={1}
+                                    className="w-14 py-2 text-center text-sm font-bold text-[#1e3a5f] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    value={newProgram.modulesCount}
+                                    onChange={e => {
+                                        const v = parseInt(e.target.value, 10);
+                                        if (!isNaN(v) && v >= 1) setNewProgram({ ...newProgram, modulesCount: v });
+                                    }}
+                                    onFocus={e => e.target.select()}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setNewProgram({ ...newProgram, modulesCount: newProgram.modulesCount + 1 })}
+                                    className="p-2.5 bg-gray-100 hover:bg-gray-200 text-[#1e3a5f] transition-colors"
+                                    aria-label="Aumentar módulos"
+                                >
+                                    <Plus size={16} />
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-blue-100/50">
@@ -322,10 +354,11 @@ export function ProgramManager() {
                                             <span className="text-[9px] font-bold text-gray-400 uppercase block mb-0.5">Matrícula</span>
                                             {isEditing === p.id ? (
                                                 <input
-                                                    type="number"
+                                                    type="text"
                                                     className="w-full bg-transparent text-xs font-bold text-[#1e3a5f] outline-none"
-                                                    value={editForm.matriculaValue}
-                                                    onChange={e => setEditForm({ ...editForm, matriculaValue: Number(e.target.value) })}
+                                                    value={formatCurrency(editForm.matriculaValue)}
+                                                    onChange={e => setEditForm({ ...editForm, matriculaValue: parseCurrency(e.target.value) })}
+                                                    onFocus={e => e.target.select()}
                                                 />
                                             ) : (
                                                 <span className="text-xs font-bold text-[#1e3a5f]">${p.matriculaValue.toLocaleString()}</span>
@@ -335,10 +368,11 @@ export function ProgramManager() {
                                             <span className="text-[9px] font-bold text-emerald-600/70 uppercase block mb-0.5">Total</span>
                                             {isEditing === p.id ? (
                                                 <input
-                                                    type="number"
+                                                    type="text"
                                                     className="w-full bg-transparent text-xs font-bold text-emerald-700 outline-none"
-                                                    value={editForm.totalValue}
-                                                    onChange={e => setEditForm({ ...editForm, totalValue: Number(e.target.value) })}
+                                                    value={formatCurrency(editForm.totalValue)}
+                                                    onChange={e => setEditForm({ ...editForm, totalValue: parseCurrency(e.target.value) })}
+                                                    onFocus={e => e.target.select()}
                                                 />
                                             ) : (
                                                 <span className="text-xs font-bold text-emerald-700">${p.totalValue.toLocaleString()}</span>
@@ -347,12 +381,36 @@ export function ProgramManager() {
                                         <div className="bg-gray-50 p-2 rounded-xl border border-gray-100 text-center">
                                             <span className="text-[9px] font-bold text-gray-400 uppercase block mb-0.5">Módulos</span>
                                             {isEditing === p.id ? (
-                                                <input
-                                                    type="number"
-                                                    className="w-full bg-transparent text-xs font-bold text-gray-600 outline-none text-center"
-                                                    value={editForm.modulesCount}
-                                                    onChange={e => setEditForm({ ...editForm, modulesCount: Number(e.target.value) })}
-                                                />
+                                                <div className="flex items-center justify-center gap-0.5">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditForm({ ...editForm, modulesCount: Math.max(1, (editForm.modulesCount ?? 1) - 1) })}
+                                                        className="p-1 rounded bg-gray-200/80 hover:bg-gray-300 text-gray-600 disabled:opacity-40"
+                                                        disabled={(editForm.modulesCount ?? 1) <= 1}
+                                                        aria-label="Disminuir"
+                                                    >
+                                                        <Minus size={12} />
+                                                    </button>
+                                                    <input
+                                                        type="number"
+                                                        min={1}
+                                                        className="w-10 bg-transparent text-xs font-bold text-gray-600 outline-none text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                        value={editForm.modulesCount ?? ""}
+                                                        onChange={e => {
+                                                            const v = parseInt(e.target.value, 10);
+                                                            if (!isNaN(v) && v >= 1) setEditForm({ ...editForm, modulesCount: v });
+                                                        }}
+                                                        onFocus={e => e.target.select()}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditForm({ ...editForm, modulesCount: (editForm.modulesCount ?? 1) + 1 })}
+                                                        className="p-1 rounded bg-gray-200/80 hover:bg-gray-300 text-gray-600"
+                                                        aria-label="Aumentar"
+                                                    >
+                                                        <Plus size={12} />
+                                                    </button>
+                                                </div>
                                             ) : (
                                                 <span className="text-xs font-bold text-gray-600">{p.modulesCount}</span>
                                             )}
@@ -391,10 +449,11 @@ export function ProgramManager() {
                                             <td className="px-6 py-4 text-center">
                                                 {isEditing === p.id ? (
                                                     <input
-                                                        type="number"
-                                                        className="px-3 py-2 border rounded-xl w-28 text-center text-sm font-bold outline-none"
-                                                        value={editForm.matriculaValue}
-                                                        onChange={e => setEditForm({ ...editForm, matriculaValue: Number(e.target.value) })}
+                                                        type="text"
+                                                        className="px-3 py-2 border rounded-xl w-28 text-center text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20"
+                                                        value={formatCurrency(editForm.matriculaValue)}
+                                                        onChange={e => setEditForm({ ...editForm, matriculaValue: parseCurrency(e.target.value) })}
+                                                        onFocus={e => e.target.select()}
                                                     />
                                                 ) : (
                                                     <span className="text-gray-600 font-medium">${p.matriculaValue.toLocaleString()}</span>
@@ -403,10 +462,11 @@ export function ProgramManager() {
                                             <td className="px-6 py-4 text-center">
                                                 {isEditing === p.id ? (
                                                     <input
-                                                        type="number"
-                                                        className="px-3 py-2 border rounded-xl w-32 text-center text-sm font-bold text-emerald-600 outline-none"
-                                                        value={editForm.totalValue}
-                                                        onChange={e => setEditForm({ ...editForm, totalValue: Number(e.target.value) })}
+                                                        type="text"
+                                                        className="px-3 py-2 border rounded-xl w-32 text-center text-sm font-bold text-emerald-600 outline-none focus:ring-2 focus:ring-primary/20"
+                                                        value={formatCurrency(editForm.totalValue)}
+                                                        onChange={e => setEditForm({ ...editForm, totalValue: parseCurrency(e.target.value) })}
+                                                        onFocus={e => e.target.select()}
                                                     />
                                                 ) : (
                                                     <span className="font-black text-emerald-600">${p.totalValue.toLocaleString()}</span>
@@ -414,12 +474,36 @@ export function ProgramManager() {
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 {isEditing === p.id ? (
-                                                    <input
-                                                        type="number"
-                                                        className="px-3 py-2 border rounded-xl w-20 text-center text-sm font-bold outline-none"
-                                                        value={editForm.modulesCount}
-                                                        onChange={e => setEditForm({ ...editForm, modulesCount: Number(e.target.value) })}
-                                                    />
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setEditForm({ ...editForm, modulesCount: Math.max(1, (editForm.modulesCount ?? 1) - 1) })}
+                                                            className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-[#1e3a5f] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                                            disabled={(editForm.modulesCount ?? 1) <= 1}
+                                                            aria-label="Disminuir módulos"
+                                                        >
+                                                            <Minus size={14} />
+                                                        </button>
+                                                        <input
+                                                            type="number"
+                                                            min={1}
+                                                            className="w-14 px-2 py-2 border rounded-xl text-center text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            value={editForm.modulesCount ?? ""}
+                                                            onChange={e => {
+                                                                const v = parseInt(e.target.value, 10);
+                                                                if (!isNaN(v) && v >= 1) setEditForm({ ...editForm, modulesCount: v });
+                                                            }}
+                                                            onFocus={e => e.target.select()}
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setEditForm({ ...editForm, modulesCount: (editForm.modulesCount ?? 1) + 1 })}
+                                                            className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-[#1e3a5f] transition-colors"
+                                                            aria-label="Aumentar módulos"
+                                                        >
+                                                            <Plus size={14} />
+                                                        </button>
+                                                    </div>
                                                 ) : (
                                                     <span className="text-gray-500 font-black">{p.modulesCount}</span>
                                                 )}

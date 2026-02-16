@@ -42,7 +42,7 @@ export const swaggerConfig = {
         type: 'apiKey' as const,
         in: 'cookie' as const,
         name: 'session-token',
-        description: 'Token de sesion almacenado en cookie HTTP-only. Se obtiene al iniciar sesion.',
+        description: 'Token de sesion almacenado en cookie HTTP-only. Si usas el formulario de login en /api-docs, no necesitas rellenar este campo manualmente.',
       },
       cronAuth: {
         type: 'http' as const,

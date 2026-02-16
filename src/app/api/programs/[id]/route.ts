@@ -76,10 +76,27 @@ export const PUT = withTenantAuthAndCSRF(async (request, user, tenantId, context
 export const DELETE = withTenantAuthAndCSRF(async (request, user, tenantId, context) => {
   const { id } = await context!.params;
 
-  await ProgramService.deleteProgram(id);
+  try {
+    await ProgramService.deleteProgram(id);
 
-  return NextResponse.json({
-    success: true,
-    message: "Programa eliminado exitosamente",
-  });
+    return NextResponse.json({
+      success: true,
+      message: "Programa eliminado exitosamente",
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Error al eliminar programa";
+
+    if (message.includes("estudiantes matriculados")) {
+      return NextResponse.json(
+        { success: false, error: message },
+        { status: 409 }
+      );
+    }
+
+    console.error("Error deleting program:", error);
+    return NextResponse.json(
+      { success: false, error: message },
+      { status: 500 }
+    );
+  }
 });

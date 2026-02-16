@@ -39,7 +39,7 @@ export default async function proxy(req: NextRequest) {
     // CONTEXTO: ADMIN
     if (context === 'admin') {
         // Rutas que no requieren autenticación
-        const publicAdminPaths = ['/login', '/forgot-password', '/reset-password'];
+        const publicAdminPaths = ['/login', '/forgot-password', '/reset-password', '/api-docs', '/api/openapi'];
         const isPublicPath = publicAdminPaths.some(path => pathname.startsWith(path));
 
         if (!isPublicPath) {
@@ -72,7 +72,7 @@ export default async function proxy(req: NextRequest) {
         // No se hace en middleware porque requiere Prisma (incompatible con Edge Runtime)
 
         // Rutas públicas del tenant (login, registro, etc.)
-        const publicTenantPaths = ['/auth', '/login', '/register', '/forgot-password', '/reset-password', '/suspended'];
+        const publicTenantPaths = ['/auth', '/login', '/register', '/forgot-password', '/reset-password', '/suspended', '/api-docs', '/api/openapi'];
         const isPublicPath = publicTenantPaths.some(path => pathname.startsWith(path));
 
         if (!isPublicPath) {

@@ -1,4 +1,61 @@
 export const authPaths = {
+  '/api/auth/login': {
+    post: {
+      tags: ['Autenticacion'],
+      summary: 'Iniciar sesion',
+      description:
+        'Autentica un usuario con email y contrasena. Establece una cookie HTTP-only `session_token` que se envia automaticamente en las siguientes peticiones.',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['email', 'password'],
+              properties: {
+                email: { type: 'string', format: 'email', example: 'admin@miinstituto.edu.co' },
+                password: { type: 'string', minLength: 6, example: 'miPassword123' },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        200: {
+          description: 'Inicio de sesion exitoso. Se establece la cookie `session_token`.',
+          headers: {
+            'Set-Cookie': {
+              description: 'Cookie de sesion HTTP-only',
+              schema: { type: 'string', example: 'session_token=abc123; Path=/; HttpOnly; SameSite=Lax' },
+            },
+          },
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: true },
+                  data: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      email: { type: 'string', example: 'admin@miinstituto.edu.co' },
+                      name: { type: 'string', example: 'Carlos Admin' },
+                      role: { type: 'string', example: 'ADMIN', nullable: true },
+                    },
+                  },
+                  message: { type: 'string', example: 'Inicio de sesion exitoso' },
+                },
+              },
+            },
+          },
+        },
+        400: { description: 'Datos invalidos (email o contrasena no cumplen formato)', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+        401: { description: 'Credenciales invalidas', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+        429: { description: 'Demasiados intentos de inicio de sesion (rate limit)' },
+      },
+    },
+  },
   '/api/auth/register': {
     post: {
       tags: ['Autenticacion'],
@@ -104,6 +161,21 @@ export const authPaths = {
         },
         400: { description: 'Token invalido o expirado', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
         429: { description: 'Demasiados intentos (rate limit)' },
+      },
+    },
+  },
+  '/api/auth/logout': {
+    post: {
+      tags: ['Autenticacion'],
+      summary: 'Cerrar sesion',
+      description: 'Destruye la sesion actual y elimina la cookie `session_token`.',
+      security: [{ cookieAuth: [] }],
+      responses: {
+        200: {
+          description: 'Sesion cerrada exitosamente',
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/SuccessResponse' } } },
+        },
+        500: { description: 'Error al cerrar sesion', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
       },
     },
   },
