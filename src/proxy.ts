@@ -6,7 +6,9 @@ type AppContext = 'landing' | 'admin' | 'tenant';
 
 export default async function proxy(req: NextRequest) {
     // En Vercel, usar x-forwarded-host como fallback (idéntico a host con dominios custom)
-    const hostname = req.headers.get('x-forwarded-host') || req.headers.get('host') || '';
+    const rawHost = req.headers.get('x-forwarded-host') || req.headers.get('host') || '';
+   
+    const hostname = rawHost.includes(':') ? rawHost.split(':')[0] : rawHost;
     const pathname = req.nextUrl.pathname;
 
     // Define your domains
@@ -16,7 +18,7 @@ export default async function proxy(req: NextRequest) {
     // Extraer subdomain
     let subdomain = '';
     if (isDevelopment) {
-        if (hostname.includes('.localhost:') || hostname.includes('.localhost')) {
+        if (hostname.includes('.localhost')) {
             subdomain = hostname.split('.localhost')[0];
         }
     } else {
