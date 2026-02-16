@@ -150,7 +150,7 @@ export function DashboardHeader({ title, titleHighlight, subtitle, onFilterChang
           ))}
         </nav>
 
-        {/* Actions - Avatar and Notifications */}
+        {/* Actions - Filtros (admin) */}
         <div className="hidden lg:flex items-center gap-2 lg:gap-4">
           {onFilterChange && isAdmin && (
             <div className="hidden sm:flex items-center gap-2 mr-2">
@@ -184,8 +184,6 @@ export function DashboardHeader({ title, titleHighlight, subtitle, onFilterChang
               </select>
             </div>
           )}
-
-
         </div>
       </div>
 

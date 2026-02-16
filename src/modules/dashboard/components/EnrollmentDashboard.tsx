@@ -1,12 +1,14 @@
 "use client";
 
-import { TrendingUp, Users, Clock, DollarSign, Target } from "lucide-react";
+import { TrendingUp, Users, Clock, DollarSign, Target, Calendar } from "lucide-react";
 import { DashboardHeader } from "./DashboardHeader";
 import { StatCard } from "./StatCard";
 import { RevenueChart } from "./RevenueChart";
 import { AlertsList } from "./AlertsList";
 import type { AlertItem, RevenueData } from "../types";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { useBranding } from "@/components/providers/BrandingContext";
+import { cn } from "@/lib/utils";
 import { DashboardStats } from "../services/dashboard.service";
 
 interface EnrollmentDashboardProps {
@@ -15,6 +17,8 @@ interface EnrollmentDashboardProps {
 
 export function EnrollmentDashboard({ stats }: EnrollmentDashboardProps) {
   const { user } = useAuthStore();
+  const branding = useBranding();
+  const isDark = branding.darkMode !== false;
   const userRole = user?.role?.name || "USER";
   const isVentas = userRole === "VENTAS";
   const isCartera = userRole === "CARTERA";
@@ -40,22 +44,53 @@ export function EnrollmentDashboard({ stats }: EnrollmentDashboardProps) {
   const revenueData: RevenueData[] = stats.revenueChart || [];
 
   // Transform alerts (not yet in DashboardStats, waiting for next step refactor?)
-  // Actually, DashboardService doesn't fetch specific alerts list yet, only stats.
-  // For this step, we'll assume alerts are passed or we need to add them to DashboardStats.
-  // Looking at DashboardService, it returns OverdueAmount but not the list.
-  // Let's use an empty list or we need to fetch alerts separately.
-  // To avoid breaking, let's keep it empty or minimal.
   const alerts: AlertItem[] = [];
 
+  const userName = user?.name?.split(" ")[0] || "Usuario";
+
   return (
-    <div className="space-y-4 sm:space-y-6 lg:space-y-8 animate-fade-in-up">
+    <div className="space-y-6 sm:space-y-8 lg:space-y-12 animate-fade-in-up">
+      {/* Welcome Header - Estilo Amaxoft con sistema de diseño del tenant */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 animate-in fade-in slide-in-from-bottom-6 duration-1000 ease-out">
+        <div className="pt-2 sm:pt-4">
+          <h1
+            className={cn(
+              "text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter leading-none font-display",
+              isDark ? "text-white" : "text-slate-900"
+            )}
+          >
+            Hola,{" "}
+            <span
+              className="bg-clip-text text-transparent"
+              style={{
+                backgroundImage: `linear-gradient(to right, ${branding.primaryColor}, ${branding.accentColor})`,
+              }}
+            >
+              {userName}
+            </span>
+          </h1>
+          <p
+            className={cn(
+              "mt-3 sm:mt-4 flex items-center gap-3 text-base sm:text-lg font-medium",
+              isDark ? "text-slate-400" : "text-slate-500"
+            )}
+          >
+            <Calendar
+              className={cn("w-5 h-5", isDark ? "text-cyan-500" : "")}
+              style={!isDark ? { color: branding.primaryColor } : undefined}
+            />
+            {new Intl.DateTimeFormat("es-ES", { dateStyle: "long" }).format(new Date())}
+          </p>
+        </div>
+      </div>
+
       <DashboardHeader
         title="Panel de Control"
         subtitle={isAdmin ? "Vista general" : isVentas ? "Mis ventas" : "Resumen cartera"}
         onFilterChange={handleFilterChange}
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
         <StatCard
           title={isVentas ? "Mis Ventas Hoy" : "Recaudo de Hoy"}
           value={dashboardStats.todayRevenue}

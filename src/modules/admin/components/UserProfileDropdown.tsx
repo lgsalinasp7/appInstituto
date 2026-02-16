@@ -7,7 +7,12 @@ import { useAuthStore } from "@/lib/store/auth-store";
 import { useBranding } from "@/components/providers/BrandingContext";
 import { cn } from "@/lib/utils";
 
-export function UserProfileDropdown() {
+interface UserProfileDropdownProps {
+    /** Ruta de configuración (tenant: /configuracion, admin: /admin/configuracion) */
+    configHref?: string;
+}
+
+export function UserProfileDropdown({ configHref = "/admin/configuracion" }: UserProfileDropdownProps = {}) {
     const branding = useBranding();
     const isDark = branding.darkMode !== false;
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -132,7 +137,7 @@ export function UserProfileDropdown() {
                         {/* Always show configuracion as requested, or conditional based on Logic */}
                         {(user?.role?.name === "SUPERADMIN" || user?.role?.name === "ADMINISTRADOR") && (
                             <Link
-                                href="/admin/configuracion"
+                                href={configHref}
                                 onClick={() => setIsDropdownOpen(false)}
                                 className={cn(
                                     "w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-all font-medium font-display group",

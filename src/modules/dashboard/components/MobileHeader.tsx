@@ -8,6 +8,7 @@
 import Image from "next/image";
 import { Menu, Bell, X } from "lucide-react";
 import { useBranding } from "@/components/providers/BrandingContext";
+import { UserProfileDropdown } from "@/modules/admin/components/UserProfileDropdown";
 
 interface MobileHeaderProps {
   isMenuOpen: boolean;
@@ -48,6 +49,11 @@ export function MobileHeader({ isMenuOpen, onMenuToggle }: MobileHeaderProps) {
             <Bell size={20} className="text-gray-500" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
           </button>
+
+          {/* User Avatar */}
+          <div className="hidden sm:block">
+            <UserProfileDropdown configHref="/configuracion" />
+          </div>
 
           {/* Menu Toggle */}
           <button

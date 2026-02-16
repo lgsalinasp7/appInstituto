@@ -28,8 +28,8 @@ export function RevenueChart({ data }: RevenueChartProps) {
 
   return (
     <div className={cn(
-      "p-4 sm:p-5 lg:p-7 rounded-xl sm:rounded-2xl border transition-colors shadow-sm",
-      isDark ? "bg-slate-900/40 border-white/[0.05]" : "bg-white border-slate-200 shadow-slate-200/50"
+      "p-6 sm:p-8 rounded-[2rem] border transition-all",
+      isDark ? "glass-card" : "bg-white/90 backdrop-blur-xl border-slate-200/80 shadow-lg shadow-slate-200/50"
     )}>
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6">
         <h3 className={cn(

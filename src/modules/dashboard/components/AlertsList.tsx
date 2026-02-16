@@ -20,8 +20,8 @@ export function AlertsList({ alerts }: AlertsListProps) {
 
   return (
     <div className={cn(
-      "p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl border h-full flex flex-col transition-colors shadow-sm",
-      isDark ? "bg-slate-900/40 border-white/[0.05]" : "bg-white border-slate-200 shadow-slate-200/50"
+      "p-6 sm:p-8 rounded-[2rem] border h-full flex flex-col transition-all",
+      isDark ? "glass-card" : "bg-white/90 backdrop-blur-xl border-slate-200/80 shadow-lg shadow-slate-200/50"
     )}>
       <div className="flex items-center gap-2 sm:gap-2.5 mb-4 sm:mb-6">
         <div className={cn(
