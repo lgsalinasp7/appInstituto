@@ -28,12 +28,14 @@ import {
   GraduationCap,
   CreditCard,
   Target,
-  Loader2
+  Loader2,
+  Pencil
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TenantWithDetails, TenantStatus, TenantUser } from "../types";
 import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 import { TenantEditModal } from "./TenantEditModal";
+import { TenantUserEditModal } from "./TenantUserEditModal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface TenantDetailViewProps {
@@ -460,7 +462,11 @@ export function TenantDetailView({ tenant }: TenantDetailViewProps) {
 
           <TabsContent value="usuarios" className="m-0 focus-visible:ring-0">
             <div className="p-8">
-              <UsersTab users={tenant.users} />
+              <UsersTab
+                users={tenant.users}
+                tenantId={tenant.id}
+                onUserUpdated={() => router.refresh()}
+              />
             </div>
           </TabsContent>
 
@@ -545,7 +551,17 @@ function InfoRow({
   );
 }
 
-function UsersTab({ users }: { users: TenantUser[] }) {
+function UsersTab({
+  users,
+  tenantId,
+  onUserUpdated,
+}: {
+  users: TenantUser[];
+  tenantId: string;
+  onUserUpdated: () => void;
+}) {
+  const [editingUser, setEditingUser] = useState<TenantUser | null>(null);
+
   if (users.length === 0) {
     return (
       <div className="text-center py-12">
@@ -555,59 +571,94 @@ function UsersTab({ users }: { users: TenantUser[] }) {
     );
   }
 
+  const canEditUser = (u: TenantUser) => u.platformRole !== "SUPER_ADMIN";
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-white/5">
-            <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">
-              Nombre Completo
-            </th>
-            <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">
-              Email Corporativo
-            </th>
-            <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">
-              Rol Asignado
-            </th>
-            <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">
-              Status
-            </th>
-            <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">
-              Fecha Alta
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors group">
-              <td className="py-4 px-4 text-sm font-bold text-white group-hover:text-cyan-400 transition-colors">
-                {user.name || "Sin nombre"}
-              </td>
-              <td className="py-4 px-4 text-sm font-medium text-slate-400">{user.email}</td>
-              <td className="py-4 px-4 text-sm">
-                <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-500 text-[10px] font-black uppercase tracking-widest">
-                  {user.role?.name || "Sin rol"}
-                </span>
-              </td>
-              <td className="py-4 px-4">
-                <div className={cn(
-                  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase tracking-widest",
-                  user.isActive
-                    ? "bg-green-500/10 text-green-400 border-green-500/20"
-                    : "bg-slate-900 text-slate-500 border-slate-800"
-                )}>
-                  <div className={cn("w-1.5 h-1.5 rounded-full", user.isActive ? "bg-green-400 animate-pulse" : "bg-slate-500")} />
-                  {user.isActive ? "Activo" : "Inactivo"}
-                </div>
-              </td>
-              <td className="py-4 px-4 text-sm font-medium text-slate-500">
-                {new Date(user.createdAt).toLocaleDateString("es-CO")}
-              </td>
+    <>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-white/5">
+              <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">
+                Nombre Completo
+              </th>
+              <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">
+                Email Corporativo
+              </th>
+              <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">
+                Rol Asignado
+              </th>
+              <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">
+                Status
+              </th>
+              <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">
+                Fecha Alta
+              </th>
+              <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">
+                Acciones
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors group">
+                <td className="py-4 px-4 text-sm font-bold text-white group-hover:text-cyan-400 transition-colors">
+                  {user.name || "Sin nombre"}
+                </td>
+                <td className="py-4 px-4 text-sm font-medium text-slate-400">{user.email}</td>
+                <td className="py-4 px-4 text-sm">
+                  <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                    {user.role?.name || "Sin rol"}
+                  </span>
+                </td>
+                <td className="py-4 px-4">
+                  <div className={cn(
+                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase tracking-widest",
+                    user.isActive
+                      ? "bg-green-500/10 text-green-400 border-green-500/20"
+                      : "bg-slate-900 text-slate-500 border-slate-800"
+                  )}>
+                    <div className={cn("w-1.5 h-1.5 rounded-full", user.isActive ? "bg-green-400 animate-pulse" : "bg-slate-500")} />
+                    {user.isActive ? "Activo" : "Inactivo"}
+                  </div>
+                </td>
+                <td className="py-4 px-4 text-sm font-medium text-slate-500">
+                  {new Date(user.createdAt).toLocaleDateString("es-CO")}
+                </td>
+                <td className="py-4 px-4">
+                  {canEditUser(user) ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-lg text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10"
+                      onClick={() => setEditingUser(user)}
+                      title="Editar"
+                    >
+                      <Pencil size={16} />
+                    </Button>
+                  ) : (
+                    <span className="text-slate-600 text-xs">—</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {editingUser && (
+        <TenantUserEditModal
+          user={editingUser}
+          tenantId={tenantId}
+          isOpen={!!editingUser}
+          onClose={() => setEditingUser(null)}
+          onSuccess={() => {
+            onUserUpdated();
+            setEditingUser(null);
+          }}
+        />
+      )}
+    </>
   );
 }
 

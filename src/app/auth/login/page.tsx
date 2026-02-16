@@ -16,7 +16,7 @@ export default function LoginPage() {
     if (result.success && result.user) {
       login(result.user); // Update Zustand Store
       toast.success(`Bienvenido, ${result.user.name}`);
-      router.push("/dashboard");
+      router.push(result.user.mustChangePassword ? "/auth/change-password" : "/dashboard");
     } else {
       toast.error(result.message || "Error al iniciar sesión");
     }

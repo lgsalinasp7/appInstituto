@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/lib/store/auth-store";
 
 const AUTH_CHECK_TIMEOUT_MS = 3000;
@@ -13,11 +13,13 @@ interface GuestGuardProps {
 /**
  * GuestGuard - Protege rutas de autenticación (login/register)
  * Redirige a dashboard si el usuario ya está autenticado.
+ * Excepción: /auth/change-password cuando mustChangePassword - permite acceso.
  * Verifica la sesión real en el servidor (/api/auth/me) en lugar de confiar
  * solo en el estado persistido de Zustand, evitando bucles de redirección.
  */
 export function GuestGuard({ children }: GuestGuardProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
@@ -47,6 +49,11 @@ export function GuestGuard({ children }: GuestGuardProps) {
                   image: data.image ?? null,
                   invitationLimit: data.invitationLimit ?? 0,
                 });
+                // Permitir /auth/change-password cuando mustChangePassword
+                if (pathname === "/auth/change-password" && data.mustChangePassword) {
+                  setIsChecking(false);
+                  return;
+                }
                 router.replace("/dashboard");
                 return;
               }
@@ -60,6 +67,12 @@ export function GuestGuard({ children }: GuestGuardProps) {
           const state = useAuthStore.getState();
           if (state.isAuthenticated) {
             useAuthStore.getState().logout();
+          }
+          // /auth/change-password requiere sesión - redirigir a login
+          if (pathname === "/auth/change-password") {
+            clearTimeout(timeoutId);
+            router.replace(`/auth/login?returnUrl=${encodeURIComponent(pathname)}`);
+            return;
           }
         }
       } catch {
@@ -96,7 +109,7 @@ export function GuestGuard({ children }: GuestGuardProps) {
       if (fallbackId) clearTimeout(fallbackId);
       controller.abort();
     };
-  }, [router]);
+  }, [router, pathname]);
 
   if (isChecking) {
     return (

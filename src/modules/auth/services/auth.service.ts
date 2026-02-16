@@ -161,6 +161,7 @@ export class AuthService {
       platformRole: user.platformRole,
       invitationLimit: user.invitationLimit,
       tenantId: user.tenantId,
+      mustChangePassword: user.mustChangePassword ?? false,
       tenant: user.tenant ? {
         id: user.tenant.id,
         name: user.tenant.name,

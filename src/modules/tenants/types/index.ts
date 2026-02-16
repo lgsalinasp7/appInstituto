@@ -38,6 +38,7 @@ export interface TenantUser {
     name: string;
   };
   createdAt: Date;
+  platformRole?: string | null;
 }
 
 export interface CreateTenantData {

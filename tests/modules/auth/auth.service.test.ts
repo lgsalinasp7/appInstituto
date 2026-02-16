@@ -102,6 +102,7 @@ describe("AuthService", () => {
         platformRole: null,
         invitationLimit: 0,
         tenantId: "tenant-1",
+        mustChangePassword: false,
         tenant: {
           id: "tenant-1",
           name: "Test Tenant",

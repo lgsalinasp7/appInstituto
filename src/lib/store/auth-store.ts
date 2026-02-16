@@ -17,6 +17,7 @@ export interface AuthUser {
         permissions: string[];
     } | null;
     invitationLimit: number;
+    mustChangePassword?: boolean;
 }
 
 interface AuthState {

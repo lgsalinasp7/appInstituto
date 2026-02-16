@@ -25,6 +25,7 @@ export interface AuthenticatedUser {
     permissions: string[];
   } | null;
   isActive: boolean;
+  mustChangePassword: boolean;
 }
 
 /**
@@ -145,6 +146,7 @@ export const getCurrentUser = cache(async (): Promise<AuthenticatedUser | null> 
         }
       : null,
     isActive: session.user.isActive,
+    mustChangePassword: session.user.mustChangePassword ?? false,
   };
 });
 

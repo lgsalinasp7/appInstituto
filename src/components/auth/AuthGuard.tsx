@@ -38,6 +38,11 @@ export function AuthGuard({ children }: AuthGuardProps) {
                   image: data.image ?? null,
                   invitationLimit: data.invitationLimit ?? 0,
                 });
+                // Si debe cambiar contraseña, redirigir a /auth/change-password
+                if (data.mustChangePassword && pathname !== "/auth/change-password") {
+                  router.replace("/auth/change-password");
+                  return;
+                }
                 setIsChecking(false);
                 return;
               }

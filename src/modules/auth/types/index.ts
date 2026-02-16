@@ -27,6 +27,7 @@ export interface AuthUser {
   platformRole: string | null;
   invitationLimit: number;
   tenantId: string | null;
+  mustChangePassword?: boolean;
   tenant?: {
     id: string;
     name: string;

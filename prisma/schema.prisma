@@ -56,6 +56,7 @@ model User {
   students           Student[]
   role               Role?         @relation(fields: [roleId], references: [id])
   tenant             Tenant?       @relation(fields: [tenantId], references: [id])
+  mustChangePassword Boolean       @default(false)
 
   @@index([email])
   @@index([roleId])
