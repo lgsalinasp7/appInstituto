@@ -13,8 +13,12 @@ const mockPlatformUser = {
 };
 
 vi.mock("@/lib/api-auth", () => ({
-  withPlatformAdmin: (_roles: string[], handler: (req: any, user: any) => Promise<Response>) => {
-    return async (req: Request) => handler(req, mockPlatformUser);
+  withPlatformAdmin: (
+    _roles: string[],
+    handler: (req: Request, user: unknown, context?: { params: Promise<Record<string, string>> }) => Promise<Response>
+  ) => {
+    return async (req: Request, context?: { params: Promise<Record<string, string>> }) =>
+      handler(req, mockPlatformUser, context);
   },
 }));
 
