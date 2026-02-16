@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +36,7 @@ export function TenantUserEditModal({
   const [email, setEmail] = useState(user.email);
   const [setTempPassword, setSetTempPassword] = useState(false);
   const [showTempPasswordConfirm, setShowTempPasswordConfirm] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -49,8 +50,13 @@ export function TenantUserEditModal({
 
   const performSubmit = useCallback(
     async (withTempPassword: boolean) => {
+      if (isSubmittingRef.current) return;
+      isSubmittingRef.current = true;
       setLoading(true);
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
         const origin = typeof window !== "undefined" ? window.location.origin : "";
         const res = await fetch(
           `${origin}/api/admin/tenants/${tenantId}/users/${user.id}`,
@@ -63,10 +69,24 @@ export function TenantUserEditModal({
               email: email.trim() || undefined,
               setTempPassword: withTempPassword || undefined,
             }),
+            signal: controller.signal,
           }
         );
 
-        const data = await res.json();
+        clearTimeout(timeoutId);
+
+        let data: { success?: boolean; error?: string; data?: { tempPassword?: string } };
+        try {
+          const text = await res.text();
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          data = {};
+        }
+
+        if (!res.ok) {
+          toast.error(data?.error || `Error ${res.status}: ${res.statusText}`);
+          return;
+        }
 
         if (!data.success) {
           toast.error(data.error || "Error al actualizar usuario");
@@ -108,8 +128,14 @@ export function TenantUserEditModal({
         onClose();
       } catch (error) {
         console.error(error);
-        toast.error("Error al actualizar usuario");
+        const message = error instanceof Error ? error.message : "Error al actualizar usuario";
+        if (error instanceof Error && error.name === "AbortError") {
+          toast.error("La solicitud tardó demasiado. Intenta de nuevo.");
+        } else {
+          toast.error(message);
+        }
       } finally {
+        isSubmittingRef.current = false;
         setLoading(false);
         setShowTempPasswordConfirm(false);
       }
