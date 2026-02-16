@@ -60,7 +60,8 @@ describe("PaymentModal", () => {
 
     expect(screen.getByText("Registrar Nuevo Pago")).toBeInTheDocument();
     expect(screen.getByText(/María García/)).toBeInTheDocument();
-    expect(screen.getByText(/\$3\.000\.000/)).toBeInTheDocument();
+    // Locale-agnostic: toLocaleString() puede usar 3.000.000 (es-CO) o 3,000,000 (en-US)
+    expect(document.body.textContent).toMatch(/3[,.]000[,.]000/);
   });
 
   it("muestra campos monto, método, referencia y comentarios", () => {
@@ -115,6 +116,7 @@ describe("PaymentModal", () => {
     });
 
     expect(screen.getByText("REC-2025-001")).toBeInTheDocument();
-    expect(screen.getByText(/\$2\.500\.000/)).toBeInTheDocument();
+    // Locale-agnostic: 2.500.000 (es-CO) o 2,500,000 (en-US)
+    expect(document.body.textContent).toMatch(/2[,.]500[,.]000/);
   });
 });
