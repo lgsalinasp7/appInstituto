@@ -13,10 +13,14 @@ const SALT_ROUNDS = 12;
 export class AuthService {
   /**
    * Find user by email (global - for login across tenants)
+   * Usa findFirst con mode insensitive para soportar variaciones de mayúsculas
    */
   static async findUserByEmail(email: string) {
-    return prisma.user.findUnique({
-      where: { email },
+    const normalizedEmail = email.trim().toLowerCase();
+    return prisma.user.findFirst({
+      where: {
+        email: { equals: normalizedEmail, mode: "insensitive" },
+      },
       include: {
         role: true,
         tenant: true,

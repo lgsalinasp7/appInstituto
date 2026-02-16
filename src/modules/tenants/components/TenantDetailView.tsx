@@ -465,6 +465,7 @@ export function TenantDetailView({ tenant }: TenantDetailViewProps) {
               <UsersTab
                 users={tenant.users}
                 tenantId={tenant.id}
+                tenantSlug={tenant.slug}
                 onUserUpdated={() => router.refresh()}
               />
             </div>
@@ -554,10 +555,12 @@ function InfoRow({
 function UsersTab({
   users,
   tenantId,
+  tenantSlug,
   onUserUpdated,
 }: {
   users: TenantUser[];
   tenantId: string;
+  tenantSlug: string;
   onUserUpdated: () => void;
 }) {
   const [editingUser, setEditingUser] = useState<TenantUser | null>(null);
@@ -650,6 +653,7 @@ function UsersTab({
         <TenantUserEditModal
           user={editingUser}
           tenantId={tenantId}
+          tenantSlug={tenantSlug}
           isOpen={!!editingUser}
           onClose={() => setEditingUser(null)}
           onSuccess={() => {

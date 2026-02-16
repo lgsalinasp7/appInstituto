@@ -19,6 +19,7 @@ import type { TenantUser } from "../types";
 interface TenantUserEditModalProps {
   user: TenantUser;
   tenantId: string;
+  tenantSlug: string;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -27,6 +28,7 @@ interface TenantUserEditModalProps {
 export function TenantUserEditModal({
   user,
   tenantId,
+  tenantSlug,
   isOpen,
   onClose,
   onSuccess,
@@ -92,26 +94,39 @@ export function TenantUserEditModal({
 
         if (data.data?.tempPassword) {
           const tempPass = data.data.tempPassword;
+          const rootDomain = typeof window !== "undefined" ? (process.env.NEXT_PUBLIC_ROOT_DOMAIN || "kaledsoft.tech") : "kaledsoft.tech";
+          const loginUrl = `https://${tenantSlug}.${rootDomain}/auth/login`;
           toast.success("Usuario actualizado. Contraseña temporal generada.", {
             description: (
-              <div className="flex items-center gap-2 mt-2">
-                <code className="px-2 py-1 rounded bg-slate-800 text-cyan-400 text-sm font-mono">
-                  {tempPass}
-                </code>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 text-cyan-400 hover:text-cyan-300"
-                  onClick={() => {
-                    navigator.clipboard.writeText(tempPass);
-                    toast.success("Contraseña copiada al portapapeles");
-                  }}
-                >
-                  <Clipboard size={14} />
-                </Button>
+              <div className="space-y-2 mt-2">
+                <p className="text-xs text-slate-400">
+                  Usa este email para iniciar sesión: <strong className="text-white">{email.trim()}</strong>
+                </p>
+                <p className="text-xs text-slate-400">
+                  Accede a:{" "}
+                  <a href={loginUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-400 underline">
+                    {loginUrl}
+                  </a>
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="px-2 py-1 rounded bg-slate-800 text-cyan-400 text-sm font-mono">
+                    {tempPass}
+                  </code>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 text-cyan-400 hover:text-cyan-300"
+                    onClick={() => {
+                      navigator.clipboard.writeText(tempPass);
+                      toast.success("Contraseña copiada al portapapeles");
+                    }}
+                  >
+                    <Clipboard size={14} />
+                  </Button>
+                </div>
               </div>
             ),
-            duration: 15000,
+            duration: 20000,
           });
         } else {
           toast.success("Usuario actualizado correctamente");
@@ -138,7 +153,7 @@ export function TenantUserEditModal({
         setShowTempPasswordConfirm(false);
       }
     },
-    [tenantId, user.id, user.name, user.email, name, email, onSuccess, onClose]
+    [tenantId, tenantSlug, user.id, user.name, user.email, name, email, onSuccess, onClose]
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
