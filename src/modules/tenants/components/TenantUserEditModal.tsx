@@ -101,7 +101,11 @@ export function TenantUserEditModal({
         }
 
         onSuccess();
-        handleOpenChange(false);
+        setName(user.name || "");
+        setEmail(user.email);
+        setSetTempPassword(false);
+        setShowTempPasswordConfirm(false);
+        onClose();
       } catch (error) {
         console.error(error);
         toast.error("Error al actualizar usuario");
@@ -110,7 +114,7 @@ export function TenantUserEditModal({
         setShowTempPasswordConfirm(false);
       }
     },
-    [tenantId, user.id, name, email, onSuccess, handleOpenChange]
+    [tenantId, user.id, user.name, user.email, name, email, onSuccess, onClose]
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
