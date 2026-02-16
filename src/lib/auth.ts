@@ -45,15 +45,32 @@ export async function createSession(userId: string): Promise<string> {
   });
 
   // Setear cookie httpOnly, secure, sameSite
-  (await cookies()).set(SESSION_COOKIE_NAME, sessionToken, {
+  const cookieOptions: Parameters<Awaited<ReturnType<typeof cookies>>["set"]>[2] = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     expires: expiresAt,
     path: "/",
-  });
+  };
+
+  // En producción con subdominios (*.kaledsoft.tech), establecer dominio para que la cookie persista
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN;
+  if (process.env.NODE_ENV === "production" && rootDomain) {
+    cookieOptions.domain = `.${rootDomain}`;
+  }
+
+  (await cookies()).set(SESSION_COOKIE_NAME, sessionToken, cookieOptions);
 
   return sessionToken;
+}
+
+function getCookieDeleteOptions(): { path: string; domain?: string } {
+  const opts: { path: string; domain?: string } = { path: "/" };
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN;
+  if (process.env.NODE_ENV === "production" && rootDomain) {
+    opts.domain = `.${rootDomain}`;
+  }
+  return opts;
 }
 
 /**
@@ -69,8 +86,8 @@ export async function destroySession(): Promise<void> {
       where: { sessionToken },
     });
 
-    // Eliminar cookie
-    cookieStore.delete(SESSION_COOKIE_NAME);
+    // Eliminar cookie (mismo domain que al crear)
+    cookieStore.delete({ name: SESSION_COOKIE_NAME, ...getCookieDeleteOptions() });
   }
 }
 
@@ -99,6 +116,9 @@ export const getCurrentUser = cache(async (): Promise<AuthenticatedUser | null> 
     },
   });
 
+  const deleteInvalidCookie = () =>
+    cookieStore.delete({ name: SESSION_COOKIE_NAME, ...getCookieDeleteOptions() });
+
   // Validar que la sesión existe y no ha expirado
   if (!session || session.expires < new Date()) {
     // Limpiar sesión expirada
@@ -107,12 +127,14 @@ export const getCurrentUser = cache(async (): Promise<AuthenticatedUser | null> 
         where: { id: session.id },
       });
     }
-    cookieStore.delete(SESSION_COOKIE_NAME);
+    deleteInvalidCookie();
     return null;
   }
 
-  // Validar que el usuario está activo
+  // Validar que el usuario está activo (borrar cookie si está inactivo para evitar ciclos proxy/API)
   if (!session.user.isActive) {
+    await prisma.session.delete({ where: { id: session.id } });
+    deleteInvalidCookie();
     return null;
   }
 
