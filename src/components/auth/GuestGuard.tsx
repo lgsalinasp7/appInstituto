@@ -34,10 +34,26 @@ export function GuestGuard({ children }: GuestGuardProps) {
           signal: controller.signal,
         });
 
+        // Solo redirigir si hay JSON válido con usuario (evita ciclos por redirects que devuelven HTML 200)
         if (res.ok) {
-          clearTimeout(timeoutId);
-          router.replace("/dashboard");
-          return;
+          const contentType = res.headers.get("content-type") || "";
+          if (contentType.includes("application/json")) {
+            try {
+              const data = await res.json();
+              if (data?.id && data?.email) {
+                clearTimeout(timeoutId);
+                useAuthStore.getState().login({
+                  ...data,
+                  image: data.image ?? null,
+                  invitationLimit: data.invitationLimit ?? 0,
+                });
+                router.replace("/dashboard");
+                return;
+              }
+            } catch {
+              // JSON inválido - no redirigir
+            }
+          }
         }
 
         if (res.status === 401) {

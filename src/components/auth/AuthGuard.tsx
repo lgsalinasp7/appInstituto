@@ -10,37 +10,65 @@ interface AuthGuardProps {
 
 /**
  * AuthGuard - Protege rutas que requieren autenticación
- * Reemplaza la funcionalidad del middleware para rutas protegidas
+ * Verifica sesión con /api/auth/me (fuente de verdad) para evitar ciclos
+ * cuando Zustand está desincronizado (ej. subdominio diferente, redirects).
  */
 export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isChecking, setIsChecking] = useState(true);
-  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    let cancelled = false;
 
-  useEffect(() => {
-    if (!isMounted) return;
+    const verifySession = async () => {
+      try {
+        const res = await fetch("/api/auth/me", { credentials: "include" });
 
-    // Verificar después de que el componente se monte y Zustand hidrate
-    const checkAuth = () => {
-      const state = useAuthStore.getState();
+        if (cancelled) return;
 
-      if (!state.isAuthenticated) {
+        if (res.ok) {
+          const contentType = res.headers.get("content-type") || "";
+          if (contentType.includes("application/json")) {
+            try {
+              const data = await res.json();
+              if (data?.id && data?.email) {
+                useAuthStore.getState().login({
+                  ...data,
+                  image: data.image ?? null,
+                  invitationLimit: data.invitationLimit ?? 0,
+                });
+                setIsChecking(false);
+                return;
+              }
+            } catch {
+              // JSON inválido
+            }
+          }
+        }
+
+        // 401 o respuesta no válida → redirigir a login
+        useAuthStore.getState().logout();
         const returnUrl = encodeURIComponent(pathname);
         router.replace(`/auth/login?returnUrl=${returnUrl}`);
-      } else {
-        setIsChecking(false);
+      } catch {
+        if (!cancelled) {
+          const state = useAuthStore.getState();
+          if (state.isAuthenticated) {
+            setIsChecking(false);
+            return;
+          }
+          const returnUrl = encodeURIComponent(pathname);
+          router.replace(`/auth/login?returnUrl=${returnUrl}`);
+        }
       }
     };
 
-    // Delay para permitir hidratación de Zustand persist
-    const timeout = setTimeout(checkAuth, 100);
-    return () => clearTimeout(timeout);
-  }, [isMounted, pathname, router]);
+    verifySession();
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname, router]);
 
   // Mostrar loading mientras verifica
   if (isChecking) {

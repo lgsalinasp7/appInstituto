@@ -88,7 +88,7 @@ export function StatCard({
         >
           {value}
         </p>
-        {trendValue && (
+        {trend != null && trendValue && (
           <p className={cn("text-xs font-medium pt-1", isDark ? "text-slate-500" : "text-slate-400")}>
             {trend === "up" ? "↑" : "↓"} {trendValue}
           </p>
