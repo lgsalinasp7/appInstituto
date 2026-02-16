@@ -44,8 +44,9 @@ export default async function proxy(req: NextRequest) {
         // Rutas que no requieren autenticación
         const publicAdminPaths = ['/login', '/forgot-password', '/reset-password', '/api-docs', '/api/openapi'];
         const isPublicPath = publicAdminPaths.some(path => pathname.startsWith(path));
+        const isStaticAsset = /\.(png|jpg|jpeg|gif|svg|ico|webp)(\?|$)/i.test(pathname);
 
-        if (!isPublicPath) {
+        if (!isPublicPath && !isStaticAsset) {
             // Verificar sesión para rutas protegidas admin
             const sessionToken = req.cookies.get('session_token')?.value;
 
@@ -79,7 +80,10 @@ export default async function proxy(req: NextRequest) {
         const publicTenantPaths = ['/auth', '/login', '/register', '/forgot-password', '/reset-password', '/suspended', '/api-docs', '/api/openapi', '/api/auth'];
         const isPublicPath = publicTenantPaths.some(path => pathname.startsWith(path));
 
-        if (!isPublicPath) {
+        // Assets estáticos (logos, imágenes) deben ser accesibles sin sesión para que el login muestre el logo
+        const isStaticAsset = /\.(png|jpg|jpeg|gif|svg|ico|webp)(\?|$)/i.test(pathname);
+
+        if (!isPublicPath && !isStaticAsset) {
             // Verificar sesión para rutas protegidas del tenant
             const sessionToken = req.cookies.get('session_token')?.value;
 
