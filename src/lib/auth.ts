@@ -74,6 +74,15 @@ function getCookieDeleteOptions(): { path: string; domain?: string } {
 }
 
 /**
+ * Borra la cookie de sesión. Solo debe llamarse desde Route Handlers o Server Actions,
+ * nunca desde Server Components (getCurrentUser).
+ */
+export async function clearSessionCookie(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete({ name: SESSION_COOKIE_NAME, ...getCookieDeleteOptions() });
+}
+
+/**
  * Invalida la sesión actual
  */
 export async function destroySession(): Promise<void> {

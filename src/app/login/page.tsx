@@ -6,6 +6,7 @@
  * Solo visible cuando el contexto es "admin"
  */
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { LoginForm, type LoginFormData } from "@/modules/auth";
@@ -17,6 +18,20 @@ import Image from "next/image";
 export default function AdminLoginPage() {
   const router = useRouter();
   const { login } = useAuthStore();
+
+  // Limpiar cookie inválida al cargar (cuando se redirige desde AdminLayoutWrapper con sesión expirada)
+  useEffect(() => {
+    fetch("/api/auth/me", { credentials: "include" }).then((res) => {
+      if (res.ok) {
+        res.json().then((data) => {
+          if (data?.id && data?.email) {
+            login({ ...data, image: data.image ?? null, invitationLimit: data.invitationLimit ?? 0 });
+            router.replace("/admin");
+          }
+        });
+      }
+    });
+  }, [login, router]);
 
   async function handleLogin(data: LoginFormData) {
     const result = await loginAction(data);

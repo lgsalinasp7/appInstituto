@@ -4,13 +4,15 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, clearSessionCookie } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser();
 
     if (!user) {
+      // Borrar cookie inválida/expirada (solo permitido en Route Handlers)
+      await clearSessionCookie();
       return NextResponse.json(
         { error: "No autenticado" },
         { status: 401 }
