@@ -35,33 +35,25 @@ export function DashboardSidebar() {
   const { user } = useAuthStore();
   const branding = useBranding();
 
+  // Determinar si tiene acceso completo (Superadmin/Admin)
+  const roleName = user?.role?.name?.toUpperCase() || "";
+  const hasFullAccess =
+    roleName === "SUPERADMIN" ||
+    roleName === "ADMINISTRADOR" ||
+    user?.role?.permissions?.includes("all") ||
+    user?.platformRole === "SUPER_ADMIN";
+
   // Filter items based on role
   const filteredNavItems = navItems.filter((item) => {
-    const roleName = user?.role?.name?.toUpperCase() || "";
-
-    // Superadmin & Admin see everything
-    if (roleName === "SUPERADMIN" || roleName === "ADMINISTRADOR") {
-      return true;
-    }
-
-    // Ventas: Dashboard + Matriculas
-    if (roleName === "VENTAS") {
-      return ["/dashboard", "/matriculas"].includes(item.href);
-    }
-
-    // Cartera: Dashboard + Recaudos
-    if (roleName === "CARTERA") {
-      return ["/dashboard", "/recaudos"].includes(item.href);
-    }
-
-    // Fallback: only dashboard
+    if (hasFullAccess) return true;
+    if (roleName === "VENTAS") return ["/dashboard", "/matriculas"].includes(item.href);
+    if (roleName === "CARTERA") return ["/dashboard", "/recaudos"].includes(item.href);
     return item.href === "/dashboard";
   });
 
   // Add admin-only items for Superadmin/Admin
   const allNavItems = [...filteredNavItems];
-  const roleName = user?.role?.name?.toUpperCase() || "";
-  if (roleName === "SUPERADMIN" || roleName === "ADMINISTRADOR") {
+  if (hasFullAccess) {
     allNavItems.push(...adminOnlyItems);
   }
 

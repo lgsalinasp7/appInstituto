@@ -40,6 +40,11 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const branding = useBranding();
 
   const roleName = user?.role?.name?.toUpperCase() || "";
+  const hasFullAccess =
+    roleName === "SUPERADMIN" ||
+    roleName === "ADMINISTRADOR" ||
+    user?.role?.permissions?.includes("all") ||
+    user?.platformRole === "SUPER_ADMIN";
   const isAdminSection = pathname.startsWith("/admin");
 
   // Determine which list to use
@@ -50,13 +55,13 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   } else {
     // Filter standard items based on role
     displayItems = navItems.filter((item) => {
-      if (roleName === "SUPERADMIN" || roleName === "ADMINISTRADOR") return true;
+      if (hasFullAccess) return true;
       if (roleName === "VENTAS") return ["/dashboard", "/matriculas"].includes(item.href);
       if (roleName === "CARTERA") return ["/dashboard", "/recaudos"].includes(item.href);
       return item.href === "/dashboard";
     });
 
-    if (roleName === "SUPERADMIN" || roleName === "ADMINISTRADOR") {
+    if (hasFullAccess) {
       displayItems.push(configItem);
     }
   }
@@ -161,7 +166,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
             <User size={20} strokeWidth={2.5} />
             <span>Mi Perfil</span>
           </Link>
-          {(roleName === "SUPERADMIN" || roleName === "ADMINISTRADOR") && (
+          {(hasFullAccess) && (
             <Link
               href="/configuracion"
               onClick={handleLinkClick}
