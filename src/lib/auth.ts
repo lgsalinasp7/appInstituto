@@ -26,6 +26,7 @@ export interface AuthenticatedUser {
   } | null;
   isActive: boolean;
   mustChangePassword: boolean;
+  invitationLimit: number;
 }
 
 /**
@@ -147,6 +148,7 @@ export const getCurrentUser = cache(async (): Promise<AuthenticatedUser | null> 
       : null,
     isActive: session.user.isActive,
     mustChangePassword: session.user.mustChangePassword ?? false,
+    invitationLimit: session.user.invitationLimit ?? 0,
   };
 });
 

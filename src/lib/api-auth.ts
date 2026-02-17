@@ -100,7 +100,13 @@ export function withTenantAuth(handler: TenantAuthHandler) {
   return async (request: NextRequest, context?: { params: Promise<Record<string, string>> }) => {
     try {
       const user = await requireAuth();
-      const tenantId = await getCurrentTenantId();
+      let tenantId = await getCurrentTenantId();
+
+      // Fallback: si no hay slug de tenant desde el subdominio (ej. acceso directo
+      // a localhost:3000 sin subdominio), usar el tenantId del usuario autenticado.
+      if (!tenantId && user.tenantId) {
+        tenantId = user.tenantId;
+      }
 
       if (!tenantId) {
         throw new UnauthorizedError("No se pudo determinar el tenant");

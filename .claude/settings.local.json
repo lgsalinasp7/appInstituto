@@ -32,7 +32,9 @@
       "Bash(git -C \"C:\\\\KALEDSOFT\\\\AppInstitutoProvisional\" diff src/app/api/openapi/route.ts)",
       "Bash(git -C \"C:\\\\KALEDSOFT\\\\AppInstitutoProvisional\" show HEAD:src/app/api-docs/page.tsx)",
       "Bash(git -C \"C:\\\\KALEDSOFT\\\\AppInstitutoProvisional\" show HEAD:src/app/api-docs/SwaggerUIClient.tsx)",
-      "Bash(git -C \"C:\\\\KALEDSOFT\\\\AppInstitutoProvisional\" show HEAD:package.json)"
+      "Bash(git -C \"C:\\\\KALEDSOFT\\\\AppInstitutoProvisional\" show HEAD:package.json)",
+      "Bash(find:*)",
+      "Bash(ls:*)"
     ]
   }
 }

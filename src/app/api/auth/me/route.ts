@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
         : null,
       isActive: user.isActive,
       mustChangePassword: user.mustChangePassword,
+      invitationLimit: user.invitationLimit,
     });
   } catch (error) {
     console.error("Error al obtener usuario actual:", error);

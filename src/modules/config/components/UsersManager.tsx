@@ -330,7 +330,7 @@ export function UsersManager() {
                     </Button>
                     <Button
                         onClick={handleInviteClick}
-                        className="flex-1 sm:flex-none gap-2 bg-[#1e3a5f] text-white rounded-xl h-10 font-bold px-6 shadow-lg shadow-blue-900/10 hover:opacity-90"
+                        className="flex-1 sm:flex-none gap-2 bg-[#1e3a5f] text-white rounded-xl h-10 font-bold px-6 shadow-lg shadow-blue-900/10 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={isAdmin && remainingInvitations <= 0}
                     >
                         <Plus size={18} />
