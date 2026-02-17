@@ -178,6 +178,7 @@ export async function POST(request: Request) {
         name,
         password,
         roleId: invitation.roleId,
+        tenantId: invitation.tenantId,
       });
 
       // Update invitation status

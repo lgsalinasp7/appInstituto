@@ -72,7 +72,7 @@ export function UsersManager() {
         variant: "default",
     });
 
-    const isSuperAdmin = currentUser?.role?.name === "SUPERADMIN";
+    const isSuperAdmin = currentUser?.role?.name === "SUPERADMIN" || currentUser?.platformRole === "SUPER_ADMIN";
     const isAdmin = currentUser?.role?.name === "ADMINISTRADOR";
     const canAccessUsers = isSuperAdmin || isAdmin;
 
@@ -122,10 +122,10 @@ export function UsersManager() {
         }
     }, [canAccessUsers, fetchUsers, fetchInvitations]);
 
-    // Calculate remaining invitations for Admin
-    const pendingInvitations = invitations.filter(inv => inv.status === "PENDING").length;
+    // Calculate remaining invitations for Admin (count both PENDING and ACCEPTED as occupied seats)
+    const occupiedSeats = invitations.filter(inv => inv.status === "PENDING" || inv.status === "ACCEPTED").length;
     const remainingInvitations = isAdmin
-        ? (currentUser?.invitationLimit || 0) - pendingInvitations
+        ? (currentUser?.invitationLimit || 0) - occupiedSeats
         : Infinity;
 
     // Filter users

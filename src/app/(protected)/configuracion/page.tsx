@@ -11,7 +11,7 @@ import { useAuthStore } from "@/lib/store/auth-store";
 export default function ConfiguracionPage() {
     const [activeSubTab, setActiveSubTab] = useState<"general" | "programas" | "usuarios">("general");
     const { user } = useAuthStore();
-    const isSuperAdmin = user?.role?.name === "SUPERADMIN";
+    const isSuperAdmin = user?.role?.name === "SUPERADMIN" || user?.platformRole === "SUPER_ADMIN";
     const isAdmin = user?.role?.name === "ADMINISTRADOR";
     const canAccessUsers = isSuperAdmin || isAdmin;
 
