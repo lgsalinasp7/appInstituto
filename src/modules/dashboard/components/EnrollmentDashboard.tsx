@@ -1,22 +1,35 @@
 "use client";
 
-import { TrendingUp, Users, Clock, DollarSign, Target, Calendar } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { TrendingUp, Users, Clock, DollarSign, Target, Calendar, Loader2 } from "lucide-react";
 import { DashboardHeader } from "./DashboardHeader";
 import { StatCard } from "./StatCard";
 import { RevenueChart } from "./RevenueChart";
 import { AlertsList } from "./AlertsList";
+import { AdvisorPerformanceTable } from "./AdvisorPerformanceTable";
+import { CarteraUserTable } from "./CarteraUserTable";
 import type { AlertItem, RevenueData } from "../types";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { useAdvisorFilter } from "@/lib/auth-context";
 import { useBranding } from "@/components/providers/BrandingContext";
 import { cn } from "@/lib/utils";
-import { DashboardStats } from "../services/dashboard.service";
 
-interface EnrollmentDashboardProps {
-  stats: DashboardStats;
+interface DashboardApiStats {
+  todayRevenue: number;
+  monthlyRevenue: number;
+  revenueChange: number;
+  activeStudents: number;
+  studentsChange: number;
+  pendingPaymentsCount: number;
+  overdueAmount: number;
+  pendingChange: number;
+  conversionRate: number;
+  revenueChart?: { name: string; total: number }[];
 }
 
-export function EnrollmentDashboard({ stats }: EnrollmentDashboardProps) {
+export function EnrollmentDashboard() {
   const { user } = useAuthStore();
+  const { appendToUrl } = useAdvisorFilter();
   const branding = useBranding();
   const isDark = branding.darkMode !== false;
   const userRole = user?.role?.name || "USER";
@@ -24,33 +37,65 @@ export function EnrollmentDashboard({ stats }: EnrollmentDashboardProps) {
   const isCartera = userRole === "CARTERA";
   const isAdmin = userRole === "ADMINISTRADOR" || userRole === "SUPERADMIN";
 
+  const [stats, setStats] = useState<DashboardApiStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchDashboard = useCallback(async (advisorIdOverride?: string, programIdOverride?: string) => {
+    setLoading(true);
+    try {
+      let url = "/api/reports/dashboard";
+      // Para VENTAS, el backend fuerza advisorId automáticamente
+      // Para admin con filtros manuales:
+      const params = new URLSearchParams();
+      if (advisorIdOverride && advisorIdOverride !== "all") {
+        params.set("advisorId", advisorIdOverride);
+      }
+      if (programIdOverride && programIdOverride !== "all") {
+        params.set("programId", programIdOverride);
+      }
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      // appendToUrl agrega advisorId para VENTAS en el frontend también
+      url = appendToUrl(url);
+
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.success) {
+        setStats(data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching dashboard:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [appendToUrl]);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, [fetchDashboard]);
+
   const handleFilterChange = (advisorId?: string, programId?: string) => {
-    // TODO: Implement Client-Side filtering or URL params navigation 
-    // For now, filtering might require reloading page with search params if we want it server-side
-    // or we can keep some client-side fetch if filtering is dynamic.
-    // Given the architecture shift to Server Components, dynamic filtering often uses URL params.
-    console.log("Filter change:", advisorId, programId);
+    fetchDashboard(advisorId, programId);
   };
 
-  const dashboardStats = {
+  const dashboardStats = stats ? {
     todayRevenue: `$${Number(stats.todayRevenue).toLocaleString("es-CO")}`,
     monthlyRevenue: `$${Number(stats.monthlyRevenue).toLocaleString("es-CO")}`,
     overdueAmount: `$${Number(stats.overdueAmount).toLocaleString("es-CO")}`,
     activeStudents: String(stats.activeStudents),
-    conversionRate: `15%`, // Hardcoded or calculated? Service has it as placeholder
-  };
+    conversionRate: `${Math.round(stats.conversionRate)}%`,
+    revenueChange: stats.revenueChange,
+    studentsChange: stats.studentsChange,
+  } : null;
 
-  // Transform or use revenueChart provided by stats
-  const revenueData: RevenueData[] = stats.revenueChart || [];
-
-  // Transform alerts (not yet in DashboardStats, waiting for next step refactor?)
+  const revenueData: RevenueData[] = stats?.revenueChart || [];
   const alerts: AlertItem[] = [];
-
   const userName = user?.name?.split(" ")[0] || "Usuario";
 
   return (
     <div className="space-y-6 sm:space-y-8 lg:space-y-12 animate-fade-in-up">
-      {/* Welcome Header - Estilo Amaxoft con sistema de diseño del tenant */}
+      {/* Welcome Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 animate-in fade-in slide-in-from-bottom-6 duration-1000 ease-out">
         <div className="pt-2 sm:pt-4">
           <h1
@@ -90,69 +135,84 @@ export function EnrollmentDashboard({ stats }: EnrollmentDashboardProps) {
         onFilterChange={handleFilterChange}
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-        <StatCard
-          title={isVentas ? "Mis Ventas Hoy" : "Recaudo de Hoy"}
-          value={dashboardStats.todayRevenue}
-          icon={DollarSign}
-          trend="up"
-          trendValue="+0.0%"
-          gradient="from-emerald-500 to-emerald-600"
-          delay={100}
-        />
-        <StatCard
-          title={isVentas ? "Mis Ventas Mes" : "Recaudo del Mes"}
-          value={dashboardStats.monthlyRevenue}
-          icon={TrendingUp}
-          trend="up"
-          trendValue="+0.0%"
-          gradient="from-blue-500 to-blue-600"
-          delay={200}
-        />
-
-        {(isVentas || isAdmin) && (
-          <StatCard
-            title="Tasa de Conversión"
-            value={dashboardStats.conversionRate}
-            icon={Target}
-            trend="up"
-            trendValue="+0.0%"
-            gradient="from-purple-500 to-purple-600"
-            delay={300}
-          />
-        )}
-
-        {(isCartera || isAdmin) && (
-          <StatCard
-            title="Cartera Vencida"
-            value={dashboardStats.overdueAmount}
-            icon={Clock}
-            trend="down"
-            trendValue="-0.0%"
-            gradient="from-orange-500 to-orange-600"
-            delay={400}
-          />
-        )}
-
-        {(isVentas || isAdmin) && (
-          <StatCard
-            title="Estudiantes Activos"
-            value={dashboardStats.activeStudents}
-            icon={Users}
-            trend="up"
-            trendValue="+0.0%"
-            gradient="from-primary to-primary-light"
-            delay={500}
-          />
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-        <div className="lg:col-span-2">
-          <RevenueChart data={revenueData} />
+      {loading || !dashboardStats ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
         </div>
-        {!isVentas && <AlertsList alerts={alerts} />}
-      </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+            <StatCard
+              title={isVentas ? "Mis Ventas Hoy" : "Recaudo de Hoy"}
+              value={dashboardStats.todayRevenue}
+              icon={DollarSign}
+              trend="up"
+              trendValue="+0.0%"
+              gradient="from-emerald-500 to-emerald-600"
+              delay={100}
+            />
+            <StatCard
+              title={isVentas ? "Mis Ventas Mes" : "Recaudo del Mes"}
+              value={dashboardStats.monthlyRevenue}
+              icon={TrendingUp}
+              trend={dashboardStats.revenueChange >= 0 ? "up" : "down"}
+              trendValue={`${dashboardStats.revenueChange >= 0 ? "+" : ""}${dashboardStats.revenueChange.toFixed(1)}%`}
+              gradient="from-blue-500 to-blue-600"
+              delay={200}
+            />
+
+            {(isVentas || isAdmin) && (
+              <StatCard
+                title="Tasa de Conversión"
+                value={dashboardStats.conversionRate}
+                icon={Target}
+                trend="up"
+                trendValue="+0.0%"
+                gradient="from-purple-500 to-purple-600"
+                delay={300}
+              />
+            )}
+
+            {(isCartera || isAdmin) && (
+              <StatCard
+                title="Cartera Vencida"
+                value={dashboardStats.overdueAmount}
+                icon={Clock}
+                trend="down"
+                trendValue="-0.0%"
+                gradient="from-orange-500 to-orange-600"
+                delay={400}
+              />
+            )}
+
+            {(isVentas || isAdmin) && (
+              <StatCard
+                title="Estudiantes Activos"
+                value={dashboardStats.activeStudents}
+                icon={Users}
+                trend={dashboardStats.studentsChange >= 0 ? "up" : "down"}
+                trendValue={`${dashboardStats.studentsChange >= 0 ? "+" : ""}${dashboardStats.studentsChange.toFixed(1)}%`}
+                gradient="from-primary to-primary-light"
+                delay={500}
+              />
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            <div className="lg:col-span-2">
+              <RevenueChart data={revenueData} />
+            </div>
+            {!isVentas && <AlertsList alerts={alerts} />}
+          </div>
+
+          {isAdmin && (
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:gap-8">
+              <AdvisorPerformanceTable />
+              <CarteraUserTable />
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

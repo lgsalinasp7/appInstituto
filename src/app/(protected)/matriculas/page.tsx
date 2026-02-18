@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Search, CreditCard, Pencil, Trash2 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { useAdvisorFilter } from "@/lib/auth-context";
 import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 import { StudentForm, DeleteConfirmationModal, ReceiptConfirmationModal } from "@/modules/students/components";
 import type { StudentWithRelations, CreateStudentResult, MatriculaReceiptData } from "@/modules/students/types";
@@ -21,13 +22,15 @@ export default function MatriculasPage() {
     const [isLoadingReceipt, setIsLoadingReceipt] = useState(false);
     const [formKey, setFormKey] = useState(0); // Key para forzar remontaje del formulario
     const { user } = useAuthStore();
+    const { appendToUrl } = useAdvisorFilter();
 
     const fetchStudents = async () => {
         setLoading(true);
         try {
-            const url = searchTerm
+            const baseUrl = searchTerm
                 ? `/api/students?search=${encodeURIComponent(searchTerm)}`
                 : "/api/students";
+            const url = appendToUrl(baseUrl);
 
             const response = await fetch(url);
             const data = await response.json();

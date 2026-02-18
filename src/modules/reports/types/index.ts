@@ -79,3 +79,15 @@ export interface RevenueChartData {
   name: string;
   total: number;
 }
+
+export type ReportPeriod = "month" | "3months" | "year";
+
+export interface CarteraUserReport {
+  userId: string;
+  userName: string;
+  userEmail: string;
+  totalPaymentsRegistered: number;
+  totalAmountCollected: number;
+  paymentsThisPeriod: number;
+  amountThisPeriod: number;
+}

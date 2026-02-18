@@ -9,8 +9,22 @@ import type {
   RevenueChartData,
   PortfolioAgingReport,
   AgingBracket,
+  ReportPeriod,
+  CarteraUserReport,
 } from "../types";
 import { Prisma } from "@prisma/client";
+
+function getPeriodStartDate(period: ReportPeriod): Date {
+  const now = new Date();
+  switch (period) {
+    case "month":
+      return new Date(now.getFullYear(), now.getMonth(), 1);
+    case "3months":
+      return new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    case "year":
+      return new Date(now.getFullYear(), 0, 1);
+  }
+}
 
 export class ReportsService {
   static async getFinancialReport(filters: ReportFilters): Promise<FinancialReport> {
@@ -82,8 +96,9 @@ export class ReportsService {
     };
   }
 
-  static async getAdvisorReports(_filters?: ReportFilters): Promise<AdvisorReport[]> {
+  static async getAdvisorReports(period: ReportPeriod = "month"): Promise<AdvisorReport[]> {
     const tenantId = await getCurrentTenantId() as string;
+    const periodStart = getPeriodStartDate(period);
 
     const advisors = await prisma.user.findMany({
       where: {
@@ -106,9 +121,6 @@ export class ReportsService {
         },
       },
     });
-
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
     return advisors.map((advisor) => {
       const totalStudents = advisor.students.length;
@@ -136,11 +148,11 @@ export class ReportsService {
         : 0;
 
       const studentsThisMonth = advisor.students.filter(
-        (s) => new Date(s.enrollmentDate) >= startOfMonth
+        (s) => new Date(s.enrollmentDate) >= periodStart
       ).length;
 
       const revenueThisMonth = advisor.registeredPayments
-        .filter((p) => new Date(p.paymentDate) >= startOfMonth)
+        .filter((p) => new Date(p.paymentDate) >= periodStart)
         .reduce((sum, p) => sum + Number(p.amount), 0);
 
       return {
@@ -468,5 +480,52 @@ export class ReportsService {
       brackets,
       totalOverdue
     };
+  }
+
+  static async getCarteraUserReports(period: ReportPeriod = "month"): Promise<CarteraUserReport[]> {
+    const tenantId = await getCurrentTenantId() as string;
+    const periodStart = getPeriodStartDate(period);
+
+    const carteraUsers = await prisma.user.findMany({
+      where: {
+        tenantId,
+        role: {
+          name: "CARTERA",
+        },
+        isActive: true,
+      },
+      include: {
+        registeredPayments: {
+          select: { amount: true, paymentDate: true },
+        },
+      },
+    });
+
+    return carteraUsers.map((user) => {
+      const totalPaymentsRegistered = user.registeredPayments.length;
+      const totalAmountCollected = user.registeredPayments.reduce(
+        (sum, p) => sum + Number(p.amount),
+        0
+      );
+
+      const periodPayments = user.registeredPayments.filter(
+        (p) => new Date(p.paymentDate) >= periodStart
+      );
+      const paymentsThisPeriod = periodPayments.length;
+      const amountThisPeriod = periodPayments.reduce(
+        (sum, p) => sum + Number(p.amount),
+        0
+      );
+
+      return {
+        userId: user.id,
+        userName: user.name || "Sin nombre",
+        userEmail: user.email,
+        totalPaymentsRegistered,
+        totalAmountCollected,
+        paymentsThisPeriod,
+        amountThisPeriod,
+      };
+    }).sort((a, b) => b.amountThisPeriod - a.amountThisPeriod);
   }
 }

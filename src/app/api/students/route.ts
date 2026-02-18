@@ -6,12 +6,18 @@ import { withTenantAuth, withTenantAuthAndCSRF } from "@/lib/api-auth";
 
 export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) => {
   const searchParams = request.nextUrl.searchParams;
-  
+
+  // VENTAS solo ve sus propias matrículas (server-side enforcement)
+  const isVentas = user.role?.name === "VENTAS";
+  const effectiveAdvisorId = isVentas
+    ? user.id
+    : searchParams.get("advisorId") || undefined;
+
   const filters = {
     search: searchParams.get("search") || undefined,
     status: (searchParams.get("status") as StudentStatus) || undefined,
     programId: searchParams.get("programId") || undefined,
-    advisorId: searchParams.get("advisorId") || undefined,
+    advisorId: effectiveAdvisorId,
     page: Number(searchParams.get("page")) || 1,
     limit: Number(searchParams.get("limit")) || 10,
   };

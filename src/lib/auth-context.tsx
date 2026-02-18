@@ -101,11 +101,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   user?.role?.permissions?.includes("admin:full") || 
                   false;
   
-  const isAdvisor = user?.role?.name === "VENTAS" || 
-                   user?.role?.name === "CARTERA" || 
+  const isVentas = user?.role?.name === "VENTAS";
+  const isAdvisor = isVentas ||
+                   user?.role?.name === "CARTERA" ||
                    (!isAdmin && !isPlatformUser);
 
-  const advisorId = isAdmin ? null : user?.id || null;
+  // Solo VENTAS debe tener advisorId forzado (CARTERA ve todos los datos)
+  const advisorId = isVentas ? (user?.id || null) : null;
 
   return (
     <AuthContext.Provider value={{ 

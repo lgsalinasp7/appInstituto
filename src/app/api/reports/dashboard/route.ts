@@ -4,7 +4,12 @@ import { withTenantAuth } from "@/lib/api-auth";
 
 export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) => {
   const searchParams = request.nextUrl.searchParams;
-  const advisorId = searchParams.get("advisorId") || undefined;
+
+  // VENTAS solo ve sus propias métricas (server-side enforcement)
+  const isVentas = user.role?.name === "VENTAS";
+  const advisorId = isVentas
+    ? user.id
+    : searchParams.get("advisorId") || undefined;
   const programId = searchParams.get("programId") || undefined;
 
   const [stats, revenueChart] = await Promise.all([

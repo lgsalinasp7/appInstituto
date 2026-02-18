@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Search, DollarSign, CheckCircle } from "lucide-react";
 import type { StudentWithRelations } from "@/modules/students/types";
+import { useAdvisorFilter } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -22,13 +23,15 @@ export function StudentPaymentTable({ onSelectStudent }: StudentPaymentTableProp
     const [students, setStudents] = useState<StudentWithRelations[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const { appendToUrl } = useAdvisorFilter();
 
     const fetchStudents = async () => {
         setLoading(true);
         try {
-            const url = searchTerm
+            const baseUrl = searchTerm
                 ? `/api/students?search=${encodeURIComponent(searchTerm)}`
                 : "/api/students?limit=50";
+            const url = appendToUrl(baseUrl);
 
             const res = await fetch(url);
             const data = await res.json();
