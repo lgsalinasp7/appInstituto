@@ -26,7 +26,21 @@ interface InvitationData {
     name: string | null;
     email: string;
   };
+  tenantSlug?: string;
+  tenantName?: string;
   expiresAt: string;
+}
+
+function getTenantLoginUrl(tenantSlug?: string): string {
+  if (!tenantSlug) return "/auth/login";
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "kaledsoft.tech";
+  const isDev =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname.endsWith(".localhost"));
+  return isDev
+    ? `http://${tenantSlug}.localhost:3000/auth/login`
+    : `https://${tenantSlug}.${rootDomain}/auth/login`;
 }
 
 export default function AcceptInvitationPage() {
@@ -98,8 +112,9 @@ export default function AcceptInvitationPage() {
       } else {
         setSuccess(true);
         toast.success("Cuenta creada exitosamente");
+        const loginUrl = getTenantLoginUrl(invitation?.tenantSlug);
         setTimeout(() => {
-          router.push("/auth/login");
+          window.location.href = loginUrl;
         }, 1500);
       }
     } catch {
@@ -134,7 +149,9 @@ export default function AcceptInvitationPage() {
             <p className="mt-2 text-center text-muted-foreground">{error}</p>
             <Button
               className="mt-6"
-              onClick={() => router.push("/auth/login")}
+              onClick={() => {
+                window.location.href = getTenantLoginUrl(invitation?.tenantSlug);
+              }}
             >
               Ir al Login
             </Button>
@@ -157,7 +174,9 @@ export default function AcceptInvitationPage() {
             </p>
             <Button
               className="mt-6"
-              onClick={() => router.push("/auth/login")}
+              onClick={() => {
+                window.location.href = getTenantLoginUrl(invitation?.tenantSlug);
+              }}
             >
               Ir al Login Ahora
             </Button>
@@ -183,6 +202,11 @@ export default function AcceptInvitationPage() {
         <CardContent>
           {invitation && (
             <div className="mb-6 p-4 bg-muted rounded-lg">
+              {invitation.tenantName && (
+                <p className="text-sm">
+                  <span className="font-medium">Institución:</span> {invitation.tenantName}
+                </p>
+              )}
               <p className="text-sm">
                 <span className="font-medium">Email:</span> {invitation.email}
               </p>

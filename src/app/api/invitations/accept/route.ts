@@ -47,6 +47,12 @@ export async function GET(request: Request) {
             email: true,
           },
         },
+        tenant: {
+          select: {
+            slug: true,
+            name: true,
+          },
+        },
       },
     });
 
@@ -87,6 +93,8 @@ export async function GET(request: Request) {
         email: invitation.email,
         role: invitation.role,
         inviter: invitation.inviter,
+        tenantSlug: invitation.tenant?.slug,
+        tenantName: invitation.tenant?.name,
         expiresAt: invitation.expiresAt,
       },
     });

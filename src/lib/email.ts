@@ -30,6 +30,7 @@ interface SendInvitationEmailParams {
   token: string;
   roleName: string;
   inviterName: string;
+  tenantSlug?: string;
 }
 
 interface SendPasswordResetEmailParams {
@@ -55,9 +56,16 @@ export async function sendInvitationEmail({
   token,
   roleName,
   inviterName,
+  tenantSlug,
 }: SendInvitationEmailParams) {
   const resend = getResendClient();
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "kaledsoft.tech";
+  const isDev = process.env.NODE_ENV === "development";
+  const baseUrl = tenantSlug
+    ? isDev
+      ? `http://${tenantSlug}.localhost:3000`
+      : `https://${tenantSlug}.${rootDomain}`
+    : process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
   const inviteUrl = `${baseUrl}/auth/invitation/${token}`;
 
   const { data, error } = await resend.emails.send({

@@ -196,6 +196,12 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
       },
     });
 
+    // Obtener tenant slug para construir el link correcto en el email
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { slug: true },
+    });
+
     // Send invitation email
     try {
       await sendInvitationEmail({
@@ -203,6 +209,7 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
         token,
         roleName: role.name,
         inviterName: inviter.name || inviter.email,
+        tenantSlug: tenant?.slug,
       });
     } catch (emailError) {
       // If email fails, delete the invitation

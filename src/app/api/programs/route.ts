@@ -16,7 +16,7 @@ export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) =
   const searchParams = request.nextUrl.searchParams;
   const includeInactive = searchParams.get("includeInactive") === "true";
 
-  const result = await ProgramService.getPrograms(includeInactive);
+  const result = await ProgramService.getPrograms(includeInactive, tenantId);
 
   return NextResponse.json({
     success: true,
@@ -40,7 +40,7 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
     );
   }
 
-  const program = await ProgramService.createProgram(validationResult.data);
+  const program = await ProgramService.createProgram(validationResult.data, tenantId);
 
   return NextResponse.json({
     success: true,

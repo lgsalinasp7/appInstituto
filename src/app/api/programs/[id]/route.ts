@@ -16,7 +16,7 @@ export const GET = withTenantAuth(async (request, user, tenantId, context) => {
   const { id } = await context!.params;
 
   try {
-    const program = await ProgramService.getProgramById(id);
+    const program = await ProgramService.getProgramById(id, tenantId);
 
     if (!program) {
       return NextResponse.json(
@@ -57,7 +57,7 @@ export const PUT = withTenantAuthAndCSRF(async (request, user, tenantId, context
       );
     }
 
-    const program = await ProgramService.updateProgram(id, validationResult.data);
+    const program = await ProgramService.updateProgram(id, validationResult.data, tenantId);
 
     return NextResponse.json({
       success: true,
@@ -77,7 +77,7 @@ export const DELETE = withTenantAuthAndCSRF(async (request, user, tenantId, cont
   const { id } = await context!.params;
 
   try {
-    await ProgramService.deleteProgram(id);
+    await ProgramService.deleteProgram(id, tenantId);
 
     return NextResponse.json({
       success: true,

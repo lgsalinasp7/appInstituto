@@ -63,7 +63,11 @@ export class AuthService {
    */
   static async createUser(data: RegisterData & { roleId: string; tenantId?: string }) {
     const hashedPassword = await this.hashPassword(data.password);
-    const tenantId = data.tenantId || await getCurrentTenantId() as string;
+    const tenantId = data.tenantId || await getCurrentTenantId();
+
+    if (!tenantId) {
+      throw new Error("No se pudo determinar el tenant para crear el usuario. Asegúrese de acceder desde el subdominio correcto.");
+    }
 
     return prisma.user.create({
       data: {
