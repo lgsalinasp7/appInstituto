@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
 
         const user = await prisma.user.findUnique({
             where: { email },
+            include: { tenant: { select: { slug: true } } },
         });
 
         // For security reasons, we use a generic response if the user doesn't exist
@@ -65,6 +66,7 @@ export async function POST(request: NextRequest) {
             to: email,
             token,
             userName: user.name || undefined,
+            tenantSlug: user.tenant?.slug || undefined,
         });
 
         return NextResponse.json({

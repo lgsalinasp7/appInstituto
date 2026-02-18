@@ -37,6 +37,7 @@ interface SendPasswordResetEmailParams {
   to: string;
   token: string;
   userName?: string;
+  tenantSlug?: string;
 }
 
 interface SendReceiptEmailParams {
@@ -130,9 +131,16 @@ export async function sendPasswordResetEmail({
   to,
   token,
   userName,
+  tenantSlug,
 }: SendPasswordResetEmailParams) {
   const resend = getResendClient();
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "kaledsoft.tech";
+  const isDev = process.env.NODE_ENV === "development";
+  const baseUrl = tenantSlug
+    ? isDev
+      ? `http://${tenantSlug}.localhost:3000`
+      : `https://${tenantSlug}.${rootDomain}`
+    : process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
   const resetUrl = `${baseUrl}/auth/reset-password/${token}`;
 
   const { data, error } = await resend.emails.send({
