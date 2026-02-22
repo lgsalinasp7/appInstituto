@@ -23,6 +23,8 @@ import {
   Palette,
   BarChart3,
   History,
+  Bot,
+  BookOpen,
 } from "lucide-react";
 
 // Const types pattern (typescript skill)
@@ -66,6 +68,9 @@ const sections: NavSection[] = [
   {
     label: "Inteligencia",
     items: [
+      { title: "Agentes IA", href: "/admin/agentes", icon: Bot, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.MARKETING] },
+      { title: "Margy & Kaled", href: "/admin/agentes-kanban", icon: Bot, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.MARKETING] },
+      { title: "Free Tier Reference", href: "/admin/agentes/referencia", icon: BookOpen, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.MARKETING] },
       { title: "Métricas", href: "/admin/metricas", icon: BarChart3, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.MARKETING] },
       { title: "Auditoría", href: "/admin/audit", icon: History, roles: [PLATFORM_ROLES.SUPER_ADMIN] },
     ],

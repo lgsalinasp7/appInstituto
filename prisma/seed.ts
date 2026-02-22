@@ -32,6 +32,10 @@ async function main() {
     console.log("Reiniciando base de datos...");
 
     // Limpiar tablas en orden inverso de dependencias
+    await prisma.aiMessage.deleteMany();
+    await prisma.aiConversation.deleteMany();
+    await prisma.aiUsage.deleteMany();
+    await prisma.aiModel.deleteMany();
     await prisma.receipt.deleteMany();
     await prisma.payment.deleteMany();
     await prisma.paymentCommitment.deleteMany();
@@ -346,6 +350,66 @@ async function main() {
         });
     }
     console.log(`  -> ${prospectsRaw.length} prospectos creados`);
+
+    // ============================================
+    // PASO 9: Crear Modelos de IA
+    // ============================================
+    console.log("Creando modelos de IA...");
+    await prisma.aiModel.create({
+        data: {
+            name: "Gemini 2.0 Flash",
+            provider: "GOOGLE",
+            modelIdentifier: "gemini-2.0-flash",
+            freeTokensLimit: 100000, // 100k tokens gratis por mes
+            inputCostPer1k: 0.0003, // 300 COP per 1M tokens = 0.0003 per 1k
+            outputCostPer1k: 0.0012, // 1,200 COP per 1M tokens = 0.0012 per 1k
+            isActive: true,
+            resetPeriod: "MONTHLY",
+        },
+    });
+    console.log("  -> Gemini 2.0 Flash creado");
+
+    await prisma.aiModel.create({
+        data: {
+            name: "Llama 3.3 70B (Groq)",
+            provider: "GROQ",
+            modelIdentifier: "llama-3.3-70b-versatile",
+            freeTokensLimit: 15000000, // 15M tokens gratis por día
+            inputCostPer1k: 0.0,
+            outputCostPer1k: 0.0,
+            isActive: true,
+            resetPeriod: "DAILY",
+        },
+    });
+    console.log("  -> Llama 3.3 70B (Groq) creado");
+
+    await prisma.aiModel.create({
+        data: {
+            name: "Llama 3.1 8B Instant (Groq Router)",
+            provider: "GROQ",
+            modelIdentifier: "llama-3.1-8b-instant",
+            freeTokensLimit: 15000000,
+            inputCostPer1k: 0.0,
+            outputCostPer1k: 0.0,
+            isActive: true,
+            resetPeriod: "DAILY",
+        },
+    });
+    console.log("  -> Llama 3.1 8B Instant (Router) creado");
+
+    await prisma.aiModel.create({
+        data: {
+            name: "Llama 3.3 70B (OpenRouter)",
+            provider: "OPENROUTER",
+            modelIdentifier: "meta-llama/llama-3.3-70b-instruct",
+            freeTokensLimit: 0,
+            inputCostPer1k: 0.00042, // ~$0.10/1M tokens * 4200 COP/USD
+            outputCostPer1k: 0.00042,
+            isActive: true,
+            resetPeriod: "DAILY",
+        },
+    });
+    console.log("  -> Llama 3.3 70B (OpenRouter) creado");
 
     // ============================================
     // RESUMEN

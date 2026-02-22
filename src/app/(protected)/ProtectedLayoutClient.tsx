@@ -9,6 +9,7 @@ import { useState } from "react";
 import { useBranding } from "@/components/providers/BrandingContext";
 import { cn } from "@/lib/utils";
 import { Search, Bell, HelpCircle, Settings } from "lucide-react";
+import { FloatingChatButton } from "@/components/chat/FloatingChatButton";
 
 export default function ProtectedLayoutClient({
   children,
@@ -118,6 +119,9 @@ export default function ProtectedLayoutClient({
             </div>
           </main>
         </div>
+
+        {/* Agente de IA flotante */}
+        <FloatingChatButton />
       </div>
     </AuthGuard>
   );

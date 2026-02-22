@@ -1,0 +1,111 @@
+{
+  "models": [
+    {
+      "provider": "Google AI Studio",
+      "model": "Gemini 2.5 Flash",
+      "freeTokens": 250000000,
+      "resetPeriod": "MONTHLY",
+      "inputCostPer1M": 0.075,
+      "outputCostPer1M": 0.30,
+      "description": "Modelo multimodal rápido de Google"
+    },
+    {
+      "provider": "Mistral La Plateforme",
+      "model": "Mistral Large / Codestral",
+      "freeTokens": 1000000000,
+      "resetPeriod": "MONTHLY",
+      "inputCostPer1M": 2,
+      "outputCostPer1M": 6,
+      "description": "Modelo de lenguaje grande de Mistral AI"
+    },
+    {
+      "provider": "Groq",
+      "model": "Llama 3.3 70B",
+      "freeTokens": 15000000,
+      "resetPeriod": "DAILY",
+      "inputCostPer1M": 0.05,
+      "outputCostPer1M": 0.08,
+      "description": "Llama 3.3 70B con inferencia ultra-rápida"
+    },
+    {
+      "provider": "Cerebras",
+      "model": "Llama 3.3 70B",
+      "freeTokens": 30000000,
+      "resetPeriod": "DAILY",
+      "inputCostPer1M": 0.1,
+      "outputCostPer1M": 0.1,
+      "description": "Llama 3.3 70B optimizado por Cerebras"
+    },
+    {
+      "provider": "DeepSeek",
+      "model": "DeepSeek-V3",
+      "freeTokens": 5000000,
+      "resetPeriod": "ONCE",
+      "inputCostPer1M": 0.14,
+      "outputCostPer1M": 0.28,
+      "description": "Modelo de razonamiento de DeepSeek"
+    },
+    {
+      "provider": "OpenRouter",
+      "model": "DeepSeek R1 / Llama 405B",
+      "freeTokens": 3000000,
+      "resetPeriod": "DAILY",
+      "inputCostPer1M": 0.2,
+      "outputCostPer1M": 0.2,
+      "description": "Múltiples modelos vía OpenRouter"
+    },
+    {
+      "provider": "Cohere",
+      "model": "Command R+",
+      "freeTokens": 2000000,
+      "resetPeriod": "MONTHLY",
+      "inputCostPer1M": 3,
+      "outputCostPer1M": 15,
+      "description": "Modelo optimizado para RAG de Cohere"
+    }
+  ],
+  "usageProfiles": {
+    "patient_low": {
+      "name": "Paciente/Estudiante (bajo)",
+      "tokensPerMonth": 1600,
+      "conversationsPerMonth": 2,
+      "tokensPerConversation": 800
+    },
+    "patient_medium": {
+      "name": "Paciente/Estudiante (medio)",
+      "tokensPerMonth": 6000,
+      "conversationsPerMonth": 5,
+      "tokensPerConversation": 1200
+    },
+    "professional": {
+      "name": "Profesional (odontólogo/docente)",
+      "tokensPerMonth": 12000,
+      "conversationsPerMonth": 8,
+      "tokensPerConversation": 1500
+    },
+    "admin_power": {
+      "name": "Admin/Power User (secretaria/coordinador)",
+      "tokensPerMonth": 30000,
+      "conversationsPerMonth": 15,
+      "tokensPerConversation": 2000
+    },
+    "office_complete": {
+      "name": "Consultorio completo (3 profesionales + 1 admin)",
+      "tokensPerMonth": 75000,
+      "conversationsPerMonth": 50,
+      "tokensPerConversation": 1500
+    },
+    "institute_small": {
+      "name": "Instituto pequeño (5 docentes + 1 coordinador + 50 estudiantes)",
+      "tokensPerMonth": 120000,
+      "conversationsPerMonth": 100,
+      "tokensPerConversation": 1200
+    },
+    "institute_medium": {
+      "name": "Instituto mediano (10 docentes + 2 admins + 150 estudiantes)",
+      "tokensPerMonth": 360000,
+      "conversationsPerMonth": 300,
+      "tokensPerConversation": 1200
+    }
+  }
+}

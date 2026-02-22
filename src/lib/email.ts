@@ -269,5 +269,29 @@ export async function sendReceiptEmail({
   return data;
 }
 
+/**
+ * Send email with custom HTML template
+ */
+export async function sendTemplateEmail(params: {
+  to: string;
+  subject: string;
+  html: string;
+}): Promise<{ id: string }> {
+  const resend = getResendClient();
+  const { data, error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: params.to,
+    subject: params.subject,
+    html: params.html,
+  });
+
+  if (error) {
+    console.error("Error sending template email:", error);
+    throw new Error(`Failed to send email: ${error.message}`);
+  }
+
+  return data!;
+}
+
 // Export the getter function instead of the client directly
 export { getResendClient };

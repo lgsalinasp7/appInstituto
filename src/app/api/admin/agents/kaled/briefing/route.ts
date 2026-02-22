@@ -1,0 +1,39 @@
+import { NextRequest } from 'next/server';
+import { withTenantAuth } from '@/lib/api-auth';
+import { KaledService } from '@/modules/agents/services/kaled.service';
+import { generateBriefingSchema } from '@/modules/agents/schemas';
+import { ZodError } from 'zod';
+
+export const POST = withTenantAuth(async (req: NextRequest, user, tenantId) => {
+  try {
+    const body = await req.json();
+    const validated = generateBriefingSchema.parse(body);
+
+    const briefing = await KaledService.generateBriefing(
+      validated.prospectId,
+      tenantId,
+      {
+        includeTimeline: validated.includeTimeline,
+        includeAnalytics: validated.includeAnalytics,
+      }
+    );
+
+    return Response.json({
+      success: true,
+      data: briefing,
+    });
+  } catch (error: any) {
+    if (error instanceof ZodError) {
+      return Response.json(
+        { success: false, error: 'Validation error', details: error.issues },
+        { status: 400 }
+      );
+    }
+
+    console.error('Error generating briefing:', error);
+    return Response.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
+  }
+});
