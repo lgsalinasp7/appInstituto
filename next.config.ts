@@ -19,6 +19,18 @@ const nextConfig: NextConfig = {
       "date-fns",
     ],
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'kaledsoft.tech',
+      },
+    ],
+  },
 };
 
 export default nextConfig;

@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Logo } from "@/components/brand";
 import { headers } from "next/headers";
-import LandingPage from "@/components/marketing/LandingPage";
+import { InstitutionalWrapper } from "@/components/marketing/v2/InstitutionalWrapper";
 
 function TenantWelcome() {
   return (
@@ -69,7 +69,7 @@ export default async function HomePage() {
 
     // Tenant no encontrado (slug inválido o eliminado) -> mostrar landing
     if (!tenant) {
-      return <LandingPage />;
+      return <InstitutionalWrapper />;
     }
 
     if (tenant.status === "SUSPENDIDO" || tenant.status === "CANCELADO") {
@@ -80,6 +80,6 @@ export default async function HomePage() {
     return <TenantWelcome />;
   }
 
-  // Otherwise, render the KaledSoft Landing Page
-  return <LandingPage />;
+  // Otherwise, render the KaledSoft Institutional Home
+  return <InstitutionalWrapper />;
 }

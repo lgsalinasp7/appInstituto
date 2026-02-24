@@ -19,9 +19,56 @@ const sora = Sora({
   subsets: ["latin"],
 });
 
+import { LocalBusinessSchema } from "@/components/seo/LocalBusinessSchema";
+
 export const metadata: Metadata = {
-  title: "App Instituto",
-  description: "Sistema de gestión institucional",
+  title: {
+    default: "KaledSoft | Academia de IA y Lab de Software en Colombia",
+    template: "%s | KaledSoft"
+  },
+  description: "Expertos en Desarrollo de Software e Inteligencia Artificial en Montería, la Costa Caribe y Colombia. Formación de élite y soluciones tecnológicas B2B.",
+  keywords: ["Desarrollo de software Montería", "Inteligencia Artificial Colombia", "Software factory Costa Caribe", "Academia de programación Colombia", "Agentes de IA", "KaledSoft"],
+  authors: [{ name: "KaledSoft Team" }],
+  creator: "KaledSoft Technologies",
+  publisher: "KaledSoft Technologies",
+  formatDetection: {
+    email: false,
+    address: true,
+    telephone: true,
+  },
+  openGraph: {
+    type: "website",
+    locale: "es_CO",
+    url: "https://kaledsoft.tech",
+    siteName: "KaledSoft",
+    title: "KaledSoft | Academia de IA y Laboratorio de Software",
+    description: "Liderando la revolución de la IA en la Costa Caribe. Formación avanzada y desarrollo de software de alto impacto.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "KaledSoft Technologies",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "KaledSoft | IA & Software en Colombia",
+    description: "Academia de Inteligencia Artificial y Laboratorio de Ingeniería.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function RootLayout({
@@ -31,6 +78,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning>
+      <head>
+        <LocalBusinessSchema />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${sora.variable} antialiased`}
         suppressHydrationWarning
