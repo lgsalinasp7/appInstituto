@@ -7,10 +7,11 @@ import { startOfDay, endOfDay } from 'date-fns';
 export class AgentTaskService {
   /**
    * Obtener tablero Kanban completo
+   * @param tenantId - ID del tenant o null para tareas de plataforma
    */
-  static async getBoard(tenantId: string): Promise<AgentTaskBoard> {
+  static async getBoard(tenantId: string | null): Promise<AgentTaskBoard> {
     const tasks = await prisma.agentTask.findMany({
-      where: { tenantId },
+      where: tenantId ? { tenantId } : { tenantId: null },
       include: {
         prospect: {
           select: { name: true },
@@ -40,6 +41,7 @@ export class AgentTaskService {
 
   /**
    * Crear tarea de agente
+   * @param tenantId - ID del tenant o null para tareas de plataforma
    */
   static async createTask(
     data: {
@@ -50,7 +52,7 @@ export class AgentTaskService {
       prospectId?: string;
       metadata?: Record<string, unknown>;
     },
-    tenantId: string
+    tenantId: string | null
   ): Promise<AgentTask> {
     return prisma.agentTask.create({
       data: {
@@ -60,7 +62,7 @@ export class AgentTaskService {
         priority: data.priority,
         prospectId: data.prospectId,
         metadata: (data.metadata as any) || undefined,
-        tenantId,
+        tenantId: tenantId || undefined,
       },
     });
   }
@@ -78,7 +80,7 @@ export class AgentTaskService {
       result?: string;
       metadata?: Record<string, unknown>;
     },
-    tenantId: string
+    tenantId: string | null
   ): Promise<AgentTask> {
     const updateData: any = {};
 
@@ -95,7 +97,10 @@ export class AgentTaskService {
     }
 
     return prisma.agentTask.update({
-      where: { id: taskId, tenantId },
+      where: {
+        id: taskId,
+        ...(tenantId ? { tenantId } : { tenantId: null })
+      },
       data: updateData,
     });
   }
@@ -103,18 +108,24 @@ export class AgentTaskService {
   /**
    * Eliminar tarea
    */
-  static async deleteTask(taskId: string, tenantId: string): Promise<void> {
+  static async deleteTask(taskId: string, tenantId: string | null): Promise<void> {
     await prisma.agentTask.delete({
-      where: { id: taskId, tenantId },
+      where: {
+        id: taskId,
+        ...(tenantId ? { tenantId } : { tenantId: null })
+      },
     });
   }
 
   /**
    * Obtener tarea por ID
    */
-  static async getById(taskId: string, tenantId: string): Promise<AgentTask | null> {
+  static async getById(taskId: string, tenantId: string | null): Promise<AgentTask | null> {
     return prisma.agentTask.findFirst({
-      where: { id: taskId, tenantId },
+      where: {
+        id: taskId,
+        ...(tenantId ? { tenantId } : { tenantId: null })
+      },
       include: {
         prospect: true,
       },
@@ -124,9 +135,12 @@ export class AgentTaskService {
   /**
    * Obtener tareas por agente
    */
-  static async getByAgent(agentType: AgentType, tenantId: string): Promise<AgentTask[]> {
+  static async getByAgent(agentType: AgentType, tenantId: string | null): Promise<AgentTask[]> {
     return prisma.agentTask.findMany({
-      where: { agentType, tenantId },
+      where: {
+        agentType,
+        ...(tenantId ? { tenantId } : { tenantId: null })
+      },
       include: {
         prospect: {
           select: { name: true },
@@ -142,11 +156,11 @@ export class AgentTaskService {
   /**
    * Obtener tareas pendientes de un prospect
    */
-  static async getPendingByProspect(prospectId: string, tenantId: string): Promise<AgentTask[]> {
+  static async getPendingByProspect(prospectId: string, tenantId: string | null): Promise<AgentTask[]> {
     return prisma.agentTask.findMany({
       where: {
         prospectId,
-        tenantId,
+        ...(tenantId ? { tenantId } : { tenantId: null }),
         status: { in: ['PENDIENTE', 'EN_PROCESO'] },
       },
       orderBy: { createdAt: 'desc' },
@@ -156,20 +170,22 @@ export class AgentTaskService {
   /**
    * Calcular estadísticas de agentes
    */
-  private static async calculateStats(tenantId: string): Promise<AgentStats> {
+  private static async calculateStats(tenantId: string | null): Promise<AgentStats> {
     const today = new Date();
     const startOfToday = startOfDay(today);
     const endOfToday = endOfDay(today);
 
+    const tenantFilter = tenantId ? { tenantId } : { tenantId: null };
+
     // Stats de Margy
     const margyTasks = await prisma.agentTask.findMany({
-      where: { agentType: 'MARGY', tenantId },
+      where: { agentType: 'MARGY', ...tenantFilter },
     });
 
     const margyCompletedToday = await prisma.agentTask.count({
       where: {
         agentType: 'MARGY',
-        tenantId,
+        ...tenantFilter,
         status: 'COMPLETADA',
         completedAt: {
           gte: startOfToday,
@@ -182,13 +198,13 @@ export class AgentTaskService {
 
     // Stats de Kaled
     const kaledTasks = await prisma.agentTask.findMany({
-      where: { agentType: 'KALED', tenantId },
+      where: { agentType: 'KALED', ...tenantFilter },
     });
 
     const kaledCompletedToday = await prisma.agentTask.count({
       where: {
         agentType: 'KALED',
-        tenantId,
+        ...tenantFilter,
         status: 'COMPLETADA',
         completedAt: {
           gte: startOfToday,
@@ -264,23 +280,30 @@ export class AgentTaskService {
     return Math.round((completed / tasks.length) * 100);
   }
 
-  private static async countLeadsQualifiedByMargy(tenantId: string): Promise<number> {
+  private static async countLeadsQualifiedByMargy(tenantId: string | null): Promise<number> {
     // Contar prospects que fueron movidos de NUEVO a INTERESADO o superior
     // (simplificado - en producción usar interacciones)
-    return prisma.prospect.count({
-      where: {
-        tenantId,
-        funnelStage: { notIn: ['NUEVO', 'PERDIDO'] },
-      },
-    });
+    // Para plataforma (tenantId=null), contar todos los prospects
+    const where: any = {
+      funnelStage: { notIn: ['NUEVO', 'PERDIDO'] },
+    };
+
+    if (tenantId) {
+      where.tenantId = tenantId;
+    }
+
+    return prisma.prospect.count({ where });
   }
 
-  private static async countMessagesSentByMargy(tenantId: string): Promise<number> {
-    return prisma.whatsAppMessage.count({
-      where: {
-        tenantId,
-        direction: 'OUTBOUND',
-      },
-    });
+  private static async countMessagesSentByMargy(tenantId: string | null): Promise<number> {
+    const where: any = {
+      direction: 'OUTBOUND',
+    };
+
+    if (tenantId) {
+      where.tenantId = tenantId;
+    }
+
+    return prisma.whatsAppMessage.count({ where });
   }
 }

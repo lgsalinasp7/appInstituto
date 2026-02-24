@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Brain, TrendingUp, TrendingDown } from 'lucide-react';
+import { tenantFetch } from '@/lib/tenant-fetch';
 import type { AgentMemoryItem } from '@/modules/agents/types';
 
 export function AgentMemoryManager() {
@@ -18,8 +19,8 @@ export function AgentMemoryManager() {
   const fetchMemories = async () => {
     try {
       const [margyRes, kaledRes] = await Promise.all([
-        fetch('/api/admin/agents/memories?agentType=MARGY'),
-        fetch('/api/admin/agents/memories?agentType=KALED'),
+        tenantFetch('/api/admin/agents/memories?agentType=MARGY'),
+        tenantFetch('/api/admin/agents/memories?agentType=KALED'),
       ]);
 
       const margyData = await margyRes.json();

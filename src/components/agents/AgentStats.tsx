@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot, CheckCircle2, Clock, TrendingUp } from 'lucide-react';
+import { tenantFetch } from '@/lib/tenant-fetch';
 import type { AgentStats as AgentStatsType } from '@/modules/agents/types';
 
 export function AgentStats() {
@@ -15,7 +16,7 @@ export function AgentStats() {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch('/api/admin/agents/board');
+      const res = await tenantFetch('/api/admin/agents/board');
       const data = await res.json();
       if (data.success) {
         setStats(data.data.stats);

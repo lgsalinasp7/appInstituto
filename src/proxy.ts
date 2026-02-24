@@ -41,6 +41,15 @@ export default async function proxy(req: NextRequest) {
 
     // CONTEXTO: ADMIN
     if (context === 'admin') {
+        // Compatibilidad: esta vista ahora vive en /admin/campanas
+        if (pathname === '/campanas') {
+            return NextResponse.redirect(new URL('/admin/campanas', req.url));
+        }
+        // Compatibilidad: esta vista ahora vive en /admin/agentes-comerciales
+        if (pathname === '/agentes-comerciales') {
+            return NextResponse.redirect(new URL('/admin/agentes-comerciales', req.url));
+        }
+
         // Rutas que no requieren autenticación
         const publicAdminPaths = ['/login', '/forgot-password', '/reset-password', '/api-docs', '/api/openapi'];
         const isPublicPath = publicAdminPaths.some(path => pathname.startsWith(path));

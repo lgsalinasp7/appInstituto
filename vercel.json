@@ -1,6 +1,8 @@
 {
   "crons": [
     {"path": "/api/cron/notifications", "schedule": "0 9 * * *"},
-    {"path": "/api/cron/process-subscriptions", "schedule": "0 0 * * *"}
+    {"path": "/api/cron/process-subscriptions", "schedule": "0 0 * * *"},
+    {"path": "/api/cron/reports/daily", "schedule": "0 9 * * *"},
+    {"path": "/api/cron/reports/weekly", "schedule": "0 9 * * 1"}
   ]
 }

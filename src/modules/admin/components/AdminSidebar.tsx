@@ -20,6 +20,7 @@ import {
   Users,
   CreditCard,
   Target,
+  Megaphone,
   Palette,
   BarChart3,
   History,
@@ -56,6 +57,7 @@ const sections: NavSection[] = [
       { title: "Empresas", href: "/admin/empresas", icon: Building2, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.ASESOR_COMERCIAL] },
       { title: "Suscripciones", href: "/admin/suscripciones", icon: CreditCard, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.ASESOR_COMERCIAL] },
       { title: "Leads", href: "/admin/leads", icon: Target, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.ASESOR_COMERCIAL] },
+      { title: "Campañas", href: "/admin/campanas", icon: Megaphone, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.ASESOR_COMERCIAL, PLATFORM_ROLES.MARKETING] },
     ],
   },
   {
@@ -68,6 +70,7 @@ const sections: NavSection[] = [
   {
     label: "Inteligencia",
     items: [
+      { title: "Agentes Comerciales", href: "/admin/agentes-comerciales", icon: Bot, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.MARKETING] },
       { title: "Agentes IA", href: "/admin/agentes", icon: Bot, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.MARKETING] },
       { title: "Margy & Kaled", href: "/admin/agentes-kanban", icon: Bot, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.MARKETING] },
       { title: "Free Tier Reference", href: "/admin/agentes/referencia", icon: BookOpen, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.MARKETING] },
@@ -137,6 +140,7 @@ export function AdminSidebar() {
                     <Link
                       key={item.href}
                       href={item.href}
+                      prefetch={false}
                       className={cn(
                         "group relative flex items-center justify-start gap-3 rounded-xl px-2 py-1.5 text-sm font-medium transition-all duration-300",
                         isActive

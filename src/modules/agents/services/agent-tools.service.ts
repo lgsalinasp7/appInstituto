@@ -17,7 +17,7 @@ export class AgentToolsService {
     // @ts-ignore - AI SDK v6 type inference limitation
     return tool({
       description: 'Obtiene información completa de un prospect por su ID',
-      parameters: z.object({
+      inputSchema: z.object({
         prospectId: z.string().describe('ID del prospect'),
       }),
       execute: async ({ prospectId }) => {
@@ -66,7 +66,7 @@ export class AgentToolsService {
     // @ts-ignore - AI SDK v6 type inference limitation
     return tool({
       description: 'Mueve un prospect a una nueva etapa del funnel',
-      parameters: z.object({
+      inputSchema: z.object({
         prospectId: z.string().describe('ID del prospect'),
         newStage: z.enum([
           'NUEVO', 'CONTACTADO', 'INTERESADO',
@@ -94,17 +94,29 @@ export class AgentToolsService {
     // @ts-ignore - AI SDK v6 type inference limitation
     return tool({
       description: 'Actualiza la temperatura de un lead (FRIO, TIBIO, CALIENTE)',
-      parameters: z.object({
-        prospectId: z.string().describe('ID del prospect'),
-        temperature: z.enum(['FRIO', 'TIBIO', 'CALIENTE']).describe('Nueva temperatura'),
+      inputSchema: z.object({
+        prospectId: z.string().optional().describe('ID del prospect'),
+        lead_id: z.string().optional().describe('Alias de prospectId en snake_case'),
+        temperature: z.enum(['FRIO', 'TIBIO', 'CALIENTE']).optional().describe('Nueva temperatura'),
+        newTemperature: z.enum(['FRIO', 'TIBIO', 'CALIENTE']).optional().describe('Alias de temperature'),
       }),
-      execute: async ({ prospectId, temperature }) => {
+      execute: async ({ prospectId, lead_id, temperature, newTemperature }) => {
         try {
+          const normalizedProspectId = prospectId || lead_id;
+          const normalizedTemperature = temperature || newTemperature;
+
+          if (!normalizedProspectId || !normalizedTemperature) {
+            return {
+              success: false,
+              error: 'prospectId/lead_id y temperature/newTemperature son requeridos',
+            };
+          }
+
           await prisma.prospect.update({
-            where: { id: prospectId, tenantId },
-            data: { temperature: temperature as any },
+            where: { id: normalizedProspectId, tenantId },
+            data: { temperature: normalizedTemperature as any },
           });
-          return { success: true, message: `Temperatura actualizada a ${temperature}` };
+          return { success: true, message: `Temperatura actualizada a ${normalizedTemperature}` };
         } catch (error: any) {
           return { success: false, error: error.message };
         }
@@ -119,7 +131,7 @@ export class AgentToolsService {
     // @ts-ignore - AI SDK v6 type inference limitation
     return tool({
       description: 'Envía un mensaje de WhatsApp a un prospect',
-      parameters: z.object({
+      inputSchema: z.object({
         prospectId: z.string().describe('ID del prospect'),
         message: z.string().describe('Mensaje a enviar'),
       }),
@@ -155,7 +167,7 @@ export class AgentToolsService {
     // @ts-ignore - AI SDK v6 type inference limitation
     return tool({
       description: 'Crea una tarea de seguimiento en el Kanban',
-      parameters: z.object({
+      inputSchema: z.object({
         title: z.string().describe('Título de la tarea'),
         description: z.string().describe('Descripción detallada'),
         prospectId: z.string().optional().describe('ID del prospect relacionado'),
@@ -189,7 +201,7 @@ export class AgentToolsService {
     // @ts-ignore - AI SDK v6 type inference limitation
     return tool({
       description: 'Guarda una memoria, estrategia o lección aprendida para mejorar en el futuro',
-      parameters: z.object({
+      inputSchema: z.object({
         category: z.string().describe('Categoría: estrategia, leccion, patron_conversion, manejo_objeciones, etc.'),
         content: z.string().describe('Contenido de la memoria o lección'),
         score: z.number().int().min(0).max(100).default(50).describe('Score inicial (0-100)'),
@@ -221,7 +233,7 @@ export class AgentToolsService {
     // @ts-ignore - AI SDK v6 type inference limitation
     return tool({
       description: 'Dispara una secuencia de emails automatizada para un prospect',
-      parameters: z.object({
+      inputSchema: z.object({
         prospectId: z.string().describe('ID del prospect'),
       }),
       execute: async ({ prospectId }) => {
@@ -251,7 +263,7 @@ export class AgentToolsService {
     // @ts-ignore - AI SDK v6 type inference limitation
     return tool({
       description: 'Programa una fecha de seguimiento para un prospect',
-      parameters: z.object({
+      inputSchema: z.object({
         prospectId: z.string().describe('ID del prospect'),
         daysFromNow: z.number().int().min(1).max(30).describe('Días desde hoy para el seguimiento'),
         notes: z.string().optional().describe('Notas sobre el seguimiento'),

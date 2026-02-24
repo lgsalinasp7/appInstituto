@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, User, Clock } from 'lucide-react';
 import { AgentTaskCard } from './AgentTaskCard';
 import { CreateTaskModal } from './CreateTaskModal';
+import { tenantFetch } from '@/lib/tenant-fetch';
 import type { AgentTaskBoard } from '@/modules/agents/types';
 
 const STATUS_LABELS = {
@@ -20,6 +21,7 @@ export function AgentKanbanBoard() {
   const [board, setBoard] = useState<AgentTaskBoard | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchBoard();
@@ -27,13 +29,27 @@ export function AgentKanbanBoard() {
 
   const fetchBoard = async () => {
     try {
-      const res = await fetch('/api/admin/agents/board');
+      setError(null);
+      const res = await tenantFetch('/api/admin/agents/board');
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          setError('No se pudo determinar el tenant. Por favor, usa un subdomain (ej: edutec.localhost:3000) o verifica tu sesión.');
+        } else {
+          setError('Error al cargar el tablero');
+        }
+        return;
+      }
+
       const data = await res.json();
       if (data.success) {
         setBoard(data.data);
+      } else {
+        setError(data.error || 'Error al cargar el tablero');
       }
     } catch (error) {
       console.error('Error fetching board:', error);
+      setError('Error de conexión al cargar el tablero');
     } finally {
       setIsLoading(false);
     }
@@ -48,6 +64,17 @@ export function AgentKanbanBoard() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-muted-foreground">Cargando tablero...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+        <div className="text-destructive font-medium">{error}</div>
+        <Button onClick={fetchBoard} variant="outline">
+          Reintentar
+        </Button>
       </div>
     );
   }

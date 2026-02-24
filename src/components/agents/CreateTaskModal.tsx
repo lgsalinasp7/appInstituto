@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { tenantFetch } from '@/lib/tenant-fetch';
 
 interface CreateTaskModalProps {
   open: boolean;
@@ -40,7 +41,7 @@ export function CreateTaskModal({ open, onClose, onSuccess }: CreateTaskModalPro
     setIsSubmitting(true);
 
     try {
-      const res = await fetch('/api/admin/agents/tasks', {
+      const res = await tenantFetch('/api/admin/agents/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

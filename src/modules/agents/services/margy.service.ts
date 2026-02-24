@@ -1,6 +1,7 @@
 import { streamText, generateText } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { groq } from '@ai-sdk/groq';
 import { AgentToolsService } from './agent-tools.service';
 import { AgentMemoryService } from './agent-memory.service';
 import { AgentTaskService } from './agent-task.service';
@@ -14,6 +15,10 @@ const anthropic = createAnthropic({
 const google = createGoogleGenerativeAI({
   apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
 });
+
+const hasGroqKey = Boolean(process.env.GROQ_API_KEY?.trim());
+const hasAnthropicKey = Boolean(process.env.ANTHROPIC_API_KEY?.trim());
+const hasGoogleKey = Boolean(process.env.GOOGLE_GENERATIVE_AI_API_KEY?.trim());
 
 export class MargyService {
   /**
@@ -90,8 +95,15 @@ ${memorySection}
     message: string,
     history: AgentChatMessage[],
     tenantId: string,
-    prospectId?: string
+    prospectId?: string,
+    onFinish?: (result: { text: string; usage?: { inputTokens?: number; outputTokens?: number }; model: string }) => Promise<void>
   ) {
+    if (!hasGroqKey && !hasAnthropicKey && !hasGoogleKey) {
+      throw new Error(
+        'No hay proveedor IA configurado para Margy. Configure GROQ_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY o ANTHROPIC_API_KEY.'
+      );
+    }
+
     const systemPrompt = await this.getSystemPrompt(tenantId);
     const tools = AgentToolsService.getMargyTools(tenantId);
 
@@ -123,31 +135,65 @@ ${memorySection}
       }
     }
 
-    try {
-      // Intentar con Claude primero
-      const result = await streamText({
-        model: anthropic('claude-sonnet-4-5-20250929'),
-        system: systemPrompt + contextMessage,
-        messages: history.concat([{ role: 'user', content: message }]),
-        tools,
-        maxOutputTokens: 2000,
-      });
+    if (hasGroqKey) {
+      try {
+        const result = await streamText({
+          model: groq('llama-3.3-70b-versatile'),
+          system: systemPrompt + contextMessage,
+          messages: history.concat([{ role: 'user', content: message }]),
+          // Groq presenta fallos intermitentes con function-calling en este flujo.
+          // En fallback priorizamos respuesta estable sin tools.
+          maxOutputTokens: 2000,
+          onFinish: onFinish
+            ? async ({ text, usage }) => {
+                await onFinish({ text, usage, model: 'llama-3.3-70b-versatile' });
+              }
+            : undefined,
+        });
 
-      return result;
-    } catch (error: any) {
-      console.error('Error with Claude, falling back to Gemini:', error);
+        return result;
+      } catch (error: any) {
+        console.error('Error with Groq, trying fallback provider:', error);
+      }
+    }
 
-      // Fallback a Gemini
+    if (hasGoogleKey) {
       const result = await streamText({
         model: google('gemini-2.0-flash-001'),
         system: systemPrompt + contextMessage,
         messages: history.concat([{ role: 'user', content: message }]),
         tools,
         maxOutputTokens: 2000,
+        onFinish: onFinish
+          ? async ({ text, usage }) => {
+              await onFinish({ text, usage, model: 'gemini-2.0-flash-001' });
+            }
+          : undefined,
       });
 
       return result;
     }
+
+    if (!hasAnthropicKey) {
+      throw new Error(
+        'Groq no disponible y no hay claves de fallback (GOOGLE_GENERATIVE_AI_API_KEY/ANTHROPIC_API_KEY)'
+      );
+    }
+
+    const result = await streamText({
+      model: anthropic('claude-sonnet-4-5-20250929'),
+      system: systemPrompt + contextMessage,
+      messages: history.concat([{ role: 'user', content: message }]),
+      tools,
+      maxOutputTokens: 2000,
+      onFinish: onFinish
+        ? async ({ text, usage }) => {
+            await onFinish({ text, usage, model: 'claude-sonnet-4-5-20250929' });
+          }
+        : undefined,
+    });
+
+    return result;
   }
 
   /**
@@ -158,6 +204,12 @@ ${memorySection}
     incomingMessage: string,
     tenantId: string
   ): Promise<string> {
+    if (!hasGroqKey && !hasAnthropicKey && !hasGoogleKey) {
+      throw new Error(
+        'No hay proveedor IA configurado para Margy. Configure GROQ_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY o ANTHROPIC_API_KEY.'
+      );
+    }
+
     const systemPrompt = await this.getSystemPrompt(tenantId);
     const tools = AgentToolsService.getMargyTools(tenantId);
 
@@ -200,21 +252,22 @@ INSTRUCCIÓN: Responde al mensaje del prospect. Usa las herramientas disponibles
 Responde de forma natural y concisa (máximo 2-3 mensajes cortos estilo WhatsApp).
 `;
 
-    try {
-      // Intentar con Claude
-      const result = await generateText({
-        model: anthropic('claude-sonnet-4-5-20250929'),
-        system: systemPrompt + contextMessage,
-        messages: history.concat([{ role: 'user', content: incomingMessage }]),
-        tools,
-        maxOutputTokens: 1500,
-      });
+    if (hasGroqKey) {
+      try {
+        const result = await generateText({
+          model: groq('llama-3.3-70b-versatile'),
+          system: systemPrompt + contextMessage,
+          messages: history.concat([{ role: 'user', content: incomingMessage }]),
+          // Groq fallback sin tools para evitar errores de function-calling.
+          maxOutputTokens: 1500,
+        });
+        return result.text;
+      } catch (error: any) {
+        console.error('Error with Groq, trying fallback provider:', error);
+      }
+    }
 
-      return result.text;
-    } catch (error: any) {
-      console.error('Error with Claude, falling back to Gemini:', error);
-
-      // Fallback a Gemini
+    if (hasGoogleKey) {
       const result = await generateText({
         model: google('gemini-2.0-flash-001'),
         system: systemPrompt + contextMessage,
@@ -222,9 +275,24 @@ Responde de forma natural y concisa (máximo 2-3 mensajes cortos estilo WhatsApp
         tools,
         maxOutputTokens: 1500,
       });
-
       return result.text;
     }
+
+    if (!hasAnthropicKey) {
+      throw new Error(
+        'Groq no disponible y no hay claves de fallback (GOOGLE_GENERATIVE_AI_API_KEY/ANTHROPIC_API_KEY)'
+      );
+    }
+
+    const result = await generateText({
+      model: anthropic('claude-sonnet-4-5-20250929'),
+      system: systemPrompt + contextMessage,
+      messages: history.concat([{ role: 'user', content: incomingMessage }]),
+      tools,
+      maxOutputTokens: 1500,
+    });
+
+    return result.text;
   }
 
   /**
@@ -236,6 +304,12 @@ Responde de forma natural y concisa (máximo 2-3 mensajes cortos estilo WhatsApp
     reasoning: string;
     nextActions: string[];
   }> {
+    if (!hasGroqKey && !hasAnthropicKey && !hasGoogleKey) {
+      throw new Error(
+        'No hay proveedor IA configurado para calificar leads. Configure GROQ_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY o ANTHROPIC_API_KEY.'
+      );
+    }
+
     const prospect = await prisma.prospect.findFirst({
       where: { id: prospectId, tenantId },
       include: {
@@ -277,11 +351,23 @@ Responde en formato JSON:
 }`;
 
     try {
-      const result = await generateText({
-        model: anthropic('claude-sonnet-4-5-20250929'),
-        prompt,
-        maxOutputTokens: 500,
-      });
+      const result = hasGroqKey
+        ? await generateText({
+            model: groq('llama-3.3-70b-versatile'),
+            prompt,
+            maxOutputTokens: 500,
+          })
+        : hasGoogleKey
+        ? await generateText({
+            model: google('gemini-2.0-flash-001'),
+            prompt,
+            maxOutputTokens: 500,
+          })
+        : await generateText({
+            model: anthropic('claude-sonnet-4-5-20250929'),
+            prompt,
+            maxOutputTokens: 500,
+          });
 
       return JSON.parse(result.text);
     } catch (error: any) {

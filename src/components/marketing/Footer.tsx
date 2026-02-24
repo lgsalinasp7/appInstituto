@@ -19,26 +19,26 @@ export function Footer() {
                             Empoderando el futuro a través de tecnología de punta y educación especializada en Inteligencia Artificial.
                         </p>
                         <div className="flex gap-4">
-                            <Link href="https://linkedin.com/company/kaledsoft" target="_blank" rel="noopener noreferrer">
-                                <Button size="icon" variant="ghost" className="hover:text-cyan-400 hover:bg-white/5 transition-[background-color,color] duration-300">
+                            <Button asChild size="icon" variant="ghost" className="hover:text-cyan-400 hover:bg-white/5 transition-[background-color,color] duration-300">
+                                <Link href="https://linkedin.com/company/kaledsoft" target="_blank" rel="noopener noreferrer">
                                     <Linkedin className="w-5 h-5" />
-                                </Button>
-                            </Link>
-                            <Link href="https://twitter.com/kaledsoft" target="_blank" rel="noopener noreferrer">
-                                <Button size="icon" variant="ghost" className="hover:text-cyan-400 hover:bg-white/5 transition-[background-color,color] duration-300">
+                                </Link>
+                            </Button>
+                            <Button asChild size="icon" variant="ghost" className="hover:text-cyan-400 hover:bg-white/5 transition-[background-color,color] duration-300">
+                                <Link href="https://twitter.com/kaledsoft" target="_blank" rel="noopener noreferrer">
                                     <Twitter className="w-5 h-5" />
-                                </Button>
-                            </Link>
-                            <Link href="https://instagram.com/kaledsoft" target="_blank" rel="noopener noreferrer">
-                                <Button size="icon" variant="ghost" className="hover:text-cyan-400 hover:bg-white/5 transition-[background-color,color] duration-300">
+                                </Link>
+                            </Button>
+                            <Button asChild size="icon" variant="ghost" className="hover:text-cyan-400 hover:bg-white/5 transition-[background-color,color] duration-300">
+                                <Link href="https://instagram.com/kaledsoft" target="_blank" rel="noopener noreferrer">
                                     <Instagram className="w-5 h-5" />
-                                </Button>
-                            </Link>
-                            <Link href="https://facebook.com/kaledsoft" target="_blank" rel="noopener noreferrer">
-                                <Button size="icon" variant="ghost" className="hover:text-cyan-400 hover:bg-white/5 transition-[background-color,color] duration-300">
+                                </Link>
+                            </Button>
+                            <Button asChild size="icon" variant="ghost" className="hover:text-cyan-400 hover:bg-white/5 transition-[background-color,color] duration-300">
+                                <Link href="https://facebook.com/kaledsoft" target="_blank" rel="noopener noreferrer">
                                     <Facebook className="w-5 h-5" />
-                                </Button>
-                            </Link>
+                                </Link>
+                            </Button>
                         </div>
                     </div>
 
@@ -94,7 +94,9 @@ export function Footer() {
                 </div>
 
                 <div className="border-t border-white/10 pt-8 text-center text-gray-500 text-sm">
-                    <p>&copy; {new Date().getFullYear()} KaledSoft Technologies. Todos los derechos reservados.</p>
+                    <p>
+                        &copy; <span suppressHydrationWarning>{new Date().getFullYear()}</span> KaledSoft Technologies. Todos los derechos reservados.
+                    </p>
                 </div>
             </div>
         </footer>

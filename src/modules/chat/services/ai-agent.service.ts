@@ -278,6 +278,11 @@ export class AiAgentService {
           conversationId: true,
           conversation: {
             select: {
+              user: {
+                select: {
+                  tenantId: true,
+                },
+              },
               tenant: {
                 select: {
                   name: true,
@@ -301,10 +306,24 @@ export class AiAgentService {
     );
 
     const logs: UsageLog[] = messages.map((msg) => ({
+      // Si la conversación pertenece a un usuario de plataforma (user.tenantId null),
+      // se etiqueta como consumo de KaledSoft en vez de tenant operativo.
+      ...(msg.conversation.user?.tenantId == null
+        ? {
+            tenantName: "KaledSoft (Plataforma)",
+            tenantSlug: "kaledsoft",
+          }
+        : msg.conversation.tenant
+        ? {
+            tenantName: msg.conversation.tenant.name,
+            tenantSlug: msg.conversation.tenant.slug,
+          }
+        : {
+            tenantName: "KaledSoft (Plataforma)",
+            tenantSlug: "kaledsoft",
+          }),
       id: msg.id,
       timestamp: msg.createdAt,
-      tenantName: msg.conversation.tenant?.name || null,
-      tenantSlug: msg.conversation.tenant?.slug || null,
       model: msg.modelUsed || "unknown",
       modelName: modelNameMap.get(msg.modelUsed || "") || msg.modelUsed || "Unknown",
       inputTokens: msg.inputTokens || 0,
@@ -341,6 +360,11 @@ export class AiAgentService {
         costInCents: true,
         conversation: {
           select: {
+            user: {
+              select: {
+                tenantId: true,
+              },
+            },
             tenant: {
               select: {
                 id: true,
@@ -360,12 +384,19 @@ export class AiAgentService {
     >();
 
     messages.forEach((msg) => {
+      const isPlatformUsage = msg.conversation.user?.tenantId == null;
       const tenant = msg.conversation.tenant;
-      if (!tenant) return;
+      const tenantKey = isPlatformUsage ? "platform" : (tenant?.id || "unknown-tenant");
+      const tenantName = isPlatformUsage
+        ? "KaledSoft (Plataforma)"
+        : (tenant?.name || "Tenant desconocido");
+      const tenantSlug = isPlatformUsage
+        ? "kaledsoft"
+        : (tenant?.slug || "unknown");
 
-      const existing = tenantsMap.get(tenant.id) || {
-        name: tenant.name,
-        slug: tenant.slug,
+      const existing = tenantsMap.get(tenantKey) || {
+        name: tenantName,
+        slug: tenantSlug,
         tokens: 0,
         messages: 0,
         cost: 0,
@@ -375,7 +406,7 @@ export class AiAgentService {
       existing.messages += 1;
       existing.cost += (msg.costInCents || 0) / 100;
 
-      tenantsMap.set(tenant.id, existing);
+      tenantsMap.set(tenantKey, existing);
     });
 
     // Calculate total for percentages

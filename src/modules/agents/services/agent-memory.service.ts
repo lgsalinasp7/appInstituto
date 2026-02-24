@@ -5,6 +5,7 @@ import type { AgentMemoryItem, AgentMemoryContext } from '../types';
 export class AgentMemoryService {
   /**
    * Crear memoria
+   * @param tenantId - ID del tenant o null para memorias de plataforma
    */
   static async create(
     data: {
@@ -14,7 +15,7 @@ export class AgentMemoryService {
       score?: number;
       metadata?: Record<string, unknown>;
     },
-    tenantId: string
+    tenantId: string | null
   ): Promise<AgentMemory> {
     return prisma.agentMemory.create({
       data: {
@@ -23,7 +24,7 @@ export class AgentMemoryService {
         content: data.content,
         score: data.score || 50,
         metadata: (data.metadata as any) || undefined,
-        tenantId,
+        tenantId: tenantId || undefined,
       },
     });
   }
@@ -38,7 +39,7 @@ export class AgentMemoryService {
       content?: string;
       metadata?: Record<string, unknown>;
     },
-    tenantId: string
+    tenantId: string | null
   ): Promise<AgentMemory> {
     const updateData: any = {};
     if (data.score !== undefined) updateData.score = data.score;
@@ -46,7 +47,10 @@ export class AgentMemoryService {
     if (data.metadata !== undefined) updateData.metadata = data.metadata as any;
 
     return prisma.agentMemory.update({
-      where: { id: memoryId, tenantId },
+      where: {
+        id: memoryId,
+        ...(tenantId ? { tenantId } : { tenantId: null })
+      },
       data: updateData,
     });
   }
@@ -54,9 +58,12 @@ export class AgentMemoryService {
   /**
    * Obtener todas las memorias de un agente
    */
-  static async getByAgent(agentType: AgentType, tenantId: string): Promise<AgentMemoryItem[]> {
+  static async getByAgent(agentType: AgentType, tenantId: string | null): Promise<AgentMemoryItem[]> {
     const memories = await prisma.agentMemory.findMany({
-      where: { agentType, tenantId },
+      where: {
+        agentType,
+        ...(tenantId ? { tenantId } : { tenantId: null })
+      },
       orderBy: [
         { score: 'desc' },
         { createdAt: 'desc' },
@@ -72,10 +79,14 @@ export class AgentMemoryService {
   static async getByCategory(
     agentType: AgentType,
     category: string,
-    tenantId: string
+    tenantId: string | null
   ): Promise<AgentMemoryItem[]> {
     const memories = await prisma.agentMemory.findMany({
-      where: { agentType, category, tenantId },
+      where: {
+        agentType,
+        category,
+        ...(tenantId ? { tenantId } : { tenantId: null })
+      },
       orderBy: { score: 'desc' },
     });
 
@@ -87,11 +98,14 @@ export class AgentMemoryService {
    */
   static async getTopMemories(
     agentType: AgentType,
-    tenantId: string,
+    tenantId: string | null,
     limit: number = 10
   ): Promise<AgentMemoryItem[]> {
     const memories = await prisma.agentMemory.findMany({
-      where: { agentType, tenantId },
+      where: {
+        agentType,
+        ...(tenantId ? { tenantId } : { tenantId: null })
+      },
       orderBy: { score: 'desc' },
       take: limit,
     });
@@ -104,7 +118,7 @@ export class AgentMemoryService {
    */
   static async getMemoryContext(
     agentType: AgentType,
-    tenantId: string
+    tenantId: string | null
   ): Promise<AgentMemoryContext> {
     const topMemories = await this.getTopMemories(agentType, tenantId, 5);
 
@@ -156,9 +170,12 @@ export class AgentMemoryService {
   /**
    * Incrementar score de memoria
    */
-  static async incrementScore(memoryId: string, increment: number, tenantId: string): Promise<AgentMemory> {
+  static async incrementScore(memoryId: string, increment: number, tenantId: string | null): Promise<AgentMemory> {
     const memory = await prisma.agentMemory.findFirst({
-      where: { id: memoryId, tenantId },
+      where: {
+        id: memoryId,
+        ...(tenantId ? { tenantId } : { tenantId: null })
+      },
     });
 
     if (!memory) {
@@ -176,9 +193,12 @@ export class AgentMemoryService {
   /**
    * Decrementar score de memoria
    */
-  static async decrementScore(memoryId: string, decrement: number, tenantId: string): Promise<AgentMemory> {
+  static async decrementScore(memoryId: string, decrement: number, tenantId: string | null): Promise<AgentMemory> {
     const memory = await prisma.agentMemory.findFirst({
-      where: { id: memoryId, tenantId },
+      where: {
+        id: memoryId,
+        ...(tenantId ? { tenantId } : { tenantId: null })
+      },
     });
 
     if (!memory) {
@@ -201,7 +221,7 @@ export class AgentMemoryService {
     category: string,
     content: string,
     wasSuccessful: boolean,
-    tenantId: string
+    tenantId: string | null
   ): Promise<AgentMemory> {
     const initialScore = wasSuccessful ? 70 : 30;
 
@@ -223,11 +243,11 @@ export class AgentMemoryService {
   /**
    * Limpiar memorias con score bajo
    */
-  static async cleanLowScoreMemories(agentType: AgentType, tenantId: string, threshold: number = 20): Promise<number> {
+  static async cleanLowScoreMemories(agentType: AgentType, tenantId: string | null, threshold: number = 20): Promise<number> {
     const result = await prisma.agentMemory.deleteMany({
       where: {
         agentType,
-        tenantId,
+        ...(tenantId ? { tenantId } : { tenantId: null }),
         score: { lt: threshold },
         createdAt: {
           lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // más de 30 días

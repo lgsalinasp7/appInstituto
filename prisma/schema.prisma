@@ -41,6 +41,7 @@ model Tenant {
   masterclasses    Masterclass[]
   agentTasks       AgentTask[]
   agentMemories    AgentMemory[]
+  campaignCosts    CampaignCost[]
 
   @@index([slug])
   @@index([status])
@@ -524,12 +525,12 @@ model AgentTask {
   prospectId    String?
   metadata      Json?           // Datos flexibles: que funciono, que no
   completedAt   DateTime?
-  tenantId      String
+  tenantId      String?         // Opcional: null para tareas de plataforma
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
   prospect      Prospect?       @relation(fields: [prospectId], references: [id])
-  tenant        Tenant          @relation(fields: [tenantId], references: [id])
+  tenant        Tenant?         @relation(fields: [tenantId], references: [id])
 
   @@index([status])
   @@index([agentType])
@@ -549,11 +550,11 @@ model AgentMemory {
   content     String    @db.Text
   score       Int       @default(0) // Puntuacion de efectividad
   metadata    Json?
-  tenantId    String
+  tenantId    String?   // Opcional: null para memorias de plataforma
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  tenant      Tenant    @relation(fields: [tenantId], references: [id])
+  tenant      Tenant?   @relation(fields: [tenantId], references: [id])
 
   @@index([agentType])
   @@index([category])
@@ -906,4 +907,28 @@ enum ResetPeriod {
   DAILY
   MONTHLY
   YEARLY
+}
+
+// ============================================
+// MODELO: Costos de Campañas (CPL Tracking)
+// ============================================
+model CampaignCost {
+  id          String   @id @default(cuid())
+  date        DateTime
+  campaign    String   // Coincide con utm_campaign
+  adset       String?  @default("N/A")
+  ad          String?  @default("N/A")
+  spendCop    Decimal  @db.Decimal(12, 2)
+  impressions Int?
+  clicks      Int?
+  tenantId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, date, campaign, adset, ad])
+  @@index([tenantId])
+  @@index([date])
+  @@index([campaign])
 }

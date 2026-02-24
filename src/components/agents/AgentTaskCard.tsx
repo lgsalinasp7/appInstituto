@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreVertical, User, Clock, AlertTriangle } from 'lucide-react';
+import { tenantFetch } from '@/lib/tenant-fetch';
 import type { AgentTaskItem } from '@/modules/agents/types';
 
 interface AgentTaskCardProps {
@@ -37,7 +38,7 @@ const AGENT_COLORS = {
 export function AgentTaskCard({ task, onUpdate }: AgentTaskCardProps) {
   const handleStatusChange = async (newStatus: string) => {
     try {
-      const res = await fetch(`/api/admin/agents/tasks/${task.id}`, {
+      const res = await tenantFetch(`/api/admin/agents/tasks/${task.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
@@ -55,7 +56,7 @@ export function AgentTaskCard({ task, onUpdate }: AgentTaskCardProps) {
     if (!confirm('¿Eliminar esta tarea?')) return;
 
     try {
-      const res = await fetch(`/api/admin/agents/tasks/${task.id}`, {
+      const res = await tenantFetch(`/api/admin/agents/tasks/${task.id}`, {
         method: 'DELETE',
       });
 
