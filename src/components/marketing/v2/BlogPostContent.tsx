@@ -67,10 +67,11 @@ export function BlogPostContent({ post }: BlogPostContentProps) {
                 >
                     <Image
                         src={post.image}
-                        alt={post.title}
+                        alt={`${post.title} - Análisis técnico de KaledSoft sobre ${post.category}`}
                         fill
                         className="object-cover"
                         priority
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-950/20" />
                 </motion.div>

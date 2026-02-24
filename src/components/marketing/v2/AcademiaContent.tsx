@@ -39,8 +39,8 @@ export function AcademiaContent() {
                         animate={{ opacity: 1, y: 0 }}
                         className="text-4xl md:text-7xl font-black text-white leading-tight font-display"
                     >
-                        Academia de Élite en <br />
-                        <span className="text-cyan-500">IA & Desarrollo de SaaS</span>
+                        Academia de Inteligencia Artificial en Montería <br />
+                        <span className="text-cyan-500">Desarrollo de SaaS con IA</span>
                     </motion.h1>
                     <motion.p
                         initial={{ opacity: 0 }}

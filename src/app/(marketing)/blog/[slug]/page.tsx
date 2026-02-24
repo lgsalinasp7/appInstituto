@@ -2,6 +2,8 @@ import { Metadata } from "next";
 import { blogPosts } from "@/lib/blog-data";
 import { BlogPostContent } from "@/components/marketing/v2/BlogPostContent";
 import { notFound } from "next/navigation";
+import { BreadcrumbSchema } from "@/components/seo/BreadcrumbSchema";
+import { ArticleSchema } from "@/components/seo/ArticleSchema";
 
 interface BlogPostPageProps {
     params: Promise<{ slug: string }>;
@@ -16,6 +18,9 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
     return {
         title: post.title,
         description: post.description,
+        alternates: {
+            canonical: `https://kaledsoft.tech/blog/${slug}`
+        },
         openGraph: {
             title: post.title,
             description: post.description,
@@ -49,7 +54,25 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         notFound();
     }
 
-    return <BlogPostContent post={post} />;
+    return (
+        <>
+            <BreadcrumbSchema items={[
+                { name: 'Inicio', url: 'https://kaledsoft.tech' },
+                { name: 'Blog', url: 'https://kaledsoft.tech/blog' },
+                { name: post.title, url: `https://kaledsoft.tech/blog/${slug}` }
+            ]} />
+            <ArticleSchema
+                title={post.title}
+                description={post.description}
+                image={post.image}
+                datePublished={post.date}
+                author={post.author}
+                category={post.category}
+                slug={slug}
+            />
+            <BlogPostContent post={post} />
+        </>
+    );
 }
 
 export async function generateStaticParams() {

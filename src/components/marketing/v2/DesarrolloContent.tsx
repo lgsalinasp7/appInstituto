@@ -39,8 +39,8 @@ export function DesarrolloContent() {
                         animate={{ opacity: 1, y: 0 }}
                         className="text-4xl md:text-7xl font-black text-white leading-tight font-display"
                     >
-                        Desarrollo de Software & <br />
-                        <span className="text-purple-500">Laboratorio de IA en Colombia</span>
+                        Desarrollo de Software en Montería <br />
+                        <span className="text-purple-500">Laboratorio de IA - Colombia</span>
                     </motion.h1>
                     <motion.p
                         initial={{ opacity: 0 }}

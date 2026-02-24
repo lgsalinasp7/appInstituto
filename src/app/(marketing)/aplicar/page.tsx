@@ -3,12 +3,26 @@
 import { motion } from "framer-motion";
 import { Send, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
+import { trackEvent } from "@/components/analytics/GoogleAnalytics";
+import { trackMetaEvent } from "@/components/analytics/MetaPixel";
 
 export default function AplicarPage() {
     const [isSubmitted, setIsSubmitted] = useState(false);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Track form submission events
+        trackEvent("form_submit", {
+            form_name: "academia_application",
+            page_path: "/aplicar"
+        });
+
+        trackMetaEvent("Lead", {
+            content_name: "Academia Application",
+            content_category: "Application"
+        });
+
         setIsSubmitted(true);
     };
 

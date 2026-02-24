@@ -7,21 +7,31 @@ import "./globals.css";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
+  fallback: ["system-ui", "arial"],
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
+  fallback: ["monospace"],
 });
 
 const sora = Sora({
   variable: "--font-sora",
   subsets: ["latin"],
+  display: "swap",
+  fallback: ["system-ui", "arial"],
 });
 
 import { LocalBusinessSchema } from "@/components/seo/LocalBusinessSchema";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
+import { MetaPixel } from "@/components/analytics/MetaPixel";
+import { CookieConsent } from "@/components/CookieConsent";
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://kaledsoft.tech'),
   title: {
     default: "KaledSoft | Academia de IA y Lab de Software en Colombia",
     template: "%s | KaledSoft"
@@ -80,6 +90,24 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <head>
         <LocalBusinessSchema />
+        {/* Preload critical resources */}
+        <link
+          rel="preload"
+          as="image"
+          href="/kaledsoft-logo-transparent.webp"
+          type="image/webp"
+        />
+        {/* Preconnect to external domains */}
+        <link rel="preconnect" href="https://images.unsplash.com" />
+        <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+        <link rel="dns-prefetch" href="https://connect.facebook.net" />
+        {/* PWA Manifest */}
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#0891b2" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="KaledSoft" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${sora.variable} antialiased`}
@@ -88,6 +116,9 @@ export default function RootLayout({
         {children}
         <Toaster />
         <LazyAnalytics />
+        <GoogleAnalytics />
+        <MetaPixel />
+        <CookieConsent />
       </body>
     </html>
   );

@@ -5,13 +5,13 @@ export function LocalBusinessSchema() {
         "@context": "https://schema.org",
         "@type": "LocalBusiness",
         "name": "KaledSoft Technologies",
-        "image": "https://kaledsoft.tech/kaledsoft-logo-transparent.png",
+        "image": "https://kaledsoft.tech/kaledsoft-logo-transparent.webp",
         "@id": "https://kaledsoft.tech",
         "url": "https://kaledsoft.tech",
-        "telephone": "+573000000000",
+        "telephone": "+573337226157",
         "address": {
             "@type": "PostalAddress",
-            "streetAddress": "Montería, Córdoba",
+            "streetAddress": "Calle 30 # 10-09",
             "addressLocality": "Montería",
             "addressRegion": "Córdoba",
             "postalCode": "230001",
@@ -58,7 +58,41 @@ export function LocalBusinessSchema() {
                 "name": "Colombia"
             }
         ],
-        "priceRange": "$$"
+        "priceRange": "$$",
+        "email": "contacto@kaledsoft.tech",
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.9",
+            "reviewCount": "28"
+        },
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "+573337226157",
+            "contactType": "customer service",
+            "availableLanguage": ["Spanish", "es"]
+        },
+        "hasOfferCatalog": {
+            "@type": "OfferCatalog",
+            "name": "Servicios de IA y Desarrollo",
+            "itemListElement": [
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Academia de IA y Desarrollo de SaaS",
+                        "description": "Formación intensiva en desarrollo de software con inteligencia artificial y agentes de IA"
+                    }
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Desarrollo de Software B2B",
+                        "description": "Desarrollo de soluciones SaaS a medida con integración de agentes de IA"
+                    }
+                }
+            ]
+        }
     };
 
     return (

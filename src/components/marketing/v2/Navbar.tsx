@@ -41,9 +41,11 @@ export function NavbarV2() {
                 <Link href="/" className="flex items-center gap-2 group">
                     <div className="relative w-10 h-10 overflow-hidden">
                         <Image
-                            src="/kaledsoft-logo-transparent.png"
-                            alt="KaledSoft Logo"
-                            fill
+                            src="/kaledsoft-logo-transparent.webp"
+                            alt="KaledSoft - Academia de Inteligencia Artificial en Montería, Colombia"
+                            width={40}
+                            height={40}
+                            priority
                             className="object-contain transition-transform duration-500 group-hover:scale-110"
                         />
                     </div>

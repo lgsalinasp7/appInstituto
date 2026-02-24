@@ -10,6 +10,13 @@ import {
 import { Logo } from "@/components/brand";
 import { headers } from "next/headers";
 import { InstitutionalWrapper } from "@/components/marketing/v2/InstitutionalWrapper";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: 'https://kaledsoft.tech'
+  }
+};
 
 function TenantWelcome() {
   return (
