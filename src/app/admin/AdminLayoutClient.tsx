@@ -16,7 +16,6 @@ import {
   Bell,
   HelpCircle,
   Settings,
-  User,
 } from "lucide-react";
 import { BrandingProvider } from "@/components/providers/BrandingContext";
 
@@ -53,9 +52,9 @@ export default function AdminLayoutClient({
 
           <span className="font-bold text-gradient">KaledSoft Admin</span>
 
-          <button className="p-2 rounded-xl bg-slate-800 text-slate-300">
-            <User className="w-5 h-5" />
-          </button>
+          <div className="scale-90 origin-right">
+            <UserProfileDropdown />
+          </div>
         </header>
 
         {/* Mobile Sidebar Overlay */}

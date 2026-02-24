@@ -11,9 +11,14 @@ import { performLogout } from "@/lib/logout";
 interface UserProfileDropdownProps {
     /** Ruta de configuración (tenant: /configuracion, admin: /admin/configuracion) */
     configHref?: string;
+    /** Ruta de perfil (tenant: /profile, admin: /admin/profile) */
+    profileHref?: string;
 }
 
-export function UserProfileDropdown({ configHref = "/admin/configuracion" }: UserProfileDropdownProps = {}) {
+export function UserProfileDropdown({
+    configHref = "/admin/configuracion",
+    profileHref,
+}: UserProfileDropdownProps = {}) {
     const branding = useBranding();
     const isDark = branding.darkMode !== false;
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -40,6 +45,9 @@ export function UserProfileDropdown({ configHref = "/admin/configuracion" }: Use
             .toUpperCase()
             .slice(0, 2);
     };
+
+    const resolvedProfileHref =
+        profileHref ?? (configHref.startsWith("/admin") ? "/admin/profile" : "/profile");
 
     return (
         <div className="relative" ref={dropdownRef}>
@@ -122,7 +130,7 @@ export function UserProfileDropdown({ configHref = "/admin/configuracion" }: Use
                     {/* Menu Items */}
                     <div className="py-1">
                         <Link
-                            href="/profile"
+                            href={resolvedProfileHref}
                             onClick={() => setIsDropdownOpen(false)}
                             className={cn(
                                 "w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-all font-medium font-display group",

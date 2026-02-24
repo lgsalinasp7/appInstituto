@@ -93,6 +93,21 @@ export function AdminSidebar() {
     return item.roles.includes(platformRole as PlatformRoleValue);
   };
 
+  const doesPathMatch = (href: string, currentPath: string): boolean => {
+    if (href === "/admin") return currentPath === "/admin";
+    return currentPath === href || currentPath.startsWith(`${href}/`);
+  };
+
+  const visibleItems = sections.flatMap((section) =>
+    section.items.filter(isItemVisible)
+  );
+
+  // Keep a single active item: pick the most specific matching route.
+  const activeItemHref =
+    visibleItems
+      .filter((item) => doesPathMatch(item.href, pathname))
+      .sort((a, b) => b.href.length - a.href.length)[0]?.href ?? null;
+
   return (
     <aside className="w-64 bg-slate-950 border-r border-slate-800/50 h-full flex flex-col transition-all duration-300">
       {/* Logo Section */}
@@ -131,9 +146,7 @@ export function AdminSidebar() {
               {/* Section items */}
               <div className="space-y-0.5">
                 {visibleItems.map((item) => {
-                  const isActive = item.href === "/admin"
-                    ? pathname === "/admin"
-                    : pathname.startsWith(item.href);
+                  const isActive = activeItemHref === item.href;
                   const Icon = item.icon;
 
                   return (

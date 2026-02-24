@@ -49,11 +49,29 @@ export default async function proxy(req: NextRequest) {
         if (pathname === '/agentes-comerciales') {
             return NextResponse.redirect(new URL('/admin/agentes-comerciales', req.url));
         }
+        // Compatibilidad: perfil/configuración en admin
+        if (pathname === '/profile') {
+            return NextResponse.redirect(new URL('/admin/profile', req.url));
+        }
+        if (pathname === '/configuracion') {
+            return NextResponse.redirect(new URL('/admin/configuracion', req.url));
+        }
 
         // Rutas que no requieren autenticación
         const publicAdminPaths = ['/login', '/forgot-password', '/reset-password', '/api-docs', '/api/openapi'];
         const isPublicPath = publicAdminPaths.some(path => pathname.startsWith(path));
         const isStaticAsset = /\.(png|jpg|jpeg|gif|svg|ico|webp)(\?|$)/i.test(pathname);
+        const isAdminPath = pathname.startsWith('/admin');
+        const isApiPath = pathname.startsWith('/api');
+        const isInternalNextPath = pathname.startsWith('/_next');
+        const isRootPath = pathname === '/';
+
+        if (!isPublicPath && !isStaticAsset && !isAdminPath && !isApiPath && !isInternalNextPath && !isRootPath) {
+            return NextResponse.redirect(new URL('/admin', req.url));
+        }
+        if (isRootPath) {
+            return NextResponse.redirect(new URL('/admin', req.url));
+        }
 
         if (!isPublicPath && !isStaticAsset) {
             // Verificar sesión para rutas protegidas admin
