@@ -13,11 +13,14 @@ interface UserProfileDropdownProps {
     configHref?: string;
     /** Ruta de perfil (tenant: /profile, admin: /admin/profile) */
     profileHref?: string;
+    /** Variante compacta para header móvil */
+    compact?: boolean;
 }
 
 export function UserProfileDropdown({
     configHref = "/admin/configuracion",
     profileHref,
+    compact = false,
 }: UserProfileDropdownProps = {}) {
     const branding = useBranding();
     const isDark = branding.darkMode !== false;
@@ -54,13 +57,16 @@ export function UserProfileDropdown({
             <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className={cn(
-                    "flex items-center gap-3 border rounded-xl px-4 py-2.5 transition-all cursor-pointer group active:scale-95",
+                    "flex items-center border rounded-xl transition-all cursor-pointer group active:scale-95",
+                    compact ? "gap-2 px-2 py-1.5" : "gap-3 px-4 py-2.5",
                     isDark
-                        ? "bg-slate-900/40 border-slate-800/50 hover:border-cyan-500/30"
+                        ? compact
+                            ? "bg-slate-800 border-slate-700/80 text-slate-300 hover:text-white hover:border-cyan-500/40"
+                            : "bg-slate-900/40 border-slate-800/50 hover:border-cyan-500/30"
                         : "bg-white border-slate-200 hover:border-blue-500/30"
                 )}
             >
-                <div className="flex flex-col items-end mr-1 text-right">
+                <div className={cn("flex flex-col items-end mr-1 text-right", compact ? "hidden" : "flex")}>
                     <span className={cn(
                         "text-sm font-bold transition-colors font-display tracking-tight",
                         isDark ? "text-white group-hover:text-cyan-400" : "text-slate-900 group-hover:text-blue-600"
@@ -77,7 +83,8 @@ export function UserProfileDropdown({
 
                 <div
                     className={cn(
-                        "w-9 h-9 rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300",
+                        "rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300",
+                        compact ? "w-8 h-8" : "w-9 h-9",
                         isDark
                             ? "bg-gradient-to-br from-cyan-500 to-blue-600"
                             : "bg-gradient-to-br from-blue-500 to-blue-700"
@@ -89,9 +96,9 @@ export function UserProfileDropdown({
                 </div>
 
                 <ChevronDown
-                    size={16}
+                    size={compact ? 14 : 16}
                     className={cn(
-                        "text-slate-500 transition-transform duration-300",
+                        compact ? "text-slate-300 transition-transform duration-300" : "text-slate-500 transition-transform duration-300",
                         isDropdownOpen ? "rotate-180" : ""
                     )}
                 />
