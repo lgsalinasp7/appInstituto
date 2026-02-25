@@ -1,0 +1,32 @@
+---
+title: "Overview"
+description: "Vision general, stack tecnologico y estructura del repositorio."
+---
+
+# Overview
+
+`App Instituto` es un sistema de gestion institucional modular construido sobre Next.js con App Router.
+
+## Stack principal
+
+- Next.js 16 + React 19 + TypeScript
+- Tailwind CSS 4 + shadcn/ui
+- Prisma ORM + Neon PostgreSQL
+- Zod para validaciones
+- Vitest para pruebas
+
+## Estructura general
+
+```txt
+src/
+  app/          # Rutas (publicas, protegidas y admin)
+  components/   # Componentes compartidos
+  lib/          # Utilidades y configuracion
+  modules/      # Dominios de negocio (auth, users, dashboard, admin)
+prisma/         # Esquema y operaciones de base de datos
+docs/           # Documentacion interna historica
+```
+
+## Enfoque modular
+
+Cada modulo en `src/modules/` centraliza componentes, servicios, esquemas y tipos para mantener separacion por dominio y facilitar mantenimiento.

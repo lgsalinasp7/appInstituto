@@ -1,0 +1,42 @@
+---
+title: "Endpoints y servicios"
+description: "Mapa inicial de endpoints y donde documentarlos."
+---
+
+# Endpoints y servicios
+
+Esta pagina sirve como indice para documentar APIs por dominio.
+
+## Convencion propuesta
+
+Para cada endpoint documentar:
+
+- Metodo y ruta
+- Autenticacion/autorizacion requerida
+- Request body o query params
+- Respuesta exitosa
+- Errores esperados
+
+## Plantilla sugerida
+
+~~~mdx
+### POST /api/ejemplo
+
+**Descripcion:** Crea un recurso.
+
+**Auth:** Requerida (rol admin).
+
+**Request:**
+```json
+{ "name": "valor" }
+```
+
+**Response 200:**
+```json
+{ "id": "123", "name": "valor" }
+```
+~~~
+
+## Siguiente paso
+
+Completar esta seccion recorriendo los handlers reales en `src/app/api/` y agrupando por modulo.

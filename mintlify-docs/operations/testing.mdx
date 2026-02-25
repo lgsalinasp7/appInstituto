@@ -1,0 +1,35 @@
+---
+title: "Testing"
+description: "Comandos y practicas para validar calidad antes de publicar."
+---
+
+# Testing
+
+## Suite disponible
+
+- Unit/integration: Vitest
+- Linting: ESLint
+
+## Comandos
+
+```bash
+npm run lint
+npm run test:run
+npm run test:coverage
+```
+
+## Flujo recomendado antes de merge
+
+1. Ejecutar `npm run lint`.
+2. Ejecutar `npm run test:run`.
+3. Verificar que el build no rompa:
+
+```bash
+npm run build
+```
+
+## Documentacion interna complementaria
+
+- `docs/TESTING_GUIDE.md`
+- `docs/GUIA-PRUEBAS-COMPLETA.md`
+- `docs/TESTING-RAPIDO.md`

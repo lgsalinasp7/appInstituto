@@ -1,0 +1,35 @@
+---
+title: "Deploy"
+description: "Proceso recomendado para despliegue y variables de entorno."
+---
+
+# Deploy
+
+## Estrategia sugerida
+
+Despliegue en Vercel para el frontend/SSR de Next.js con base de datos Neon.
+
+## Variables de entorno minimas
+
+- `DATABASE_URL`
+- `DIRECT_URL`
+- `AUTH_SECRET`
+- `NEXT_PUBLIC_APP_URL`
+
+## Pasos
+
+1. Conectar repositorio a Vercel.
+2. Configurar variables por entorno (Preview/Production).
+3. Verificar que el build use:
+
+```bash
+npm run build:vercel
+```
+
+4. Validar endpoints criticos y login en la URL desplegada.
+
+## Buenas practicas
+
+- No usar secretos en el cliente.
+- Usar una base de datos separada para staging.
+- Configurar alertas y monitoreo de errores.

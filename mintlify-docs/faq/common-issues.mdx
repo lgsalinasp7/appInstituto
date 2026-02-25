@@ -1,0 +1,30 @@
+---
+title: "Problemas comunes"
+description: "Errores frecuentes en setup, DB y despliegue."
+---
+
+# Problemas comunes
+
+## Prisma no conecta a Neon
+
+Verifica:
+
+- `DATABASE_URL` y `DIRECT_URL` correctas.
+- `sslmode=require` presente.
+- Acceso de red habilitado en Neon.
+
+## Error al iniciar en local
+
+- Ejecuta `npm install` nuevamente.
+- Regenera cliente Prisma con `npm run db:generate`.
+- Sincroniza esquema con `npm run db:push`.
+
+## Build falla en CI/CD
+
+- Corre `npm run lint` y `npm run test:run` localmente.
+- Valida variables de entorno en Vercel.
+- Usa `npm run build:vercel` para reproducir el build de deploy.
+
+## Proxima mejora recomendada
+
+Agregar una seccion de troubleshooting por modulo (Auth, Admin, Dashboard, Users) con errores y soluciones especificas.

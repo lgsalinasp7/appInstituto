@@ -1,0 +1,49 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "App Instituto",
+  "description": "Documentacion tecnica y operativa del proyecto App Instituto.",
+  "theme": "mint",
+  "colors": {
+    "primary": "#0f766e",
+    "light": "#14b8a6",
+    "dark": "#115e59"
+  },
+  "navigation": {
+    "groups": [
+      {
+        "group": "Inicio",
+        "pages": [
+          "index",
+          "getting-started/overview",
+          "getting-started/local-setup"
+        ]
+      },
+      {
+        "group": "Arquitectura",
+        "pages": [
+          "architecture/system-architecture",
+          "architecture/module-structure"
+        ]
+      },
+      {
+        "group": "Operacion",
+        "pages": [
+          "operations/deploy",
+          "operations/testing"
+        ]
+      },
+      {
+        "group": "API",
+        "pages": [
+          "api/endpoints"
+        ]
+      },
+      {
+        "group": "Ayuda",
+        "pages": [
+          "faq/common-issues"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+---
+title: "Estructura modular"
+description: "Convenciones para crear y mantener modulos de negocio."
+---
+
+# Estructura modular
+
+Cada modulo en `src/modules/` debe mantener una estructura coherente:
+
+```txt
+src/modules/<modulo>/
+  components/
+  services/
+  schemas/
+  types/
+  index.ts
+```
+
+## Reglas recomendadas
+
+- `components/`: piezas de UI del dominio.
+- `services/`: logica de negocio y acceso a datos.
+- `schemas/`: validaciones con Zod.
+- `types/`: contratos TypeScript.
+- `index.ts`: unico punto de export del modulo.
+
+## Ejemplo de import limpio
+
+```ts
+import { LoginForm, AuthService, loginSchema } from "@/modules/auth";
+```
+
+## Checklist al crear un modulo nuevo
+
+1. Crear carpeta y subcarpetas base.
+2. Definir tipos y esquemas primero.
+3. Implementar servicios.
+4. Crear componentes y conectarlos con rutas en `src/app/`.
+5. Exportar todo en `index.ts`.

@@ -1,0 +1,33 @@
+---
+title: "Arquitectura del sistema"
+description: "Capas, responsabilidades y flujo de alto nivel."
+---
+
+# Arquitectura del sistema
+
+## Vista de alto nivel
+
+El sistema sigue un enfoque por capas:
+
+1. **UI y rutas** en `src/app/` y `src/components/`
+2. **Logica de dominio** en `src/modules/`
+3. **Persistencia y acceso a datos** con Prisma/Neon
+
+## Principios
+
+- Separacion por modulos de negocio.
+- Reutilizacion de componentes compartidos.
+- Validacion de entradas con Zod.
+- Tipado fuerte con TypeScript.
+
+## Flujos comunes
+
+- Auth y autorizacion para rutas protegidas.
+- Operaciones CRUD desde servicios por modulo.
+- Renderizado de pantallas con App Router en Next.js.
+
+## Referencias internas utiles
+
+- `docs/MULTI_TENANCY.md`
+- `docs/ARQUITECTURA_ADMIN_VS_TENANT.md`
+- `docs/ROLES-Y-PERMISOS.md`
