@@ -74,6 +74,7 @@ export class StudentService {
         documentNumber: student.documentNumber,
         email: student.email,
         phone: student.phone,
+        city: student.city,
         address: student.address,
         guardianName: student.guardianName,
         guardianPhone: student.guardianPhone,
@@ -138,6 +139,7 @@ export class StudentService {
       documentNumber: student.documentNumber,
       email: student.email,
       phone: student.phone,
+      city: student.city,
       address: student.address,
       guardianName: student.guardianName,
       guardianPhone: student.guardianPhone,
@@ -200,6 +202,7 @@ export class StudentService {
           documentNumber: data.documentNumber,
           email: data.email || null,
           phone: data.phone,
+          city: data.city || null,
           address: data.address || null,
           guardianName: data.guardianName || null,
           guardianPhone: data.guardianPhone || null,
@@ -311,6 +314,7 @@ export class StudentService {
       data: {
         ...data,
         email: data.email || null,
+        city: data.city || null,
         guardianEmail: data.guardianEmail || null,
       },
       include: {
@@ -470,6 +474,7 @@ export class StudentService {
         documentNumber: student.documentNumber,
         phone: student.phone,
         email: student.email,
+        city: student.city,
       },
       payment: {
         id: matriculaPayment.id,

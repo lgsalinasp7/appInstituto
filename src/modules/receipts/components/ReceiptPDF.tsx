@@ -251,6 +251,7 @@ export interface ReceiptPDFData {
     documentNumber: string;
     phone: string;
     email?: string | null;
+    city?: string | null;
     address?: string | null;
   };
   program: {
@@ -345,7 +346,7 @@ export function ReceiptPDF({ data }: { data: ReceiptPDFData }) {
           <View style={styles.rowDouble}>
             <View style={[styles.colHalf, { flex: 2 }]}>
               <Text style={styles.stripLabel}>Ciudad:</Text>
-              <Text style={styles.stripValue}>CARTAGENA</Text>
+              <Text style={styles.stripValue}>{data.student.city || "N/A"}</Text>
             </View>
             {/* <View style={[styles.colHalf, { flex: 1 }]}>
               <Text style={styles.stripLabel}>Grupo:</Text>

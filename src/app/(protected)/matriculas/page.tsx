@@ -367,6 +367,7 @@ export default function MatriculasPage() {
                             documentNumber: receiptData.student.documentNumber,
                             phone: receiptData.student.phone,
                             email: receiptData.student.email,
+                            city: receiptData.student.city,
                         },
                         payment: receiptData.payment,
                         commitment: receiptData.commitment,

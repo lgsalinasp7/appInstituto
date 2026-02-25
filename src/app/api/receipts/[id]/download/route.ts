@@ -50,6 +50,7 @@ export const GET = withTenantAuth(async (request, user, tenantId, context) => {
         documentNumber: payment.student.documentNumber,
         phone: payment.student.phone,
         email: payment.student.email,
+        city: payment.student.city,
         address: payment.student.address,
       },
       program: {

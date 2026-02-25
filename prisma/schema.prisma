@@ -181,6 +181,7 @@ model Student {
   documentNumber      String
   email               String?
   phone               String
+  city                String?
   address             String?
   guardianName        String?
   guardianPhone       String?

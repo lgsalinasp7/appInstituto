@@ -95,6 +95,7 @@ export function StudentForm({ isOpen, onClose, onSuccess, onSuccessWithData, cur
           documentNumber: student.documentNumber,
           email: student.email || "",
           phone: student.phone,
+          city: student.city || "",
           address: student.address || "",
           guardianName: student.guardianName || "",
           guardianPhone: student.guardianPhone || "",
@@ -122,6 +123,7 @@ export function StudentForm({ isOpen, onClose, onSuccess, onSuccessWithData, cur
           // Datos de contacto - limpiar
           phone: "",
           email: "",
+          city: "",
           address: "",
           // Datos del acudiente - limpiar
           guardianName: "",
@@ -328,6 +330,18 @@ export function StudentForm({ isOpen, onClose, onSuccess, onSuccessWithData, cur
                 {errors.email && (
                   <p className="text-red-500 text-[10px] sm:text-xs mt-1">{errors.email.message}</p>
                 )}
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                  <MapPin size={10} className="sm:w-3 sm:h-3" />
+                  Ciudad
+                </label>
+                <input
+                  {...register("city")}
+                  className="w-full mt-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium transition-all text-sm"
+                  placeholder="Ciudad de residencia"
+                />
               </div>
 
               <div className="sm:col-span-2">

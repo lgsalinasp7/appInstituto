@@ -17,6 +17,7 @@ export interface CreateStudentData {
   documentNumber: string;
   email?: string;
   phone: string;
+  city?: string;
   address?: string;
   guardianName?: string;
   guardianPhone?: string;
@@ -66,6 +67,7 @@ export interface UpdateStudentData {
   documentType?: string;
   email?: string;
   phone?: string;
+  city?: string;
   address?: string;
   guardianName?: string;
   guardianPhone?: string;
@@ -84,6 +86,7 @@ export interface StudentWithRelations {
   documentNumber: string;
   email: string | null;
   phone: string;
+  city: string | null;
   address: string | null;
   guardianName: string | null;
   guardianPhone: string | null;
@@ -130,6 +133,7 @@ export interface MatriculaReceiptData {
     documentNumber: string;
     phone: string;
     email: string | null;
+    city: string | null;
   };
   payment: {
     id: string;

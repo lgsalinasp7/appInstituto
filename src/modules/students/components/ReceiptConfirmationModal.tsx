@@ -18,6 +18,7 @@ interface ReceiptConfirmationModalProps {
       documentNumber: string;
       phone: string;
       email?: string | null;
+      city?: string | null;
     };
     payment: {
       id: string;
@@ -91,6 +92,7 @@ export function ReceiptConfirmationModal({ isOpen, onClose, data }: ReceiptConfi
           documentNumber: `${data.student.documentType} ${data.student.documentNumber}`,
           phone: data.student.phone,
           email: data.student.email,
+          city: data.student.city,
         },
         program: {
           name: data.program.name,
@@ -225,6 +227,10 @@ export function ReceiptConfirmationModal({ isOpen, onClose, data }: ReceiptConfi
             <div className="flex justify-between items-center">
               <span className="text-gray-500">Programa:</span>
               <span className={cn("font-medium text-right truncate max-w-[170px]", isDark ? "text-slate-400" : "text-gray-700")}>{data.program.name}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">Ciudad:</span>
+              <span className={cn("font-medium text-right truncate max-w-[170px]", isDark ? "text-slate-400" : "text-gray-700")}>{data.student.city || "N/A"}</span>
             </div>
           </div>
 
