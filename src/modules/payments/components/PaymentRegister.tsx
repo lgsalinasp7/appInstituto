@@ -34,6 +34,7 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
     const [paymentData, setPaymentData] = useState({
         amount: 0,
         method: "BANCOLOMBIA",
+        city: "",
         comments: "",
     });
 
@@ -121,6 +122,7 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
         setStudent(found);
         setSearchTerm(found.documentNumber);
         setPaymentInfo(null);
+        setPaymentData(prev => ({ ...prev, city: found.city || "" }));
 
         // Fetch payment info from API
         try {
@@ -170,6 +172,7 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
                     registeredById: user?.id || "unknown",
                     amount: Number(paymentData.amount),
                     method: paymentData.method,
+                    city: paymentData.city.trim(),
                     comments: paymentData.comments,
                     paymentDate: new Date(),
                     // El backend decide si es matricula o modulo
@@ -276,6 +279,10 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
                                     <span className="opacity-70">Saldo</span>
                                     <span className="font-bold text-orange-300">${paymentInfo ? paymentInfo.remainingBalance.toLocaleString() : Number(student.remainingBalance).toLocaleString()}</span>
                                 </div>
+                                <div className="flex justify-between gap-2">
+                                    <span className="opacity-70">Ciudad</span>
+                                    <span className="font-medium text-right truncate max-w-[140px] sm:max-w-none">{paymentData.city || "Sin ciudad"}</span>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -354,6 +361,21 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
                                         <option value="OTRO">Otro</option>
                                     </select>
                                 </div>
+
+                                <div className="sm:col-span-2">
+                                    <label className="block text-[10px] sm:text-xs font-bold text-gray-400 uppercase mb-1.5 sm:mb-2">
+                                        Ciudad del Estudiante *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        minLength={2}
+                                        className="w-full px-3 sm:px-4 py-3 sm:py-4 bg-gray-50 border-2 border-gray-100 rounded-xl sm:rounded-2xl focus:border-primary focus:outline-none font-semibold text-primary transition-all text-sm sm:text-base"
+                                        value={paymentData.city}
+                                        onChange={e => setPaymentData({ ...paymentData, city: e.target.value })}
+                                        placeholder="Ej: Bogotá"
+                                    />
+                                </div>
                             </div>
 
                             <div>
@@ -369,7 +391,7 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
 
                             <button
                                 type="submit"
-                                disabled={loading || !student || paymentData.amount <= 0}
+                                disabled={loading || !student || paymentData.amount <= 0 || paymentData.city.trim().length < 2}
                                 className="w-full py-3.5 sm:py-5 bg-gradient-instituto text-white font-black rounded-xl sm:rounded-2xl shadow-xl hover:shadow-primary/40 transition-all disabled:opacity-30 flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-lg"
                             >
                                 {loading ? "Procesando..." : "CONFIRMAR TRANSACCIÓN"}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { CreditCard, Search, Download, Calendar, Send, Eye, Edit2, X, Printer, AlertCircle, CheckCircle2 } from "lucide-react";
+import { CreditCard, Search, Download, Calendar, Send, Eye, Edit2, X, Printer, AlertCircle, CheckCircle2, FileText } from "lucide-react";
 import { Pagination } from "./Pagination";
 import { sendReceiptViaWhatsApp } from "../utils/whatsapp";
 import type { PaymentWithRelations, PaymentStats } from "@/modules/payments/types";
@@ -469,9 +469,19 @@ function PaymentDetailsModal({ payment, onClose, onEdit }: { payment: Payment, o
               <label className="text-xs text-gray-500 uppercase font-bold">Método</label>
               <span className={`px-2 py-1 rounded text-xs ${getMethodColor(payment.method)}`}>{payment.method}</span>
             </div>
+            <div className="col-span-2">
+              <label className="text-xs text-gray-500 uppercase font-bold">Ciudad</label>
+              <p className="font-medium text-primary">{payment.student.city || "Sin ciudad registrada"}</p>
+            </div>
           </div>
         </div>
-        <div className="p-4 bg-gray-50 flex justify-end gap-2">
+        <div className="p-4 bg-gray-50 flex flex-wrap justify-end gap-2">
+          <button
+            onClick={() => window.open(`/api/receipts/${payment.id}/download`, "_blank")}
+            className="px-4 py-2 bg-primary text-white rounded-lg flex items-center gap-2 hover:bg-primary-light transition-colors"
+          >
+            <FileText size={16} /> Descargar PDF
+          </button>
           <button onClick={onEdit} className="px-4 py-2 bg-orange-500 text-white rounded-lg flex items-center gap-2"><Edit2 size={16} /> Editar</button>
           <button onClick={onClose} className="px-4 py-2 border rounded-lg">Cerrar</button>
         </div>
@@ -488,6 +498,7 @@ function EditPaymentModal({ payment, onClose, onSave }: { payment: Payment, onCl
     amount: payment.amount,
     paymentDate: new Date(payment.paymentDate).toISOString().split('T')[0],
     method: payment.method,
+    city: payment.student.city || "",
     reference: payment.reference || "",
     comments: payment.comments || "",
   });
@@ -568,6 +579,19 @@ function EditPaymentModal({ payment, onClose, onSave }: { payment: Payment, onCl
                 <option value="EFECTIVO">Efectivo</option>
                 <option value="OTRO">Otro</option>
               </select>
+            </div>
+
+            <div className="col-span-2">
+              <label className="text-xs font-black text-[#1e3a5f] uppercase mb-1.5 block">Ciudad</label>
+              <input
+                type="text"
+                required
+                minLength={2}
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                placeholder="Ej: Medellín"
+                className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-sm"
+              />
             </div>
           </div>
 

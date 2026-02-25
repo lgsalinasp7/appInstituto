@@ -108,6 +108,9 @@ export function StudentForm({ isOpen, onClose, onSuccess, onSuccessWithData, cur
           advisorId: student.advisorId,
           paymentFrequency: student.paymentFrequency as any,
           firstCommitmentDate: formatDateForInput(student.firstCommitmentDate ? new Date(student.firstCommitmentDate) : new Date()) as unknown as Date,
+          // En edición no se muestra esta sección, pero el schema de formulario la exige.
+          paymentMethod: "EFECTIVO" as any,
+          paymentReference: "",
         });
       } else {
         // Modo Creación: Limpiar TODOS los campos explícitamente

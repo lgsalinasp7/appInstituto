@@ -20,6 +20,7 @@ export interface CreatePaymentData {
   method: PaymentMethod;
   reference?: string;
   comments?: string;
+  city?: string;
   studentId: string;
   registeredById: string;
   tenantId: string;
@@ -31,6 +32,7 @@ export interface UpdatePaymentData {
   method?: PaymentMethod;
   reference?: string;
   comments?: string;
+  city?: string;
 }
 
 export interface PaymentWithRelations {
@@ -49,6 +51,7 @@ export interface PaymentWithRelations {
     fullName: string;
     documentNumber: string;
     phone: string | null;
+    city: string | null;
     program: {
       name: string;
     };

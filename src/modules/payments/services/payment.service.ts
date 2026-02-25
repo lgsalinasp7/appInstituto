@@ -84,6 +84,7 @@ export class PaymentService {
               fullName: true,
               documentNumber: true,
               phone: true,
+              city: true,
               program: { select: { name: true } }
             },
           },
@@ -134,6 +135,7 @@ export class PaymentService {
             fullName: true,
             documentNumber: true,
             phone: true,
+              city: true,
             program: { select: { name: true } }
           },
         },
@@ -365,6 +367,14 @@ export class PaymentService {
       }
 
       // 3. Crear el Registro de Pago
+      const normalizedCity = data.city?.trim();
+      if (normalizedCity && normalizedCity !== (student.city || "")) {
+        await tx.student.update({
+          where: { id: student.id },
+          data: { city: normalizedCity },
+        });
+      }
+
       const payment = await tx.payment.create({
         data: {
           amount: data.amount,
@@ -387,6 +397,7 @@ export class PaymentService {
               documentNumber: true,
               email: true,
               phone: true,
+              city: true,
               totalProgramValue: true
             },
           },
@@ -638,23 +649,43 @@ export class PaymentService {
   }
 
   static async updatePayment(id: string, data: UpdatePaymentData) {
-    return await prisma.payment.update({
-      where: { id },
-      data: {
-        amount: data.amount,
-        paymentDate: data.paymentDate,
-        method: data.method,
-        reference: data.reference,
-        comments: data.comments,
-      },
-      include: {
-        student: {
-          select: { id: true, fullName: true, documentNumber: true, phone: true, program: { select: { name: true } } },
+    const normalizedCity = data.city?.trim();
+
+    return await prisma.$transaction(async (tx) => {
+      const payment = await tx.payment.findUnique({
+        where: { id },
+        select: { studentId: true },
+      });
+
+      if (!payment) {
+        throw new Error("Pago no encontrado");
+      }
+
+      if (normalizedCity) {
+        await tx.student.update({
+          where: { id: payment.studentId },
+          data: { city: normalizedCity },
+        });
+      }
+
+      return await tx.payment.update({
+        where: { id },
+        data: {
+          amount: data.amount,
+          paymentDate: data.paymentDate,
+          method: data.method,
+          reference: data.reference,
+          comments: data.comments,
         },
-        registeredBy: {
-          select: { id: true, name: true, email: true },
+        include: {
+          student: {
+            select: { id: true, fullName: true, documentNumber: true, phone: true, city: true, program: { select: { name: true } } },
+          },
+          registeredBy: {
+            select: { id: true, name: true, email: true },
+          },
         },
-      },
+      });
     });
   }
 }

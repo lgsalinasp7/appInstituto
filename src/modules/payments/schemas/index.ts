@@ -6,6 +6,7 @@ export const createPaymentSchema = z.object({
   method: z.enum(["BANCOLOMBIA", "NEQUI", "DAVIPLATA", "EFECTIVO", "OTRO"]),
   reference: z.string().optional(),
   comments: z.string().optional(),
+  city: z.string().trim().min(2, "La ciudad debe tener al menos 2 caracteres").optional(),
   studentId: z.string().min(1, "Debe seleccionar un estudiante"),
   registeredById: z.string().min(1, "Usuario no identificado"),
 });

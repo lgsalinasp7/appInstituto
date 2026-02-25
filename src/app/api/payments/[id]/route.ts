@@ -9,6 +9,7 @@ const updatePaymentSchema = z.object({
   method: z.enum(["BANCOLOMBIA", "NEQUI", "DAVIPLATA", "EFECTIVO", "OTRO"]).optional(),
   reference: z.string().optional(),
   comments: z.string().optional(),
+  city: z.string().trim().min(2).optional(),
 });
 
 export const PUT = withTenantAuthAndCSRF(async (
