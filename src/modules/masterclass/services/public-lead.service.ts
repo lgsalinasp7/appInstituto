@@ -24,6 +24,14 @@ export class PublicLeadService {
       },
     });
 
+    // Compilar observaciones de la masterclass
+    const masterclassNotes = [
+      data.studyStatus ? `Estudio: ${data.studyStatus}` : null,
+      data.programmingLevel ? `Nivel: ${data.programmingLevel}` : null,
+      data.saasInterest ? `Interés SaaS: ${data.saasInterest}` : null,
+      data.investmentReady ? `Inversión: ${data.investmentReady}` : null,
+    ].filter(Boolean).join(' | ');
+
     // Si ya existe, actualizar información
     if (prospect) {
       prospect = await prisma.prospect.update({
@@ -36,6 +44,7 @@ export class PublicLeadService {
           utmCampaign: data.utmCampaign || prospect.utmCampaign,
           funnelStage: data.masterclassSlug ? 'MASTERCLASS_REGISTRADO' : prospect.funnelStage,
           masterclassRegisteredAt: data.masterclassSlug ? new Date() : prospect.masterclassRegisteredAt,
+          observations: masterclassNotes ? `${prospect.observations || ''}\n[MASTERCLASS]: ${masterclassNotes}`.trim() : prospect.observations,
         },
       });
     } else {
@@ -64,6 +73,7 @@ export class PublicLeadService {
           utmMedium: data.utmMedium,
           utmCampaign: data.utmCampaign,
           masterclassRegisteredAt: data.masterclassSlug ? new Date() : null,
+          observations: masterclassNotes ? `[MASTERCLASS]: ${masterclassNotes}` : null,
           tenantId,
         },
       });
@@ -83,6 +93,12 @@ export class PublicLeadService {
           utmCampaign: data.utmCampaign,
           utmContent: data.utmContent,
           masterclassSlug: data.masterclassSlug,
+          filteringAnswers: {
+            studyStatus: data.studyStatus,
+            programmingLevel: data.programmingLevel,
+            saasInterest: data.saasInterest,
+            investmentReady: data.investmentReady,
+          }
         } as any,
         tenantId,
       },

@@ -8,22 +8,69 @@ import { trackMetaEvent } from "@/components/analytics/MetaPixel";
 
 export default function AplicarPage() {
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setIsLoading(true);
+        setError(null);
 
-        // Track form submission events
-        trackEvent("form_submit", {
-            form_name: "academia_application",
-            page_path: "/aplicar"
-        });
+        const formData = new FormData(e.currentTarget);
 
-        trackMetaEvent("Lead", {
-            content_name: "Academia Application",
-            content_category: "Application"
-        });
+        // Capturar UTM parameters de la URL
+        const urlParams = new URLSearchParams(window.location.search);
 
-        setIsSubmitted(true);
+        const data = {
+            name: formData.get('name') as string,
+            age: parseInt(formData.get('age') as string),
+            email: formData.get('email') as string || undefined,
+            phone: formData.get('phone') as string || undefined,
+            technicalLevel: formData.get('technicalLevel') as string,
+            motivation: formData.get('motivation') as string,
+            hasSaasIdea: formData.get('saas') as string,
+            utmSource: urlParams.get('utm_source') || undefined,
+            utmMedium: urlParams.get('utm_medium') || undefined,
+            utmCampaign: urlParams.get('utm_campaign') || undefined,
+            utmContent: urlParams.get('utm_content') || undefined,
+        };
+
+        try {
+            const response = await fetch('/api/public/aplicar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Track form submission events
+                trackEvent("form_submit", {
+                    form_name: "academia_application",
+                    page_path: "/aplicar",
+                    lead_id: result.data.leadId
+                });
+
+                trackMetaEvent("Lead", {
+                    content_name: "Academia Application",
+                    content_category: "Application",
+                    value: 1,
+                    currency: "COP"
+                });
+
+                setIsSubmitted(true);
+            } else {
+                setError(result.error || 'Error al enviar la solicitud');
+            }
+        } catch (err) {
+            console.error('Error submitting form:', err);
+            setError('Error al enviar la solicitud. Por favor intenta de nuevo.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     if (isSubmitted) {
@@ -92,30 +139,70 @@ export default function AplicarPage() {
                 >
                     <form onSubmit={handleSubmit} className="space-y-8">
 
+                        {error && (
+                            <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                                {error}
+                            </div>
+                        )}
+
                         <div className="grid md:grid-cols-2 gap-8">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Nombre Completo</label>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Nombre Completo *</label>
                                 <input
                                     required
+                                    name="name"
                                     type="text"
                                     placeholder="Ej: Elon Musk"
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-cyan-500/50 transition-all font-medium"
+                                    disabled={isLoading}
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-cyan-500/50 transition-all font-medium disabled:opacity-50"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Edad</label>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Edad *</label>
                                 <input
                                     required
+                                    name="age"
                                     type="number"
+                                    min="15"
+                                    max="100"
                                     placeholder="24"
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-cyan-500/50 transition-all font-medium"
+                                    disabled={isLoading}
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-cyan-500/50 transition-all font-medium disabled:opacity-50"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-8">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Email (Opcional)</label>
+                                <input
+                                    name="email"
+                                    type="email"
+                                    placeholder="tu@email.com"
+                                    disabled={isLoading}
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-cyan-500/50 transition-all font-medium disabled:opacity-50"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Teléfono (Opcional)</label>
+                                <input
+                                    name="phone"
+                                    type="tel"
+                                    placeholder="+57 300 123 4567"
+                                    disabled={isLoading}
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-cyan-500/50 transition-all font-medium disabled:opacity-50"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Nivel Técnico Actual</label>
-                            <select className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-cyan-500/50 transition-all font-medium appearance-none">
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Nivel Técnico Actual *</label>
+                            <select
+                                name="technicalLevel"
+                                required
+                                disabled={isLoading}
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-cyan-500/50 transition-all font-medium appearance-none disabled:opacity-50"
+                            >
                                 <option value="zero" className="bg-slate-950">Jóven sin experiencia (ruta desde cero)</option>
                                 <option value="intermediate" className="bg-slate-950">Desarrollador Intermedio (especialización)</option>
                                 <option value="entrepreneur" className="bg-slate-950">Emprendedor Tecnológico</option>
@@ -123,24 +210,39 @@ export default function AplicarPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">¿Por qué quieres aprender IA?</label>
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">¿Por qué quieres aprender IA? *</label>
                             <textarea
                                 required
+                                name="motivation"
                                 rows={4}
                                 placeholder="Cuéntanos tu motivación técnica..."
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-cyan-500/50 transition-all font-medium resize-none"
+                                disabled={isLoading}
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-cyan-500/50 transition-all font-medium resize-none disabled:opacity-50"
                             />
                         </div>
 
                         <div className="space-y-4">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">¿Tienes intención de crear un SaaS propio?</label>
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">¿Tienes intención de crear un SaaS propio? *</label>
                             <div className="flex gap-6">
                                 <label className="flex items-center gap-3 cursor-pointer group">
-                                    <input type="radio" name="saas" className="w-5 h-5 accent-cyan-500" />
+                                    <input
+                                        type="radio"
+                                        name="saas"
+                                        value="si-tengo-idea"
+                                        required
+                                        disabled={isLoading}
+                                        className="w-5 h-5 accent-cyan-500 disabled:opacity-50"
+                                    />
                                     <span className="text-slate-300 group-hover:text-white transition-colors">Sí, tengo una idea</span>
                                 </label>
                                 <label className="flex items-center gap-3 cursor-pointer group">
-                                    <input type="radio" name="saas" className="w-5 h-5 accent-cyan-500" />
+                                    <input
+                                        type="radio"
+                                        name="saas"
+                                        value="tal-vez-futuro"
+                                        disabled={isLoading}
+                                        className="w-5 h-5 accent-cyan-500 disabled:opacity-50"
+                                    />
                                     <span className="text-slate-300 group-hover:text-white transition-colors">Tal vez en el futuro</span>
                                 </label>
                             </div>
@@ -148,9 +250,11 @@ export default function AplicarPage() {
 
                         <button
                             type="submit"
-                            className="w-full py-5 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-lg transition-all flex items-center justify-center gap-3 group"
+                            disabled={isLoading}
+                            className="w-full py-5 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-lg transition-all flex items-center justify-center gap-3 group disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Enviar Solicitud <Send className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                            {isLoading ? 'Enviando...' : 'Enviar Solicitud'}
+                            <Send className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                         </button>
 
                         <p className="text-center text-slate-500 text-xs mt-4">

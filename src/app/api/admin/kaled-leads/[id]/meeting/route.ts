@@ -1,0 +1,75 @@
+/**
+ * KaledLead Meeting Log API Route
+ * POST /api/admin/kaled-leads/[id]/meeting
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { withPlatformAdmin } from '@/lib/api-auth';
+import { KaledInteractionService } from '@/modules/kaled-crm/services/kaled-interaction.service';
+import { z } from 'zod';
+
+const meetingSchema = z.object({
+  content: z.string().min(1, 'El contenido es requerido'),
+  date: z.string().datetime('Fecha inválida'),
+  duration: z.number().positive().optional(),
+});
+
+export const POST = withPlatformAdmin(
+  ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
+  async (request: NextRequest, user, context: any) => {
+    try {
+      const params = await context.params;
+      const id = params.id;
+
+      if (!id) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'ID del lead es requerido',
+          },
+          { status: 400 }
+        );
+      }
+
+      const body = await request.json();
+
+      // Validar datos
+      const validation = meetingSchema.safeParse(body);
+      if (!validation.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: validation.error.issues[0].message,
+          },
+          { status: 400 }
+        );
+      }
+
+      const { content, date, duration } = validation.data;
+
+      // Registrar reunión
+      const interaction = await KaledInteractionService.logMeeting(
+        id,
+        user.id,
+        content,
+        new Date(date),
+        duration
+      );
+
+      return NextResponse.json({
+        success: true,
+        data: interaction,
+        message: 'Reunión registrada correctamente',
+      });
+    } catch (error: any) {
+      console.error('Error logging meeting:', error);
+      return NextResponse.json(
+        {
+          success: false,
+          error: error.message || 'Error al registrar la reunión',
+        },
+        { status: 500 }
+      );
+    }
+  }
+);

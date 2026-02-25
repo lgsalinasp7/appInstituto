@@ -72,6 +72,7 @@ model User {
   mustChangePassword Boolean       @default(false)
   aiConversations    AiConversation[]
   advisorInteractions ProspectInteraction[] @relation("InteractionAdvisor")
+  kaledInteractions  KaledLeadInteraction[]
 
   @@index([email])
   @@index([roleId])
@@ -931,4 +932,191 @@ model CampaignCost {
   @@index([tenantId])
   @@index([date])
   @@index([campaign])
+}
+
+// ============================================
+// MODELO: Leads de Plataforma KaledSoft (Directos)
+// ============================================
+model KaledLead {
+  id              String   @id @default(cuid())
+  name            String
+  email           String   @unique
+  phone           String?
+  status          String   @default("NUEVO") // NUEVO, CONTACTADO, DEMO, CONVERTIDO, PERDIDO
+  source          String   @default("MASTERCLASS")
+
+  // Datos específicos de la masterclass o interés
+  observations    String?  @db.Text
+  filteringData   Json?    // Respuestas a preguntas de filtro
+
+  // UTM Tracking
+  utmSource       String?
+  utmMedium       String?
+  utmCampaign     String?
+  utmContent      String?
+
+  // CRM - Gestión de campañas
+  campaignId      String?
+
+  // Soft delete
+  deletedAt       DateTime?
+  deletedBy       String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relaciones CRM
+  campaign        KaledCampaign?            @relation(fields: [campaignId], references: [id])
+  interactions    KaledLeadInteraction[]
+  emailLogs       KaledEmailLog[]
+
+  @@index([status])
+  @@index([email])
+  @@index([campaignId])
+  @@index([deletedAt])
+}
+
+// ============================================
+// CRM: Interacciones con KaledLeads
+// ============================================
+model KaledLeadInteraction {
+  id          String                    @id @default(cuid())
+  type        KaledInteractionType
+  content     String                    @db.Text
+  metadata    Json?                     // { duration: 30, result: "Interesado" }
+  kaledLeadId String
+  userId      String?                   // Quién lo registró (null si automático)
+  createdAt   DateTime                  @default(now())
+
+  kaledLead   KaledLead                 @relation(fields: [kaledLeadId], references: [id], onDelete: Cascade)
+  user        User?                     @relation(fields: [userId], references: [id])
+
+  @@index([kaledLeadId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+enum KaledInteractionType {
+  NOTA
+  CORREO
+  WHATSAPP
+  LLAMADA
+  REUNION
+  CAMBIO_ESTADO
+  TAREA
+}
+
+// ============================================
+// CRM: Campañas de KaledLeads
+// ============================================
+model KaledCampaign {
+  id          String                    @id @default(cuid())
+  name        String                    @unique
+  description String?                   @db.Text
+  status      KaledCampaignStatus       @default(DRAFT)
+  startDate   DateTime?
+  endDate     DateTime?
+  timeline    Json?                     // Configuración flexible de fases
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+
+  leads       KaledLead[]
+  templates   KaledEmailTemplate[]
+  sequences   KaledEmailSequence[]
+
+  @@index([status])
+}
+
+enum KaledCampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+// ============================================
+// CRM: Plantillas de Email para KaledLeads
+// ============================================
+model KaledEmailTemplate {
+  id          String                    @id @default(cuid())
+  name        String                    @unique
+  subject     String
+  htmlContent String                    @db.Text
+  variables   String[]                  // ["nombre", "email", "enlace"]
+  category    String                    @default("GENERAL") // AUTOMATIC, SEMI_AUTOMATIC, MANUAL
+  isActive    Boolean                   @default(true)
+  campaignId  String?
+  createdAt   DateTime                  @default(now())
+
+  campaign    KaledCampaign?            @relation(fields: [campaignId], references: [id])
+  emailLogs   KaledEmailLog[]
+  sequenceSteps KaledEmailSequenceStep[]
+
+  @@index([category])
+  @@index([campaignId])
+}
+
+// ============================================
+// CRM: Secuencias Automáticas de Email
+// ============================================
+model KaledEmailSequence {
+  id            String                    @id @default(cuid())
+  name          String                    @unique
+  triggerType   KaledTriggerType          // TIME_BASED, ACTION_BASED, STAGE_BASED
+  triggerConfig Json                      // { status: "NUEVO", delayHours: 0 }
+  isActive      Boolean                   @default(true)
+  campaignId    String?
+  createdAt     DateTime                  @default(now())
+
+  campaign      KaledCampaign?            @relation(fields: [campaignId], references: [id])
+  steps         KaledEmailSequenceStep[]
+
+  @@index([triggerType])
+  @@index([isActive])
+}
+
+enum KaledTriggerType {
+  TIME_BASED      // Después de X horas/días
+  ACTION_BASED    // Al registrarse, agendar demo, etc.
+  STAGE_BASED     // Al cambiar de estado
+}
+
+model KaledEmailSequenceStep {
+  id          String                    @id @default(cuid())
+  sequenceId  String
+  templateId  String
+  orderIndex  Int                       // 0, 1, 2...
+  delayHours  Int
+  conditions  Json?
+
+  sequence    KaledEmailSequence        @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  template    KaledEmailTemplate        @relation(fields: [templateId], references: [id])
+
+  @@index([sequenceId])
+}
+
+// ============================================
+// CRM: Log de Emails Enviados a KaledLeads
+// ============================================
+model KaledEmailLog {
+  id              String                    @id @default(cuid())
+  to              String
+  subject         String
+  templateId      String?
+  kaledLeadId     String?
+  status          String                    @default("PENDING") // PENDING, SENT, FAILED
+  resendId        String?
+  requiresApproval Boolean                  @default(false)
+  approvedBy      String?
+  approvedAt      DateTime?
+  metadata        Json?
+  sentAt          DateTime                  @default(now())
+
+  template        KaledEmailTemplate?       @relation(fields: [templateId], references: [id])
+  kaledLead       KaledLead?                @relation(fields: [kaledLeadId], references: [id])
+
+  @@index([kaledLeadId])
+  @@index([status])
+  @@index([requiresApproval])
 }

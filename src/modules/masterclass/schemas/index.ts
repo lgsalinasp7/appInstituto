@@ -27,4 +27,10 @@ export const publicLeadCaptureSchema = z.object({
   utmMedium: z.string().optional(),
   utmCampaign: z.string().optional(),
   utmContent: z.string().optional(),
+
+  // Filtering fields
+  studyStatus: z.string().optional(),
+  programmingLevel: z.string().optional(),
+  saasInterest: z.string().optional(),
+  investmentReady: z.string().optional(),
 });
