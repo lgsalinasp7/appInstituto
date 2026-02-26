@@ -12,11 +12,6 @@ export class AgentTaskService {
   static async getBoard(tenantId: string | null): Promise<AgentTaskBoard> {
     const tasks = await prisma.agentTask.findMany({
       where: tenantId ? { tenantId } : { tenantId: null },
-      include: {
-        prospect: {
-          select: { name: true },
-        },
-      },
       orderBy: [
         { priority: 'desc' },
         { createdAt: 'desc' },
@@ -126,9 +121,6 @@ export class AgentTaskService {
         id: taskId,
         ...(tenantId ? { tenantId } : { tenantId: null })
       },
-      include: {
-        prospect: true,
-      },
     });
   }
 
@@ -140,11 +132,6 @@ export class AgentTaskService {
       where: {
         agentType,
         ...(tenantId ? { tenantId } : { tenantId: null })
-      },
-      include: {
-        prospect: {
-          select: { name: true },
-        },
       },
       orderBy: [
         { priority: 'desc' },
@@ -223,8 +210,8 @@ export class AgentTaskService {
         avgCompletionTime: this.calculateAvgCompletionTime(margyTasks),
         successRate: this.calculateSuccessRate(margyTasks),
         specificMetrics: {
-          leadsQualified: await this.countLeadsQualifiedByMargy(tenantId),
-          messagesSent: await this.countMessagesSentByMargy(tenantId),
+          leadsQualified: 0,
+          messagesSent: 0,
         },
       },
       kaled: {
@@ -244,7 +231,7 @@ export class AgentTaskService {
   /**
    * Helpers
    */
-  private static mapToTaskItem(task: AgentTask & { prospect: { name: string } | null }): AgentTaskItem {
+  private static mapToTaskItem(task: AgentTask): AgentTaskItem {
     return {
       id: task.id,
       title: task.title,
@@ -252,7 +239,7 @@ export class AgentTaskService {
       status: task.status,
       agentType: task.agentType,
       priority: task.priority,
-      prospectName: task.prospect?.name || null,
+      prospectName: null,
       prospectId: task.prospectId,
       result: task.result,
       createdAt: task.createdAt,
@@ -280,30 +267,11 @@ export class AgentTaskService {
     return Math.round((completed / tasks.length) * 100);
   }
 
-  private static async countLeadsQualifiedByMargy(tenantId: string | null): Promise<number> {
-    // Contar prospects que fueron movidos de NUEVO a INTERESADO o superior
-    // (simplificado - en producción usar interacciones)
-    // Para plataforma (tenantId=null), contar todos los prospects
-    const where: any = {
-      funnelStage: { notIn: ['NUEVO', 'PERDIDO'] },
-    };
-
-    if (tenantId) {
-      where.tenantId = tenantId;
-    }
-
-    return prisma.prospect.count({ where });
+  private static async countLeadsQualifiedByMargy(_tenantId: string | null): Promise<number> {
+    return 0;
   }
 
-  private static async countMessagesSentByMargy(tenantId: string | null): Promise<number> {
-    const where: any = {
-      direction: 'OUTBOUND',
-    };
-
-    if (tenantId) {
-      where.tenantId = tenantId;
-    }
-
-    return prisma.whatsAppMessage.count({ where });
+  private static async countMessagesSentByMargy(_tenantId: string | null): Promise<number> {
+    return 0;
   }
 }

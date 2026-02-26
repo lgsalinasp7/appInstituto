@@ -96,12 +96,6 @@ export function useAdvisorReports() {
   return useDataFetch("/api/reports/advisors", { applyAdvisorFilter: false });
 }
 
-export function useProspects(filters?: Record<string, string>) {
-  const queryParams = new URLSearchParams(filters).toString();
-  const url = `/api/prospects${queryParams ? `?${queryParams}` : ""}`;
-  return useDataFetch(url);
-}
-
 export function usePrograms() {
   return useDataFetch("/api/programs", { applyAdvisorFilter: false });
 }

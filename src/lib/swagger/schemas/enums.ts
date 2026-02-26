@@ -24,11 +24,6 @@ export const enumSchemas = {
     enum: ['PAGADO', 'PENDIENTE', 'EN_COMPROMISO'],
     description: 'Estado del compromiso de pago',
   },
-  ProspectStatus: {
-    type: 'string' as const,
-    enum: ['CONTACTADO', 'EN_SEGUIMIENTO', 'CERRADO', 'PERDIDO'],
-    description: 'Estado del prospecto en el embudo de ventas',
-  },
   TenantStatus: {
     type: 'string' as const,
     enum: ['ACTIVO', 'PENDIENTE', 'SUSPENDIDO', 'CANCELADO'],

@@ -1,7 +1,6 @@
 import { authPaths } from './auth';
 import { adminTenantsPaths } from './admin-tenants';
 import { studentsPaths } from './students';
-import { prospectsPaths } from './prospects';
 import { programsPaths } from './programs';
 import { usersPaths } from './users';
 import { rolesPaths } from './roles';
@@ -21,7 +20,6 @@ export const allPaths = {
   ...authPaths,
   ...adminTenantsPaths,
   ...studentsPaths,
-  ...prospectsPaths,
   ...programsPaths,
   ...usersPaths,
   ...rolesPaths,

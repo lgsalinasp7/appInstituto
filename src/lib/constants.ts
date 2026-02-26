@@ -79,16 +79,6 @@ export const COMMITMENT_STATUS = {
 
 export type CommitmentStatus = (typeof COMMITMENT_STATUS)[keyof typeof COMMITMENT_STATUS];
 
-// Estados de Prospecto
-export const PROSPECT_STATUS = {
-  CONTACTADO: "CONTACTADO",
-  EN_SEGUIMIENTO: "EN_SEGUIMIENTO",
-  CERRADO: "CERRADO",
-  PERDIDO: "PERDIDO",
-} as const;
-
-export type ProspectStatus = (typeof PROSPECT_STATUS)[keyof typeof PROSPECT_STATUS];
-
 // Estados de Invitación
 export const INVITATION_STATUS = {
   PENDING: "PENDING",

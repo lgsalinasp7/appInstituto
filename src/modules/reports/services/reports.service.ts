@@ -303,23 +303,9 @@ export class ReportsService {
       prisma.paymentCommitment.count({
         where: { status: "PENDIENTE", createdAt: { lte: endOfLastMonth }, ...commitmentWhere },
       }),
-      // 9. Prospectos
-      prisma.prospect.count({
-        where: {
-          tenantId,
-          ...(advisorId && { advisorId }),
-          ...(programId && { programId }),
-        },
-      }),
-      // 10. Cerrados
-      prisma.prospect.count({
-        where: {
-          tenantId,
-          status: "CERRADO",
-          ...(advisorId && { advisorId }),
-          ...(programId && { programId }),
-        },
-      }),
+      // 9-10. Conversión comercial por prospectos tenant removida
+      Promise.resolve(0),
+      Promise.resolve(0),
     ]);
 
     const todayRevenue = Number(todayRevenueAggregate._sum.amount) || 0;

@@ -4,7 +4,7 @@ export const swaggerConfig = {
     title: 'API Instituto - Plataforma SaaS Educativa',
     description:
       'Documentacion completa de la API REST para la plataforma de gestion de instituciones educativas. ' +
-      'Sistema multi-tenant con gestion de estudiantes, pagos, prospectos, programas academicos, reportes y mas.',
+      'Sistema multi-tenant con gestion de estudiantes, pagos, programas academicos, reportes y mas.',
     version: '1.0.0',
     contact: {
       name: 'KaledSoft',
@@ -20,7 +20,6 @@ export const swaggerConfig = {
     { name: 'Autenticacion', description: 'Registro, login, recuperacion de contrasena y sesion' },
     { name: 'Admin - Tenants', description: 'Gestion de tenants de la plataforma (solo super-admin)' },
     { name: 'Estudiantes', description: 'CRUD de estudiantes, informacion de pagos y recibos' },
-    { name: 'Prospectos', description: 'Gestion de prospectos, interacciones y conversion' },
     { name: 'Programas', description: 'Programas academicos del tenant' },
     { name: 'Usuarios', description: 'Gestion de usuarios del tenant' },
     { name: 'Roles', description: 'Consulta de roles disponibles' },

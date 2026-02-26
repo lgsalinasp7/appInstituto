@@ -1,6 +1,4 @@
 // Services
-export { MargyService } from './services/margy.service';
-export { KaledService } from './services/kaled.service';
 export { AgentTaskService } from './services/agent-task.service';
 export { AgentMemoryService } from './services/agent-memory.service';
 export { AgentToolsService } from './services/agent-tools.service';
@@ -21,8 +19,6 @@ export type {
   AgentTool,
   MargyMetrics,
   KaledMetrics,
-  ProspectBriefing,
-  FunnelAnalysisResult,
 } from './types';
 
 export {
@@ -39,5 +35,4 @@ export {
   createAgentMemorySchema,
   updateAgentMemorySchema,
   agentChatSchema,
-  generateBriefingSchema,
 } from './schemas';
