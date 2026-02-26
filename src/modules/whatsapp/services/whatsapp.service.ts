@@ -163,11 +163,11 @@ export class WhatsAppService {
                 if (!prospect) {
                     // Crear nuevo prospect con stage NUEVO, source WHATSAPP
                     const defaultAdvisor = await this.getDefaultAdvisor(tenantId);
-                    const defaultAdvisorId = defaultAdvisor?.id;
-                    if (!defaultAdvisorId) {
+                    if (!defaultAdvisor) {
                         console.error("No default advisor found for tenant", tenantId);
                         continue;
                     }
+                    const defaultAdvisorId = defaultAdvisor!.id;
 
                     prospect = await prisma.prospect.create({
                         data: {
@@ -182,6 +182,11 @@ export class WhatsAppService {
                     });
                 }
 
+                if (!prospect) {
+                    continue;
+                }
+                const prospectId = prospect!.id;
+
                 // Crear WhatsAppMessage (INBOUND)
                 await prisma.whatsAppMessage.create({
                     data: {
@@ -190,7 +195,7 @@ export class WhatsAppService {
                         phone: from,
                         content: messageText,
                         status: 'DELIVERED',
-                        prospectId: prospect.id,
+                        prospectId,
                         tenantId,
                     },
                 });
@@ -200,14 +205,14 @@ export class WhatsAppService {
                     data: {
                         type: 'WHATSAPP_RECIBIDO',
                         content: messageText,
-                        prospectId: prospect.id,
+                        prospectId,
                         tenantId,
                     },
                 });
 
                 // Actualizar lastContactAt
                 await prisma.prospect.update({
-                    where: { id: prospect.id },
+                    where: { id: prospectId },
                     data: { lastContactAt: new Date() },
                 });
 
@@ -215,14 +220,14 @@ export class WhatsAppService {
                 if (process.env.MARGY_AUTO_RESPONSE_ENABLED === 'true') {
                     try {
                         const { MargyService } = await import('@/modules/agents/services/margy.service');
-                        const response = await MargyService.autoRespond(prospect.id, messageText, tenantId);
+                        const response = await MargyService.autoRespond(prospectId, messageText, tenantId);
 
                         // Enviar respuesta por WhatsApp
                         if (response) {
                             await this.sendAndLog({
-                                to: prospect.phone,
+                                to: from,
                                 message: response,
-                                prospectId: prospect.id,
+                                prospectId,
                                 tenantId,
                             });
                         }
