@@ -14,7 +14,6 @@ export { StudentsTable } from "./StudentsTable";
 export { PaymentModal } from "./PaymentModal";
 export { PaymentsHistoryView } from "./PaymentsHistoryView";
 export { CarteraView } from "./CarteraView";
-export { ProspectsView } from "./ProspectsView";
 export { Pagination } from "./Pagination";
 export { EnrollmentDashboard } from "./EnrollmentDashboard";
 

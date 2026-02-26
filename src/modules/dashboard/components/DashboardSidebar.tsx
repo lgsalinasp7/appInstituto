@@ -40,8 +40,7 @@ export function DashboardSidebar() {
   const hasFullAccess =
     roleName === "SUPERADMIN" ||
     roleName === "ADMINISTRADOR" ||
-    user?.role?.permissions?.includes("all") ||
-    user?.platformRole === "SUPER_ADMIN";
+    user?.role?.permissions?.includes("all");
 
   // Filter items based on role
   const filteredNavItems = navItems.filter((item) => {

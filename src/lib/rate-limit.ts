@@ -37,6 +37,10 @@ export const RATE_LIMIT_CONFIGS = {
     maxRequests: 100,
     windowMs: 60 * 1000, // 1 minuto
   },
+  PUBLIC_LEADS: {
+    maxRequests: 20,
+    windowMs: 60 * 1000, // 1 minuto
+  },
 } as const;
 
 /**

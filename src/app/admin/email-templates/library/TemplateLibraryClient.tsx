@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { KaledEmailTemplate } from '@prisma/client';
 import { EmailTemplateQuickPreview } from '../EmailTemplateQuickPreview';
 import { useRouter } from 'next/navigation';
@@ -16,11 +16,13 @@ const PHASE_LABELS: Record<Phase, string> = {
   NO_SHOW: 'Fase 4: No-Show Recovery',
 };
 
+const PHASE_ORDER: Phase[] = ['ALL', 'FASE_1', 'FASE_2', 'FASE_3', 'NO_SHOW'];
+
 const PHASE_COLORS: Record<string, string> = {
-  FASE_1: 'bg-blue-100 text-blue-800',
-  FASE_2: 'bg-yellow-100 text-yellow-800',
-  FASE_3: 'bg-green-100 text-green-800',
-  NO_SHOW: 'bg-red-100 text-red-800',
+  FASE_1: 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300',
+  FASE_2: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
+  FASE_3: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
+  NO_SHOW: 'border-rose-500/30 bg-rose-500/10 text-rose-300',
 };
 
 interface TemplateLibraryClientProps {
@@ -34,25 +36,55 @@ export function TemplateLibraryClient({ templates }: TemplateLibraryClientProps)
   const [previewTemplate, setPreviewTemplate] = useState<KaledEmailTemplate | null>(null);
   const [isUsingTemplate, setIsUsingTemplate] = useState(false);
 
-  // Filter templates
-  const filteredTemplates = templates.filter((template) => {
-    const matchesPhase = selectedPhase === 'ALL' || template.phase === selectedPhase;
-    const matchesSearch =
-      searchTerm === '' ||
-      template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      template.subject.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesPhase && matchesSearch;
-  });
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
 
-  // Group by phase for display
-  const groupedTemplates = filteredTemplates.reduce((acc, template) => {
-    const phase = template.phase || 'OTHER';
-    if (!acc[phase]) {
-      acc[phase] = [];
-    }
-    acc[phase].push(template);
-    return acc;
-  }, {} as Record<string, KaledEmailTemplate[]>);
+  const filteredTemplates = useMemo(() => {
+    return templates.filter((template) => {
+      const matchesPhase = selectedPhase === 'ALL' || template.phase === selectedPhase;
+      const matchesSearch =
+        normalizedSearchTerm === '' ||
+        template.name.toLowerCase().includes(normalizedSearchTerm) ||
+        template.subject.toLowerCase().includes(normalizedSearchTerm);
+      return matchesPhase && matchesSearch;
+    });
+  }, [templates, selectedPhase, normalizedSearchTerm]);
+
+  const groupedTemplates = useMemo(() => {
+    return filteredTemplates.reduce((acc, template) => {
+      const phase = template.phase || 'OTHER';
+      if (!acc[phase]) {
+        acc[phase] = [];
+      }
+      acc[phase].push(template);
+      return acc;
+    }, {} as Record<string, KaledEmailTemplate[]>);
+  }, [filteredTemplates]);
+
+  const groupedEntries = useMemo(() => {
+    const knownEntries = PHASE_ORDER.filter((phase) => phase !== 'ALL')
+      .map((phase) => [phase, groupedTemplates[phase]] as const)
+      .filter(([, phaseTemplates]) => Boolean(phaseTemplates?.length));
+
+    const otherEntries = Object.entries(groupedTemplates).filter(
+      ([phase]) => !PHASE_ORDER.includes(phase as Phase)
+    );
+
+    return [...knownEntries, ...otherEntries];
+  }, [groupedTemplates]);
+
+  const phaseCounts = useMemo(() => {
+    return PHASE_ORDER.reduce(
+      (acc, phase) => {
+        if (phase === 'ALL') {
+          acc.ALL = templates.length;
+          return acc;
+        }
+        acc[phase] = templates.filter((template) => template.phase === phase).length;
+        return acc;
+      },
+      { ALL: templates.length, FASE_1: 0, FASE_2: 0, FASE_3: 0, NO_SHOW: 0 } as Record<Phase, number>
+    );
+  }, [templates]);
 
   const handleUseTemplate = async (template: KaledEmailTemplate) => {
     setIsUsingTemplate(true);
@@ -89,122 +121,127 @@ export function TemplateLibraryClient({ templates }: TemplateLibraryClientProps)
 
   return (
     <>
-      {/* Filters */}
-      <div className="mb-6 space-y-4">
-        {/* Phase Filter */}
-        <div className="flex flex-wrap gap-2">
-          {(Object.keys(PHASE_LABELS) as Phase[]).map((phase) => (
+      <div className="sticky top-4 z-20 mb-7 rounded-2xl border border-slate-800/80 bg-slate-900/75 p-4 backdrop-blur">
+        <div className="mb-3 flex flex-wrap gap-2">
+          {PHASE_ORDER.map((phase) => (
             <button
               key={phase}
               onClick={() => setSelectedPhase(phase)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`rounded-full border px-4 py-2 text-sm font-medium transition-all ${
                 selectedPhase === phase
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'border-cyan-400/70 bg-cyan-500/15 text-cyan-200 shadow-[0_8px_30px_-18px_rgba(34,211,238,0.9)]'
+                  : 'border-slate-700 bg-slate-900/70 text-slate-300 hover:border-slate-500 hover:text-slate-100'
               }`}
             >
-              {PHASE_LABELS[phase]}
+              {PHASE_LABELS[phase]} ({phaseCounts[phase]})
             </button>
           ))}
         </div>
 
-        {/* Search */}
-        <div>
+        <div className="relative">
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+          >
+            <path
+              d="M11 4a7 7 0 1 1 0 14 7 7 0 0 1 0-14Zm0-2a9 9 0 1 0 5.65 16l4.67 4.68 1.42-1.42-4.68-4.67A9 9 0 0 0 11 2Z"
+              fill="currentColor"
+            />
+          </svg>
           <input
             type="text"
             placeholder="Buscar por nombre o asunto..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full rounded-xl border border-slate-700 bg-slate-950/70 py-2.5 pl-10 pr-4 text-slate-100 placeholder:text-slate-500 focus:border-cyan-400/70 focus:outline-none"
           />
         </div>
       </div>
 
-      {/* Results count */}
-      <div className="mb-4 text-sm text-gray-600">
-        Mostrando {filteredTemplates.length} de {templates.length} plantillas
+      <div className="mb-5 flex items-center justify-between rounded-xl border border-slate-800/70 bg-slate-900/60 px-4 py-3 text-sm text-slate-300">
+        <p>
+          Mostrando <span className="font-semibold text-slate-100">{filteredTemplates.length}</span> de{' '}
+          <span className="font-semibold text-slate-100">{templates.length}</span> plantillas
+        </p>
+        <p className="hidden text-xs text-slate-400 sm:block">Optimizado para embudos de alta conversión</p>
       </div>
 
-      {/* Templates Grid */}
-      {Object.keys(groupedTemplates).length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">No se encontraron plantillas</p>
+      {groupedEntries.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-900/40 py-16 text-center">
+          <p className="text-lg font-semibold text-slate-200">No se encontraron plantillas</p>
+          <p className="mt-2 text-sm text-slate-400">Prueba con otro término o cambia la fase seleccionada.</p>
         </div>
       ) : (
         <div className="space-y-8">
-          {Object.entries(groupedTemplates).map(([phase, phaseTemplates]) => (
-            <div key={phase}>
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                {PHASE_LABELS[phase as Phase] || phase}
-              </h2>
+          {groupedEntries.map(([phase, phaseTemplates]) => (
+            <section key={phase}>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-slate-100">{PHASE_LABELS[phase as Phase] || phase}</h2>
+                <span className="rounded-full border border-slate-700 bg-slate-900/70 px-2.5 py-1 text-xs text-slate-300">
+                  {phaseTemplates.length} plantillas
+                </span>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {phaseTemplates.map((template) => (
-                  <div
+                  <article
                     key={template.id}
-                    className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                    className="group relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 p-4 transition-all hover:-translate-y-0.5 hover:border-cyan-500/45 hover:shadow-[0_20px_40px_-28px_rgba(34,211,238,0.85)]"
                   >
-                    {/* Card Header */}
-                    <div className="p-4 border-b border-gray-200 bg-gray-50">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className="font-semibold text-gray-900 text-sm line-clamp-2">
-                          {template.name}
-                        </h3>
+                    <div className="mb-4">
+                      <div className="mb-3 flex items-start justify-between gap-2">
+                        <h3 className="line-clamp-2 text-base font-semibold text-slate-100">{template.name}</h3>
                         {template.phase && (
                           <span
-                            className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${
-                              PHASE_COLORS[template.phase]
-                            }`}
+                            className={`whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-medium ${PHASE_COLORS[template.phase] || 'border-slate-700 bg-slate-900 text-slate-300'}`}
                           >
-                            {template.phase}
+                            {PHASE_LABELS[template.phase as Phase] || template.phase}
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 line-clamp-2">
-                        <strong>Asunto:</strong> {template.subject}
+                      <p className="line-clamp-3 text-sm text-slate-300">
+                        <span className="font-semibold text-slate-100">Asunto:</span> {template.subject}
                       </p>
                     </div>
 
-                    {/* Card Body */}
-                    <div className="p-4">
-                      {/* Variables */}
-                      {template.variables.length > 0 && (
-                        <div className="mb-4">
-                          <p className="text-xs text-gray-500 mb-2">Variables requeridas:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {template.variables.map((variable) => (
-                              <span
-                                key={variable}
-                                className="px-2 py-1 bg-purple-50 text-purple-700 rounded text-xs font-mono"
-                              >
-                                {`{{${variable}}}`}
-                              </span>
-                            ))}
-                          </div>
+                    {Array.isArray(template.variables) && template.variables.length > 0 ? (
+                      <div className="mb-4">
+                        <p className="mb-2 text-xs text-slate-400">Variables requeridas</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {template.variables.map((variable) => (
+                            <span
+                              key={String(variable)}
+                              className="rounded-md border border-fuchsia-500/30 bg-fuchsia-500/10 px-2 py-1 text-xs font-mono text-fuchsia-200"
+                            >
+                              {`{{${String(variable)}}}`}
+                            </span>
+                          ))}
                         </div>
-                      )}
-
-                      {/* Actions */}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setPreviewTemplate(template)}
-                          className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
-                        >
-                          👁 Ver
-                        </button>
-                        <button
-                          onClick={() => handleUseTemplate(template)}
-                          disabled={isUsingTemplate}
-                          className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          📋 Usar
-                        </button>
                       </div>
+                    ) : (
+                      <p className="mb-4 text-xs text-slate-500">Sin variables requeridas</p>
+                    )}
+
+                    <div className="mt-auto flex gap-2">
+                      <button
+                        onClick={() => setPreviewTemplate(template)}
+                        className="flex-1 rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-2 text-sm font-medium text-slate-200 transition-colors hover:border-slate-500 hover:text-white"
+                      >
+                        Ver
+                      </button>
+                      <button
+                        onClick={() => handleUseTemplate(template)}
+                        disabled={isUsingTemplate}
+                        className="flex-1 rounded-lg border border-cyan-500/50 bg-cyan-500/15 px-3 py-2 text-sm font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/25 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Usar
+                      </button>
                     </div>
-                  </div>
+                  </article>
                 ))}
               </div>
-            </div>
+            </section>
           ))}
         </div>
       )}

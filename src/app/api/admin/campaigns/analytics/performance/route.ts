@@ -1,32 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from '@/lib/api-auth';
-import { CplAnalyticsService } from '@/modules/campaigns/services/cpl-analytics.service';
+import { withPlatformAdmin } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
+import { subDays } from 'date-fns';
 
-async function resolveTenantId(req: NextRequest, userId: string, userTenantId?: string | null) {
-  if (userTenantId) return userTenantId;
-  const tenantSlug = req.headers.get('x-tenant-slug');
-  if (tenantSlug && tenantSlug !== 'admin') {
-    const tenant = await prisma.tenant.findUnique({ where: { slug: tenantSlug }, select: { id: true } });
-    if (tenant) return tenant.id;
-  }
-  const platformUser = await prisma.user.findUnique({ where: { id: userId }, select: { platformRole: true } });
-  if (!platformUser?.platformRole) return null;
-  const fallbackTenant = await prisma.tenant.findFirst({
-    where: { status: 'ACTIVO' },
-    orderBy: { createdAt: 'asc' },
-    select: { id: true },
-  });
-  return fallbackTenant?.id ?? null;
-}
-
-export const GET = withAuth(async (req: NextRequest, user) => {
+export const GET = withPlatformAdmin(
+  ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
+  async (req: NextRequest) => {
   try {
-    const tenantId = await resolveTenantId(req, user.id, user.tenantId);
-    if (!tenantId) {
-      return NextResponse.json({ success: false, error: 'No se pudo determinar el tenant' }, { status: 401 });
-    }
-
     const { searchParams } = new URL(req.url);
     const period = parseInt(searchParams.get('period') || '30');
 
@@ -37,7 +17,40 @@ export const GET = withAuth(async (req: NextRequest, user) => {
       );
     }
 
-    const data = await CplAnalyticsService.getCampaignPerformance(tenantId, period);
+    const startDate = subDays(new Date(), period);
+    const campaigns = await prisma.kaledCampaign.findMany({
+      include: {
+        leads: {
+          where: {
+            deletedAt: null,
+            createdAt: { gte: startDate },
+          },
+          select: { status: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const data = campaigns.map((campaign) => {
+      const totalLeads = campaign.leads.length;
+      const matriculados = campaign.leads.filter((lead) => lead.status === 'CONVERTIDO').length;
+      const perdidos = campaign.leads.filter((lead) => lead.status === 'PERDIDO').length;
+      const spend = 0;
+      const cpl = totalLeads > 0 ? spend / totalLeads : 0;
+      const conversionRate = totalLeads > 0 ? (matriculados / totalLeads) * 100 : 0;
+      const cps = matriculados > 0 ? spend / matriculados : 0;
+
+      return {
+        campaign: campaign.name,
+        spend,
+        totalLeads,
+        matriculados,
+        perdidos,
+        cpl,
+        conversionRate,
+        cps,
+      };
+    });
 
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
@@ -47,4 +60,5 @@ export const GET = withAuth(async (req: NextRequest, user) => {
       { status: 500 }
     );
   }
-});
+}
+);

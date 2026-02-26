@@ -299,7 +299,10 @@ export default function EmailTemplateForm({ template }: EmailTemplateFormProps) 
           <h3 className="text-xl font-bold text-white mb-4">Vista Previa</h3>
           {showPreview ? (
             <div
-              className="prose prose-sm max-w-none prose-invert overflow-auto max-h-[500px] bg-white/5 rounded-lg p-4"
+              className="overflow-auto max-h-[500px] rounded-xl border border-slate-700/80 bg-slate-950/75 p-4 text-slate-100 shadow-inner"
+              style={{
+                lineHeight: 1.6,
+              }}
               dangerouslySetInnerHTML={{ __html: previewHtml }}
             />
           ) : (

@@ -1,25 +1,16 @@
-// GET /api/funnel/analytics - Obtener métricas del embudo
-
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { withTenantAuth } from '@/lib/api-auth';
-import { FunnelAnalyticsService } from '@/modules/funnel';
 
-export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) => {
-  try {
-    const { searchParams } = new URL(request.url);
-    const period = searchParams.get('period') || undefined;
+const TENANT_LEADS_DISABLED_MESSAGE =
+  'El módulo de leads/funnel para tenants está deshabilitado por política de separación.';
 
-    const metrics = await FunnelAnalyticsService.getFunnelMetrics(tenantId, period);
-
-    return NextResponse.json({
-      success: true,
-      data: metrics,
-    });
-  } catch (error: any) {
-    console.error('[API] Error getting analytics:', error);
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
-  }
-});
+export const GET = withTenantAuth(async () =>
+  NextResponse.json(
+    {
+      success: false,
+      error: TENANT_LEADS_DISABLED_MESSAGE,
+      code: 'TENANT_LEADS_DISABLED',
+    },
+    { status: 410 }
+  )
+);

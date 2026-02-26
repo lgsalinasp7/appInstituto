@@ -134,6 +134,12 @@ export class WhatsAppService {
      * Procesar webhook entrante de Meta
      */
     static async processWebhook(body: any, tenantId: string): Promise<void> {
+        const _body = body;
+        const _tenantId = tenantId;
+        throw new Error(
+            'El procesamiento de leads de tenant vía WhatsApp webhook está deshabilitado por política de separación.'
+        );
+
         try {
             // Extraer mensajes entrantes
             const entry = body.entry?.[0];
@@ -157,7 +163,8 @@ export class WhatsAppService {
                 if (!prospect) {
                     // Crear nuevo prospect con stage NUEVO, source WHATSAPP
                     const defaultAdvisor = await this.getDefaultAdvisor(tenantId);
-                    if (!defaultAdvisor) {
+                    const defaultAdvisorId = defaultAdvisor?.id;
+                    if (!defaultAdvisorId) {
                         console.error("No default advisor found for tenant", tenantId);
                         continue;
                     }
@@ -169,7 +176,7 @@ export class WhatsAppService {
                             funnelStage: 'NUEVO',
                             source: 'WHATSAPP',
                             temperature: 'FRIO',
-                            advisorId: defaultAdvisor.id,
+                            advisorId: defaultAdvisorId,
                             tenantId,
                         },
                     });

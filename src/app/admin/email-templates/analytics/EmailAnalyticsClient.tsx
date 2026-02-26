@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { BarChart3, TrendingUp, Mail, MousePointer, ShoppingCart } from 'lucide-react';
 
 interface TemplateAnalytics {
@@ -33,165 +33,196 @@ interface EmailAnalyticsClientProps {
   globalStats: GlobalStats;
 }
 
+type SortKey = 'sent' | 'openRate' | 'clickRate' | 'conversionRate';
+
+const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
+  { value: 'sent', label: 'Emails Enviados' },
+  { value: 'openRate', label: 'Open Rate' },
+  { value: 'clickRate', label: 'Click Rate' },
+  { value: 'conversionRate', label: 'Conversion Rate' },
+];
+
+const PHASE_LABELS: Record<string, string> = {
+  FASE_1: 'Fase 1',
+  FASE_2: 'Fase 2',
+  FASE_3: 'Fase 3',
+  NO_SHOW: 'No-Show',
+};
+
+const PHASE_COLORS: Record<string, string> = {
+  FASE_1: 'border-cyan-500/35 bg-cyan-500/10 text-cyan-200',
+  FASE_2: 'border-amber-500/35 bg-amber-500/10 text-amber-200',
+  FASE_3: 'border-emerald-500/35 bg-emerald-500/10 text-emerald-200',
+  NO_SHOW: 'border-rose-500/35 bg-rose-500/10 text-rose-200',
+};
+
+const getRateBadge = (value: number, highThreshold: number, mediumThreshold: number) => {
+  if (value >= highThreshold) {
+    return 'border-emerald-500/40 bg-emerald-500/15 text-emerald-200';
+  }
+  if (value >= mediumThreshold) {
+    return 'border-amber-500/40 bg-amber-500/15 text-amber-200';
+  }
+  return 'border-rose-500/40 bg-rose-500/15 text-rose-200';
+};
+
 export function EmailAnalyticsClient({ analyticsData, globalStats }: EmailAnalyticsClientProps) {
-  const [sortBy, setSortBy] = useState<'sent' | 'openRate' | 'clickRate' | 'conversionRate'>(
-    'sent'
-  );
+  const [sortBy, setSortBy] = useState<SortKey>('sent');
   const [filterPhase, setFilterPhase] = useState<string | null>('ALL');
 
-  // Filtrar por fase
-  const filteredData = analyticsData.filter(
-    (template) => filterPhase === 'ALL' || template.phase === filterPhase
+  const phases = useMemo(
+    () => ['ALL', ...new Set(analyticsData.map((template) => template.phase).filter(Boolean) as string[])],
+    [analyticsData]
   );
 
-  // Ordenar
-  const sortedData = [...filteredData].sort((a, b) => {
-    switch (sortBy) {
-      case 'sent':
-        return b.totalSent - a.totalSent;
-      case 'openRate':
-        return b.openRate - a.openRate;
-      case 'clickRate':
-        return b.clickRate - a.clickRate;
-      case 'conversionRate':
-        return b.conversionRate - a.conversionRate;
-      default:
-        return 0;
-    }
-  });
+  const sortedData = useMemo(() => {
+    const filteredData = analyticsData.filter(
+      (template) => filterPhase === 'ALL' || template.phase === filterPhase
+    );
 
-  // Obtener fases únicas
-  const phases: (string | null)[] = ['ALL', ...new Set(analyticsData.map((t) => t.phase).filter(Boolean) as string[])];
+    return filteredData.toSorted((a, b) => {
+      switch (sortBy) {
+        case 'sent':
+          return b.totalSent - a.totalSent;
+        case 'openRate':
+          return b.openRate - a.openRate;
+        case 'clickRate':
+          return b.clickRate - a.clickRate;
+        case 'conversionRate':
+          return b.conversionRate - a.conversionRate;
+        default:
+          return 0;
+      }
+    });
+  }, [analyticsData, filterPhase, sortBy]);
 
   return (
-    <div className="space-y-8">
-      {/* Global Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-gray-600">Total Plantillas</h3>
-            <BarChart3 className="w-5 h-5 text-blue-600" />
+    <div className="space-y-7">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/75 p-5 shadow-[0_18px_45px_-35px_rgba(34,211,238,0.7)]">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-medium text-slate-400">Total Plantillas</h3>
+            <BarChart3 className="h-5 w-5 text-cyan-300" />
           </div>
-          <p className="text-3xl font-bold text-gray-900">{globalStats.totalTemplates}</p>
+          <p className="text-3xl font-bold text-slate-100">{globalStats.totalTemplates}</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-gray-600">Emails Enviados</h3>
-            <Mail className="w-5 h-5 text-green-600" />
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/75 p-5">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-medium text-slate-400">Emails Enviados</h3>
+            <Mail className="h-5 w-5 text-emerald-300" />
           </div>
-          <p className="text-3xl font-bold text-gray-900">{globalStats.totalEmailsSent}</p>
+          <p className="text-3xl font-bold text-slate-100">{globalStats.totalEmailsSent}</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-gray-600">Open Rate Promedio</h3>
-            <TrendingUp className="w-5 h-5 text-purple-600" />
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/75 p-5">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-medium text-slate-400">Open Rate Promedio</h3>
+            <TrendingUp className="h-5 w-5 text-violet-300" />
           </div>
-          <p className="text-3xl font-bold text-gray-900">{globalStats.avgOpenRate}%</p>
+          <p className="text-3xl font-bold text-slate-100">{globalStats.avgOpenRate}%</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-gray-600">Click Rate Promedio</h3>
-            <MousePointer className="w-5 h-5 text-orange-600" />
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/75 p-5">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-medium text-slate-400">Click Rate Promedio</h3>
+            <MousePointer className="h-5 w-5 text-amber-300" />
           </div>
-          <p className="text-3xl font-bold text-gray-900">{globalStats.avgClickRate}%</p>
+          <p className="text-3xl font-bold text-slate-100">{globalStats.avgClickRate}%</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-gray-600">Conversion Rate Promedio</h3>
-            <ShoppingCart className="w-5 h-5 text-red-600" />
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/75 p-5">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-medium text-slate-400">Conversion Rate Promedio</h3>
+            <ShoppingCart className="h-5 w-5 text-rose-300" />
           </div>
-          <p className="text-3xl font-bold text-gray-900">{globalStats.avgConversionRate}%</p>
+          <p className="text-3xl font-bold text-slate-100">{globalStats.avgConversionRate}%</p>
         </div>
       </div>
 
-      {/* Filters & Sort */}
-      <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-        <div className="flex flex-wrap gap-4 items-center justify-between">
-          <div className="flex gap-2 flex-wrap">
-            <label className="text-sm font-medium text-gray-700">Filtrar por fase:</label>
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/75 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="text-sm font-medium text-slate-300">Filtrar por fase:</label>
             {phases.map((phase) => (
               <button
                 key={phase}
                 onClick={() => setFilterPhase(phase)}
-                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                className={`rounded-full border px-3 py-1 text-sm font-medium transition-colors ${
                   filterPhase === phase
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'border-cyan-400/70 bg-cyan-500/15 text-cyan-200'
+                    : 'border-slate-700 bg-slate-900/70 text-slate-300 hover:border-slate-500 hover:text-slate-100'
                 }`}
               >
-                {phase === 'ALL' ? 'Todas' : phase}
+                {phase === 'ALL' ? 'Todas' : PHASE_LABELS[phase] || phase}
               </button>
             ))}
           </div>
 
-          <div className="flex gap-2 items-center">
-            <label className="text-sm font-medium text-gray-700">Ordenar por:</label>
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-slate-300">Ordenar por:</label>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              onChange={(e) => setSortBy(e.target.value as SortKey)}
+              className="rounded-lg border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-200 focus:border-cyan-400/70 focus:outline-none"
             >
-              <option value="sent">Emails Enviados</option>
-              <option value="openRate">Open Rate</option>
-              <option value="clickRate">Click Rate</option>
-              <option value="conversionRate">Conversion Rate</option>
+              {SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </div>
         </div>
       </div>
 
-      {/* Templates Table */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="border-b border-slate-800 bg-slate-950/75">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-400">
                   Plantilla
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-400">
                   Fase
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-slate-400">
                   Enviados
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-slate-400">
                   Abiertos
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-slate-400">
                   Clicks
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-slate-400">
                   Open Rate
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-slate-400">
                   Click Rate
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-slate-400">
                   Conversión
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-slate-800 bg-slate-900/40">
               {sortedData.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={8} className="px-6 py-12 text-center text-slate-400">
                     No hay datos disponibles
                   </td>
                 </tr>
               ) : (
                 sortedData.map((template) => (
-                  <tr key={template.id} className="hover:bg-gray-50">
+                  <tr key={template.id} className="transition-colors hover:bg-slate-800/35">
                     <td className="px-6 py-4">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{template.name}</div>
-                        <div className="text-xs text-gray-500 line-clamp-1">{template.subject}</div>
+                        <div className="text-sm font-semibold text-slate-100">{template.name}</div>
+                        <div className="line-clamp-1 text-xs text-slate-400">{template.subject}</div>
                         {template.isLibraryTemplate && (
-                          <span className="inline-block mt-1 px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">
+                          <span className="mt-1 inline-block rounded border border-fuchsia-500/35 bg-fuchsia-500/10 px-2 py-1 text-xs text-fuchsia-200">
                             Librería
                           </span>
                         )}
@@ -199,59 +230,43 @@ export function EmailAnalyticsClient({ analyticsData, globalStats }: EmailAnalyt
                     </td>
                     <td className="px-6 py-4">
                       {template.phase ? (
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
-                          {template.phase}
+                        <span
+                          className={`rounded-full border px-2.5 py-1 text-xs ${PHASE_COLORS[template.phase] || 'border-slate-700 bg-slate-900 text-slate-300'}`}
+                        >
+                          {PHASE_LABELS[template.phase] || template.phase}
                         </span>
                       ) : (
-                        <span className="text-xs text-gray-400">-</span>
+                        <span className="text-xs text-slate-500">-</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className="text-sm font-semibold text-gray-900">
+                      <span className="text-sm font-semibold text-slate-100">
                         {template.totalSent}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className="text-sm text-gray-700">{template.totalOpened}</span>
+                      <span className="text-sm text-slate-300">{template.totalOpened}</span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className="text-sm text-gray-700">{template.totalClicked}</span>
+                      <span className="text-sm text-slate-300">{template.totalClicked}</span>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          template.openRate >= 40
-                            ? 'bg-green-100 text-green-800'
-                            : template.openRate >= 20
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
+                        className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${getRateBadge(template.openRate, 40, 20)}`}
                       >
                         {template.openRate}%
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          template.clickRate >= 10
-                            ? 'bg-green-100 text-green-800'
-                            : template.clickRate >= 5
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
+                        className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${getRateBadge(template.clickRate, 10, 5)}`}
                       >
                         {template.clickRate}%
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          template.conversionRate >= 5
-                            ? 'bg-green-100 text-green-800'
-                            : template.conversionRate >= 2
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
+                        className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${getRateBadge(template.conversionRate, 5, 2)}`}
                       >
                         {template.conversionRate}%
                       </span>
@@ -266,9 +281,9 @@ export function EmailAnalyticsClient({ analyticsData, globalStats }: EmailAnalyt
 
       {/* Insights */}
       {sortedData.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-blue-900 mb-4">💡 Insights</h3>
-          <div className="space-y-2 text-sm text-blue-800">
+        <div className="rounded-2xl border border-cyan-500/35 bg-cyan-500/10 p-6">
+          <h3 className="mb-4 text-lg font-semibold text-cyan-100">Insights</h3>
+          <div className="space-y-2 text-sm text-cyan-50/90">
             {sortedData[0] && sortedData[0].openRate > 0 && (
               <p>
                 • <strong>{sortedData[0].name}</strong> tiene el mejor open rate con{' '}

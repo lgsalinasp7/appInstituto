@@ -37,9 +37,9 @@ export default async function ProtectedLayoutWrapper({
 }) {
   const tenant = await getTenantData();
 
-  // Si no hay tenant, renderizar sin tema (usuario de plataforma)
+  // Las rutas protegidas tenant deben ejecutarse solo con tenant resuelto.
   if (!tenant) {
-    return <ProtectedLayoutClient>{children}</ProtectedLayoutClient>;
+    redirect("/auth/login");
   }
 
   // Redirigir a /suspended si el tenant está SUSPENDIDO o CANCELADO

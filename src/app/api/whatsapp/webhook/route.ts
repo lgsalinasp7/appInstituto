@@ -38,65 +38,20 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        const data = JSON.parse(body);
-
-        // Obtener tenant basado en el phoneNumberId del webhook
-        // Esto permite soportar múltiples tenants con sus propios números de WhatsApp Business
-        const tenantId = await getTenantIdFromWebhook(data);
-
-        // Procesar webhook
-        await WhatsAppService.processWebhook(data, tenantId);
-
-        return NextResponse.json({ success: true }, { status: 200 });
+        return NextResponse.json(
+            {
+                success: true,
+                message:
+                    'Webhook recibido, pero el procesamiento de leads tenant está deshabilitado por política de separación.',
+                code: 'TENANT_LEADS_DISABLED',
+            },
+            { status: 200 }
+        );
     } catch (error) {
         console.error('Error processing WhatsApp webhook:', error);
         return NextResponse.json(
             { error: 'Internal server error' },
             { status: 500 }
         );
-    }
-}
-
-/**
- * Helper: Obtener tenant ID basado en el phoneNumberId del webhook
- * Esto permite multi-tenant real basado en el número de WhatsApp Business
- */
-async function getTenantIdFromWebhook(webhookData: any): Promise<string> {
-    try {
-        // Extraer phone_number_id del webhook payload
-        const phoneNumberId = webhookData.entry?.[0]?.changes?.[0]?.value?.metadata?.phone_number_id;
-
-        if (phoneNumberId) {
-            // Mapeo de WhatsApp Business Phone ID -> Tenant ID
-            // Este mapeo debe actualizarse cuando se agreguen nuevos tenants
-            const PHONE_TO_TENANT: Record<string, string> = {
-                // Ejemplo: 'PHONE_NUMBER_ID_EDUTEC': 'tenant-id-real-de-edutec',
-                // Agregar más entradas cuando haya más tenants con WhatsApp
-            };
-
-            // Si hay un mapeo explícito, usarlo
-            if (PHONE_TO_TENANT[phoneNumberId]) {
-                console.log(`[WhatsApp] Tenant resuelto desde mapeo: ${PHONE_TO_TENANT[phoneNumberId]}`);
-                return PHONE_TO_TENANT[phoneNumberId];
-            }
-
-            console.warn(`[WhatsApp] phoneNumberId ${phoneNumberId} no encontrado en mapeo, usando DEFAULT_TENANT_ID`);
-        }
-
-        // Fallback a variable de entorno
-        const defaultTenantId = process.env.DEFAULT_TENANT_ID;
-        if (defaultTenantId) {
-            console.log(`[WhatsApp] Usando DEFAULT_TENANT_ID: ${defaultTenantId}`);
-            return defaultTenantId;
-        }
-
-        // Si no hay ninguno configurado, lanzar error claro
-        throw new Error(
-            'No se pudo determinar el tenant para el webhook de WhatsApp. ' +
-            'Configure DEFAULT_TENANT_ID en las variables de entorno o agregue el phoneNumberId al mapeo en webhook/route.ts'
-        );
-    } catch (error) {
-        console.error('[WhatsApp] Error obteniendo tenantId:', error);
-        throw error;
     }
 }

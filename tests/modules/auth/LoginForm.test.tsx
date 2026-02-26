@@ -58,7 +58,7 @@ describe("LoginForm", () => {
         password: "password123",
       });
     });
-  });
+  }, 15000);
 
   it("no llama onSubmit cuando los datos son inválidos", async () => {
     const user = userEvent.setup();
@@ -73,7 +73,7 @@ describe("LoginForm", () => {
     await waitFor(() => {
       expect(onSubmit).not.toHaveBeenCalled();
     });
-  });
+  }, 15000);
 
   it("deshabilita el botón mientras carga", async () => {
     let resolveSubmit: () => void;

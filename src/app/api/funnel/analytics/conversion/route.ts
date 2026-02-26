@@ -1,22 +1,16 @@
-// GET /api/funnel/analytics/conversion - Datos para gráfico de conversión
-
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { withTenantAuth } from '@/lib/api-auth';
-import { FunnelAnalyticsService } from '@/modules/funnel';
 
-export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) => {
-  try {
-    const conversionData = await FunnelAnalyticsService.getConversionFunnel(tenantId);
+const TENANT_LEADS_DISABLED_MESSAGE =
+  'El módulo de leads/funnel para tenants está deshabilitado por política de separación.';
 
-    return NextResponse.json({
-      success: true,
-      data: conversionData,
-    });
-  } catch (error: any) {
-    console.error('[API] Error getting conversion data:', error);
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
-  }
-});
+export const GET = withTenantAuth(async () =>
+  NextResponse.json(
+    {
+      success: false,
+      error: TENANT_LEADS_DISABLED_MESSAGE,
+      code: 'TENANT_LEADS_DISABLED',
+    },
+    { status: 410 }
+  )
+);

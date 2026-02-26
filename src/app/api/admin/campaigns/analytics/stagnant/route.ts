@@ -1,32 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from '@/lib/api-auth';
-import { CplAnalyticsService } from '@/modules/campaigns/services/cpl-analytics.service';
+import { withPlatformAdmin } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
+import { subDays } from 'date-fns';
 
-async function resolveTenantId(req: NextRequest, userId: string, userTenantId?: string | null) {
-  if (userTenantId) return userTenantId;
-  const tenantSlug = req.headers.get('x-tenant-slug');
-  if (tenantSlug && tenantSlug !== 'admin') {
-    const tenant = await prisma.tenant.findUnique({ where: { slug: tenantSlug }, select: { id: true } });
-    if (tenant) return tenant.id;
-  }
-  const platformUser = await prisma.user.findUnique({ where: { id: userId }, select: { platformRole: true } });
-  if (!platformUser?.platformRole) return null;
-  const fallbackTenant = await prisma.tenant.findFirst({
-    where: { status: 'ACTIVO' },
-    orderBy: { createdAt: 'asc' },
-    select: { id: true },
-  });
-  return fallbackTenant?.id ?? null;
-}
-
-export const GET = withAuth(async (req: NextRequest, user) => {
+export const GET = withPlatformAdmin(
+  ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
+  async (req: NextRequest) => {
   try {
-    const tenantId = await resolveTenantId(req, user.id, user.tenantId);
-    if (!tenantId) {
-      return NextResponse.json({ success: false, error: 'No se pudo determinar el tenant' }, { status: 401 });
-    }
-
     const { searchParams } = new URL(req.url);
     const days = parseInt(searchParams.get('days') || '7');
 
@@ -37,7 +17,37 @@ export const GET = withAuth(async (req: NextRequest, user) => {
       );
     }
 
-    const data = await CplAnalyticsService.getStagnantLeads(tenantId, days);
+    const cutoffDate = subDays(new Date(), days);
+    const leads = await prisma.kaledLead.findMany({
+      where: {
+        deletedAt: null,
+        status: { notIn: ['CONVERTIDO', 'PERDIDO'] },
+        updatedAt: { lt: cutoffDate },
+      },
+      include: {
+        campaign: { select: { name: true } },
+        interactions: {
+          where: { type: 'CAMBIO_ESTADO' },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { createdAt: true },
+        },
+      },
+      orderBy: { updatedAt: 'asc' },
+      take: 50,
+    });
+
+    const data = leads.map((lead) => ({
+      id: lead.id,
+      name: lead.name,
+      phone: lead.phone || '',
+      funnelStage: lead.status,
+      temperature: lead.interestLevel?.toUpperCase() || 'N/A',
+      advisor: null,
+      program: lead.campaign?.name || null,
+      daysSinceUpdate: Math.floor((Date.now() - lead.updatedAt.getTime()) / (1000 * 60 * 60 * 24)),
+      lastStageChange: lead.interactions[0]?.createdAt || lead.updatedAt,
+    }));
 
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
@@ -47,4 +57,5 @@ export const GET = withAuth(async (req: NextRequest, user) => {
       { status: 500 }
     );
   }
-});
+}
+);

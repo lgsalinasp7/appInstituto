@@ -1,32 +1,16 @@
-// GET /api/funnel/leads/[id]/timeline - Obtener timeline de actividad
-
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { withTenantAuth } from '@/lib/api-auth';
-import { FunnelService } from '@/modules/funnel';
 
-export const GET = withTenantAuth(async (request: NextRequest, user, tenantId, context?: { params: Promise<Record<string, string>> }) => {
-  try {
-    const params = context?.params ? await context.params : {};
-    const { id } = params;
+const TENANT_LEADS_DISABLED_MESSAGE =
+  'El módulo de leads/funnel para tenants está deshabilitado por política de separación.';
 
-    if (!id) {
-      return NextResponse.json(
-        { success: false, error: 'ID requerido' },
-        { status: 400 }
-      );
-    }
-
-    const timeline = await FunnelService.getLeadTimeline(id, tenantId);
-
-    return NextResponse.json({
-      success: true,
-      data: timeline,
-    });
-  } catch (error: any) {
-    console.error('[API] Error getting timeline:', error);
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
-  }
-});
+export const GET = withTenantAuth(async () =>
+  NextResponse.json(
+    {
+      success: false,
+      error: TENANT_LEADS_DISABLED_MESSAGE,
+      code: 'TENANT_LEADS_DISABLED',
+    },
+    { status: 410 }
+  )
+);

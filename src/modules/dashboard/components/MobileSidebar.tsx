@@ -8,7 +8,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { TrendingUp, Users, CreditCard, FileText, LogOut, Settings, User, X, ShieldCheck } from "lucide-react";
+import { TrendingUp, Users, CreditCard, FileText, LogOut, Settings, User, X } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { performLogout } from "@/lib/logout";
 import { useBranding } from "@/components/providers/BrandingContext";
@@ -25,13 +25,6 @@ const navItems = [
   { href: "/reportes", label: "Reportes", icon: FileText },
 ];
 
-const adminItems = [
-  { href: "/admin", label: "Dashboard Admin", icon: TrendingUp },
-  { href: "/admin/users", label: "Usuarios", icon: Users },
-  { href: "/admin/roles", label: "Roles", icon: ShieldCheck },
-  { href: "/admin/content", label: "Módulos", icon: FileText },
-];
-
 const configItem = { href: "/configuracion", label: "Configuración", icon: Settings };
 
 export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
@@ -43,27 +36,18 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const hasFullAccess =
     roleName === "SUPERADMIN" ||
     roleName === "ADMINISTRADOR" ||
-    user?.role?.permissions?.includes("all") ||
-    user?.platformRole === "SUPER_ADMIN";
-  const isAdminSection = pathname.startsWith("/admin");
+    user?.role?.permissions?.includes("all");
 
-  // Determine which list to use
-  let displayItems = [];
+  // Filter standard items based on role
+  const displayItems = navItems.filter((item) => {
+    if (hasFullAccess) return true;
+    if (roleName === "VENTAS") return ["/dashboard", "/matriculas"].includes(item.href);
+    if (roleName === "CARTERA") return ["/dashboard", "/recaudos"].includes(item.href);
+    return item.href === "/dashboard";
+  });
 
-  if (isAdminSection) {
-    displayItems = adminItems;
-  } else {
-    // Filter standard items based on role
-    displayItems = navItems.filter((item) => {
-      if (hasFullAccess) return true;
-      if (roleName === "VENTAS") return ["/dashboard", "/matriculas"].includes(item.href);
-      if (roleName === "CARTERA") return ["/dashboard", "/recaudos"].includes(item.href);
-      return item.href === "/dashboard";
-    });
-
-    if (hasFullAccess) {
-      displayItems.push(configItem);
-    }
+  if (hasFullAccess) {
+    displayItems.push(configItem);
   }
 
   // Handler para cerrar después de un pequeño delay para permitir la navegación
@@ -119,7 +103,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
         {/* Navigation */}
         <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider px-3 mb-3">
-            {isAdminSection ? "Panel Administración" : "Menú Principal"}
+            Menú Principal
           </p>
           {displayItems.map((item) => {
             const Icon = item.icon;
@@ -140,17 +124,6 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
             );
           })}
 
-          {isAdminSection && (
-            <div className="pt-4 mt-4 border-t border-gray-100">
-              <Link
-                href="/dashboard"
-                onClick={handleLinkClick}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-primary transition-all font-bold text-sm"
-              >
-                <span>← Volver al Dashboard</span>
-              </Link>
-            </div>
-          )}
         </nav>
 
         {/* Bottom Section - User Options */}

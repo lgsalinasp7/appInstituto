@@ -60,7 +60,7 @@ const sections: NavSection[] = [
       { title: "Empresas", href: "/admin/empresas", icon: Building2, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.ASESOR_COMERCIAL] },
       { title: "Suscripciones", href: "/admin/suscripciones", icon: CreditCard, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.ASESOR_COMERCIAL] },
       { title: "Leads", href: "/admin/leads", icon: Target, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.ASESOR_COMERCIAL] },
-      { title: "Campañas", href: "/admin/campanas", icon: Megaphone, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.ASESOR_COMERCIAL, PLATFORM_ROLES.MARKETING] },
+      { title: "Campañas", href: "/admin/campaigns", icon: Megaphone, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.ASESOR_COMERCIAL, PLATFORM_ROLES.MARKETING] },
       { title: "Mis Plantillas", href: "/admin/email-templates", icon: Mail, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.ASESOR_COMERCIAL, PLATFORM_ROLES.MARKETING] },
       { title: "Librería Emails", href: "/admin/email-templates/library", icon: Library, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.ASESOR_COMERCIAL, PLATFORM_ROLES.MARKETING] },
       { title: "Analytics Emails", href: "/admin/email-templates/analytics", icon: TrendingUp, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.MARKETING] },
