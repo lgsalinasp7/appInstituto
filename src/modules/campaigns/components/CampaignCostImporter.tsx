@@ -60,42 +60,54 @@ export function CampaignCostImporter() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Importar Costos de Campaña</CardTitle>
+    <Card className="glass-card rounded-[2rem] border-slate-800/50 bg-slate-900/40">
+      <CardHeader className="border-b border-slate-800/50 pb-4">
+        <CardTitle className="font-display text-xl font-bold tracking-tight text-white">
+          Importar Costos de Campaña
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm text-slate-400">
           <p>Sube un archivo CSV con los costos diarios de tus campañas publicitarias.</p>
           <p className="mt-1">Formato: date, campaign, adset, ad, spend_cop, impressions, clicks</p>
         </div>
 
-        <Button variant="outline" onClick={downloadTemplate} className="w-full">
+        <Button
+          variant="outline"
+          onClick={downloadTemplate}
+          className="w-full border-slate-800/60 bg-slate-950/40 text-slate-300 hover:border-cyan-500/30 hover:bg-slate-900/70 hover:text-white"
+        >
           <Download className="h-4 w-4 mr-2" />
           Descargar Plantilla CSV
         </Button>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Seleccionar archivo CSV</label>
+          <label className="text-xs font-bold uppercase tracking-widest text-slate-500">
+            Seleccionar archivo CSV
+          </label>
           <input
             type="file"
             accept=".csv"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="w-full p-2 border rounded"
+            className="w-full rounded-xl border border-slate-800/60 bg-slate-950/40 p-2 text-sm text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-slate-800 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-200 hover:file:bg-slate-700"
           />
         </div>
 
-        <Button onClick={handleUpload} disabled={!file || loading} className="w-full">
+        <Button
+          onClick={handleUpload}
+          disabled={!file || loading}
+          className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/20 hover:from-cyan-600 hover:to-blue-600"
+        >
           <Upload className="h-4 w-4 mr-2" />
           {loading ? 'Importando...' : 'Importar CSV'}
         </Button>
 
         {result && (
           <div
-            className={`p-3 rounded ${
+            className={`rounded-xl border p-3 ${
               result.success
-                ? 'bg-green-50 text-green-800 border border-green-200'
-                : 'bg-red-50 text-red-800 border border-red-200'
+                ? 'border-green-500/30 bg-green-500/10 text-green-300'
+                : 'border-red-500/30 bg-red-500/10 text-red-300'
             }`}
           >
             {result.success ? (

@@ -135,23 +135,31 @@ export function SalesAgentChat({ prospectId }: SalesAgentChatProps) {
       {/* Selector de Agente */}
       <div className="flex gap-2">
         <Button
-          variant={selectedAgent === 'margy' ? 'default' : 'outline'}
+          variant="outline"
           onClick={() => {
             setSelectedAgent('margy');
             setMessages([]);
           }}
-          className="flex-1"
+          className={`flex-1 border-slate-800/60 ${
+            selectedAgent === 'margy'
+              ? 'bg-purple-500/20 text-purple-200 border-purple-500/30 hover:bg-purple-500/25'
+              : 'bg-slate-950/40 text-slate-300 hover:bg-slate-900/70 hover:text-white'
+          }`}
         >
           <span className="mr-2">🎀</span>
           Margy
         </Button>
         <Button
-          variant={selectedAgent === 'kaled' ? 'default' : 'outline'}
+          variant="outline"
           onClick={() => {
             setSelectedAgent('kaled');
             setMessages([]);
           }}
-          className="flex-1"
+          className={`flex-1 border-slate-800/60 ${
+            selectedAgent === 'kaled'
+              ? 'bg-cyan-500/20 text-cyan-200 border-cyan-500/30 hover:bg-cyan-500/25'
+              : 'bg-slate-950/40 text-slate-300 hover:bg-slate-900/70 hover:text-white'
+          }`}
         >
           <span className="mr-2">🎯</span>
           Kaled
@@ -159,9 +167,9 @@ export function SalesAgentChat({ prospectId }: SalesAgentChatProps) {
       </div>
 
       {/* Panel de Chat */}
-      <Card>
-        <CardHeader className={selectedAgent === 'margy' ? 'bg-pink-50' : 'bg-blue-50'}>
-          <CardTitle className="flex items-center gap-2">
+      <Card className="glass-card rounded-[2rem] border-slate-800/50 bg-slate-900/40">
+        <CardHeader className="border-b border-slate-800/50 bg-slate-950/40">
+          <CardTitle className="flex items-center gap-2 text-slate-100">
             {selectedAgent === 'margy' ? (
               <>
                 <span>🎀</span>
@@ -174,7 +182,7 @@ export function SalesAgentChat({ prospectId }: SalesAgentChatProps) {
               </>
             )}
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-slate-500">
             {selectedAgent === 'margy'
               ? 'Especialista en detectar prioridades y sugerir seguimientos'
               : 'Analista que identifica patrones y recomienda estrategias'}
@@ -182,20 +190,20 @@ export function SalesAgentChat({ prospectId }: SalesAgentChatProps) {
         </CardHeader>
         <CardContent className="p-4">
           {/* Mensajes */}
-          <div className="h-[500px] overflow-y-auto mb-4 space-y-3 border rounded p-3 bg-muted/20">
+          <div className="mb-4 h-[500px] space-y-3 overflow-y-auto rounded-xl border border-slate-800/60 bg-slate-950/35 p-3">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
-                <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">
+                <Sparkles className="mb-4 h-12 w-12 text-slate-500" />
+                <h3 className="mb-2 text-lg font-medium text-slate-100">
                   {selectedAgent === 'margy' ? '¡Hola! Soy Margy' : '¡Hola! Soy Kaled'}
                 </h3>
-                <p className="text-sm text-muted-foreground max-w-md">
+                <p className="max-w-md text-sm text-slate-500">
                   {selectedAgent === 'margy'
                     ? 'Puedo ayudarte a identificar qué leads contactar, evaluar su temperatura y sugerir el mejor momento para hacer seguimiento.'
                     : 'Puedo analizar el rendimiento de tus campañas, calcular métricas clave y sugerirte estrategias para mejorar tus conversiones.'}
                 </p>
                 <div className="mt-6 space-y-2 w-full max-w-md">
-                  <p className="text-xs font-medium text-muted-foreground">
+                  <p className="text-xs font-medium uppercase tracking-widest text-slate-500">
                     Preguntas sugeridas:
                   </p>
                   {getSuggestedQuestions().map((question, i) => (
@@ -203,7 +211,7 @@ export function SalesAgentChat({ prospectId }: SalesAgentChatProps) {
                       key={i}
                       variant="outline"
                       size="sm"
-                      className="w-full text-left justify-start"
+                      className="w-full justify-start border-slate-800/60 bg-slate-950/35 text-left text-slate-300 hover:bg-slate-900/70 hover:text-white"
                       onClick={() => handleSuggestedQuestion(question)}
                       disabled={isLoading}
                     >
@@ -219,10 +227,10 @@ export function SalesAgentChat({ prospectId }: SalesAgentChatProps) {
                     key={m.id}
                     className={`p-3 rounded-lg ${
                       m.role === 'user'
-                        ? 'bg-blue-100 ml-auto max-w-[80%]'
+                        ? 'ml-auto max-w-[80%] border border-cyan-500/20 bg-cyan-500/10 text-cyan-50'
                         : selectedAgent === 'margy'
-                        ? 'bg-pink-100 mr-auto max-w-[80%]'
-                        : 'bg-blue-50 mr-auto max-w-[80%]'
+                        ? 'mr-auto max-w-[80%] border border-purple-500/20 bg-purple-500/10 text-purple-50'
+                        : 'mr-auto max-w-[80%] border border-blue-500/20 bg-blue-500/10 text-blue-50'
                     }`}
                   >
                     <div className="text-sm whitespace-pre-wrap">{m.content}</div>
@@ -232,7 +240,7 @@ export function SalesAgentChat({ prospectId }: SalesAgentChatProps) {
               </>
             )}
             {isLoading && (
-              <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <div className="flex items-center gap-2 text-sm text-slate-500">
                 <div className="animate-pulse">●</div>
                 <div className="animate-pulse delay-75">●</div>
                 <div className="animate-pulse delay-150">●</div>
@@ -250,9 +258,14 @@ export function SalesAgentChat({ prospectId }: SalesAgentChatProps) {
               onChange={(e) => setInput(e.target.value)}
               placeholder={`Pregunta a ${selectedAgent === 'margy' ? 'Margy' : 'Kaled'}...`}
               disabled={isLoading}
-              className="flex-1"
+              className="flex-1 border-slate-800/60 bg-slate-950/40 text-slate-100 placeholder:text-slate-500 focus-visible:ring-cyan-500/20"
             />
-            <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+            <Button
+              type="submit"
+              size="icon"
+              disabled={isLoading || !input.trim()}
+              className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600"
+            >
               <Send className="h-4 w-4" />
             </Button>
           </form>

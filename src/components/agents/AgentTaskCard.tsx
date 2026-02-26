@@ -19,9 +19,9 @@ interface AgentTaskCardProps {
 }
 
 const PRIORITY_COLORS = {
-  0: 'bg-blue-500',
-  1: 'bg-orange-500',
-  2: 'bg-red-500',
+  0: 'bg-blue-500/80',
+  1: 'bg-orange-500/80',
+  2: 'bg-red-500/80',
 };
 
 const PRIORITY_LABELS = {
@@ -69,11 +69,11 @@ export function AgentTaskCard({ task, onUpdate }: AgentTaskCardProps) {
   };
 
   return (
-    <Card className="p-3 hover:shadow-md transition-shadow">
+    <Card className="rounded-xl border-slate-800/60 bg-slate-950/35 p-3 transition-colors hover:border-cyan-500/20 hover:bg-slate-900/50">
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${AGENT_COLORS[task.agentType]}`} />
-          <span className="text-xs font-medium text-muted-foreground">
+          <span className="text-xs font-medium text-slate-500">
             {task.agentType}
           </span>
         </div>
@@ -85,23 +85,23 @@ export function AgentTaskCard({ task, onUpdate }: AgentTaskCardProps) {
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:bg-slate-800/70 hover:text-slate-200">
                 <MoreVertical className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleStatusChange('EN_PROCESO')}>
+            <DropdownMenuContent align="end" className="glass-card border-slate-800/60 bg-slate-900/90 text-slate-200">
+              <DropdownMenuItem onClick={() => handleStatusChange('EN_PROCESO')} className="focus:bg-slate-800/70 focus:text-white">
                 Marcar en proceso
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleStatusChange('COMPLETADA')}>
+              <DropdownMenuItem onClick={() => handleStatusChange('COMPLETADA')} className="focus:bg-slate-800/70 focus:text-white">
                 Marcar completada
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleStatusChange('MEJORA')}>
+              <DropdownMenuItem onClick={() => handleStatusChange('MEJORA')} className="focus:bg-slate-800/70 focus:text-white">
                 Enviar a mejora
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleDelete}
-                className="text-red-600"
+                className="text-red-400 focus:bg-red-500/20 focus:text-red-300"
               >
                 Eliminar
               </DropdownMenuItem>
@@ -110,25 +110,25 @@ export function AgentTaskCard({ task, onUpdate }: AgentTaskCardProps) {
         </div>
       </div>
 
-      <h4 className="text-sm font-semibold mb-1 line-clamp-2">{task.title}</h4>
-      <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+      <h4 className="mb-1 line-clamp-2 text-sm font-semibold text-slate-100">{task.title}</h4>
+      <p className="mb-2 line-clamp-2 text-xs text-slate-500">
         {task.description}
       </p>
 
       {task.prospectName && (
-        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+        <div className="mb-2 flex items-center gap-1 text-xs text-slate-500">
           <User className="h-3 w-3" />
           <span className="truncate">{task.prospectName}</span>
         </div>
       )}
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1 text-xs text-slate-500">
           <Clock className="h-3 w-3" />
           <span>{new Date(task.createdAt).toLocaleDateString()}</span>
         </div>
         {task.priority > 0 && (
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="border-slate-700/70 bg-slate-900/50 text-xs text-slate-300">
             {PRIORITY_LABELS[task.priority as 0 | 1 | 2]}
           </Badge>
         )}

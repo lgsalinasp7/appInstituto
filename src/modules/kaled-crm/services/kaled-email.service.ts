@@ -24,6 +24,8 @@ export class KaledEmailService {
         variables: data.variables || [],
         category: data.category || 'GENERAL',
         campaignId: data.campaignId,
+        isLibraryTemplate: (data as any).isLibraryTemplate || false,
+        phase: (data as any).phase || null,
       },
       include: {
         campaign: true,

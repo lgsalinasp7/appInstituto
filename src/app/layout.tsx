@@ -29,6 +29,7 @@ import { LocalBusinessSchema } from "@/components/seo/LocalBusinessSchema";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { MetaPixel } from "@/components/analytics/MetaPixel";
 import { CookieConsent } from "@/components/CookieConsent";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://kaledsoft.tech'),
@@ -118,6 +119,7 @@ export default function RootLayout({
         <LazyAnalytics />
         <GoogleAnalytics />
         <MetaPixel />
+        <SpeedInsights />
         <CookieConsent />
       </body>
     </html>

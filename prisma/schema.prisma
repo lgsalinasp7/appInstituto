@@ -959,6 +959,23 @@ model KaledLead {
   // CRM - Gestión de campañas
   campaignId      String?
 
+  // Email Engagement Tracking
+  emailOpens         Int       @default(0)
+  emailClicks        Int       @default(0)
+  lastEmailOpenedAt  DateTime?
+  lastEmailClickedAt DateTime?
+  lastEmailSentAt    DateTime?
+  lastEmailTemplateId String?
+
+  // Lead Scoring (0-100)
+  leadScore          Int      @default(0)
+  interestLevel      String   @default("low") // low, medium, high
+
+  // Masterclass Tracking
+  masterclassRegisteredAt DateTime?
+  masterclassAttendedAt   DateTime?
+  purchasedAt             DateTime?
+
   // Soft delete
   deletedAt       DateTime?
   deletedBy       String?
@@ -975,6 +992,8 @@ model KaledLead {
   @@index([email])
   @@index([campaignId])
   @@index([deletedAt])
+  @@index([leadScore])
+  @@index([interestLevel])
 }
 
 // ============================================
@@ -1018,6 +1037,18 @@ model KaledCampaign {
   startDate   DateTime?
   endDate     DateTime?
   timeline    Json?                     // Configuración flexible de fases
+
+  // Enlaces de la campaña
+  eventUrl          String?  // Zoom/Google Meet URL
+  checkoutUrl       String?  // URL de pago/checkout
+  calendlyUrl       String?  // URL para agendar llamadas
+  recordingUrl      String?  // URL de grabación (para no-show)
+
+  // Metadata del evento
+  eventDate         DateTime?
+  eventTime         String?  // "7:00 PM COT"
+  eventDuration     Int?     // minutos
+
   createdAt   DateTime                  @default(now())
   updatedAt   DateTime                  @updatedAt
 
@@ -1047,6 +1078,8 @@ model KaledEmailTemplate {
   variables   String[]                  // ["nombre", "email", "enlace"]
   category    String                    @default("GENERAL") // AUTOMATIC, SEMI_AUTOMATIC, MANUAL
   isActive    Boolean                   @default(true)
+  isLibraryTemplate Boolean             @default(false) // Plantillas pre-diseñadas de la librería
+  phase       String?                   // FASE_1, FASE_2, FASE_3, NO_SHOW
   campaignId  String?
   createdAt   DateTime                  @default(now())
 
@@ -1056,6 +1089,8 @@ model KaledEmailTemplate {
 
   @@index([category])
   @@index([campaignId])
+  @@index([isLibraryTemplate])
+  @@index([phase])
 }
 
 // ============================================
@@ -1106,7 +1141,7 @@ model KaledEmailLog {
   subject         String
   templateId      String?
   kaledLeadId     String?
-  status          String                    @default("PENDING") // PENDING, SENT, FAILED
+  status          String                    @default("PENDING") // PENDING, SENT, FAILED, DELIVERED, OPENED, CLICKED, BOUNCED
   resendId        String?
   requiresApproval Boolean                  @default(false)
   approvedBy      String?
@@ -1114,10 +1149,19 @@ model KaledEmailLog {
   metadata        Json?
   sentAt          DateTime                  @default(now())
 
+  // Email Tracking
+  deliveredAt     DateTime?
+  openedAt        DateTime?
+  clickedAt       DateTime?
+  bouncedAt       DateTime?
+  openCount       Int                       @default(0)
+  clickCount      Int                       @default(0)
+
   template        KaledEmailTemplate?       @relation(fields: [templateId], references: [id])
   kaledLead       KaledLead?                @relation(fields: [kaledLeadId], references: [id])
 
   @@index([kaledLeadId])
   @@index([status])
   @@index([requiresApproval])
+  @@index([resendId])
 }

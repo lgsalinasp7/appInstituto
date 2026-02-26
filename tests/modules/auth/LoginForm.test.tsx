@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { LoginForm } from "@/modules/auth/components/LoginForm";
 import { BrandingProvider } from "@/components/providers/BrandingContext";
@@ -76,7 +76,6 @@ describe("LoginForm", () => {
   });
 
   it("deshabilita el botón mientras carga", async () => {
-    const user = userEvent.setup();
     let resolveSubmit: () => void;
     const onSubmit = vi.fn().mockImplementation(
       () => new Promise<void>((r) => { resolveSubmit = r; })
@@ -84,10 +83,17 @@ describe("LoginForm", () => {
 
     renderLoginForm({ onSubmit });
 
-    await user.type(screen.getByPlaceholderText(/tu@email\.com/i), "test@example.com");
-    await user.type(screen.getByPlaceholderText(/••••••••/), "password123");
-    await user.click(screen.getByRole("button", { name: /ingresar al portal/i }));
+    fireEvent.change(screen.getByPlaceholderText(/tu@email\.com/i), {
+      target: { value: "test@example.com" },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/••••••••/), {
+      target: { value: "password123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /ingresar al portal/i }));
 
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+    });
     expect(screen.getByRole("button", { name: /verificando/i })).toBeDisabled();
 
     resolveSubmit!();

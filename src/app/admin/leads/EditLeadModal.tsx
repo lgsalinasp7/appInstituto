@@ -120,26 +120,46 @@ export function EditLeadModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-premium-dark max-h-[90vh] overflow-y-auto border border-slate-800/50 text-slate-200 sm:max-w-[640px]">
         <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Editar Lead</DialogTitle>
-            <DialogDescription>
+          <DialogHeader className="border-b border-slate-800/50 pb-4">
+            <DialogTitle className="font-display text-2xl font-bold tracking-tighter text-white">
+              Editar Lead
+            </DialogTitle>
+            <DialogDescription className="text-sm font-medium text-slate-500">
               Actualiza la información del lead
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs defaultValue="basic" className="mt-4">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="basic">Información Básica</TabsTrigger>
-              <TabsTrigger value="observations">Observaciones</TabsTrigger>
-              <TabsTrigger value="utm">UTM Tracking</TabsTrigger>
+          <Tabs defaultValue="basic" className="mt-5 space-y-4">
+            <TabsList className="glass-card grid h-auto w-full grid-cols-3 rounded-2xl border border-slate-800/50 bg-slate-900/40 p-1">
+              <TabsTrigger
+                value="basic"
+                className="rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-400 data-[state=active]:bg-slate-800/70 data-[state=active]:text-white"
+              >
+                Información Básica
+              </TabsTrigger>
+              <TabsTrigger
+                value="observations"
+                className="rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-400 data-[state=active]:bg-slate-800/70 data-[state=active]:text-white"
+              >
+                Observaciones
+              </TabsTrigger>
+              <TabsTrigger
+                value="utm"
+                className="rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-400 data-[state=active]:bg-slate-800/70 data-[state=active]:text-white"
+              >
+                UTM Tracking
+              </TabsTrigger>
             </TabsList>
 
             {/* Tab: Basic Information */}
-            <TabsContent value="basic" className="space-y-4 mt-4">
+            <TabsContent
+              value="basic"
+              className="glass-card mt-0 space-y-4 rounded-[2rem] border border-slate-800/50 p-5"
+            >
               <div className="space-y-2">
-                <Label htmlFor="name">
+                <Label htmlFor="name" className="text-xs font-bold uppercase tracking-widest text-slate-500">
                   Nombre Completo <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -150,11 +170,12 @@ export function EditLeadModal({
                   }
                   required
                   disabled={loading}
+                  className="border-slate-800/60 bg-slate-950/40 text-slate-100 placeholder:text-slate-500 focus-visible:ring-cyan-500/20"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">
+                <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-slate-500">
                   Email <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -166,11 +187,14 @@ export function EditLeadModal({
                   }
                   required
                   disabled={loading}
+                  className="border-slate-800/60 bg-slate-950/40 text-slate-100 placeholder:text-slate-500 focus-visible:ring-cyan-500/20"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">Teléfono</Label>
+                <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  Teléfono
+                </Label>
                 <Input
                   id="phone"
                   type="tel"
@@ -179,11 +203,14 @@ export function EditLeadModal({
                     setFormData({ ...formData, phone: e.target.value })
                   }
                   disabled={loading}
+                  className="border-slate-800/60 bg-slate-950/40 text-slate-100 placeholder:text-slate-500 focus-visible:ring-cyan-500/20"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="status">Estado</Label>
+                <Label htmlFor="status" className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  Estado
+                </Label>
                 <Select
                   value={formData.status}
                   onValueChange={(value) =>
@@ -191,10 +218,10 @@ export function EditLeadModal({
                   }
                   disabled={loading}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="border-slate-800/60 bg-slate-950/40 text-slate-100 focus:ring-cyan-500/20">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="glass-card border-slate-800/60 bg-slate-900/90 text-slate-200 backdrop-blur-xl">
                     <SelectItem value="NUEVO">Nuevo</SelectItem>
                     <SelectItem value="CONTACTADO">Contactado</SelectItem>
                     <SelectItem value="DEMO">Demo Agendada</SelectItem>
@@ -206,9 +233,14 @@ export function EditLeadModal({
             </TabsContent>
 
             {/* Tab: Observations */}
-            <TabsContent value="observations" className="space-y-4 mt-4">
+            <TabsContent
+              value="observations"
+              className="glass-card mt-0 space-y-4 rounded-[2rem] border border-slate-800/50 p-5"
+            >
               <div className="space-y-2">
-                <Label htmlFor="observations">Observaciones</Label>
+                <Label htmlFor="observations" className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  Observaciones
+                </Label>
                 <Textarea
                   id="observations"
                   value={formData.observations}
@@ -218,14 +250,20 @@ export function EditLeadModal({
                   rows={8}
                   placeholder="Notas adicionales sobre el lead..."
                   disabled={loading}
+                  className="border-slate-800/60 bg-slate-950/40 text-slate-100 placeholder:text-slate-500 focus-visible:ring-cyan-500/20"
                 />
               </div>
             </TabsContent>
 
             {/* Tab: UTM Tracking */}
-            <TabsContent value="utm" className="space-y-4 mt-4">
+            <TabsContent
+              value="utm"
+              className="glass-card mt-0 space-y-4 rounded-[2rem] border border-slate-800/50 p-5"
+            >
               <div className="space-y-2">
-                <Label htmlFor="utmSource">UTM Source</Label>
+                <Label htmlFor="utmSource" className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  UTM Source
+                </Label>
                 <Input
                   id="utmSource"
                   value={formData.utmSource}
@@ -234,11 +272,14 @@ export function EditLeadModal({
                   }
                   placeholder="Ej: google, facebook, email"
                   disabled={loading}
+                  className="border-slate-800/60 bg-slate-950/40 text-slate-100 placeholder:text-slate-500 focus-visible:ring-cyan-500/20"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="utmMedium">UTM Medium</Label>
+                <Label htmlFor="utmMedium" className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  UTM Medium
+                </Label>
                 <Input
                   id="utmMedium"
                   value={formData.utmMedium}
@@ -247,11 +288,14 @@ export function EditLeadModal({
                   }
                   placeholder="Ej: cpc, email, social"
                   disabled={loading}
+                  className="border-slate-800/60 bg-slate-950/40 text-slate-100 placeholder:text-slate-500 focus-visible:ring-cyan-500/20"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="utmCampaign">UTM Campaign</Label>
+                <Label htmlFor="utmCampaign" className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  UTM Campaign
+                </Label>
                 <Input
                   id="utmCampaign"
                   value={formData.utmCampaign}
@@ -260,11 +304,14 @@ export function EditLeadModal({
                   }
                   placeholder="Ej: masterclass_feb_2024"
                   disabled={loading}
+                  className="border-slate-800/60 bg-slate-950/40 text-slate-100 placeholder:text-slate-500 focus-visible:ring-cyan-500/20"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="utmContent">UTM Content</Label>
+                <Label htmlFor="utmContent" className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  UTM Content
+                </Label>
                 <Input
                   id="utmContent"
                   value={formData.utmContent}
@@ -273,21 +320,27 @@ export function EditLeadModal({
                   }
                   placeholder="Ej: ad_version_a, banner_top"
                   disabled={loading}
+                  className="border-slate-800/60 bg-slate-950/40 text-slate-100 placeholder:text-slate-500 focus-visible:ring-cyan-500/20"
                 />
               </div>
             </TabsContent>
           </Tabs>
 
-          <DialogFooter className="mt-6">
+          <DialogFooter className="mt-6 border-t border-slate-800/50 pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={handleClose}
               disabled={loading}
+              className="border-slate-800/60 bg-slate-950/40 text-slate-300 hover:border-slate-700 hover:bg-slate-900/70 hover:text-white"
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="bg-cyan-600/90 text-white hover:bg-cyan-500"
+            >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Guardar Cambios
             </Button>

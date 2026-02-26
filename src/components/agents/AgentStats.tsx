@@ -30,16 +30,16 @@ export function AgentStats() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground">Cargando estadísticas...</div>
+      <div className="glass-card flex items-center justify-center rounded-[2rem] border border-slate-800/50 py-12">
+        <div className="text-slate-500">Cargando estadísticas...</div>
       </div>
     );
   }
 
   if (!stats) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground">No se pudieron cargar las estadísticas</div>
+      <div className="glass-card flex items-center justify-center rounded-[2rem] border border-slate-800/50 py-12">
+        <div className="text-slate-500">No se pudieron cargar las estadísticas</div>
       </div>
     );
   }
@@ -47,78 +47,80 @@ export function AgentStats() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold mb-2">Estadísticas de Agentes</h2>
-        <p className="text-sm text-muted-foreground">
+        <h2 className="font-display mb-2 text-2xl font-bold tracking-tighter text-white">
+          Estadísticas de Agentes
+        </h2>
+        <p className="text-sm text-slate-500">
           Performance y métricas de Margy y Kaled
         </p>
       </div>
 
       {/* Margy Stats */}
       <div>
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+        <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-100">
           <div className="w-3 h-3 rounded-full bg-purple-500" />
           Margy (Captadora/Calificadora)
         </h3>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
+          <Card className="glass-card rounded-[2rem] border-slate-800/50 bg-slate-900/40">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Tareas</CardTitle>
-              <Bot className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-slate-400">Total Tareas</CardTitle>
+              <Bot className="h-4 w-4 text-slate-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.margy.totalTasks}</div>
+              <div className="text-2xl font-bold text-white">{stats.margy.totalTasks}</div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="glass-card rounded-[2rem] border-slate-800/50 bg-slate-900/40">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completadas Hoy</CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-slate-400">Completadas Hoy</CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-slate-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.margy.completedToday}</div>
+              <div className="text-2xl font-bold text-white">{stats.margy.completedToday}</div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="glass-card rounded-[2rem] border-slate-800/50 bg-slate-900/40">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-slate-400">Pendientes</CardTitle>
+              <Clock className="h-4 w-4 text-slate-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.margy.pendingTasks}</div>
+              <div className="text-2xl font-bold text-white">{stats.margy.pendingTasks}</div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="glass-card rounded-[2rem] border-slate-800/50 bg-slate-900/40">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tasa de Éxito</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-slate-400">Tasa de Éxito</CardTitle>
+              <TrendingUp className="h-4 w-4 text-slate-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.margy.successRate}%</div>
+              <div className="text-2xl font-bold text-white">{stats.margy.successRate}%</div>
             </CardContent>
           </Card>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 mt-4">
-          <Card>
+          <Card className="glass-card rounded-[2rem] border-slate-800/50 bg-slate-900/40">
             <CardHeader>
-              <CardTitle className="text-sm">Leads Calificados</CardTitle>
+              <CardTitle className="text-sm text-slate-400">Leads Calificados</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">
+              <div className="text-3xl font-bold text-white">
                 {stats.margy.specificMetrics.leadsQualified}
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="glass-card rounded-[2rem] border-slate-800/50 bg-slate-900/40">
             <CardHeader>
-              <CardTitle className="text-sm">Mensajes Enviados</CardTitle>
+              <CardTitle className="text-sm text-slate-400">Mensajes Enviados</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">
+              <div className="text-3xl font-bold text-white">
                 {stats.margy.specificMetrics.messagesSent}
               </div>
             </CardContent>
@@ -128,70 +130,70 @@ export function AgentStats() {
 
       {/* Kaled Stats */}
       <div>
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+        <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-100">
           <div className="w-3 h-3 rounded-full bg-cyan-500" />
           Kaled (Analista/Cerrador)
         </h3>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
+          <Card className="glass-card rounded-[2rem] border-slate-800/50 bg-slate-900/40">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Tareas</CardTitle>
-              <Bot className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-slate-400">Total Tareas</CardTitle>
+              <Bot className="h-4 w-4 text-slate-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.kaled.totalTasks}</div>
+              <div className="text-2xl font-bold text-white">{stats.kaled.totalTasks}</div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="glass-card rounded-[2rem] border-slate-800/50 bg-slate-900/40">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completadas Hoy</CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-slate-400">Completadas Hoy</CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-slate-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.kaled.completedToday}</div>
+              <div className="text-2xl font-bold text-white">{stats.kaled.completedToday}</div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="glass-card rounded-[2rem] border-slate-800/50 bg-slate-900/40">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-slate-400">Pendientes</CardTitle>
+              <Clock className="h-4 w-4 text-slate-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.kaled.pendingTasks}</div>
+              <div className="text-2xl font-bold text-white">{stats.kaled.pendingTasks}</div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="glass-card rounded-[2rem] border-slate-800/50 bg-slate-900/40">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tasa de Éxito</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-slate-400">Tasa de Éxito</CardTitle>
+              <TrendingUp className="h-4 w-4 text-slate-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.kaled.successRate}%</div>
+              <div className="text-2xl font-bold text-white">{stats.kaled.successRate}%</div>
             </CardContent>
           </Card>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 mt-4">
-          <Card>
+          <Card className="glass-card rounded-[2rem] border-slate-800/50 bg-slate-900/40">
             <CardHeader>
-              <CardTitle className="text-sm">Briefings Generados</CardTitle>
+              <CardTitle className="text-sm text-slate-400">Briefings Generados</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">
+              <div className="text-3xl font-bold text-white">
                 {stats.kaled.specificMetrics.briefingsGenerated}
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="glass-card rounded-[2rem] border-slate-800/50 bg-slate-900/40">
             <CardHeader>
-              <CardTitle className="text-sm">Análisis Ejecutados</CardTitle>
+              <CardTitle className="text-sm text-slate-400">Análisis Ejecutados</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">
+              <div className="text-3xl font-bold text-white">
                 {stats.kaled.specificMetrics.analyticsRun}
               </div>
             </CardContent>

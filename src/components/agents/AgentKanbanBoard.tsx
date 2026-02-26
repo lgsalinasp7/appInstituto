@@ -62,17 +62,17 @@ export function AgentKanbanBoard() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground">Cargando tablero...</div>
+      <div className="glass-card flex items-center justify-center rounded-[2rem] border border-slate-800/50 py-12">
+        <div className="text-slate-500">Cargando tablero...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 space-y-4">
-        <div className="text-destructive font-medium">{error}</div>
-        <Button onClick={fetchBoard} variant="outline">
+      <div className="glass-card flex flex-col items-center justify-center space-y-4 rounded-[2rem] border border-slate-800/50 py-12">
+        <div className="font-medium text-red-400">{error}</div>
+        <Button onClick={fetchBoard} variant="outline" className="border-slate-800/60 bg-slate-950/40 text-slate-300 hover:bg-slate-900/60 hover:text-white">
           Reintentar
         </Button>
       </div>
@@ -81,8 +81,8 @@ export function AgentKanbanBoard() {
 
   if (!board) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground">No se pudo cargar el tablero</div>
+      <div className="glass-card flex items-center justify-center rounded-[2rem] border border-slate-800/50 py-12">
+        <div className="text-slate-500">No se pudo cargar el tablero</div>
       </div>
     );
   }
@@ -91,12 +91,15 @@ export function AgentKanbanBoard() {
     <>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-2xl font-bold">Tablero Kanban</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="font-display text-2xl font-bold tracking-tighter text-white">Tablero Kanban</h2>
+          <p className="text-sm text-slate-500">
             Tareas de Margy y Kaled
           </p>
         </div>
-        <Button onClick={() => setIsCreateModalOpen(true)}>
+        <Button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/20 hover:from-cyan-600 hover:to-blue-600"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Nueva Tarea
         </Button>
@@ -104,18 +107,20 @@ export function AgentKanbanBoard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {board.columns.map((column) => (
-          <Card key={column.status} className="flex flex-col">
+          <Card key={column.status} className="glass-card flex flex-col rounded-[2rem] border-slate-800/50 bg-slate-900/40">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium text-slate-300">
                   {STATUS_LABELS[column.status]}
                 </CardTitle>
-                <Badge variant="secondary">{column.tasks.length}</Badge>
+                <Badge variant="secondary" className="bg-slate-800/70 text-slate-200 border border-slate-700/60">
+                  {column.tasks.length}
+                </Badge>
               </div>
             </CardHeader>
             <CardContent className="flex-1 space-y-2">
               {column.tasks.length === 0 ? (
-                <div className="text-center text-sm text-muted-foreground py-8">
+                <div className="py-8 text-center text-sm text-slate-500">
                   No hay tareas
                 </div>
               ) : (

@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Target, Search, Mail, Phone, Calendar, Rocket, ExternalLink, MoreVertical, Edit, History, Trash, RefreshCw } from "lucide-react";
+import { Target, Search, Mail, Phone, Calendar, Rocket, ExternalLink, MoreVertical, Edit, History, Trash, RefreshCw, Send } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
@@ -22,6 +22,7 @@ import { EditLeadModal } from "./EditLeadModal";
 import { AddNoteModal } from "./AddNoteModal";
 import { LogCallModal } from "./LogCallModal";
 import { LogMeetingModal } from "./LogMeetingModal";
+import SendEmailModal from "./SendEmailModal";
 import { toast } from "sonner";
 import type { KaledLead } from "@prisma/client";
 
@@ -46,6 +47,7 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
     const [showAddNote, setShowAddNote] = useState(false);
     const [showLogCall, setShowLogCall] = useState(false);
     const [showLogMeeting, setShowLogMeeting] = useState(false);
+    const [showSendEmail, setShowSendEmail] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const refreshLeads = async () => {
@@ -71,6 +73,11 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
     const handleEdit = (lead: KaledLead) => {
         setSelectedLead(lead);
         setShowEdit(true);
+    };
+
+    const handleSendEmail = (lead: KaledLead) => {
+        setSelectedLead(lead);
+        setShowSendEmail(true);
     };
 
     const handleDelete = async (lead: KaledLead) => {
@@ -219,21 +226,39 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
                                                     <MoreVertical className="w-4 h-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="w-48">
-                                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                            <DropdownMenuContent
+                                                align="end"
+                                                className="glass-card w-48 rounded-xl border-white/10 bg-slate-900/80 text-slate-200 backdrop-blur-xl"
+                                            >
+                                                <DropdownMenuLabel className="text-xs uppercase tracking-wide text-slate-400">
+                                                    Acciones
+                                                </DropdownMenuLabel>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem onClick={() => handleViewHistory(lead)}>
+                                                <DropdownMenuItem
+                                                    onClick={() => handleViewHistory(lead)}
+                                                    className="cursor-pointer rounded-lg text-slate-200 focus:bg-slate-800/70 focus:text-white"
+                                                >
                                                     <History className="mr-2 h-4 w-4" />
                                                     Ver Historial
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleEdit(lead)}>
+                                                <DropdownMenuItem
+                                                    onClick={() => handleEdit(lead)}
+                                                    className="cursor-pointer rounded-lg text-slate-200 focus:bg-slate-800/70 focus:text-white"
+                                                >
                                                     <Edit className="mr-2 h-4 w-4" />
                                                     Editar
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={() => handleSendEmail(lead)}
+                                                    className="cursor-pointer rounded-lg text-slate-200 focus:bg-slate-800/70 focus:text-white"
+                                                >
+                                                    <Send className="mr-2 h-4 w-4" />
+                                                    Enviar Email
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem
                                                     onClick={() => handleDelete(lead)}
-                                                    className="text-red-600 focus:text-red-600"
+                                                    className="cursor-pointer rounded-lg text-red-400 focus:bg-red-500/20 focus:text-red-300"
                                                 >
                                                     <Trash className="mr-2 h-4 w-4" />
                                                     Eliminar
@@ -322,6 +347,19 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
                 onSuccess={() => {
                     refreshLeads();
                     setShowHistory(true);
+                }}
+            />
+
+            <SendEmailModal
+                lead={selectedLead}
+                open={showSendEmail}
+                onClose={() => {
+                    setShowSendEmail(false);
+                    setSelectedLead(null);
+                }}
+                onSuccess={() => {
+                    refreshLeads();
+                    toast.success('Email enviado correctamente');
                 }}
             />
         </div>

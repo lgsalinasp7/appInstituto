@@ -39,6 +39,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
   });
 
   async function handleSubmit(data: LoginFormData) {
+    if (isLoading) return;
     setIsLoading(true);
     try {
       await onSubmit?.(data);

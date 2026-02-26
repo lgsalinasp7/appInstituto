@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { tenantFetch } from '@/lib/tenant-fetch';
+import { cn } from '@/lib/utils';
 import { CampaignPerformance, StagnantLead } from '../services/cpl-analytics.service';
 
 export function CplDashboard() {
@@ -36,10 +37,10 @@ export function CplDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
+      <div className="glass-card flex items-center justify-center rounded-[2rem] border border-slate-800/50 p-12">
         <div className="text-center">
-          <div className="text-lg font-medium">Cargando datos...</div>
-          <div className="text-sm text-muted-foreground mt-2">
+          <div className="text-lg font-medium text-slate-200">Cargando datos...</div>
+          <div className="mt-2 text-sm text-slate-500">
             Calculando métricas de campañas
           </div>
         </div>
@@ -56,80 +57,80 @@ export function CplDashboard() {
 
   const getActionBadge = (camp: CampaignPerformance) => {
     if (camp.cpl < avgCpl && camp.conversionRate > 5) {
-      return { label: 'Escalar', className: 'bg-green-100 text-green-800 border-green-200' };
+      return { label: 'Escalar', className: 'bg-green-500/10 text-green-300 border-green-500/30' };
     } else if (camp.cpl > avgCpl * 1.5 || camp.conversionRate < 2) {
-      return { label: 'Pausar', className: 'bg-red-100 text-red-800 border-red-200' };
+      return { label: 'Pausar', className: 'bg-red-500/10 text-red-300 border-red-500/30' };
     }
-    return { label: 'Monitorear', className: 'bg-yellow-100 text-yellow-800 border-yellow-200' };
+    return { label: 'Monitorear', className: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/30' };
   };
 
   const getTrendIcon = (conversionRate: number) => {
-    if (conversionRate > 10) return <TrendingUp className="h-4 w-4 text-green-600" />;
-    if (conversionRate < 3) return <TrendingDown className="h-4 w-4 text-red-600" />;
-    return <Minus className="h-4 w-4 text-yellow-600" />;
+    if (conversionRate > 10) return <TrendingUp className="h-4 w-4 text-green-400" />;
+    if (conversionRate < 3) return <TrendingDown className="h-4 w-4 text-red-400" />;
+    return <Minus className="h-4 w-4 text-yellow-400" />;
   };
 
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <Card className="glass-card rounded-[2rem] border-slate-800/50 bg-slate-900/40">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-slate-500">
               Gasto Total (30d)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-white">
               ${totalSpend.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="mt-1 text-xs text-slate-500">
               {performance.length} campañas activas
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="glass-card rounded-[2rem] border-slate-800/50 bg-slate-900/40">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-slate-500">
               Leads Totales
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalLeads}</div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <div className="text-2xl font-bold text-white">{totalLeads}</div>
+            <p className="mt-1 text-xs text-slate-500">
               {totalMatriculados} matriculados
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="glass-card rounded-[2rem] border-slate-800/50 bg-slate-900/40">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-slate-500">
               CPL Promedio
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-white">
               ${Math.round(avgCpl).toLocaleString('es-CO')}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="mt-1 text-xs text-slate-500">
               Por lead generado
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="glass-card rounded-[2rem] border-slate-800/50 bg-slate-900/40">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-slate-500">
               Leads Estancados
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
+            <div className="text-2xl font-bold text-orange-400">
               {stagnant.length}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="mt-1 text-xs text-slate-500">
               Sin actualización 7+ días
             </p>
           </CardContent>
@@ -137,56 +138,58 @@ export function CplDashboard() {
       </div>
 
       {/* Tabla de Rendimiento */}
-      <Card>
+      <Card className="glass-card rounded-[2.5rem] border-slate-800/50 bg-slate-900/40">
         <CardHeader>
-          <CardTitle>Rendimiento por Campaña</CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <CardTitle className="font-display text-xl font-bold tracking-tight text-white">
+            Rendimiento por Campaña
+          </CardTitle>
+          <p className="text-sm text-slate-500">
             Últimos 30 días • Ordenado por total de leads
           </p>
         </CardHeader>
         <CardContent>
           {performance.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="py-8 text-center text-slate-500">
               No hay datos de campañas disponibles. Importa costos para ver métricas.
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-3 font-medium">Campaña</th>
-                    <th className="text-right p-3 font-medium">Gasto</th>
-                    <th className="text-right p-3 font-medium">Leads</th>
-                    <th className="text-right p-3 font-medium">CPL</th>
-                    <th className="text-right p-3 font-medium">Matriculados</th>
-                    <th className="text-right p-3 font-medium">Conv %</th>
-                    <th className="text-right p-3 font-medium">Acción</th>
+                  <tr className="border-b border-slate-800/50 bg-slate-900/10">
+                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500">Campaña</th>
+                    <th className="px-4 py-4 text-right text-xs font-bold uppercase tracking-widest text-slate-500">Gasto</th>
+                    <th className="px-4 py-4 text-right text-xs font-bold uppercase tracking-widest text-slate-500">Leads</th>
+                    <th className="px-4 py-4 text-right text-xs font-bold uppercase tracking-widest text-slate-500">CPL</th>
+                    <th className="px-4 py-4 text-right text-xs font-bold uppercase tracking-widest text-slate-500">Matriculados</th>
+                    <th className="px-4 py-4 text-right text-xs font-bold uppercase tracking-widest text-slate-500">Conv %</th>
+                    <th className="px-4 py-4 text-right text-xs font-bold uppercase tracking-widest text-slate-500">Acción</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-800/30 font-medium">
                   {performance.map((camp) => {
                     const action = getActionBadge(camp);
                     return (
-                      <tr key={camp.campaign} className="border-b hover:bg-muted/50">
-                        <td className="p-3 font-medium max-w-xs truncate">
+                      <tr key={camp.campaign} className="group hover:bg-white/[0.02] transition-colors">
+                        <td className="max-w-xs truncate px-4 py-3 font-medium text-white">
                           {camp.campaign}
                         </td>
-                        <td className="text-right p-3">
+                        <td className="px-4 py-3 text-right text-slate-300">
                           ${camp.spend.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                         </td>
-                        <td className="text-right p-3">{camp.totalLeads}</td>
-                        <td className="text-right p-3">
+                        <td className="px-4 py-3 text-right text-slate-300">{camp.totalLeads}</td>
+                        <td className="px-4 py-3 text-right text-slate-300">
                           ${Math.round(camp.cpl).toLocaleString('es-CO')}
                         </td>
-                        <td className="text-right p-3">{camp.matriculados}</td>
-                        <td className="text-right p-3">
+                        <td className="px-4 py-3 text-right text-slate-300">{camp.matriculados}</td>
+                        <td className="px-4 py-3 text-right text-slate-300">
                           <div className="flex items-center justify-end gap-1">
                             {getTrendIcon(camp.conversionRate)}
                             <span>{camp.conversionRate.toFixed(1)}%</span>
                           </div>
                         </td>
-                        <td className="text-right p-3">
-                          <Badge className={action.className}>
+                        <td className="px-4 py-3 text-right">
+                          <Badge className={cn('rounded-lg border px-3 py-1 text-[10px] font-bold uppercase tracking-widest', action.className)}>
                             {action.label}
                           </Badge>
                         </td>
@@ -202,13 +205,13 @@ export function CplDashboard() {
 
       {/* Leads Estancados */}
       {stagnant.length > 0 && (
-        <Card>
+        <Card className="glass-card rounded-[2.5rem] border-slate-800/50 bg-slate-900/40">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-600" />
+            <CardTitle className="font-display flex items-center gap-2 text-xl font-bold tracking-tight text-white">
+              <AlertTriangle className="h-5 w-5 text-orange-400" />
               Leads Estancados (7+ días sin movimiento)
             </CardTitle>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-slate-500">
               Estos leads necesitan seguimiento urgente
             </p>
           </CardHeader>
@@ -217,26 +220,26 @@ export function CplDashboard() {
               {stagnant.slice(0, 10).map((lead) => (
                 <div
                   key={lead.id}
-                  className="flex justify-between items-center p-3 border rounded hover:bg-muted/50"
+                  className="flex items-center justify-between rounded-xl border border-slate-800/60 bg-slate-950/35 p-3 hover:bg-slate-900/50"
                 >
                   <div className="flex-1">
-                    <div className="font-medium">{lead.name}</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="font-medium text-slate-100">{lead.name}</div>
+                    <div className="text-sm text-slate-500">
                       {lead.phone} • {lead.funnelStage}
                       {lead.advisor && ` • ${lead.advisor}`}
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant="outline" className="text-orange-700 border-orange-300">
+                    <Badge variant="outline" className="border-orange-500/30 bg-orange-500/10 text-orange-300">
                       {lead.daysSinceUpdate} días
                     </Badge>
                     <Badge
                       className={
                         lead.temperature === 'CALIENTE'
-                          ? 'bg-red-100 text-red-800'
+                          ? 'bg-red-500/10 text-red-300'
                           : lead.temperature === 'TIBIO'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-blue-100 text-blue-800'
+                          ? 'bg-yellow-500/10 text-yellow-300'
+                          : 'bg-blue-500/10 text-blue-300'
                       }
                     >
                       {lead.temperature}
@@ -245,7 +248,7 @@ export function CplDashboard() {
                 </div>
               ))}
               {stagnant.length > 10 && (
-                <div className="text-center text-sm text-muted-foreground pt-2">
+                <div className="pt-2 text-center text-sm text-slate-500">
                   +{stagnant.length - 10} leads estancados adicionales
                 </div>
               )}
