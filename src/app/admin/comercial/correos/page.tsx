@@ -63,7 +63,7 @@ async function getAnalytics() {
     ).length;
     const totalClicked = template.emailLogs.filter((log) => log.status === 'CLICKED').length;
     const totalConverted = template.emailLogs.filter(
-      (log) => log.kaledLead?.purchasedAt !== null
+      (log) => log.kaledLead?.purchasedAt != null
     ).length;
 
     const openRate = totalDelivered > 0 ? (totalOpened / totalDelivered) * 100 : 0;
