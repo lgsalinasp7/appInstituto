@@ -130,7 +130,7 @@ export const PUT = withPlatformAdmin(
 
 // DELETE /api/admin/kaled-leads/[id]
 export const DELETE = withPlatformAdmin(
-  ['SUPER_ADMIN', 'ASESOR_COMERCIAL'],
+  ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
   async (request: NextRequest, user, context: any) => {
     try {
       const params = await context.params;

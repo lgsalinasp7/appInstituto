@@ -75,6 +75,7 @@ export class KaledLeadService {
      */
     static async getAllLeads() {
         return prisma.kaledLead.findMany({
+            where: { deletedAt: null },
             orderBy: { createdAt: 'desc' },
         });
     }
