@@ -25,6 +25,7 @@ export function MasterclassForm() {
         formData.append("utmSource", searchParams.get("utm_source") || "");
         formData.append("utmMedium", searchParams.get("utm_medium") || "");
         formData.append("utmCampaign", searchParams.get("utm_campaign") || "");
+        formData.append("utmContent", searchParams.get("utm_content") || "");
         formData.append("masterclassSlug", "masterclass-ia");
 
         try {

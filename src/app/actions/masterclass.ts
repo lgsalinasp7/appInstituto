@@ -19,6 +19,7 @@ export async function captureMasterclassLead(formData: FormData) {
             utmSource: formData.get("utmSource") as string,
             utmMedium: formData.get("utmMedium") as string,
             utmCampaign: formData.get("utmCampaign") as string,
+            utmContent: formData.get("utmContent") as string,
         };
 
         // Validar con Zod
