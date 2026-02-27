@@ -1,7 +1,7 @@
 /**
  * Process Kaled Emails Cron Job
  * Processes pending emails scheduled to be sent
- * Run daily: 0 10 * * *
+ * Run every hour: 0 * * * *
  */
 
 import { NextRequest, NextResponse } from 'next/server';
