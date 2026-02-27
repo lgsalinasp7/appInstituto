@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import EmailTemplatePreviewModal from './EmailTemplatePreviewModal';
+import { useAuthStore } from '@/lib/store/auth-store';
 
 interface EmailTemplate {
   id: string;
@@ -52,6 +53,7 @@ export default function EmailTemplatesClient({
   templates: initialTemplates,
 }: EmailTemplatesClientProps) {
   const router = useRouter();
+  const platformRole = useAuthStore((state) => state.user?.platformRole);
   const [templates, setTemplates] = useState<EmailTemplate[]>(initialTemplates);
   const [searchQuery, setSearchQuery] = useState('');
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -72,7 +74,16 @@ export default function EmailTemplatesClient({
       .length,
   };
 
+  const canCreateOrDuplicate =
+    platformRole === 'SUPER_ADMIN' || platformRole === 'MARKETING';
+  const canEditOrToggle = platformRole === 'SUPER_ADMIN' || platformRole === 'MARKETING';
+  const canDelete = platformRole === 'SUPER_ADMIN';
+
   const handleEdit = (template: EmailTemplate) => {
+    if (!canEditOrToggle) {
+      toast.error('No tienes permisos para editar plantillas');
+      return;
+    }
     router.push(`/admin/email-templates/${template.id}`);
   };
 
@@ -82,6 +93,11 @@ export default function EmailTemplatesClient({
   };
 
   const handleDuplicate = async (template: EmailTemplate) => {
+    if (!canCreateOrDuplicate) {
+      toast.error('No tienes permisos para duplicar plantillas');
+      return;
+    }
+
     try {
       const response = await fetch('/api/admin/email-templates', {
         method: 'POST',
@@ -108,6 +124,11 @@ export default function EmailTemplatesClient({
   };
 
   const handleToggleActive = async (template: EmailTemplate) => {
+    if (!canEditOrToggle) {
+      toast.error('No tienes permisos para activar o desactivar plantillas');
+      return;
+    }
+
     try {
       const response = await fetch(
         `/api/admin/email-templates/${template.id}`,
@@ -134,6 +155,11 @@ export default function EmailTemplatesClient({
   };
 
   const handleDelete = async (template: EmailTemplate) => {
+    if (!canDelete) {
+      toast.error('No tienes permisos para eliminar plantillas');
+      return;
+    }
+
     if (
       !confirm(
         `¿Estás seguro de eliminar la plantilla "${template.name}"? Esta acción no se puede revertir.`
@@ -191,13 +217,15 @@ export default function EmailTemplatesClient({
             Gestiona plantillas de correo para automatización de campañas
           </p>
         </div>
-        <Button
-          onClick={() => router.push('/admin/email-templates/new')}
-          className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Nueva Plantilla
-        </Button>
+        {canCreateOrDuplicate && (
+          <Button
+            onClick={() => router.push('/admin/email-templates/new')}
+            className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Nueva Plantilla
+          </Button>
+        )}
       </div>
 
       {/* Stats Grid */}
@@ -323,36 +351,46 @@ export default function EmailTemplatesClient({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(template)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Editar
-                          </DropdownMenuItem>
+                          {canEditOrToggle && (
+                            <DropdownMenuItem onClick={() => handleEdit(template)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Editar
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem
                             onClick={() => handlePreview(template)}
                           >
                             <Eye className="mr-2 h-4 w-4" />
                             Vista Previa
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleDuplicate(template)}
-                          >
-                            <Copy className="mr-2 h-4 w-4" />
-                            Duplicar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleToggleActive(template)}
-                          >
-                            <Power className="mr-2 h-4 w-4" />
-                            {template.isActive ? 'Desactivar' : 'Activar'}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => handleDelete(template)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Eliminar
-                          </DropdownMenuItem>
+                          {canCreateOrDuplicate && (
+                            <DropdownMenuItem
+                              onClick={() => handleDuplicate(template)}
+                            >
+                              <Copy className="mr-2 h-4 w-4" />
+                              Duplicar
+                            </DropdownMenuItem>
+                          )}
+                          {canEditOrToggle && (
+                            <DropdownMenuItem
+                              onClick={() => handleToggleActive(template)}
+                            >
+                              <Power className="mr-2 h-4 w-4" />
+                              {template.isActive ? 'Desactivar' : 'Activar'}
+                            </DropdownMenuItem>
+                          )}
+                          {canDelete && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(template)}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Eliminar
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>

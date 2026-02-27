@@ -121,7 +121,7 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
     ];
 
     return (
-        <div className="space-y-8 animate-fade-in-up">
+        <div className="space-y-6 sm:space-y-8 lg:space-y-10 animate-fade-in-up">
             <DashboardHeader
                 title="Pipeline"
                 titleHighlight="Comercial"
@@ -129,7 +129,7 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
             />
 
             {/* Stats */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:gap-6 lg:gap-8 md:grid-cols-2 lg:grid-cols-4">
                 {stats.map((stat, index) => {
                     const Icon = stat.icon;
                     return (
@@ -151,12 +151,12 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
             </div>
 
             {/* Toolbar */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div className="relative group">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6">
+                <div className="relative group w-full lg:w-auto">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
                     <Input
                         placeholder="Buscar por nombre, email o teléfono..."
-                        className="pl-11 pr-4 py-6 bg-slate-950/50 border-slate-800/50 rounded-2xl w-full lg:w-96 focus:border-cyan-500/50 focus:ring-cyan-500/20 transition-all font-medium"
+                        className="h-12 sm:h-14 pl-11 pr-4 bg-slate-950/50 border-slate-800/50 rounded-2xl w-full lg:w-[28rem] focus:border-cyan-500/50 focus:ring-cyan-500/20 transition-all font-medium"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -164,9 +164,9 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
             </div>
 
             {/* Leads Table */}
-            <div className="glass-card rounded-[2.5rem] overflow-hidden">
+            <div className="glass-card rounded-[2.5rem] border border-slate-800/50 overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full min-w-[880px] text-left border-collapse">
                         <thead>
                             <tr className="border-b border-slate-800/50 bg-slate-900/10">
                                 <th className="px-8 py-6 text-xs font-bold uppercase tracking-widest text-slate-500">Prospecto</th>
@@ -179,7 +179,7 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
                         <tbody className="divide-y divide-slate-800/30 font-medium">
                             {filteredLeads.map((lead) => (
                                 <tr key={lead.id} className="group hover:bg-white/[0.02] transition-colors">
-                                    <td className="px-8 py-5">
+                                    <td className="px-8 py-6">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 flex items-center justify-center text-cyan-400 font-bold">
                                                 {lead.name.charAt(0)}
@@ -198,12 +198,12 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-5">
+                                    <td className="px-6 py-6">
                                         <Badge className={cn("rounded-lg border px-3 py-1 font-bold text-[10px]", STAGE_COLORS[lead.status] || "bg-slate-500/10 text-slate-500")}>
                                             {lead.status}
                                         </Badge>
                                     </td>
-                                    <td className="px-6 py-5 focus-within:z-10 relative">
+                                    <td className="px-6 py-6 focus-within:z-10 relative">
                                         <div className="text-xs text-slate-300 font-bold mb-1 line-clamp-1">{lead.source}</div>
                                         {lead.utmCampaign && (
                                             <div className="text-[10px] text-slate-500 font-normal truncate max-w-[150px]">
@@ -211,7 +211,7 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
                                             </div>
                                         )}
                                     </td>
-                                    <td className="px-6 py-5">
+                                    <td className="px-6 py-6">
                                         <div className="flex items-center gap-2 text-slate-400">
                                             <Calendar className="w-3.5 h-3.5" />
                                             <span className="text-xs">
@@ -219,48 +219,53 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
                                             </span>
                                         </div>
                                     </td>
-                                    <td className="px-8 py-5 text-right">
+                                    <td className="px-8 py-6 text-right">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-500 hover:text-white hover:bg-slate-800/50 rounded-xl transition-all">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-11 w-11 rounded-xl border border-transparent text-slate-500 transition-all hover:border-slate-700/60 hover:bg-slate-800/50 hover:text-white"
+                                                >
                                                     <MoreVertical className="w-4 h-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent
                                                 align="end"
-                                                className="glass-card w-48 rounded-xl border-white/10 bg-slate-900/80 text-slate-200 backdrop-blur-xl"
+                                                sideOffset={8}
+                                                className="glass-card w-56 rounded-2xl border-slate-700/50 bg-slate-900/90 p-2 text-slate-200 shadow-2xl backdrop-blur-xl"
                                             >
-                                                <DropdownMenuLabel className="text-xs uppercase tracking-wide text-slate-400">
+                                                <DropdownMenuLabel className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                                                     Acciones
                                                 </DropdownMenuLabel>
-                                                <DropdownMenuSeparator />
+                                                <DropdownMenuSeparator className="my-1.5 bg-slate-700/60" />
                                                 <DropdownMenuItem
                                                     onClick={() => handleViewHistory(lead)}
-                                                    className="cursor-pointer rounded-lg text-slate-200 focus:bg-slate-800/70 focus:text-white"
+                                                    className="h-10 cursor-pointer rounded-xl px-3 text-sm font-medium text-slate-200 focus:bg-slate-800/70 focus:text-white"
                                                 >
-                                                    <History className="mr-2 h-4 w-4" />
+                                                    <History className="mr-2.5 h-4 w-4" />
                                                     Ver Historial
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     onClick={() => handleEdit(lead)}
-                                                    className="cursor-pointer rounded-lg text-slate-200 focus:bg-slate-800/70 focus:text-white"
+                                                    className="h-10 cursor-pointer rounded-xl px-3 text-sm font-medium text-slate-200 focus:bg-slate-800/70 focus:text-white"
                                                 >
-                                                    <Edit className="mr-2 h-4 w-4" />
+                                                    <Edit className="mr-2.5 h-4 w-4" />
                                                     Editar
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     onClick={() => handleSendEmail(lead)}
-                                                    className="cursor-pointer rounded-lg text-slate-200 focus:bg-slate-800/70 focus:text-white"
+                                                    className="h-10 cursor-pointer rounded-xl px-3 text-sm font-medium text-slate-200 focus:bg-slate-800/70 focus:text-white"
                                                 >
-                                                    <Send className="mr-2 h-4 w-4" />
+                                                    <Send className="mr-2.5 h-4 w-4" />
                                                     Enviar Email
                                                 </DropdownMenuItem>
-                                                <DropdownMenuSeparator />
+                                                <DropdownMenuSeparator className="my-1.5 bg-slate-700/60" />
                                                 <DropdownMenuItem
                                                     onClick={() => handleDelete(lead)}
-                                                    className="cursor-pointer rounded-lg text-red-400 focus:bg-red-500/20 focus:text-red-300"
+                                                    className="h-10 cursor-pointer rounded-xl px-3 text-sm font-medium text-red-400 focus:bg-red-500/20 focus:text-red-300"
                                                 >
-                                                    <Trash className="mr-2 h-4 w-4" />
+                                                    <Trash className="mr-2.5 h-4 w-4" />
                                                     Eliminar
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>

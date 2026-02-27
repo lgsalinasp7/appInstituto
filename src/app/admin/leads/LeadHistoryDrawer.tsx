@@ -103,8 +103,8 @@ export function LeadHistoryDrawer({
 
   return (
     <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <SheetContent className="bg-premium-dark w-full overflow-y-auto border-l border-slate-800/50 text-slate-200 sm:max-w-2xl">
-        <SheetHeader className="sticky top-0 z-10 border-b border-slate-800/50 bg-slate-950/70 pb-4 pt-6 backdrop-blur-xl">
+      <SheetContent className="bg-premium-dark w-full overflow-y-auto border-l border-slate-800/50 text-slate-200 sm:max-w-2xl lg:max-w-3xl">
+        <SheetHeader className="sticky top-0 z-10 border-b border-slate-800/50 bg-slate-950/70 px-5 pb-5 pt-7 backdrop-blur-xl sm:px-6 sm:pt-8">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <SheetTitle className="font-display text-2xl font-bold tracking-tighter text-white">
@@ -128,18 +128,18 @@ export function LeadHistoryDrawer({
           </div>
         </SheetHeader>
 
-        <div className="space-y-6 p-4 sm:p-6">
+        <div className="space-y-5 p-5 sm:space-y-6 sm:p-6 lg:p-7">
           {/* Quick Actions */}
-          <section className="glass-card space-y-4 rounded-[2rem] border-slate-800/50 p-5">
+          <section className="glass-card space-y-4 rounded-[2rem] border-slate-800/50 p-5 sm:space-y-5 sm:p-6">
             <h3 className="font-display text-xs font-bold uppercase tracking-widest text-slate-500">
               Acciones Rápidas
             </h3>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2.5">
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => handleActionAndRefresh(onAddNote)}
-                className="h-9 border-slate-800/60 bg-slate-950/40 text-slate-300 hover:border-cyan-500/30 hover:bg-slate-900/70 hover:text-white"
+                className="h-10 border-slate-800/60 bg-slate-950/40 px-3.5 text-slate-300 hover:border-cyan-500/30 hover:bg-slate-900/70 hover:text-white"
               >
                 <Plus className="h-4 w-4" />
                 Agregar Nota
@@ -148,7 +148,7 @@ export function LeadHistoryDrawer({
                 size="sm"
                 variant="outline"
                 onClick={() => handleActionAndRefresh(onLogCall)}
-                className="h-9 border-slate-800/60 bg-slate-950/40 text-slate-300 hover:border-cyan-500/30 hover:bg-slate-900/70 hover:text-white"
+                className="h-10 border-slate-800/60 bg-slate-950/40 px-3.5 text-slate-300 hover:border-cyan-500/30 hover:bg-slate-900/70 hover:text-white"
               >
                 <PhoneCall className="h-4 w-4" />
                 Registrar Llamada
@@ -157,7 +157,7 @@ export function LeadHistoryDrawer({
                 size="sm"
                 variant="outline"
                 onClick={() => handleActionAndRefresh(onLogMeeting)}
-                className="h-9 border-slate-800/60 bg-slate-950/40 text-slate-300 hover:border-cyan-500/30 hover:bg-slate-900/70 hover:text-white"
+                className="h-10 border-slate-800/60 bg-slate-950/40 px-3.5 text-slate-300 hover:border-cyan-500/30 hover:bg-slate-900/70 hover:text-white"
               >
                 <Video className="h-4 w-4" />
                 Registrar Reunión
@@ -166,7 +166,7 @@ export function LeadHistoryDrawer({
                 size="sm"
                 variant="outline"
                 onClick={() => handleActionAndRefresh(onSendEmail)}
-                className="h-9 border-slate-800/60 bg-slate-950/40 text-slate-300 hover:border-cyan-500/30 hover:bg-slate-900/70 hover:text-white"
+                className="h-10 border-slate-800/60 bg-slate-950/40 px-3.5 text-slate-300 hover:border-cyan-500/30 hover:bg-slate-900/70 hover:text-white"
               >
                 <Mail className="h-4 w-4" />
                 Enviar Email
@@ -175,17 +175,17 @@ export function LeadHistoryDrawer({
           </section>
 
           {/* Contact Info */}
-          <section className="glass-card space-y-4 rounded-[2rem] border-slate-800/50 p-5">
+          <section className="glass-card space-y-4 rounded-[2rem] border-slate-800/50 p-5 sm:space-y-5 sm:p-6">
             <h3 className="font-display text-xs font-bold uppercase tracking-widest text-slate-500">
               Información de Contacto
             </h3>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 rounded-xl border border-slate-800/60 bg-slate-950/35 px-3 py-2.5">
+            <div className="space-y-3.5">
+              <div className="flex items-center gap-3 rounded-xl border border-slate-800/60 bg-slate-950/35 px-4 py-3">
                 <Mail className="h-4 w-4 text-slate-500" />
                 <span className="text-sm text-slate-200">{lead.email}</span>
               </div>
               {lead.phone && (
-                <div className="flex items-center gap-3 rounded-xl border border-slate-800/60 bg-slate-950/35 px-3 py-2.5">
+                <div className="flex items-center gap-3 rounded-xl border border-slate-800/60 bg-slate-950/35 px-4 py-3">
                   <Phone className="h-4 w-4 text-slate-500" />
                   <span className="text-sm text-slate-200">{lead.phone}</span>
                 </div>
@@ -194,11 +194,11 @@ export function LeadHistoryDrawer({
           </section>
 
           {/* Metadata */}
-          <section className="glass-card space-y-4 rounded-[2rem] border-slate-800/50 p-5">
+          <section className="glass-card space-y-4 rounded-[2rem] border-slate-800/50 p-5 sm:space-y-5 sm:p-6">
             <h3 className="font-display text-xs font-bold uppercase tracking-widest text-slate-500">
               Información General
             </h3>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
               <div className="rounded-xl border border-slate-800/60 bg-slate-950/35 p-3">
                 <p className="mb-1 text-xs text-slate-500">Estado</p>
                 <p className="text-sm font-semibold text-slate-100">
@@ -229,11 +229,11 @@ export function LeadHistoryDrawer({
             lead.utmMedium ||
             lead.utmCampaign ||
             lead.utmContent) && (
-            <section className="glass-card space-y-4 rounded-[2rem] border-slate-800/50 p-5">
+            <section className="glass-card space-y-4 rounded-[2rem] border-slate-800/50 p-5 sm:space-y-5 sm:p-6">
               <h3 className="font-display text-xs font-bold uppercase tracking-widest text-slate-500">
                 UTM Tracking
               </h3>
-              <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 sm:gap-4">
                 {lead.utmSource && (
                   <div className="rounded-xl border border-slate-800/60 bg-slate-950/35 p-3">
                     <span className="text-xs text-slate-500">Source</span>
@@ -264,7 +264,7 @@ export function LeadHistoryDrawer({
 
           {/* Observations */}
           {lead.observations && (
-            <section className="glass-card space-y-4 rounded-[2rem] border-slate-800/50 p-5">
+            <section className="glass-card space-y-4 rounded-[2rem] border-slate-800/50 p-5 sm:space-y-5 sm:p-6">
               <h3 className="font-display text-xs font-bold uppercase tracking-widest text-slate-500">
                 Observaciones
               </h3>
@@ -275,7 +275,7 @@ export function LeadHistoryDrawer({
           )}
 
           {/* Timeline */}
-          <section className="glass-card space-y-4 rounded-[2rem] border-slate-800/50 p-5">
+          <section className="glass-card space-y-4 rounded-[2rem] border-slate-800/50 p-5 sm:space-y-5 sm:p-6">
             <h3 className="font-display text-xs font-bold uppercase tracking-widest text-slate-500">
               Historial de Actividad
             </h3>
@@ -293,7 +293,7 @@ export function LeadHistoryDrawer({
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3.5">
                 {timeline.map((interaction) => (
                   <TimelineItem key={interaction.id} interaction={interaction} />
                 ))}
@@ -341,8 +341,8 @@ function TimelineItem({ interaction }: { interaction: InteractionWithUser }) {
   };
 
   return (
-    <div className="flex gap-3 rounded-xl border border-slate-800/60 bg-slate-950/35 p-3">
-      <div className="mt-0.5 rounded-full bg-slate-900/70 p-2 text-slate-300">
+    <div className="flex gap-3.5 rounded-xl border border-slate-800/60 bg-slate-950/35 p-4">
+      <div className="mt-0.5 rounded-full bg-slate-900/70 p-2.5 text-slate-300">
         {getIcon()}
       </div>
       <div className="flex-1 min-w-0">
