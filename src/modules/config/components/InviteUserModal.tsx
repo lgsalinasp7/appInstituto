@@ -122,22 +122,23 @@ export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAd
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md rounded-2xl border-none shadow-2xl p-0 overflow-hidden bg-white">
+            <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+                <div className="h-2 w-full bg-gradient-to-r from-cyan-500 to-blue-600" />
                 <DialogHeader className="p-6 pb-2">
-                    <DialogTitle className="flex items-center gap-3 text-xl font-bold text-[#1e3a5f]">
-                        <div className="w-10 h-10 rounded-xl bg-[#1e3a5f]/10 flex items-center justify-center text-[#1e3a5f]">
+                    <DialogTitle className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
                             <UserPlus size={20} />
                         </div>
                         Invitar Nuevo Usuario
                     </DialogTitle>
-                    <DialogDescription className="text-gray-500 pt-2">
+                    <DialogDescription className="pt-2">
                         Envía una invitación por correo electrónico para dar acceso a la plataforma.
                     </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4 p-6 pt-2">
                     <div className="space-y-2">
-                        <Label htmlFor="email" className="flex items-center gap-2">
+                        <Label htmlFor="email" className="flex items-center gap-2 text-slate-300">
                             <Mail size={16} />
                             Correo Electrónico
                         </Label>
@@ -153,13 +154,13 @@ export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAd
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="role">Rol del Usuario</Label>
+                        <Label htmlFor="role" className="text-slate-300">Rol del Usuario</Label>
                         <select
                             id="role"
                             value={roleId}
                             onChange={(e) => setRoleId(e.target.value)}
                             disabled={isLoading || roles.length === 0}
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex h-10 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/40 disabled:cursor-not-allowed disabled:opacity-50"
                             required
                         >
                             <option value="">Selecciona un rol</option>
@@ -177,11 +178,15 @@ export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAd
                             variant="outline"
                             onClick={() => onOpenChange(false)}
                             disabled={isLoading}
-                            className="flex-1"
+                            className="flex-1 rounded-xl border-white/15 bg-transparent text-slate-300 hover:bg-slate-800 hover:text-white"
                         >
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={isLoading} className="flex-1">
+                        <Button
+                            type="submit"
+                            disabled={isLoading}
+                            className="flex-1 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500"
+                        >
                             {isLoading ? "Enviando..." : "Enviar Invitación"}
                         </Button>
                     </div>

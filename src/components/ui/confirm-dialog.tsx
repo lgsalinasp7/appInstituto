@@ -38,44 +38,48 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-[400px] border-none shadow-instituto-lg overflow-hidden p-0 gap-0 rounded-2xl bg-white">
+            <DialogContent className="sm:max-w-[420px] overflow-hidden p-0 gap-0">
                 <div className={cn(
                     "h-2 w-full",
-                    variant === "destructive" ? "bg-red-500" : "bg-primary"
+                    variant === "destructive"
+                        ? "bg-gradient-to-r from-red-500 to-rose-500"
+                        : "bg-gradient-to-r from-cyan-500 to-blue-600"
                 )} />
 
                 <div className="p-6 pt-8">
                     <div className="flex items-start gap-4">
                         <div className={cn(
-                            "p-3 rounded-full shrink-0",
-                            variant === "destructive" ? "bg-red-50" : "bg-primary/10"
+                            "p-3 rounded-2xl shrink-0 border",
+                            variant === "destructive"
+                                ? "bg-red-500/10 border-red-500/30"
+                                : "bg-cyan-500/10 border-cyan-500/30"
                         )}>
                             {variant === "destructive" ? (
-                                <AlertTriangle className="text-red-600" size={24} />
+                                <AlertTriangle className="text-red-400" size={24} />
                             ) : (
-                                <Info className="text-primary" size={24} />
+                                <Info className="text-cyan-400" size={24} />
                             )}
                         </div>
 
                         <div className="space-y-2">
                             <DialogHeader>
-                                <DialogTitle className="text-xl font-bold text-[#1e3a5f]">
+                                <DialogTitle>
                                     {title}
                                 </DialogTitle>
                             </DialogHeader>
-                            <DialogDescription className="text-gray-500 leading-relaxed">
+                            <DialogDescription>
                                 {description}
                             </DialogDescription>
                         </div>
                     </div>
                 </div>
 
-                <DialogFooter className="bg-gray-50/50 p-4 sm:p-6 flex-row gap-3 sm:justify-end border-t border-gray-100">
+                <DialogFooter className="p-4 sm:p-6 flex-row gap-3 sm:justify-end border-t border-white/10 bg-slate-950/40">
                     <Button
                         variant="outline"
                         onClick={onClose}
                         disabled={isLoading}
-                        className="flex-1 sm:flex-none border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-gray-800 font-bold h-11"
+                        className="flex-1 sm:flex-none h-11 rounded-xl border-white/15 bg-transparent text-slate-300 hover:bg-slate-800 hover:text-white"
                     >
                         {cancelText}
                     </Button>
@@ -84,8 +88,8 @@ export function ConfirmDialog({
                         onClick={onConfirm}
                         disabled={isLoading}
                         className={cn(
-                            "flex-1 sm:flex-none font-bold h-11 shadow-sm transition-all",
-                            variant === "default" && "bg-primary hover:bg-primary-light"
+                            "flex-1 sm:flex-none h-11 rounded-xl font-bold transition-all",
+                            variant === "default" && "bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500"
                         )}
                     >
                         {isLoading ? "Procesando..." : confirmText}
