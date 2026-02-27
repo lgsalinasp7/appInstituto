@@ -25,6 +25,7 @@ import { LogMeetingModal } from "./LogMeetingModal";
 import SendEmailModal from "./SendEmailModal";
 import { toast } from "sonner";
 import type { KaledLead } from "@prisma/client";
+import { useConfirmModal } from "@/components/modals/use-confirm-modal";
 
 interface LeadsClientProps {
     initialLeads: any[];
@@ -49,6 +50,7 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
     const [showLogMeeting, setShowLogMeeting] = useState(false);
     const [showSendEmail, setShowSendEmail] = useState(false);
     const [loading, setLoading] = useState(false);
+    const { confirm, confirmModal } = useConfirmModal();
 
     const refreshLeads = async () => {
         setLoading(true);
@@ -81,7 +83,15 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
     };
 
     const handleDelete = async (lead: KaledLead) => {
-        if (!confirm('¿Estás seguro de eliminar este lead? Esta acción se puede revertir.')) {
+        const isConfirmed = await confirm({
+            title: "Eliminar lead",
+            description: "¿Estás seguro de eliminar este lead? Esta acción se puede revertir.",
+            confirmText: "Eliminar",
+            cancelText: "Cancelar",
+            variant: "destructive",
+        });
+
+        if (!isConfirmed) {
             return;
         }
 
@@ -367,6 +377,8 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
                     toast.success('Email enviado correctamente');
                 }}
             />
+
+            {confirmModal}
         </div>
     );
 }

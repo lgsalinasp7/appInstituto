@@ -12,6 +12,7 @@ import {
 import { MoreVertical, User, Clock, AlertTriangle } from 'lucide-react';
 import { tenantFetch } from '@/lib/tenant-fetch';
 import type { AgentTaskItem } from '@/modules/agents/types';
+import { useConfirmModal } from '@/components/modals/use-confirm-modal';
 
 interface AgentTaskCardProps {
   task: AgentTaskItem;
@@ -36,6 +37,8 @@ const AGENT_COLORS = {
 };
 
 export function AgentTaskCard({ task, onUpdate }: AgentTaskCardProps) {
+  const { confirm, confirmModal } = useConfirmModal();
+
   const handleStatusChange = async (newStatus: string) => {
     try {
       const res = await tenantFetch(`/api/admin/agents/tasks/${task.id}`, {
@@ -53,7 +56,15 @@ export function AgentTaskCard({ task, onUpdate }: AgentTaskCardProps) {
   };
 
   const handleDelete = async () => {
-    if (!confirm('¿Eliminar esta tarea?')) return;
+    const isConfirmed = await confirm({
+      title: 'Eliminar tarea',
+      description: '¿Eliminar esta tarea?',
+      confirmText: 'Eliminar',
+      cancelText: 'Cancelar',
+      variant: 'destructive',
+    });
+
+    if (!isConfirmed) return;
 
     try {
       const res = await tenantFetch(`/api/admin/agents/tasks/${task.id}`, {
@@ -69,8 +80,9 @@ export function AgentTaskCard({ task, onUpdate }: AgentTaskCardProps) {
   };
 
   return (
-    <Card className="rounded-xl border-slate-800/60 bg-slate-950/35 p-3 transition-colors hover:border-cyan-500/20 hover:bg-slate-900/50">
-      <div className="flex items-start justify-between mb-2">
+    <>
+      <Card className="rounded-xl border-slate-800/60 bg-slate-950/35 p-3 transition-colors hover:border-cyan-500/20 hover:bg-slate-900/50">
+        <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${AGENT_COLORS[task.agentType]}`} />
           <span className="text-xs font-medium text-slate-500">
@@ -110,29 +122,31 @@ export function AgentTaskCard({ task, onUpdate }: AgentTaskCardProps) {
         </div>
       </div>
 
-      <h4 className="mb-1 line-clamp-2 text-sm font-semibold text-slate-100">{task.title}</h4>
-      <p className="mb-2 line-clamp-2 text-xs text-slate-500">
-        {task.description}
-      </p>
+        <h4 className="mb-1 line-clamp-2 text-sm font-semibold text-slate-100">{task.title}</h4>
+        <p className="mb-2 line-clamp-2 text-xs text-slate-500">
+          {task.description}
+        </p>
 
-      {task.prospectName && (
-        <div className="mb-2 flex items-center gap-1 text-xs text-slate-500">
-          <User className="h-3 w-3" />
-          <span className="truncate">{task.prospectName}</span>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 text-xs text-slate-500">
-          <Clock className="h-3 w-3" />
-          <span>{new Date(task.createdAt).toLocaleDateString()}</span>
-        </div>
-        {task.priority > 0 && (
-          <Badge variant="outline" className="border-slate-700/70 bg-slate-900/50 text-xs text-slate-300">
-            {PRIORITY_LABELS[task.priority as 0 | 1 | 2]}
-          </Badge>
+        {task.prospectName && (
+          <div className="mb-2 flex items-center gap-1 text-xs text-slate-500">
+            <User className="h-3 w-3" />
+            <span className="truncate">{task.prospectName}</span>
+          </div>
         )}
-      </div>
-    </Card>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1 text-xs text-slate-500">
+            <Clock className="h-3 w-3" />
+            <span>{new Date(task.createdAt).toLocaleDateString()}</span>
+          </div>
+          {task.priority > 0 && (
+            <Badge variant="outline" className="border-slate-700/70 bg-slate-900/50 text-xs text-slate-300">
+              {PRIORITY_LABELS[task.priority as 0 | 1 | 2]}
+            </Badge>
+          )}
+        </div>
+      </Card>
+      {confirmModal}
+    </>
   );
 }

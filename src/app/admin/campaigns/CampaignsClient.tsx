@@ -34,6 +34,7 @@ import { DashboardHeader } from '@/modules/dashboard/components/DashboardHeader'
 import { toast } from 'sonner';
 import type { KaledCampaign } from '@prisma/client';
 import { CampaignFormModal } from './CampaignFormModal';
+import { useConfirmModal } from '@/components/modals/use-confirm-modal';
 
 interface CampaignsClientProps {
   initialCampaigns: any[];
@@ -61,6 +62,7 @@ export default function CampaignsClient({ initialCampaigns }: CampaignsClientPro
   const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { confirm, confirmModal } = useConfirmModal();
 
   const refreshCampaigns = async () => {
     setLoading(true);
@@ -118,7 +120,14 @@ export default function CampaignsClient({ initialCampaigns }: CampaignsClientPro
   };
 
   const handleCompleteCampaign = async (campaign: any) => {
-    if (!confirm('¿Estás seguro de completar esta campaña?')) {
+    const isConfirmed = await confirm({
+      title: 'Completar campaña',
+      description: '¿Estás seguro de completar esta campaña?',
+      confirmText: 'Completar',
+      cancelText: 'Cancelar',
+    });
+
+    if (!isConfirmed) {
       return;
     }
 
@@ -147,11 +156,16 @@ export default function CampaignsClient({ initialCampaigns }: CampaignsClientPro
   };
 
   const handleDelete = async (campaign: any) => {
-    if (
-      !confirm(
-        '¿Estás seguro de eliminar esta campaña? Esta acción no se puede deshacer.'
-      )
-    ) {
+    const isConfirmed = await confirm({
+      title: 'Eliminar campaña',
+      description:
+        '¿Estás seguro de eliminar esta campaña? Esta acción no se puede deshacer.',
+      confirmText: 'Eliminar',
+      cancelText: 'Cancelar',
+      variant: 'destructive',
+    });
+
+    if (!isConfirmed) {
       return;
     }
 
@@ -432,6 +446,7 @@ export default function CampaignsClient({ initialCampaigns }: CampaignsClientPro
         }}
         onSuccess={refreshCampaigns}
       />
+      {confirmModal}
     </div>
   );
 }

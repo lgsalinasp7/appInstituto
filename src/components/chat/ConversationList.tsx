@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import type { ConversationListItem } from "@/modules/chat/types";
+import { useConfirmModal } from "@/components/modals/use-confirm-modal";
 
 interface ConversationListProps {
   conversations: ConversationListItem[];
@@ -23,6 +24,26 @@ export function ConversationList({
   onSelectConversation,
   onDeleteConversation,
 }: ConversationListProps) {
+  const { confirm, confirmModal } = useConfirmModal();
+
+  const handleDeleteConversation = async (
+    event: React.MouseEvent<HTMLButtonElement>,
+    conversationId: string
+  ) => {
+    event.stopPropagation();
+
+    const isConfirmed = await confirm({
+      title: "Eliminar conversación",
+      description: "¿Eliminar esta conversación?",
+      confirmText: "Eliminar",
+      cancelText: "Cancelar",
+      variant: "destructive",
+    });
+
+    if (!isConfirmed) return;
+    onDeleteConversation(conversationId);
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -77,18 +98,14 @@ export function ConversationList({
               variant="ghost"
               size="icon"
               className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (confirm("¿Eliminar esta conversación?")) {
-                  onDeleteConversation(conv.id);
-                }
-              }}
+              onClick={(e) => handleDeleteConversation(e, conv.id)}
             >
               <Trash2 className="h-4 w-4 text-red-600" />
             </Button>
           </div>
         ))}
       </div>
+      {confirmModal}
     </div>
   );
 }

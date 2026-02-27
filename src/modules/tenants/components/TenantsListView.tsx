@@ -23,6 +23,7 @@ import { Search, Plus, ExternalLink, Users, GraduationCap, Shield, MoreVertical,
 import { cn } from "@/lib/utils";
 import type { Tenant, TenantStatus } from "../types";
 import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
+import { useConfirmModal } from "@/components/modals/use-confirm-modal";
 
 interface TenantsListViewProps {
   tenants: Tenant[];
@@ -63,6 +64,7 @@ export function TenantsListView({
   const [search, setSearch] = useState(filters.search);
   const [status, setStatus] = useState(filters.status);
   const [isCreating, setIsCreating] = useState(false);
+  const { confirm, confirmModal } = useConfirmModal();
 
   useEffect(() => {
     setMounted(true);
@@ -88,7 +90,15 @@ export function TenantsListView({
   };
 
   const handleSuspend = async (tenantId: string) => {
-    if (!confirm("¿Estás seguro de suspender este tenant?")) return;
+    const isConfirmed = await confirm({
+      title: "Suspender tenant",
+      description: "¿Estás seguro de suspender este tenant?",
+      confirmText: "Suspender",
+      cancelText: "Cancelar",
+      variant: "destructive",
+    });
+
+    if (!isConfirmed) return;
 
     try {
       await fetch(`/api/admin/tenants/${tenantId}/suspend`, { method: "POST" });
@@ -220,6 +230,7 @@ export function TenantsListView({
           )}
         </div>
       )}
+      {confirmModal}
     </div>
   );
 }

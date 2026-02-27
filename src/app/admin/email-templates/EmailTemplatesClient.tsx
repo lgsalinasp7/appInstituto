@@ -25,6 +25,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import EmailTemplatePreviewModal from './EmailTemplatePreviewModal';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { useConfirmModal } from '@/components/modals/use-confirm-modal';
 
 interface EmailTemplate {
   id: string;
@@ -59,6 +60,7 @@ export default function EmailTemplatesClient({
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] =
     useState<EmailTemplate | null>(null);
+  const { confirm, confirmModal } = useConfirmModal();
 
   const filteredTemplates = templates.filter(
     (template) =>
@@ -160,11 +162,15 @@ export default function EmailTemplatesClient({
       return;
     }
 
-    if (
-      !confirm(
-        `¿Estás seguro de eliminar la plantilla "${template.name}"? Esta acción no se puede revertir.`
-      )
-    )
+    const isConfirmed = await confirm({
+      title: 'Eliminar plantilla',
+      description: `¿Estás seguro de eliminar la plantilla "${template.name}"? Esta acción no se puede revertir.`,
+      confirmText: 'Eliminar',
+      cancelText: 'Cancelar',
+      variant: 'destructive',
+    });
+
+    if (!isConfirmed)
       return;
 
     try {
@@ -411,6 +417,7 @@ export default function EmailTemplatesClient({
         }}
         template={selectedTemplate}
       />
+      {confirmModal}
     </div>
   );
 }
