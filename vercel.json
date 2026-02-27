@@ -2,6 +2,6 @@
   "crons": [
     {"path": "/api/cron/notifications", "schedule": "0 9 * * *"},
     {"path": "/api/cron/process-subscriptions", "schedule": "0 0 * * *"},
-    {"path": "/api/cron/process-kaled-emails", "schedule": "0 * * * *"}
+    {"path": "/api/cron/process-kaled-emails", "schedule": "0 10 * * *"}
   ]
 }
