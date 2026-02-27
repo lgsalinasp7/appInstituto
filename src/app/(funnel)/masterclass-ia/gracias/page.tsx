@@ -28,7 +28,7 @@ export default function MasterclassGraciasPage() {
                         </p>
 
                         <a
-                            href="https://wa.me/573337226157"
+                            href="https://chat.whatsapp.com/FujGpSwq5Yv6MD7ZkxY2Vb?mode=gi_t"
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-black text-base md:text-lg transition-all shadow-[0_0_25px_rgba(34,197,94,0.35)] hover:shadow-[0_0_35px_rgba(34,197,94,0.45)]"
