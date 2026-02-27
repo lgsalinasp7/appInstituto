@@ -27,7 +27,7 @@ export const GET = withPlatformAdmin(
       const search = searchParams.get('search')?.trim();
       const status = searchParams.get('status');
       const page = Math.max(1, Number(searchParams.get('page') || 1));
-      const pageSizeRaw = Number(searchParams.get('pageSize') || 20);
+      const pageSizeRaw = Number(searchParams.get('pageSize') || 6);
       const pageSize = Math.min(100, Math.max(1, pageSizeRaw));
       const skip = (page - 1) * pageSize;
 

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Settings, ShieldCheck, CreditCard } from "lucide-react";
+import { useTablePagination } from "@/hooks/use-table-pagination";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 // Const types pattern (typescript skill)
 const TABS = {
@@ -126,6 +128,15 @@ interface RolesTabProps {
 }
 
 function RolesTab({ roles }: RolesTabProps) {
+  const {
+    page,
+    totalPages,
+    totalItems,
+    pageSize,
+    paginatedItems,
+    setPage,
+  } = useTablePagination(roles, 6);
+
   return (
     <div className="glass-card rounded-[2rem] p-8 space-y-6">
       <div className="flex items-center justify-between">
@@ -155,7 +166,7 @@ function RolesTab({ roles }: RolesTabProps) {
           </thead>
           <tbody className="divide-y divide-slate-800/30">
             {roles.length > 0 ? (
-              roles.map((role) => (
+              paginatedItems.map((role) => (
                 <tr key={role.id} className="group">
                   <td className="py-4 pr-4">
                     <span className="text-sm font-semibold text-white">{role.name}</span>
@@ -195,6 +206,13 @@ function RolesTab({ roles }: RolesTabProps) {
           </tbody>
         </table>
       </div>
+      <TablePagination
+        page={page}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageChange={setPage}
+      />
     </div>
   );
 }

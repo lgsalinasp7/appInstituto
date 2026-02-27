@@ -346,7 +346,16 @@ export class AiAgentService {
   /**
    * Get top tenants by consumption
    */
-  static async getTopTenants(limit: number = 10): Promise<TopTenant[]> {
+  static async getTopTenants(
+    page: number = 1,
+    limit: number = 6
+  ): Promise<{
+    items: TopTenant[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
     const now = new Date();
     const periodStart = this.getPeriodStart(now, "MONTHLY");
 
@@ -416,7 +425,7 @@ export class AiAgentService {
     );
 
     // Convert to array
-    const topTenants: TopTenant[] = Array.from(tenantsMap.entries())
+    const rankedTenants: TopTenant[] = Array.from(tenantsMap.entries())
       .map(([id, data]) => ({
         tenantId: id,
         tenantName: data.name,
@@ -426,10 +435,21 @@ export class AiAgentService {
         totalCost: data.cost,
         percentage: totalTokens > 0 ? (data.tokens / totalTokens) * 100 : 0,
       }))
-      .sort((a, b) => b.totalTokens - a.totalTokens)
-      .slice(0, limit);
+      .sort((a, b) => b.totalTokens - a.totalTokens);
 
-    return topTenants;
+    const total = rankedTenants.length;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const safePage = Math.min(Math.max(page, 1), totalPages);
+    const offset = (safePage - 1) * limit;
+    const items = rankedTenants.slice(offset, offset + limit);
+
+    return {
+      items,
+      total,
+      page: safePage,
+      limit,
+      totalPages,
+    };
   }
 
   /**

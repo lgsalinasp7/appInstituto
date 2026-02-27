@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,8 @@ import { toast } from 'sonner';
 import type { KaledCampaign } from '@prisma/client';
 import { CampaignFormModal } from './CampaignFormModal';
 import { useConfirmModal } from '@/components/modals/use-confirm-modal';
+import { useTablePagination } from '@/hooks/use-table-pagination';
+import { TablePagination } from '@/components/ui/table-pagination';
 
 interface CampaignsClientProps {
   initialCampaigns: any[];
@@ -195,6 +197,19 @@ export default function CampaignsClient({ initialCampaigns }: CampaignsClientPro
       (campaign.description && campaign.description.toLowerCase().includes(searchLower))
     );
   });
+  const {
+    page,
+    totalPages,
+    totalItems,
+    pageSize,
+    paginatedItems: paginatedCampaigns,
+    setPage,
+    resetPage,
+  } = useTablePagination(filteredCampaigns, 6);
+
+  useEffect(() => {
+    resetPage();
+  }, [searchTerm, resetPage]);
 
   const stats = [
     {
@@ -308,7 +323,7 @@ export default function CampaignsClient({ initialCampaigns }: CampaignsClientPro
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/30 font-medium">
-              {filteredCampaigns.map((campaign) => (
+              {paginatedCampaigns.map((campaign) => (
                 <tr
                   key={campaign.id}
                   className="group hover:bg-white/[0.02] transition-colors"
@@ -434,6 +449,13 @@ export default function CampaignsClient({ initialCampaigns }: CampaignsClientPro
             </div>
           )}
         </div>
+        <TablePagination
+          page={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
       </div>
 
       {/* Campaign Form Modal */}

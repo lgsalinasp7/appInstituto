@@ -1,6 +1,8 @@
 "use client";
 
 import { Database, RefreshCw, Clock } from "lucide-react";
+import { useTablePagination } from "@/hooks/use-table-pagination";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 interface Model {
   provider: string;
@@ -17,6 +19,15 @@ interface FreeTierReferenceTableProps {
 }
 
 export function FreeTierReferenceTable({ models }: FreeTierReferenceTableProps) {
+  const {
+    page,
+    totalPages,
+    totalItems,
+    pageSize,
+    paginatedItems,
+    setPage,
+  } = useTablePagination(models, 6);
+
   const formatTokens = (tokens: number) => {
     if (tokens >= 1000000000) {
       return `${(tokens / 1000000000).toFixed(1)}B`;
@@ -110,7 +121,7 @@ export function FreeTierReferenceTable({ models }: FreeTierReferenceTableProps) 
             </tr>
           </thead>
           <tbody>
-            {models.map((model, index) => (
+            {paginatedItems.map((model, index) => (
               <tr
                 key={`${model.provider}-${model.model}-${index}`}
                 className="border-b border-slate-700/30 hover:bg-slate-800/20 transition-colors"
@@ -160,6 +171,13 @@ export function FreeTierReferenceTable({ models }: FreeTierReferenceTableProps) 
           </tbody>
         </table>
       </div>
+      <TablePagination
+        page={page}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageChange={setPage}
+      />
 
       {/* Leyenda */}
       <div className="mt-6 pt-6 border-t border-slate-700/50">

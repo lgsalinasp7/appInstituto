@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
+import { useTablePagination } from "@/hooks/use-table-pagination";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 // Const types pattern (typescript skill)
 const STATUS_LABELS = {
@@ -52,6 +54,19 @@ export function SuscripcionesClient({ tenants, planColors }: SuscripcionesClient
     const matchesStatus = filterStatus === "ALL" || t.status === filterStatus;
     return matchesSearch && matchesPlan && matchesStatus;
   });
+  const {
+    page,
+    totalPages,
+    totalItems,
+    pageSize,
+    paginatedItems,
+    setPage,
+    resetPage,
+  } = useTablePagination(filtered, 6);
+
+  useEffect(() => {
+    resetPage();
+  }, [search, filterPlan, filterStatus, resetPage]);
 
   return (
     <div className="glass-card rounded-[2rem] p-8">
@@ -119,7 +134,7 @@ export function SuscripcionesClient({ tenants, planColors }: SuscripcionesClient
           </thead>
           <tbody className="divide-y divide-slate-800/30">
             {filtered.length > 0 ? (
-              filtered.map((tenant) => (
+              paginatedItems.map((tenant) => (
                 <tr key={tenant.id} className="group">
                   <td className="py-4 pr-4">
                     <div>
@@ -182,11 +197,18 @@ export function SuscripcionesClient({ tenants, planColors }: SuscripcionesClient
           </tbody>
         </table>
       </div>
+      <TablePagination
+        page={page}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageChange={setPage}
+      />
 
       {/* Count */}
       <div className="mt-4 pt-4 border-t border-slate-800/30">
         <p className="text-xs text-slate-500">
-          Mostrando {filtered.length} de {tenants.length} empresas
+          Mostrando {totalItems} de {tenants.length} empresas
         </p>
       </div>
     </div>

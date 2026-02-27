@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import type { AuditLogEntry } from "../types";
+import { useTablePagination } from "@/hooks/use-table-pagination";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 interface AuditLogTableProps {
   logs: AuditLogEntry[];
@@ -33,6 +35,14 @@ const actionStyles: Record<string, { color: string; bg: string; border: string; 
 
 export function AuditLogTable({ logs }: AuditLogTableProps) {
   const [mounted, setMounted] = useState(false);
+  const {
+    page,
+    totalPages,
+    totalItems,
+    pageSize,
+    paginatedItems,
+    setPage,
+  } = useTablePagination(logs, 6);
 
   useEffect(() => {
     setMounted(true);
@@ -115,7 +125,7 @@ export function AuditLogTable({ logs }: AuditLogTableProps) {
                 </td>
               </tr>
             ) : (
-              logs.map((log) => {
+              paginatedItems.map((log) => {
                 const style = getActionStyle(log.action.toLowerCase());
                 return (
                   <tr key={log.id} className="group hover:bg-white/[0.02] transition-colors">
@@ -168,6 +178,13 @@ export function AuditLogTable({ logs }: AuditLogTableProps) {
           </tbody>
         </table>
       </div>
+      <TablePagination
+        page={page}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageChange={setPage}
+      />
     </div>
   );
 }

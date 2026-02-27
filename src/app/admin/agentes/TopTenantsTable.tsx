@@ -3,18 +3,26 @@
 import { useEffect, useState } from "react";
 import { Building2 } from "lucide-react";
 import type { TopTenant } from "@/modules/chat/types/agent.types";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export function TopTenantsTable() {
   const [data, setData] = useState<TopTenant[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 6;
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
       try {
-        const res = await fetch("/api/admin/agents/top-tenants?limit=10");
+        const res = await fetch(`/api/admin/agents/top-tenants?page=${page}&limit=${pageSize}`);
         const result = await res.json();
         if (result.success) {
-          setData(result.data);
+          setData(result.data.items || []);
+          setTotalItems(result.data.total || 0);
+          setTotalPages(result.data.totalPages || 1);
         }
       } catch (error) {
         console.error("Error fetching top tenants:", error);
@@ -24,7 +32,7 @@ export function TopTenantsTable() {
     }
 
     fetchData();
-  }, []);
+  }, [page]);
 
   return (
     <div className="glass-card rounded-[2rem] p-8 animate-fade-in-up">
@@ -33,7 +41,7 @@ export function TopTenantsTable() {
           <Building2 className="w-5 h-5" />
         </div>
         <h3 className="text-xl font-bold text-white">
-          Top 10 Tenants por Consumo
+          Top Tenants por Consumo
         </h3>
       </div>
 
@@ -42,8 +50,9 @@ export function TopTenantsTable() {
           Cargando datos...
         </div>
       ) : data.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <>
+          <div className="overflow-x-auto">
+            <table className="w-full">
             <thead>
               <tr className="border-b border-slate-700/50">
                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
@@ -100,8 +109,16 @@ export function TopTenantsTable() {
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+            </table>
+          </div>
+          <TablePagination
+            page={page}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageChange={setPage}
+          />
+        </>
       ) : (
         <div className="py-8 text-center text-slate-500 text-sm">
           No hay datos de consumo disponibles

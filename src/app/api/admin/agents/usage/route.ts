@@ -10,7 +10,7 @@ export const GET = withPlatformAdmin(
 
     const params = {
       page: parseInt(searchParams.get("page") || "1"),
-      limit: parseInt(searchParams.get("limit") || "20"),
+      limit: parseInt(searchParams.get("limit") || "6"),
       tenantId: searchParams.get("tenantId") || undefined,
       modelId: searchParams.get("modelId") || undefined,
       startDate: searchParams.get("startDate")

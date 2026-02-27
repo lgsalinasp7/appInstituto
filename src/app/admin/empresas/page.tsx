@@ -24,7 +24,7 @@ export default async function EmpresasPage({
       status: params.status as any,
       plan: params.plan,
       page: parseInt(params.page || "1"),
-      limit: 12,
+      limit: 6,
     }),
   ]);
 

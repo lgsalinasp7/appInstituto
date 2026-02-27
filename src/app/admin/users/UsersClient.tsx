@@ -12,6 +12,8 @@ import { type User } from "@/modules/users";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
+import { useTablePagination } from "@/hooks/use-table-pagination";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 interface UsersClientProps {
     initialUsers: User[];
@@ -36,6 +38,38 @@ export default function UsersClient({ initialUsers, initialInvitations }: UsersC
         const searchLower = searchTerm.toLowerCase();
         return u.name?.toLowerCase().includes(searchLower) || u.email.toLowerCase().includes(searchLower);
     });
+    const filteredInvitations = initialInvitations.filter((inv) => {
+        const searchLower = searchTerm.toLowerCase();
+        return inv.email.toLowerCase().includes(searchLower);
+    });
+
+    const {
+        page: usersPage,
+        totalPages: usersTotalPages,
+        totalItems: usersTotalItems,
+        pageSize: usersPageSize,
+        paginatedItems: paginatedUsers,
+        setPage: setUsersPage,
+        resetPage: resetUsersPage,
+    } = useTablePagination(filteredUsers, 6);
+
+    const {
+        page: invitationsPage,
+        totalPages: invitationsTotalPages,
+        totalItems: invitationsTotalItems,
+        pageSize: invitationsPageSize,
+        paginatedItems: paginatedInvitations,
+        setPage: setInvitationsPage,
+        resetPage: resetInvitationsPage,
+    } = useTablePagination(filteredInvitations, 6);
+
+    useEffect(() => {
+        if (activeTab === "users") {
+            resetUsersPage();
+        } else {
+            resetInvitationsPage();
+        }
+    }, [searchTerm, activeTab, resetUsersPage, resetInvitationsPage]);
 
     const canInvite = currentUser?.role?.name === "SUPERADMIN" || (currentUser?.role?.name === "ADMINISTRADOR" && (currentUser?.invitationLimit || 0) > 0);
     const isSuperAdmin = currentUser?.role?.name === "SUPERADMIN";
@@ -105,7 +139,7 @@ export default function UsersClient({ initialUsers, initialInvitations }: UsersC
                     >
                         <Mail className="w-4 h-4" />
                         Invitaciones
-                        <span className="ml-1 px-2 py-0.5 rounded-md bg-slate-800 text-[10px]">{initialInvitations.length}</span>
+                        <span className="ml-1 px-2 py-0.5 rounded-md bg-slate-800 text-[10px]">{filteredInvitations.length}</span>
                     </button>
                 </div>
 
@@ -135,7 +169,7 @@ export default function UsersClient({ initialUsers, initialInvitations }: UsersC
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-800/30 font-medium">
-                                {filteredUsers.map((u) => (
+                                {paginatedUsers.map((u) => (
                                     <tr key={u.id} className="group hover:bg-white/[0.02] transition-colors">
                                         <td className="px-8 py-5">
                                             <div className="flex items-center gap-3">
@@ -208,6 +242,13 @@ export default function UsersClient({ initialUsers, initialInvitations }: UsersC
                                 <p className="text-slate-500">No se encontraron usuarios que coincidan con la búsqueda.</p>
                             </div>
                         )}
+                        <TablePagination
+                            page={usersPage}
+                            totalPages={usersTotalPages}
+                            totalItems={usersTotalItems}
+                            pageSize={usersPageSize}
+                            onPageChange={setUsersPage}
+                        />
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
@@ -221,7 +262,7 @@ export default function UsersClient({ initialUsers, initialInvitations }: UsersC
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-800/30 font-medium">
-                                {initialInvitations.map((inv) => (
+                                {paginatedInvitations.map((inv) => (
                                     <tr key={inv.id} className="group hover:bg-white/[0.02] transition-colors">
                                         <td className="px-8 py-6">
                                             <div className="flex items-center gap-3">
@@ -257,12 +298,19 @@ export default function UsersClient({ initialUsers, initialInvitations }: UsersC
                                 ))}
                             </tbody>
                         </table>
-                        {initialInvitations.length === 0 && (
+                        {filteredInvitations.length === 0 && (
                             <div className="py-20 text-center bg-slate-950/20">
                                 <Mail className="w-12 h-12 text-slate-700 mx-auto mb-4 opacity-20" />
                                 <p className="text-slate-500">No hay invitaciones registradas en el sistema.</p>
                             </div>
                         )}
+                        <TablePagination
+                            page={invitationsPage}
+                            totalPages={invitationsTotalPages}
+                            totalItems={invitationsTotalItems}
+                            pageSize={invitationsPageSize}
+                            onPageChange={setInvitationsPage}
+                        />
                     </div>
                 )}
             </div>

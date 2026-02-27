@@ -37,6 +37,8 @@ import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader"
 import { TenantEditModal } from "./TenantEditModal";
 import { TenantUserEditModal } from "./TenantUserEditModal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useTablePagination } from "@/hooks/use-table-pagination";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 interface TenantDetailViewProps {
   tenant: TenantWithDetails;
@@ -564,6 +566,14 @@ function UsersTab({
   onUserUpdated: () => void;
 }) {
   const [editingUser, setEditingUser] = useState<TenantUser | null>(null);
+  const {
+    page,
+    totalPages,
+    totalItems,
+    pageSize,
+    paginatedItems,
+    setPage,
+  } = useTablePagination(users, 6);
 
   if (users.length === 0) {
     return (
@@ -603,7 +613,7 @@ function UsersTab({
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => (
+            {paginatedItems.map((user) => (
               <tr key={user.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors group">
                 <td className="py-4 px-4 text-sm font-bold text-white group-hover:text-cyan-400 transition-colors">
                   {user.name || "Sin nombre"}
@@ -648,6 +658,13 @@ function UsersTab({
           </tbody>
         </table>
       </div>
+      <TablePagination
+        page={page}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageChange={setPage}
+      />
 
       {editingUser && (
         <TenantUserEditModal

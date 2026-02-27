@@ -1,7 +1,9 @@
 "use client";
 
-import { Users, TrendingUp, Calendar } from "lucide-react";
+import { Users, Calendar } from "lucide-react";
 import { useState } from "react";
+import { useTablePagination } from "@/hooks/use-table-pagination";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 interface Model {
   provider: string;
@@ -82,6 +84,14 @@ export function UsageProfilesTable({ profiles, models }: UsageProfilesTableProps
   };
 
   const currentProfile = profiles[selectedProfile];
+  const {
+    page,
+    totalPages,
+    totalItems,
+    pageSize,
+    paginatedItems,
+    setPage,
+  } = useTablePagination(models, 6);
 
   return (
     <div className="space-y-6">
@@ -192,7 +202,7 @@ export function UsageProfilesTable({ profiles, models }: UsageProfilesTableProps
               </tr>
             </thead>
             <tbody>
-              {models.map((model, index) => {
+              {paginatedItems.map((model, index) => {
                 const duration = calculateDuration(
                   model.freeTokens,
                   currentProfile.tokensPerMonth,
@@ -258,12 +268,19 @@ export function UsageProfilesTable({ profiles, models }: UsageProfilesTableProps
             </tbody>
           </table>
         </div>
+        <TablePagination
+          page={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
 
         {/* Nota */}
         <div className="mt-6 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
           <p className="text-sm text-blue-300">
             <strong>Nota:</strong> Los cálculos son estimaciones basadas en el uso promedio.
-            Los modelos con renovación "Ilimitado" tienen suficiente free tier para el perfil seleccionado.
+            Los modelos con renovación &quot;Ilimitado&quot; tienen suficiente free tier para el perfil seleccionado.
           </p>
         </div>
       </div>

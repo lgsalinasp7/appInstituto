@@ -3,18 +3,26 @@
 import { useEffect, useState } from "react";
 import { Clock } from "lucide-react";
 import type { UsageLog } from "@/modules/chat/types/agent.types";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export function RecentUsageTable() {
   const [data, setData] = useState<UsageLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 6;
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
       try {
-        const res = await fetch("/api/admin/agents/usage?page=1&limit=20");
+        const res = await fetch(`/api/admin/agents/usage?page=${page}&limit=${pageSize}`);
         const result = await res.json();
         if (result.success) {
           setData(result.data.logs);
+          setTotalItems(result.data.total || 0);
+          setTotalPages(result.data.totalPages || 1);
         }
       } catch (error) {
         console.error("Error fetching usage logs:", error);
@@ -24,7 +32,7 @@ export function RecentUsageTable() {
     }
 
     fetchData();
-  }, []);
+  }, [page]);
 
   const formatDateTime = (date: Date | string) => {
     const d = new Date(date);
@@ -57,7 +65,7 @@ export function RecentUsageTable() {
           <Clock className="w-5 h-5" />
         </div>
         <h3 className="text-xl font-bold text-white">
-          Uso Reciente (últimos 20)
+          Uso Reciente
         </h3>
       </div>
 
@@ -66,8 +74,9 @@ export function RecentUsageTable() {
           Cargando datos...
         </div>
       ) : data.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <>
+          <div className="overflow-x-auto">
+            <table className="w-full">
             <thead>
               <tr className="border-b border-slate-700/50">
                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
@@ -135,8 +144,16 @@ export function RecentUsageTable() {
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+            </table>
+          </div>
+          <TablePagination
+            page={page}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageChange={setPage}
+          />
+        </>
       ) : (
         <div className="py-8 text-center text-slate-500 text-sm">
           No hay logs de uso disponibles

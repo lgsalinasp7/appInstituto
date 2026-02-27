@@ -26,6 +26,8 @@ import SendEmailModal from "./SendEmailModal";
 import { toast } from "sonner";
 import type { KaledLead } from "@prisma/client";
 import { useConfirmModal } from "@/components/modals/use-confirm-modal";
+import { useTablePagination } from "@/hooks/use-table-pagination";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 interface LeadsClientProps {
     initialLeads: any[];
@@ -122,6 +124,19 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
             (lead.phone && lead.phone.includes(searchTerm))
         );
     });
+    const {
+        page,
+        totalPages,
+        totalItems,
+        pageSize,
+        paginatedItems: paginatedLeads,
+        setPage,
+        resetPage,
+    } = useTablePagination(filteredLeads, 6);
+
+    useEffect(() => {
+        resetPage();
+    }, [searchTerm, resetPage]);
 
     const stats = [
         { title: "Total Leads", value: leads.length, icon: Target, color: "text-cyan-400", bg: "bg-cyan-500/10" },
@@ -187,7 +202,7 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800/30 font-medium">
-                            {filteredLeads.map((lead) => (
+                            {paginatedLeads.map((lead) => (
                                 <tr key={lead.id} className="group hover:bg-white/[0.02] transition-colors">
                                     <td className="px-8 py-6">
                                         <div className="flex items-center gap-3">
@@ -294,6 +309,13 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
                         </div>
                     )}
                 </div>
+                <TablePagination
+                    page={page}
+                    totalPages={totalPages}
+                    totalItems={totalItems}
+                    pageSize={pageSize}
+                    onPageChange={setPage}
+                />
             </div>
 
             {/* Modals and Drawers */}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
@@ -26,6 +26,8 @@ import { Badge } from '@/components/ui/badge';
 import EmailTemplatePreviewModal from './EmailTemplatePreviewModal';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { useConfirmModal } from '@/components/modals/use-confirm-modal';
+import { useTablePagination } from '@/hooks/use-table-pagination';
+import { TablePagination } from '@/components/ui/table-pagination';
 
 interface EmailTemplate {
   id: string;
@@ -67,6 +69,19 @@ export default function EmailTemplatesClient({
       template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       template.subject.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const {
+    page,
+    totalPages,
+    totalItems,
+    pageSize,
+    paginatedItems: paginatedTemplates,
+    setPage,
+    resetPage,
+  } = useTablePagination(filteredTemplates, 6);
+
+  useEffect(() => {
+    resetPage();
+  }, [searchQuery, resetPage]);
 
   const stats = {
     total: templates.length,
@@ -323,7 +338,7 @@ export default function EmailTemplatesClient({
                   </td>
                 </tr>
               ) : (
-                filteredTemplates.map((template, index) => (
+                paginatedTemplates.map((template, index) => (
                   <tr
                     key={template.id}
                     className="border-b border-border/50 hover:bg-muted/30 transition-colors animate-fade-in"
@@ -407,6 +422,13 @@ export default function EmailTemplatesClient({
           </table>
         </div>
       </div>
+      <TablePagination
+        page={page}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageChange={setPage}
+      />
 
       {/* Preview Modal */}
       <EmailTemplatePreviewModal

@@ -1,7 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { BarChart3, TrendingUp, Mail, MousePointer, ShoppingCart } from 'lucide-react';
+import { useTablePagination } from '@/hooks/use-table-pagination';
+import { TablePagination } from '@/components/ui/table-pagination';
 
 interface TemplateAnalytics {
   id: string;
@@ -95,6 +97,19 @@ export function EmailAnalyticsClient({ analyticsData, globalStats }: EmailAnalyt
       }
     });
   }, [analyticsData, filterPhase, sortBy]);
+  const {
+    page,
+    totalPages,
+    totalItems,
+    pageSize,
+    paginatedItems,
+    setPage,
+    resetPage,
+  } = useTablePagination(sortedData, 6);
+
+  useEffect(() => {
+    resetPage();
+  }, [sortBy, filterPhase, resetPage]);
 
   return (
     <div className="space-y-7">
@@ -215,7 +230,7 @@ export function EmailAnalyticsClient({ analyticsData, globalStats }: EmailAnalyt
                   </td>
                 </tr>
               ) : (
-                sortedData.map((template) => (
+                paginatedItems.map((template) => (
                   <tr key={template.id} className="transition-colors hover:bg-slate-800/35">
                     <td className="px-6 py-4">
                       <div>
@@ -278,6 +293,13 @@ export function EmailAnalyticsClient({ analyticsData, globalStats }: EmailAnalyt
           </table>
         </div>
       </div>
+      <TablePagination
+        page={page}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageChange={setPage}
+      />
 
       {/* Insights */}
       {sortedData.length > 0 && (

@@ -5,6 +5,7 @@ import { Mail, RefreshCw, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { TablePagination } from '@/components/ui/table-pagination';
 
 type EmailStatus =
   | 'PENDING'
@@ -85,19 +86,22 @@ function formatDate(value: string | null): string {
 export default function MessagesTab() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<'ALL' | EmailStatus>('ALL');
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<MessageItem[]>([]);
   const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 6;
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
-    params.set('page', '1');
-    params.set('pageSize', '100');
+    params.set('page', String(page));
+    params.set('pageSize', String(pageSize));
     if (search.trim()) params.set('search', search.trim());
     if (status !== 'ALL') params.set('status', status);
     return params.toString();
-  }, [search, status]);
+  }, [search, status, page]);
 
   const loadMessages = async () => {
     setLoading(true);
@@ -110,6 +114,7 @@ export default function MessagesTab() {
       }
       setItems(payload.data.items ?? []);
       setTotal(payload.data.pagination?.total ?? 0);
+      setTotalPages(payload.data.pagination?.totalPages ?? 1);
     } catch (err: any) {
       setItems([]);
       setTotal(0);
@@ -123,6 +128,10 @@ export default function MessagesTab() {
     loadMessages();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, status]);
 
   return (
     <div className="space-y-5">
@@ -232,6 +241,13 @@ export default function MessagesTab() {
             </tbody>
           </table>
         </div>
+        <TablePagination
+          page={page}
+          totalPages={totalPages}
+          totalItems={total}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
       </div>
     </div>
   );
