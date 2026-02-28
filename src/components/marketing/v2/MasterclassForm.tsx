@@ -76,6 +76,13 @@ export function MasterclassForm() {
             <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-[100px] -mr-32 -mt-32" />
 
             <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
+                <div className="rounded-2xl border border-cyan-500/25 bg-cyan-500/10 p-4 text-left">
+                    <p className="text-cyan-300 text-xs font-black uppercase tracking-widest mb-2">Importante</p>
+                    <p className="text-slate-200 text-sm font-medium">
+                        Este registro es el requisito para enviarte al WhatsApp privado donde compartimos fecha, hora y enlace oficial de la masterclass.
+                    </p>
+                </div>
+
                 <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Nombre Completo</label>
@@ -96,6 +103,7 @@ export function MasterclassForm() {
                             placeholder="+57 300 000 0000"
                             className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-cyan-500/50 transition-all font-medium placeholder:text-slate-600"
                         />
+                        <p className="text-[11px] text-cyan-300 font-semibold">Revisa que este numero sea correcto. Ahi recibiras toda la informacion.</p>
                     </div>
                 </div>
 
@@ -208,12 +216,12 @@ export function MasterclassForm() {
                     {isSubmitting ? (
                         <>Procesando... <Loader2 className="w-5 h-5 animate-spin" /></>
                     ) : (
-                        <>Aplicar a la Masterclass <Send className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /></>
+                        <>Reservar cupo y entrar al WhatsApp <Send className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /></>
                     )}
                 </button>
 
                 <p className="text-center text-slate-500 text-[10px] uppercase font-bold tracking-widest mt-4">
-                    Acceso exclusivo para perfiles seleccionados • Cupos LIMITADOS
+                    Solo perfiles seleccionados reciben acceso al WhatsApp privado • Cupos LIMITADOS
                 </p>
             </form>
         </motion.div>

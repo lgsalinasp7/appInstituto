@@ -17,13 +17,13 @@ export function FooterV2() {
                             Formamos los arquitectos del mañana y construimos los sistemas inteligentes de hoy.
                         </p>
                         <div className="flex items-center gap-4">
-                            <Link href="#" className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors">
+                            <Link href="https://www.facebook.com/profile.php?id=61555670334803" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors hover:text-cyan-400">
                                 <Facebook className="w-5 h-5 text-slate-400" />
                             </Link>
-                            <Link href="#" className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors">
+                            <Link href="https://www.instagram.com/kaledsoft/" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors hover:text-cyan-400">
                                 <Instagram className="w-5 h-5 text-slate-400" />
                             </Link>
-                            <Link href="#" className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors">
+                            <Link href="https://linkedin.com/company/kaledsoft" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors hover:text-cyan-400">
                                 <Linkedin className="w-5 h-5 text-slate-400" />
                             </Link>
                         </div>

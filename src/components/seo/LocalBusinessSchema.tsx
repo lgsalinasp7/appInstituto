@@ -36,8 +36,8 @@ export function LocalBusinessSchema() {
             "closes": "18:00"
         },
         "sameAs": [
-            "https://facebook.com/kaledsoft",
-            "https://instagram.com/kaledsoft",
+            "https://www.facebook.com/profile.php?id=61555670334803",
+            "https://www.instagram.com/kaledsoft/",
             "https://linkedin.com/company/kaledsoft"
         ],
         "areaServed": [

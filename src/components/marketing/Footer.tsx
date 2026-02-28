@@ -30,12 +30,12 @@ export function Footer() {
                                 </Link>
                             </Button>
                             <Button asChild size="icon" variant="ghost" className="hover:text-cyan-400 hover:bg-white/5 transition-[background-color,color] duration-300">
-                                <Link href="https://instagram.com/kaledsoft" target="_blank" rel="noopener noreferrer">
+                                <Link href="https://www.instagram.com/kaledsoft/" target="_blank" rel="noopener noreferrer">
                                     <Instagram className="w-5 h-5" />
                                 </Link>
                             </Button>
                             <Button asChild size="icon" variant="ghost" className="hover:text-cyan-400 hover:bg-white/5 transition-[background-color,color] duration-300">
-                                <Link href="https://facebook.com/kaledsoft" target="_blank" rel="noopener noreferrer">
+                                <Link href="https://www.facebook.com/profile.php?id=61555670334803" target="_blank" rel="noopener noreferrer">
                                     <Facebook className="w-5 h-5" />
                                 </Link>
                             </Button>

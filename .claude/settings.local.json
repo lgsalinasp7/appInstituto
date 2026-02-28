@@ -46,7 +46,9 @@
       "mcp__context7__resolve-library-id",
       "mcp__context7__query-docs",
       "Bash(npx prisma generate:*)",
-      "Bash(node scripts/convert-images.mjs:*)"
+      "Bash(node scripts/convert-images.mjs:*)",
+      "WebFetch(domain:skills.sh)",
+      "Bash(grep:*)"
     ]
   }
 }
