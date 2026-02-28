@@ -51,6 +51,7 @@ export class KaledLeadService {
                 data: {
                     name: data.name || lead.name,
                     phone: data.phone || lead.phone,
+                    city: data.city || lead.city,
                     utmSource: data.utmSource || lead.utmSource,
                     utmMedium: data.utmMedium || lead.utmMedium,
                     utmCampaign: data.utmCampaign || lead.utmCampaign,
@@ -66,6 +67,7 @@ export class KaledLeadService {
                     name: data.name,
                     email: data.email,
                     phone: data.phone,
+                    city: data.city,
                     status: 'NUEVO',
                     source: data.masterclassSlug ? `MASTERCLASS: ${data.masterclassSlug}` : 'LANDING',
                     observations: observations ? `[MASTERCLASS]: ${observations}` : null,

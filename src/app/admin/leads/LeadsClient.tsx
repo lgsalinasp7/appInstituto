@@ -146,6 +146,9 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
     ];
 
     const getLeadCity = (lead: any): string | null => {
+        if (typeof lead?.city === "string" && lead.city.trim().length > 0) {
+            return lead.city;
+        }
         if (!lead?.filteringData || typeof lead.filteringData !== "object") {
             return null;
         }

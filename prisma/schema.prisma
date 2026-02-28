@@ -943,6 +943,7 @@ model KaledLead {
   name            String
   email           String   @unique
   phone           String?
+  city            String?
   status          String   @default("NUEVO") // NUEVO, CONTACTADO, DEMO, CONVERTIDO, PERDIDO
   source          String   @default("MASTERCLASS")
 

@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
         data: {
           name: data.name || lead.name,
           phone: data.phone || lead.phone,
+          city: data.city || lead.city,
           utmSource: data.utmSource || lead.utmSource,
           utmMedium: data.utmMedium || lead.utmMedium,
           utmCampaign: data.utmCampaign || lead.utmCampaign,
@@ -105,6 +106,7 @@ export async function POST(request: NextRequest) {
           name: data.name,
           email: email,
           phone: data.phone,
+          city: data.city,
           status: 'NUEVO',
           source: 'APLICAR_COHORTE',
           observations: observations,
