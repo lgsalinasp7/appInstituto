@@ -6,10 +6,16 @@ import { Button } from '@/components/ui/button';
 interface WhatsAppCTAProps {
   message: string;
   phoneNumber: string;
+  onWhatsAppClick?: () => void;
 }
 
-export function WhatsAppCTA({ message, phoneNumber }: WhatsAppCTAProps) {
+export function WhatsAppCTA({ message, phoneNumber, onWhatsAppClick }: WhatsAppCTAProps) {
   const handleWhatsAppClick = () => {
+    if (onWhatsAppClick) {
+      onWhatsAppClick();
+      return;
+    }
+
     const encodedMessage = encodeURIComponent(message);
     const url = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
     window.open(url, '_blank');

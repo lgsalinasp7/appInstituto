@@ -7,12 +7,16 @@
 import { CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useEffect } from 'react';
+import { captureAttributionFromCurrentUrl, getAttribution } from '@/lib/attribution';
+import { trackThankYouView, trackWhatsAppClick } from '@/lib/funnel-events';
 
 interface ThankYouCardProps {
   title?: string;
   message?: string;
   nextSteps?: string[];
   whatsappNumber?: string;
+  funnel?: string;
 }
 
 export function ThankYouCard({
@@ -24,7 +28,23 @@ export function ThankYouCard({
     'Prepárate para transformar tu carrera',
   ],
   whatsappNumber,
+  funnel = 'lp_dynamic',
 }: ThankYouCardProps) {
+  useEffect(() => {
+    captureAttributionFromCurrentUrl();
+    const attribution = getAttribution();
+    trackThankYouView({
+      funnel,
+      page_path: typeof window !== 'undefined' ? window.location.pathname : undefined,
+      utm_source: attribution.utmSource || undefined,
+      utm_medium: attribution.utmMedium || undefined,
+      utm_campaign: attribution.utmCampaign || undefined,
+      fbclid: attribution.fbclid || undefined,
+      gclid: attribution.gclid || undefined,
+      ttclid: attribution.ttclid || undefined,
+    });
+  }, [funnel]);
+
   const whatsappUrl = whatsappNumber
     ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hola! Acabo de registrarme y quiero más información.')}`
     : null;
@@ -63,7 +83,24 @@ export function ThankYouCard({
 
           <div className="space-y-4">
             {whatsappUrl && (
-              <Link href={whatsappUrl} target="_blank">
+              <Link
+                href={whatsappUrl}
+                target="_blank"
+                onClick={() => {
+                  const attribution = getAttribution();
+                  trackWhatsAppClick({
+                    funnel,
+                    page_path: typeof window !== 'undefined' ? window.location.pathname : undefined,
+                    destination: 'whatsapp',
+                    utm_source: attribution.utmSource || undefined,
+                    utm_medium: attribution.utmMedium || undefined,
+                    utm_campaign: attribution.utmCampaign || undefined,
+                    fbclid: attribution.fbclid || undefined,
+                    gclid: attribution.gclid || undefined,
+                    ttclid: attribution.ttclid || undefined,
+                  });
+                }}
+              >
                 <Button className="w-full bg-green-600 hover:bg-green-700 text-white py-6 text-lg">
                   Chatea con nosotros en WhatsApp
                 </Button>

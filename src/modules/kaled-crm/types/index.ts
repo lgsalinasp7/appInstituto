@@ -299,6 +299,17 @@ export interface SalesCycleMetrics {
   }>;
 }
 
+export interface FunnelValidationMetrics {
+  leadsThisWeek: number;
+  contactRate24h: number;
+  contactToDemoRate: number;
+  demoToClosedRate: number;
+  whatsappResponse48hRate: number;
+  averageHoursToFirstContact: number;
+  appointmentsBookedThisWeek: number;
+  conversionsThisWeek: number;
+}
+
 // ============================================
 // Dashboard Types
 // ============================================

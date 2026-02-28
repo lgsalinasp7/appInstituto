@@ -3,6 +3,7 @@ import type {
   OverviewMetrics,
   ConversionMetrics,
   ActivityMetrics,
+  FunnelValidationMetrics,
 } from '../types';
 
 export class KaledAnalyticsService {
@@ -332,5 +333,103 @@ export class KaledAnalyticsService {
     return Object.entries(trendByDay)
       .map(([date, count]) => ({ date, count }))
       .sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  static async getFunnelValidationMetrics(): Promise<FunnelValidationMetrics> {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const leadsThisWeekData = await prisma.kaledLead.findMany({
+      where: {
+        deletedAt: null,
+        createdAt: { gte: sevenDaysAgo },
+      },
+      select: {
+        id: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+
+    const leadIds = leadsThisWeekData.map((lead) => lead.id);
+
+    const interactions = leadIds.length
+      ? await prisma.kaledLeadInteraction.findMany({
+          where: {
+            kaledLeadId: { in: leadIds },
+            type: { in: ['LLAMADA', 'WHATSAPP', 'CORREO', 'REUNION'] },
+          },
+          select: {
+            kaledLeadId: true,
+            type: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        })
+      : [];
+
+    const leadsById = new Map(leadsThisWeekData.map((lead) => [lead.id, lead]));
+    const firstTouchByLead = new Map<string, Date>();
+    const whatsappTouchesByLead = new Set<string>();
+
+    interactions.forEach((interaction) => {
+      if (!firstTouchByLead.has(interaction.kaledLeadId)) {
+        firstTouchByLead.set(interaction.kaledLeadId, interaction.createdAt);
+      }
+      if (interaction.type === 'WHATSAPP') {
+        whatsappTouchesByLead.add(interaction.kaledLeadId);
+      }
+    });
+
+    const contactedIn24h = Array.from(firstTouchByLead.entries()).filter(
+      ([leadId, firstTouchAt]) => {
+        const lead = leadsById.get(leadId);
+        if (!lead) return false;
+        const hours = (firstTouchAt.getTime() - lead.createdAt.getTime()) / (1000 * 60 * 60);
+        return hours <= 24;
+      }
+    ).length;
+
+    const averageHoursToFirstContact =
+      firstTouchByLead.size > 0
+        ? Array.from(firstTouchByLead.entries()).reduce((acc, [leadId, firstTouchAt]) => {
+            const lead = leadsById.get(leadId);
+            if (!lead) return acc;
+            const hours =
+              (firstTouchAt.getTime() - lead.createdAt.getTime()) / (1000 * 60 * 60);
+            return acc + hours;
+          }, 0) / firstTouchByLead.size
+        : 0;
+
+    const contactLeads = leadsThisWeekData.filter((lead) =>
+      ['CONTACTADO', 'DEMO', 'CONVERTIDO'].includes(lead.status)
+    );
+    const demoLeads = leadsThisWeekData.filter((lead) =>
+      ['DEMO', 'CONVERTIDO'].includes(lead.status)
+    );
+    const convertedLeads = leadsThisWeekData.filter((lead) => lead.status === 'CONVERTIDO');
+
+    const contactToDemoRate =
+      contactLeads.length > 0 ? (demoLeads.length / contactLeads.length) * 100 : 0;
+    const demoToClosedRate =
+      demoLeads.length > 0 ? (convertedLeads.length / demoLeads.length) * 100 : 0;
+    const contactRate24h =
+      leadsThisWeekData.length > 0 ? (contactedIn24h / leadsThisWeekData.length) * 100 : 0;
+    const whatsappResponse48hRate =
+      leadsThisWeekData.length > 0
+        ? (whatsappTouchesByLead.size / leadsThisWeekData.length) * 100
+        : 0;
+
+    return {
+      leadsThisWeek: leadsThisWeekData.length,
+      contactRate24h: Math.round(contactRate24h * 100) / 100,
+      contactToDemoRate: Math.round(contactToDemoRate * 100) / 100,
+      demoToClosedRate: Math.round(demoToClosedRate * 100) / 100,
+      whatsappResponse48hRate: Math.round(whatsappResponse48hRate * 100) / 100,
+      averageHoursToFirstContact: Math.round(averageHoursToFirstContact * 100) / 100,
+      appointmentsBookedThisWeek: demoLeads.length,
+      conversionsThisWeek: convertedLeads.length,
+    };
   }
 }

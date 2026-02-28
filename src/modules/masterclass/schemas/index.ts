@@ -27,6 +27,9 @@ export const publicLeadCaptureSchema = z.object({
   utmMedium: z.string().optional(),
   utmCampaign: z.string().optional(),
   utmContent: z.string().optional(),
+  fbclid: z.string().optional(),
+  gclid: z.string().optional(),
+  ttclid: z.string().optional(),
 
   // Filtering fields
   studyStatus: z.string().optional(),

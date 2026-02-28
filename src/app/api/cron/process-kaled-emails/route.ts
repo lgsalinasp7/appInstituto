@@ -6,8 +6,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { KaledEmailService } from '@/modules/kaled-crm/services/kaled-email.service';
 import { KaledInteractionService } from '@/modules/kaled-crm/services/kaled-interaction.service';
+import { sendTemplateEmail } from '@/lib/email';
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,13 +24,10 @@ export async function GET(request: NextRequest) {
 
     console.log('🔄 Starting Kaled email processing job...');
 
-    // 1. Find pending emails where sentAt <= now
+    // 1. Find pending/scheduled emails
     const pendingEmails = await prisma.kaledEmailLog.findMany({
       where: {
-        status: 'PENDING',
-        sentAt: {
-          lte: new Date(),
-        },
+        status: { in: ['PENDING', 'SCHEDULED'] },
       },
       include: {
         template: true,
@@ -45,6 +42,8 @@ export async function GET(request: NextRequest) {
     let failed = 0;
     let pending = 0;
 
+    const now = new Date();
+
     // 2. Process each email
     for (const emailLog of pendingEmails) {
       try {
@@ -57,36 +56,68 @@ export async function GET(request: NextRequest) {
           continue;
         }
 
+        const metadata = (emailLog.metadata as Record<string, unknown> | null) || {};
+        const scheduledForRaw =
+          typeof metadata.scheduledFor === 'string' ? metadata.scheduledFor : null;
+        const scheduledFor = scheduledForRaw ? new Date(scheduledForRaw) : null;
+
+        // Respect schedule time for deferred emails
+        if (
+          emailLog.status === 'SCHEDULED' &&
+          scheduledFor &&
+          !Number.isNaN(scheduledFor.getTime()) &&
+          scheduledFor > now
+        ) {
+          continue;
+        }
+
         // Send email
         if (!emailLog.template) {
           throw new Error('Template not found');
         }
 
-        if (!emailLog.kaledLead) {
-          throw new Error('Lead not found');
-        }
+        const htmlContent =
+          typeof metadata.htmlContent === 'string' && metadata.htmlContent.trim().length > 0
+            ? metadata.htmlContent
+            : emailLog.template.htmlContent;
 
-        // Use KaledEmailService to send
-        await KaledEmailService.sendAutomaticEmail(
-          emailLog.kaledLead.id,
-          emailLog.template.id
-        );
+        const result = await sendTemplateEmail({
+          to: emailLog.to,
+          subject: emailLog.subject,
+          html: htmlContent,
+        });
 
         // Update status to SENT
         await prisma.kaledEmailLog.update({
           where: { id: emailLog.id },
           data: {
             status: 'SENT',
+            resendId: result.id,
             sentAt: new Date(),
+            metadata: {
+              ...metadata,
+              processedByCron: true,
+              processedAt: new Date().toISOString(),
+            },
           },
         });
 
-        // Create interaction in timeline
-        await KaledInteractionService.logEmail(
-          emailLog.kaledLead.id,
-          null, // System-triggered (no user)
-          emailLog.id
-        );
+        // Create interaction in timeline when lead exists
+        if (emailLog.kaledLeadId) {
+          await KaledInteractionService.logEmail(
+            emailLog.kaledLeadId,
+            null, // System-triggered (no user)
+            emailLog.id
+          );
+
+          await prisma.kaledLead.update({
+            where: { id: emailLog.kaledLeadId },
+            data: {
+              lastEmailSentAt: new Date(),
+              lastEmailTemplateId: emailLog.templateId || null,
+            },
+          });
+        }
 
         sent++;
         console.log(`✅ Email ${emailLog.id} sent successfully`);

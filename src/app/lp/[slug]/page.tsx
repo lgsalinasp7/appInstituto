@@ -42,16 +42,12 @@ export default async function LandingPage({ params }: PageProps) {
     notFound();
   }
 
-  // TODO: Obtener Meta Pixel ID desde SystemConfig o variables de entorno
-  const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID || process.env.META_PIXEL_ID;
-
   // TODO: Obtener número de WhatsApp desde SystemConfig
   const whatsappNumber = process.env.WHATSAPP_PHONE_NUMBER || '573001234567';
 
   return (
     <LandingPageClient
       config={config}
-      metaPixelId={metaPixelId}
       whatsappNumber={whatsappNumber}
     />
   );

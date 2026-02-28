@@ -286,12 +286,74 @@ export async function calculateLeadScore(leadId: string): Promise<number> {
 
     // Actualizar interest level automáticamente
     await updateInterestLevel(leadId, score);
+    await ensureFollowupTaskForHighIntent(leadId, score);
 
     return score;
   } catch (error) {
     console.error('❌ Error calculating lead score:', error);
     throw error;
   }
+}
+
+async function ensureFollowupTaskForHighIntent(leadId: string, score: number) {
+  if (score < INTEREST_LEVELS.HIGH.min) return;
+
+  const lead = await prisma.kaledLead.findUnique({
+    where: { id: leadId },
+    select: {
+      id: true,
+      createdAt: true,
+      status: true,
+    },
+  });
+
+  if (!lead) return;
+  if (['CONVERTIDO', 'PERDIDO'].includes(lead.status)) return;
+
+  const hoursSinceCreated =
+    (Date.now() - new Date(lead.createdAt).getTime()) / (1000 * 60 * 60);
+
+  if (hoursSinceCreated < 24) return;
+
+  const interactionCount = await prisma.kaledLeadInteraction.count({
+    where: {
+      kaledLeadId: leadId,
+      type: { in: ['LLAMADA', 'WHATSAPP', 'REUNION'] },
+    },
+  });
+
+  if (interactionCount > 0) return;
+
+  const existingTask = await prisma.kaledLeadInteraction.findFirst({
+    where: {
+      kaledLeadId: leadId,
+      type: 'TAREA',
+      metadata: {
+        path: ['autoTaskType'],
+        equals: 'HIGH_INTENT_NO_CONTACT_24H',
+      },
+    },
+    select: { id: true },
+  });
+
+  if (existingTask) return;
+
+  const dueDate = new Date();
+  dueDate.setHours(dueDate.getHours() + 4);
+
+  await prisma.kaledLeadInteraction.create({
+    data: {
+      type: 'TAREA',
+      kaledLeadId: leadId,
+      content:
+        'Seguimiento prioritario: lead de alta intención sin gestión en 24h. Contactar hoy y mover a demo.',
+      metadata: {
+        autoTaskType: 'HIGH_INTENT_NO_CONTACT_24H',
+        dueDate: dueDate.toISOString(),
+        completed: false,
+      },
+    },
+  });
 }
 
 /**

@@ -34,8 +34,8 @@ async function seedEmailSequences() {
       update: {
         triggerType: 'STAGE_BASED' as KaledTriggerType,
         triggerConfig: {
-          targetStage: 'applied',
-          description: 'Se activa cuando el lead aplica a la masterclass',
+          targetStage: 'NUEVO',
+          description: 'Se activa cuando el lead entra al funnel',
         },
         isActive: true,
       },
@@ -43,8 +43,8 @@ async function seedEmailSequences() {
         name: 'Pre-Masterclass Nurturing',
         triggerType: 'STAGE_BASED' as KaledTriggerType,
         triggerConfig: {
-          targetStage: 'applied',
-          description: 'Se activa cuando el lead aplica a la masterclass',
+          targetStage: 'NUEVO',
+          description: 'Se activa cuando el lead entra al funnel',
         },
         isActive: true,
       },
@@ -144,8 +144,8 @@ async function seedEmailSequences() {
       update: {
         triggerType: 'STAGE_BASED' as KaledTriggerType,
         triggerConfig: {
-          targetStage: 'attended',
-          description: 'Se activa cuando el lead asiste a la masterclass',
+          targetStage: 'CONTACTADO',
+          description: 'Se activa cuando el lead está contactado',
         },
         isActive: true,
       },
@@ -153,8 +153,8 @@ async function seedEmailSequences() {
         name: 'Sales Sequence - Attended',
         triggerType: 'STAGE_BASED' as KaledTriggerType,
         triggerConfig: {
-          targetStage: 'attended',
-          description: 'Se activa cuando el lead asiste a la masterclass',
+          targetStage: 'CONTACTADO',
+          description: 'Se activa cuando el lead está contactado',
         },
         isActive: true,
       },
@@ -207,8 +207,8 @@ async function seedEmailSequences() {
       update: {
         triggerType: 'STAGE_BASED' as KaledTriggerType,
         triggerConfig: {
-          targetStage: 'no_show',
-          description: 'Se activa cuando el lead no asiste a la masterclass',
+          targetStage: 'DEMO',
+          description: 'Se activa cuando el lead tiene demo agendada',
         },
         isActive: true,
       },
@@ -216,8 +216,8 @@ async function seedEmailSequences() {
         name: 'No-Show Recovery',
         triggerType: 'STAGE_BASED' as KaledTriggerType,
         triggerConfig: {
-          targetStage: 'no_show',
-          description: 'Se activa cuando el lead no asiste a la masterclass',
+          targetStage: 'DEMO',
+          description: 'Se activa cuando el lead tiene demo agendada',
         },
         isActive: true,
       },

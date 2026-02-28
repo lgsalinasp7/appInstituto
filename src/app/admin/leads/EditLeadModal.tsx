@@ -24,6 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { KaledLead } from '@prisma/client';
+import { trackCallBooked, trackLeadQualified } from '@/lib/funnel-events';
 
 interface EditLeadModalProps {
   lead: KaledLead | null;
@@ -98,6 +99,27 @@ export function EditLeadModal({
       const json = await res.json();
 
       if (json.success) {
+        const previousStatus = lead.status;
+        if (formData.status === 'DEMO' && previousStatus !== 'DEMO') {
+          trackCallBooked({
+            funnel: 'masterclass_ia',
+            source: 'admin_crm',
+            lead_id: lead.id,
+            old_status: previousStatus,
+            new_status: formData.status,
+          });
+        }
+
+        if (formData.status === 'CONTACTADO' && previousStatus !== 'CONTACTADO') {
+          trackLeadQualified({
+            funnel: 'masterclass_ia',
+            source: 'admin_crm',
+            lead_id: lead.id,
+            old_status: previousStatus,
+            new_status: formData.status,
+          });
+        }
+
         toast.success('Lead actualizado correctamente');
         onSuccess?.();
         onClose();

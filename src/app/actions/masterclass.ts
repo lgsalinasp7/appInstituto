@@ -2,7 +2,6 @@
 
 import { KaledLeadService, publicLeadCaptureSchema } from "@/modules/masterclass";
 import { sendTemplateEmail } from "@/lib/email";
-import { redirect } from "next/navigation";
 
 export async function captureMasterclassLead(formData: FormData) {
     try {
@@ -20,6 +19,9 @@ export async function captureMasterclassLead(formData: FormData) {
             utmMedium: formData.get("utmMedium") as string,
             utmCampaign: formData.get("utmCampaign") as string,
             utmContent: formData.get("utmContent") as string,
+            fbclid: formData.get("fbclid") as string,
+            gclid: formData.get("gclid") as string,
+            ttclid: formData.get("ttclid") as string,
         };
 
         // Validar con Zod
@@ -56,11 +58,12 @@ export async function captureMasterclassLead(formData: FormData) {
         }
 
         return { success: true, leadId: result.leadId };
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error en captureMasterclassLead:", error);
+        const message = error instanceof Error ? error.message : "Error al procesar el registro";
         return {
             success: false,
-            error: error.message || "Error al procesar el registro"
+            error: message
         };
     }
 }

@@ -5,14 +5,19 @@ import { motion } from "framer-motion";
 import { Send, Loader2, GraduationCap, Code2, Rocket, Wallet, Hourglass } from "lucide-react";
 import { captureMasterclassLead } from "@/app/actions/masterclass";
 import { useSearchParams, useRouter } from "next/navigation";
-import { trackMetaEvent } from "@/components/analytics/MetaPixel";
-import { trackEvent } from "@/components/analytics/GoogleAnalytics";
+import { captureAttributionFromCurrentUrl, appendAttributionToFormData, getAttribution } from "@/lib/attribution";
+import { trackLeadSubmit } from "@/lib/funnel-events";
+import { useEffect } from "react";
 
 export function MasterclassForm() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        captureAttributionFromCurrentUrl();
+    }, []);
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -21,26 +26,32 @@ export function MasterclassForm() {
 
         const formData = new FormData(e.currentTarget);
 
-        // Agregar UTMs de la URL
+        // Agregar UTMs/clids desde URL y persistencia local de atribución
         formData.append("utmSource", searchParams.get("utm_source") || "");
         formData.append("utmMedium", searchParams.get("utm_medium") || "");
         formData.append("utmCampaign", searchParams.get("utm_campaign") || "");
         formData.append("utmContent", searchParams.get("utm_content") || "");
+        formData.append("fbclid", searchParams.get("fbclid") || "");
+        formData.append("gclid", searchParams.get("gclid") || "");
+        formData.append("ttclid", searchParams.get("ttclid") || "");
+        appendAttributionToFormData(formData);
         formData.append("masterclassSlug", "masterclass-ia");
 
         try {
             const result = await captureMasterclassLead(formData);
 
             if (result.success) {
-                // Track Eventos
-                trackMetaEvent("Lead", {
-                    content_name: "Masterclass IA Registration",
-                    content_category: "Masterclass",
-                    value: 0
-                });
-
-                trackEvent("masterclass_registration_success", {
-                    page_path: "/masterclass-ia"
+                const attribution = getAttribution();
+                trackLeadSubmit({
+                    funnel: "masterclass_ia",
+                    page_path: "/masterclass-ia",
+                    lead_id: result.leadId,
+                    utm_source: attribution.utmSource || undefined,
+                    utm_medium: attribution.utmMedium || undefined,
+                    utm_campaign: attribution.utmCampaign || undefined,
+                    fbclid: attribution.fbclid || undefined,
+                    gclid: attribution.gclid || undefined,
+                    ttclid: attribution.ttclid || undefined,
                 });
 
                 router.push("/masterclass-ia/gracias");

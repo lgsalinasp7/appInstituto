@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma';
 import type { LeadRegistration } from '../types';
 import { KaledInteractionService } from '@/modules/kaled-crm/services/kaled-interaction.service';
 import type { KaledLead } from '@prisma/client';
+import { triggerSequenceByStage } from '@/modules/kaled-crm/services/kaled-automation.service';
 
 export class KaledLeadService {
     /**
@@ -24,6 +25,11 @@ export class KaledLeadService {
             saasInterest: data.saasInterest,
             investmentReady: data.investmentReady,
             masterclassSlug: data.masterclassSlug,
+            attribution: {
+                fbclid: data.fbclid || null,
+                gclid: data.gclid || null,
+                ttclid: data.ttclid || null,
+            },
         };
 
         const observations = [
@@ -31,6 +37,9 @@ export class KaledLeadService {
             data.programmingLevel ? `Nivel: ${data.programmingLevel}` : null,
             data.saasInterest ? `Interés SaaS: ${data.saasInterest}` : null,
             data.investmentReady ? `Inversión: ${data.investmentReady}` : null,
+            data.fbclid ? `fbclid: ${data.fbclid}` : null,
+            data.gclid ? `gclid: ${data.gclid}` : null,
+            data.ttclid ? `ttclid: ${data.ttclid}` : null,
         ].filter(Boolean).join(' | ');
 
         if (lead) {
@@ -65,6 +74,13 @@ export class KaledLeadService {
                     utmContent: data.utmContent,
                 },
             });
+
+            // Dispara secuencias para el estado inicial del funnel.
+            try {
+                await triggerSequenceByStage(lead.id, lead.status);
+            } catch (sequenceError) {
+                console.error('Error triggering initial lead sequence:', sequenceError);
+            }
         }
 
         return { leadId: lead.id };
@@ -167,6 +183,12 @@ export class KaledLeadService {
                 data.status,
                 userId
             );
+
+            try {
+                await triggerSequenceByStage(id, data.status);
+            } catch (sequenceError) {
+                console.error('Error triggering sequence on status change:', sequenceError);
+            }
         }
 
         return updated;

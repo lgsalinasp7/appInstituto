@@ -3,13 +3,18 @@
 import { motion } from "framer-motion";
 import { Send, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
-import { trackEvent } from "@/components/analytics/GoogleAnalytics";
-import { trackMetaEvent } from "@/components/analytics/MetaPixel";
+import { useEffect } from "react";
+import { captureAttributionFromCurrentUrl, getAttribution } from "@/lib/attribution";
+import { trackLeadSubmit } from "@/lib/funnel-events";
 
 export default function AplicarPage() {
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        captureAttributionFromCurrentUrl();
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -18,8 +23,9 @@ export default function AplicarPage() {
 
         const formData = new FormData(e.currentTarget);
 
-        // Capturar UTM parameters de la URL
+        // Capturar UTM/clid de la URL actual y fallback a atribución persistida
         const urlParams = new URLSearchParams(window.location.search);
+        const attribution = getAttribution();
 
         const data = {
             name: formData.get('name') as string,
@@ -29,10 +35,13 @@ export default function AplicarPage() {
             technicalLevel: formData.get('technicalLevel') as string,
             motivation: formData.get('motivation') as string,
             hasSaasIdea: formData.get('saas') as string,
-            utmSource: urlParams.get('utm_source') || undefined,
-            utmMedium: urlParams.get('utm_medium') || undefined,
-            utmCampaign: urlParams.get('utm_campaign') || undefined,
-            utmContent: urlParams.get('utm_content') || undefined,
+            utmSource: urlParams.get('utm_source') || attribution.utmSource || undefined,
+            utmMedium: urlParams.get('utm_medium') || attribution.utmMedium || undefined,
+            utmCampaign: urlParams.get('utm_campaign') || attribution.utmCampaign || undefined,
+            utmContent: urlParams.get('utm_content') || attribution.utmContent || undefined,
+            fbclid: urlParams.get('fbclid') || attribution.fbclid || undefined,
+            gclid: urlParams.get('gclid') || attribution.gclid || undefined,
+            ttclid: urlParams.get('ttclid') || attribution.ttclid || undefined,
         };
 
         try {
@@ -47,18 +56,16 @@ export default function AplicarPage() {
             const result = await response.json();
 
             if (result.success) {
-                // Track form submission events
-                trackEvent("form_submit", {
-                    form_name: "academia_application",
+                trackLeadSubmit({
+                    funnel: "aplicar_cohorte",
                     page_path: "/aplicar",
-                    lead_id: result.data.leadId
-                });
-
-                trackMetaEvent("Lead", {
-                    content_name: "Academia Application",
-                    content_category: "Application",
-                    value: 1,
-                    currency: "COP"
+                    lead_id: result.data.leadId,
+                    utm_source: data.utmSource,
+                    utm_medium: data.utmMedium,
+                    utm_campaign: data.utmCampaign,
+                    fbclid: data.fbclid,
+                    gclid: data.gclid,
+                    ttclid: data.ttclid,
                 });
 
                 setIsSubmitted(true);

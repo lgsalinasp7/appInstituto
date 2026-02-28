@@ -30,6 +30,9 @@ export interface LeadRegistration {
   utmMedium?: string;
   utmCampaign?: string;
   utmContent?: string;
+  fbclid?: string;
+  gclid?: string;
+  ttclid?: string;
 
   // Masterclass filtering fields
   studyStatus?: string;

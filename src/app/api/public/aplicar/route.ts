@@ -20,6 +20,9 @@ const aplicarSchema = z.object({
   utmMedium: z.string().optional(),
   utmCampaign: z.string().optional(),
   utmContent: z.string().optional(),
+  fbclid: z.string().optional(),
+  gclid: z.string().optional(),
+  ttclid: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -58,6 +61,11 @@ export async function POST(request: NextRequest) {
       motivation: data.motivation,
       hasSaasIdea: data.hasSaasIdea,
       formType: 'APLICAR_COHORTE',
+      attribution: {
+        fbclid: data.fbclid || null,
+        gclid: data.gclid || null,
+        ttclid: data.ttclid || null,
+      },
     };
 
     // Verificar si ya existe el lead por email (si se proporciona)
