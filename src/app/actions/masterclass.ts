@@ -10,6 +10,7 @@ export async function captureMasterclassLead(formData: FormData) {
             name: formData.get("name") as string,
             email: formData.get("email") as string,
             phone: formData.get("phone") as string,
+            city: formData.get("city") as string,
             studyStatus: formData.get("studyStatus") as string,
             programmingLevel: formData.get("programmingLevel") as string,
             saasInterest: formData.get("saasInterest") as string,
@@ -41,6 +42,7 @@ export async function captureMasterclassLead(formData: FormData) {
             <p><strong>Nombre:</strong> ${validated.name}</p>
             <p><strong>Email:</strong> ${validated.email}</p>
             <p><strong>WhatsApp:</strong> ${validated.phone}</p>
+            <p><strong>Ciudad:</strong> ${validated.city || 'N/A'}</p>
             <hr />
             <h3>Respuestas de Filtrado:</h3>
             <ul>

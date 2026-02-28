@@ -30,6 +30,7 @@ export default function AplicarPage() {
         const data = {
             name: formData.get('name') as string,
             age: parseInt(formData.get('age') as string),
+            city: formData.get('city') as string,
             email: formData.get('email') as string || undefined,
             phone: formData.get('phone') as string || undefined,
             technicalLevel: formData.get('technicalLevel') as string,
@@ -152,7 +153,7 @@ export default function AplicarPage() {
                             </div>
                         )}
 
-                        <div className="grid md:grid-cols-2 gap-8">
+                        <div className="grid md:grid-cols-3 gap-8">
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Nombre Completo *</label>
                                 <input
@@ -173,6 +174,17 @@ export default function AplicarPage() {
                                     min="15"
                                     max="100"
                                     placeholder="24"
+                                    disabled={isLoading}
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-cyan-500/50 transition-all font-medium disabled:opacity-50"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Ciudad *</label>
+                                <input
+                                    required
+                                    name="city"
+                                    type="text"
+                                    placeholder="Ej: Barranquilla"
                                     disabled={isLoading}
                                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-cyan-500/50 transition-all font-medium disabled:opacity-50"
                                 />

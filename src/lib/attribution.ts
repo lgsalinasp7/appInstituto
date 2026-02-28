@@ -101,13 +101,21 @@ export function appendAttributionToFormData(formData: FormData) {
   const attr = getAttribution();
   if (!attr) return;
 
-  formData.set("utmSource", attr.utmSource || "");
-  formData.set("utmMedium", attr.utmMedium || "");
-  formData.set("utmCampaign", attr.utmCampaign || "");
-  formData.set("utmContent", attr.utmContent || "");
-  formData.set("fbclid", attr.fbclid || "");
-  formData.set("gclid", attr.gclid || "");
-  formData.set("ttclid", attr.ttclid || "");
+  // Preserve explicit URL/form values and only backfill missing attribution fields.
+  const setIfMissing = (key: string, value?: string) => {
+    if (!value) return;
+    const current = formData.get(key);
+    if (typeof current === "string" && current.trim().length > 0) return;
+    formData.set(key, value);
+  };
+
+  setIfMissing("utmSource", attr.utmSource);
+  setIfMissing("utmMedium", attr.utmMedium);
+  setIfMissing("utmCampaign", attr.utmCampaign);
+  setIfMissing("utmContent", attr.utmContent);
+  setIfMissing("fbclid", attr.fbclid);
+  setIfMissing("gclid", attr.gclid);
+  setIfMissing("ttclid", attr.ttclid);
 }
 
 export function buildAttributionSummary(attr: AttributionData): string {

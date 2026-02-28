@@ -99,15 +99,27 @@ export function MasterclassForm() {
                     </div>
                 </div>
 
-                <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Correo Electrónico</label>
-                    <input
-                        required
-                        name="email"
-                        type="email"
-                        placeholder="tu@email.com"
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-cyan-500/50 transition-all font-medium placeholder:text-slate-600"
-                    />
+                <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Correo Electrónico</label>
+                        <input
+                            required
+                            name="email"
+                            type="email"
+                            placeholder="tu@email.com"
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-cyan-500/50 transition-all font-medium placeholder:text-slate-600"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Ciudad</label>
+                        <input
+                            required
+                            name="city"
+                            type="text"
+                            placeholder="Ej: Barranquilla"
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-cyan-500/50 transition-all font-medium placeholder:text-slate-600"
+                        />
+                    </div>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6">

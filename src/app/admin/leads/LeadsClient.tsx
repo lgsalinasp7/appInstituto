@@ -145,6 +145,14 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
         { title: "Convertidos", value: leads.filter(l => l.status === 'CONVERTIDO').length, icon: ExternalLink, color: "text-green-400", bg: "bg-green-500/10" },
     ];
 
+    const getLeadCity = (lead: any): string | null => {
+        if (!lead?.filteringData || typeof lead.filteringData !== "object") {
+            return null;
+        }
+        const maybeCity = (lead.filteringData as Record<string, unknown>).city;
+        return typeof maybeCity === "string" && maybeCity.trim().length > 0 ? maybeCity : null;
+    };
+
     return (
         <div className="space-y-6 sm:space-y-8 lg:space-y-10 animate-fade-in-up">
             <DashboardHeader
@@ -220,6 +228,11 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
                                                         </>
                                                     )}
                                                 </div>
+                                                {getLeadCity(lead) && (
+                                                    <div className="text-[11px] text-slate-400 mt-1">
+                                                        Ciudad: <span className="text-slate-300">{getLeadCity(lead)}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </td>

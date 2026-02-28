@@ -20,6 +20,7 @@ export class KaledLeadService {
         });
 
         const filteringData = {
+            city: data.city,
             studyStatus: data.studyStatus,
             programmingLevel: data.programmingLevel,
             saasInterest: data.saasInterest,
@@ -33,6 +34,7 @@ export class KaledLeadService {
         };
 
         const observations = [
+            data.city ? `Ciudad: ${data.city}` : null,
             data.studyStatus ? `Estudio: ${data.studyStatus}` : null,
             data.programmingLevel ? `Nivel: ${data.programmingLevel}` : null,
             data.saasInterest ? `Interés SaaS: ${data.saasInterest}` : null,

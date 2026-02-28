@@ -13,7 +13,6 @@ export function WhatsAppCTA({ message, phoneNumber, onWhatsAppClick }: WhatsAppC
   const handleWhatsAppClick = () => {
     if (onWhatsAppClick) {
       onWhatsAppClick();
-      return;
     }
 
     const encodedMessage = encodeURIComponent(message);
