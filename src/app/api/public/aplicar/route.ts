@@ -11,7 +11,7 @@ import { z } from 'zod';
 const aplicarSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
   age: z.number().positive('La edad debe ser positiva'),
-  city: z.string().min(2, 'Ciudad inválida').optional(),
+  city: z.string().trim().min(2, 'Ciudad inválida'),
   email: z.string().email('Email inválido').optional(),
   phone: z.string().optional(),
   technicalLevel: z.string().optional(),

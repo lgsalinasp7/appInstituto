@@ -21,7 +21,7 @@ export const publicLeadCaptureSchema = z.object({
   name: z.string().min(2, 'Nombre requerido'),
   phone: z.string().min(7, 'Teléfono requerido'),
   email: z.string().email('Email inválido'),
-  city: z.string().min(2, 'Ciudad inválida').optional(),
+  city: z.string().trim().min(2, 'Ciudad inválida'),
   programId: z.string().optional(),
   masterclassSlug: z.string().optional(),
   utmSource: z.string().optional(),

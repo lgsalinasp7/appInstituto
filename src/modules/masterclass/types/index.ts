@@ -24,7 +24,7 @@ export interface LeadRegistration {
   name: string;
   phone: string;
   email: string;
-  city?: string;
+  city: string;
   programId?: string;
   masterclassSlug?: string;
   utmSource?: string;
