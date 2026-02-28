@@ -61,6 +61,18 @@ export async function GET(request: NextRequest) {
           typeof metadata.scheduledFor === 'string' ? metadata.scheduledFor : null;
         const scheduledFor = scheduledForRaw ? new Date(scheduledForRaw) : null;
 
+        // Never send SCHEDULED emails without a valid schedule timestamp.
+        if (
+          emailLog.status === 'SCHEDULED' &&
+          (!scheduledFor || Number.isNaN(scheduledFor.getTime()))
+        ) {
+          pending++;
+          console.warn(
+            `⏸️  Email ${emailLog.id} is SCHEDULED without valid metadata.scheduledFor, skipping...`
+          );
+          continue;
+        }
+
         // Respect schedule time for deferred emails
         if (
           emailLog.status === 'SCHEDULED' &&
@@ -68,6 +80,7 @@ export async function GET(request: NextRequest) {
           !Number.isNaN(scheduledFor.getTime()) &&
           scheduledFor > now
         ) {
+          pending++;
           continue;
         }
 
@@ -149,7 +162,7 @@ export async function GET(request: NextRequest) {
         failed,
         pending,
       },
-      message: `Processed ${pendingEmails.length} emails: ${sent} sent, ${failed} failed, ${pending} pending approval`,
+      message: `Processed ${pendingEmails.length} emails: ${sent} sent, ${failed} failed, ${pending} pending/skipped`,
     };
 
     console.log(
