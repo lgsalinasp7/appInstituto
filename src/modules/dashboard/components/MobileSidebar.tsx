@@ -3,15 +3,31 @@
 /**
  * MobileSidebar Component
  * Sidebar deslizable para dispositivos móviles y tablets
+ * Muestra menú Instituto o Academia según la ruta actual
  */
 
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { TrendingUp, Users, CreditCard, FileText, LogOut, Settings, User, X } from "lucide-react";
+import {
+  TrendingUp,
+  Users,
+  CreditCard,
+  FileText,
+  LogOut,
+  Settings,
+  User,
+  X,
+  BookOpen,
+  BarChart3,
+  LayoutDashboard,
+  MessageSquare,
+} from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { performLogout } from "@/lib/logout";
 import { useBranding } from "@/components/providers/BrandingContext";
+import { getAcademyRoutesForRole } from "@/modules/academia/config/academy-routes.config";
+import type { PlatformRole } from "@prisma/client";
 
 interface MobileSidebarProps {
   isOpen: boolean;
@@ -27,10 +43,26 @@ const navItems = [
 
 const configItem = { href: "/configuracion", label: "Configuración", icon: Settings };
 
+const academyIconMap: Record<string, React.ComponentType<{ size?: number; strokeWidth?: number }>> = {
+  "/academia/student": LayoutDashboard,
+  "/academia/student/courses": BookOpen,
+  "/academia/student/progress": BarChart3,
+  "/academia/teacher": LayoutDashboard,
+  "/academia/teacher/students": Users,
+  "/academia/teacher/courses": BookOpen,
+  "/academia/teacher/messages": MessageSquare,
+  "/academia/admin": LayoutDashboard,
+  "/academia/admin/courses": BookOpen,
+  "/academia/admin/cohorts": Users,
+  "/academia/admin/users": Users,
+  "/academia/admin/analytics": BarChart3,
+};
+
 export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const pathname = usePathname();
   const { user } = useAuthStore();
   const branding = useBranding();
+  const isAcademia = pathname?.startsWith("/academia");
 
   const roleName = user?.role?.name?.toUpperCase() || "";
   const hasFullAccess =
@@ -38,17 +70,24 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     roleName === "ADMINISTRADOR" ||
     user?.role?.permissions?.includes("all");
 
-  // Filter standard items based on role
-  const displayItems = navItems.filter((item) => {
+  // En rutas academia: usar menú academia
+  const academyRoutes = isAcademia ? getAcademyRoutesForRole((user?.platformRole as PlatformRole) ?? null) : [];
+  const academyItems = academyRoutes.map((r) => ({
+    href: r.path,
+    label: r.label,
+    icon: academyIconMap[r.path] ?? LayoutDashboard,
+  }));
+
+  // En rutas instituto: filtrar items según rol
+  const instituteItems = navItems.filter((item) => {
     if (hasFullAccess) return true;
     if (roleName === "VENTAS") return ["/dashboard", "/matriculas"].includes(item.href);
     if (roleName === "CARTERA") return ["/dashboard", "/recaudos"].includes(item.href);
     return item.href === "/dashboard";
   });
+  if (hasFullAccess) instituteItems.push(configItem);
 
-  if (hasFullAccess) {
-    displayItems.push(configItem);
-  }
+  const displayItems = isAcademia ? academyItems : instituteItems;
 
   // Handler para cerrar después de un pequeño delay para permitir la navegación
   const handleLinkClick = () => {
@@ -88,7 +127,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
             </div>
             <div className="flex flex-col">
               <span className="font-black text-base leading-none tracking-tighter" style={{ color: branding.primaryColor }}>{branding.tenantName}</span>
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Gestion</span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{isAcademia ? "Academia" : "Gestion"}</span>
             </div>
           </div>
           <button
@@ -107,7 +146,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
           </p>
           {displayItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
+            const isActive = pathname === item.href || (isAcademia && pathname?.startsWith(item.href + "/"));
             return (
               <Link
                 key={item.href}

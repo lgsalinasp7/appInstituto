@@ -18,6 +18,11 @@ export interface AuthUser {
     } | null;
     invitationLimit: number;
     mustChangePassword?: boolean;
+    tenant?: {
+        id: string;
+        name: string;
+        slug: string;
+    };
 }
 
 interface AuthState {

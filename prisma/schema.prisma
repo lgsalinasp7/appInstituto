@@ -43,6 +43,19 @@ model Tenant {
   agentMemories    AgentMemory[]
   campaignCosts    CampaignCost[]
 
+  // KaledSoft CRM (plataforma)
+  kaledLeads            KaledLead[]
+  kaledCampaigns        KaledCampaign[]
+  kaledEmailTemplates   KaledEmailTemplate[]
+  kaledEmailSequences   KaledEmailSequence[]
+  kaledEmailLogs        KaledEmailLog[]
+  kaledLeadInteractions KaledLeadInteraction[]
+  kaledSequenceSteps    KaledEmailSequenceStep[]
+
+  // Academia LMS
+  academyCourses  AcademyCourse[]
+  academyCohorts  AcademyCohort[]
+
   @@index([slug])
   @@index([status])
 }
@@ -73,6 +86,11 @@ model User {
   aiConversations    AiConversation[]
   advisorInteractions ProspectInteraction[] @relation("InteractionAdvisor")
   kaledInteractions  KaledLeadInteraction[]
+
+  // Academia LMS
+  academyEnrollments   AcademyEnrollment[]
+  academyProgress      AcademyStudentProgress[]
+  academyCoursesCreated AcademyCourse[] @relation("AcademyCourseCreator")
 
   @@index([email])
   @@index([roleId])
@@ -607,19 +625,20 @@ model SystemConfig {
 }
 
 model Invitation {
-  id        String           @id @default(cuid())
-  email     String
-  roleId    String
-  status    InvitationStatus @default(PENDING)
-  token     String           @unique
-  expiresAt DateTime
-  inviterId String
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
-  tenantId  String
-  inviter   User             @relation("SentInvitations", fields: [inviterId], references: [id])
-  role      Role             @relation(fields: [roleId], references: [id])
-  tenant    Tenant           @relation(fields: [tenantId], references: [id])
+  id          String           @id @default(cuid())
+  email       String
+  roleId      String
+  status      InvitationStatus @default(PENDING)
+  token       String           @unique
+  expiresAt   DateTime
+  inviterId   String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  tenantId    String
+  academyRole String?          // ACADEMY_STUDENT, ACADEMY_TEACHER, ACADEMY_ADMIN (solo tenant kaledacademy)
+  inviter     User             @relation("SentInvitations", fields: [inviterId], references: [id])
+  role        Role             @relation(fields: [roleId], references: [id])
+  tenant      Tenant           @relation(fields: [tenantId], references: [id])
 
   @@index([email])
   @@index([token])
@@ -651,6 +670,9 @@ enum PlatformRole {
   SUPER_ADMIN
   ASESOR_COMERCIAL
   MARKETING
+  ACADEMY_STUDENT
+  ACADEMY_TEACHER
+  ACADEMY_ADMIN
 }
 
 enum StudentStatus {
@@ -941,11 +963,15 @@ model CampaignCost {
 model KaledLead {
   id              String   @id @default(cuid())
   name            String
-  email           String   @unique
+  email           String
   phone           String?
   city            String?
   status          String   @default("NUEVO") // NUEVO, CONTACTADO, DEMO, CONVERTIDO, PERDIDO
   source          String   @default("MASTERCLASS")
+
+  // Tenant isolation
+  tenantId        String?
+  tenant          Tenant?  @relation(fields: [tenantId], references: [id])
 
   // Datos específicos de la masterclass o interés
   observations    String?  @db.Text
@@ -989,12 +1015,14 @@ model KaledLead {
   interactions    KaledLeadInteraction[]
   emailLogs       KaledEmailLog[]
 
+  @@unique([email, tenantId])
   @@index([status])
   @@index([email])
   @@index([campaignId])
   @@index([deletedAt])
   @@index([leadScore])
   @@index([interestLevel])
+  @@index([tenantId])
 }
 
 // ============================================
@@ -1007,14 +1035,17 @@ model KaledLeadInteraction {
   metadata    Json?                     // { duration: 30, result: "Interesado" }
   kaledLeadId String
   userId      String?                   // Quién lo registró (null si automático)
+  tenantId    String?
   createdAt   DateTime                  @default(now())
 
   kaledLead   KaledLead                 @relation(fields: [kaledLeadId], references: [id], onDelete: Cascade)
   user        User?                     @relation(fields: [userId], references: [id])
+  tenant      Tenant?                   @relation(fields: [tenantId], references: [id])
 
   @@index([kaledLeadId])
   @@index([type])
   @@index([createdAt])
+  @@index([tenantId])
 }
 
 enum KaledInteractionType {
@@ -1032,12 +1063,16 @@ enum KaledInteractionType {
 // ============================================
 model KaledCampaign {
   id          String                    @id @default(cuid())
-  name        String                    @unique
+  name        String
   description String?                   @db.Text
   status      KaledCampaignStatus       @default(DRAFT)
   startDate   DateTime?
   endDate     DateTime?
   timeline    Json?                     // Configuración flexible de fases
+
+  // Tenant isolation
+  tenantId    String?
+  tenant      Tenant?                   @relation(fields: [tenantId], references: [id])
 
   // Enlaces de la campaña
   eventUrl          String?  // Zoom/Google Meet URL
@@ -1057,7 +1092,9 @@ model KaledCampaign {
   templates   KaledEmailTemplate[]
   sequences   KaledEmailSequence[]
 
+  @@unique([name, tenantId])
   @@index([status])
+  @@index([tenantId])
 }
 
 enum KaledCampaignStatus {
@@ -1073,7 +1110,7 @@ enum KaledCampaignStatus {
 // ============================================
 model KaledEmailTemplate {
   id          String                    @id @default(cuid())
-  name        String                    @unique
+  name        String
   subject     String
   htmlContent String                    @db.Text
   variables   String[]                  // ["nombre", "email", "enlace"]
@@ -1082,16 +1119,20 @@ model KaledEmailTemplate {
   isLibraryTemplate Boolean             @default(false) // Plantillas pre-diseñadas de la librería
   phase       String?                   // FASE_1, FASE_2, FASE_3, NO_SHOW
   campaignId  String?
+  tenantId    String?
   createdAt   DateTime                  @default(now())
 
   campaign    KaledCampaign?            @relation(fields: [campaignId], references: [id])
+  tenant      Tenant?                   @relation(fields: [tenantId], references: [id])
   emailLogs   KaledEmailLog[]
   sequenceSteps KaledEmailSequenceStep[]
 
+  @@unique([name, tenantId])
   @@index([category])
   @@index([campaignId])
   @@index([isLibraryTemplate])
   @@index([phase])
+  @@index([tenantId])
 }
 
 // ============================================
@@ -1099,18 +1140,22 @@ model KaledEmailTemplate {
 // ============================================
 model KaledEmailSequence {
   id            String                    @id @default(cuid())
-  name          String                    @unique
+  name          String
   triggerType   KaledTriggerType          // TIME_BASED, ACTION_BASED, STAGE_BASED
   triggerConfig Json                      // { status: "NUEVO", delayHours: 0 }
   isActive      Boolean                   @default(true)
   campaignId    String?
+  tenantId      String?
   createdAt     DateTime                  @default(now())
 
   campaign      KaledCampaign?            @relation(fields: [campaignId], references: [id])
+  tenant        Tenant?                   @relation(fields: [tenantId], references: [id])
   steps         KaledEmailSequenceStep[]
 
+  @@unique([name, tenantId])
   @@index([triggerType])
   @@index([isActive])
+  @@index([tenantId])
 }
 
 enum KaledTriggerType {
@@ -1126,11 +1171,14 @@ model KaledEmailSequenceStep {
   orderIndex  Int                       // 0, 1, 2...
   delayHours  Int
   conditions  Json?
+  tenantId    String?
 
   sequence    KaledEmailSequence        @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
   template    KaledEmailTemplate        @relation(fields: [templateId], references: [id])
+  tenant      Tenant?                   @relation(fields: [tenantId], references: [id])
 
   @@index([sequenceId])
+  @@index([tenantId])
 }
 
 // ============================================
@@ -1142,6 +1190,7 @@ model KaledEmailLog {
   subject         String
   templateId      String?
   kaledLeadId     String?
+  tenantId        String?
   status          String                    @default("PENDING") // PENDING, SENT, FAILED, DELIVERED, OPENED, CLICKED, BOUNCED
   resendId        String?
   requiresApproval Boolean                  @default(false)
@@ -1160,9 +1209,167 @@ model KaledEmailLog {
 
   template        KaledEmailTemplate?       @relation(fields: [templateId], references: [id])
   kaledLead       KaledLead?                @relation(fields: [kaledLeadId], references: [id])
+  tenant          Tenant?                   @relation(fields: [tenantId], references: [id])
 
   @@index([kaledLeadId])
   @@index([status])
   @@index([requiresApproval])
   @@index([resendId])
+  @@index([tenantId])
+}
+
+// ============================================
+// ACADEMIA LMS (Kaled Academy)
+// ============================================
+model AcademyCourse {
+  id            String   @id @default(cuid())
+  title         String
+  description   String   @db.Text
+  category      String
+  duration      String
+  level         String
+  price         Float
+  durationWeeks Int?     @default(24)
+  description2  String?  @db.Text
+  isActive      Boolean  @default(true)
+  tenantId      String
+  createdById   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdBy    User             @relation("AcademyCourseCreator", fields: [createdById], references: [id])
+  modules      AcademyModule[]
+  enrollments  AcademyEnrollment[]
+  cohorts      AcademyCohort[]
+
+  @@index([tenantId])
+  @@index([isActive])
+}
+
+model AcademyModule {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  order       Int
+  isActive    Boolean  @default(true)
+  courseId    String
+  createdAt   DateTime @default(now())
+
+  course  AcademyCourse  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons AcademyLesson[]
+
+  @@index([courseId])
+  @@index([order])
+}
+
+model AcademyLesson {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  content     String   @db.Text
+  videoUrl    String?
+  duration    Int      // minutos
+  order       Int
+  isActive    Boolean  @default(true)
+  moduleId    String
+  createdAt   DateTime @default(now())
+
+  module    AcademyModule          @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  progress  AcademyStudentProgress[]
+
+  @@index([moduleId])
+  @@index([order])
+}
+
+model AcademyEnrollment {
+  id         String   @id @default(cuid())
+  userId     String
+  courseId   String
+  status     String   @default("ACTIVE")
+  progress   Decimal  @default(0) @db.Decimal(5, 2)
+  enrolledAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course AcademyCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+  @@index([status])
+}
+
+model AcademyCohort {
+  id              String             @id @default(cuid())
+  name            String
+  startDate       DateTime
+  endDate         DateTime
+  maxStudents     Int
+  currentStudents Int                @default(0)
+  status          AcademyCohortStatus
+  schedule        Json
+  courseId        String
+  tenantId        String
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  course AcademyCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  tenant Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@index([tenantId])
+  @@index([status])
+}
+
+model AcademyStudentProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  lessonId    String
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson AcademyLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+  @@index([lessonId])
+}
+
+enum AcademyCohortStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+// ============================================
+// Plantillas de Producto para Deploy de Tenants
+// ============================================
+model ProductTemplate {
+  id                      String   @id @default(cuid())
+  name                    String
+  slug                    String   @unique
+  description             String?  @db.Text
+  icon                    String   @default("Package")
+  domain                  String?
+  logoUrl                 String?
+  primaryColor            String   @default("#1e3a5f")
+  secondaryColor          String   @default("#3b82f6")
+  accentColor             String   @default("#10b981")
+  darkMode                Boolean  @default(false)
+  footerText              String?
+  adminName               String?
+  adminEmail              String?
+  plan                    String   @default("BASICO")
+  allowPublicRegistration Boolean  @default(true)
+  isActive                Boolean  @default(true)
+  deployCount             Int      @default(0)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([slug])
+  @@index([isActive])
 }

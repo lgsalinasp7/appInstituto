@@ -26,6 +26,7 @@ export interface Tenant {
 export interface TenantWithDetails extends Tenant {
   users: TenantUser[];
   adminUser: TenantUser | null;
+  generatedAdminPassword?: string;
 }
 
 export interface TenantUser {
@@ -44,10 +45,12 @@ export interface TenantUser {
 export interface CreateTenantData {
   name: string;
   slug: string;
+  domain?: string;
   email: string;
   plan?: string;
   adminName?: string;
   adminPassword?: string;
+  autoGenerateAdminPassword?: boolean;
   subscriptionEndsAt?: Date;
 }
 

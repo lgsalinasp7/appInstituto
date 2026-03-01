@@ -29,7 +29,7 @@ export function InstitutionalBlocksV2() {
                                 </p>
                             </div>
                         </div>
-                        <Link href="/academia" className="inline-flex items-center gap-2 text-cyan-500 font-bold group-hover:gap-4 transition-all pt-8">
+                        <Link href="/formacion" className="inline-flex items-center gap-2 text-cyan-500 font-bold group-hover:gap-4 transition-all pt-8">
                             Conocer Programas <ArrowRight className="w-4 h-4" />
                         </Link>
                     </motion.div>

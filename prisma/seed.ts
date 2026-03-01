@@ -55,6 +55,22 @@ async function main() {
     await prisma.tenant.deleteMany();
 
     // ============================================
+    // PASO 0: Crear Tenant KaledSoft (plataforma core)
+    // ============================================
+    console.log("Creando tenant KALEDSOFT (core)...");
+    const kaledTenant = await prisma.tenant.create({
+        data: {
+            name: "KaledSoft",
+            slug: "kaledsoft",
+            domain: "kaledsoft.tech",
+            status: "ACTIVO",
+            plan: "EMPRESARIAL",
+            email: "gerente@kaledsoft.tech",
+        },
+    });
+    console.log(`  -> Tenant KaledSoft creado (${kaledTenant.id})`);
+
+    // ============================================
     // PASO 1: Crear Tenant de ejemplo
     // ============================================
     console.log("Creando tenant EDUTEC...");

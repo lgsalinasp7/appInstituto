@@ -859,11 +859,19 @@ async function seedEmailTemplates() {
 
   for (const template of emailTemplates) {
     try {
-      await prisma.kaledEmailTemplate.upsert({
+      const existing = await prisma.kaledEmailTemplate.findFirst({
         where: { name: template.name },
-        update: template,
-        create: template,
       });
+      if (existing) {
+        await prisma.kaledEmailTemplate.update({
+          where: { id: existing.id },
+          data: template,
+        });
+      } else {
+        await prisma.kaledEmailTemplate.create({
+          data: template,
+        });
+      }
       console.log(`✅ Created/Updated: ${template.name}`);
     } catch (error) {
       console.error(`❌ Error with ${template.name}:`, error);

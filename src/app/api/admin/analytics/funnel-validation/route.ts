@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledAnalyticsService } from '@/modules/kaled-crm/services/kaled-analytics.service';
+import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 
 export const GET = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
-  async (_request: NextRequest) => {
+  async (request: NextRequest) => {
     try {
-      const metrics = await KaledAnalyticsService.getFunnelValidationMetrics();
+      const tenantId = await resolveKaledTenantId(
+        request.nextUrl.searchParams.get('tenantId')
+      );
+      const metrics = await KaledAnalyticsService.getFunnelValidationMetrics(tenantId);
 
       return NextResponse.json({
         success: true,

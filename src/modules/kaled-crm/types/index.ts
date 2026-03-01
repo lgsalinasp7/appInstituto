@@ -103,6 +103,7 @@ export interface CreateCampaignData {
   startDate?: Date;
   endDate?: Date;
   timeline?: CampaignTimeline;
+  tenantId?: string;
 }
 
 export interface UpdateCampaignData extends Partial<CreateCampaignData> {
@@ -155,6 +156,7 @@ export interface CreateTemplateData {
   variables?: string[];
   category?: string;
   campaignId?: string;
+  tenantId?: string;
 }
 
 export interface UpdateTemplateData extends Partial<CreateTemplateData> {
@@ -190,6 +192,7 @@ export interface CreateSequenceData {
   triggerConfig: TriggerConfig;
   campaignId?: string;
   steps?: CreateSequenceStepData[];
+  tenantId?: string;
 }
 
 export interface CreateSequenceStepData {
@@ -228,6 +231,7 @@ export interface CreateEmailLogData {
   kaledLeadId?: string;
   requiresApproval?: boolean;
   metadata?: Record<string, any>;
+  tenantId?: string;
 }
 
 export interface SendEmailData {

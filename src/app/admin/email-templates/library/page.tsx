@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 import { TemplateLibraryClient } from './TemplateLibraryClient';
 
 export const metadata = {
@@ -7,11 +8,12 @@ export const metadata = {
 };
 
 export default async function EmailTemplateLibraryPage() {
-  // Fetch all library templates
+  const tenantId = await resolveKaledTenantId();
   const templates = await prisma.kaledEmailTemplate.findMany({
     where: {
       isLibraryTemplate: true,
       isActive: true,
+      tenantId,
     },
     orderBy: [
       { phase: 'asc' },

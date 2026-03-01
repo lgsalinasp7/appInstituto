@@ -16,26 +16,32 @@ async function seedFunnelCitaSequences() {
     return template.id;
   };
 
-  const sequence = await prisma.kaledEmailSequence.upsert({
+  const existing = await prisma.kaledEmailSequence.findFirst({
     where: { name: "Funnel Citas - CONTACTADO" },
-    update: {
-      triggerType: "STAGE_BASED" as KaledTriggerType,
-      triggerConfig: {
-        targetStage: "CONTACTADO",
-        objective: "booked_calls",
-      },
-      isActive: true,
-    },
-    create: {
-      name: "Funnel Citas - CONTACTADO",
-      triggerType: "STAGE_BASED" as KaledTriggerType,
-      triggerConfig: {
-        targetStage: "CONTACTADO",
-        objective: "booked_calls",
-      },
-      isActive: true,
-    },
   });
+  const sequence = existing
+    ? await prisma.kaledEmailSequence.update({
+        where: { id: existing.id },
+        data: {
+          triggerType: "STAGE_BASED" as KaledTriggerType,
+          triggerConfig: {
+            targetStage: "CONTACTADO",
+            objective: "booked_calls",
+          },
+          isActive: true,
+        },
+      })
+    : await prisma.kaledEmailSequence.create({
+        data: {
+          name: "Funnel Citas - CONTACTADO",
+          triggerType: "STAGE_BASED" as KaledTriggerType,
+          triggerConfig: {
+            targetStage: "CONTACTADO",
+            objective: "booked_calls",
+          },
+          isActive: true,
+        },
+      });
 
   await prisma.kaledEmailSequenceStep.deleteMany({
     where: { sequenceId: sequence.id },

@@ -2,8 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import Image from "next/image";
-import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Lock, ArrowRight, User } from "lucide-react";
 import { useBranding } from "@/components/providers/BrandingContext";
 import { cn } from "@/lib/utils";
 
@@ -22,13 +21,16 @@ import { loginSchema, type LoginFormData } from "../schemas";
 
 interface LoginFormProps {
   onSubmit?: (data: LoginFormData) => Promise<void>;
+  /** Variante split: formulario en tarjeta oscura estilo diseño nuevo */
+  variant?: "default" | "split";
 }
 
-export function LoginForm({ onSubmit }: LoginFormProps) {
+export function LoginForm({ onSubmit, variant = "default" }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const branding = useBranding();
   const isDark = branding.darkMode !== false;
+  const useSplitStyle = variant === "split" || (isDark && variant === "default");
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -51,51 +53,30 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
   return (
     <div className="relative w-full">
       <div className={cn(
-        "relative p-8 rounded-[2rem] border transition-all duration-300 shadow-2xl overflow-hidden",
-        isDark
-          ? "bg-slate-900/50 backdrop-blur-xl border-slate-800 hover:border-cyan-500/30 shadow-cyan-900/10"
-          : "bg-white border-gray-100/80 hover:border-blue-500/20 shadow-blue-900/5"
+        "relative p-8 lg:p-10 rounded-[2rem] border transition-all duration-300 shadow-2xl overflow-hidden",
+        useSplitStyle
+          ? "bg-slate-900/45 backdrop-blur-xl border-white/10 shadow-cyan-900/10"
+          : isDark
+            ? "bg-slate-900/50 backdrop-blur-xl border-slate-800 hover:border-cyan-500/30 shadow-cyan-900/10"
+            : "bg-white border-gray-100/80 hover:border-blue-500/20 shadow-blue-900/5"
       )}>
-        {/* Glow effect for dark mode or subtle tint for light */}
         <div className={cn(
           "absolute -top-24 -right-24 w-48 h-48 rounded-full blur-[80px] pointer-events-none transition-opacity duration-500",
-          isDark ? "bg-cyan-500/10 opacity-100" : "bg-blue-500/5 opacity-50"
+          useSplitStyle ? "bg-cyan-500/20 opacity-100" : isDark ? "bg-cyan-500/10 opacity-100" : "bg-blue-500/5 opacity-50"
         )} />
 
         <div className="pt-2 pb-8 px-2 text-center relative z-10 flex flex-col items-center">
-          {/* Logo del tenant solicitado por Edutec */}
-          {branding.logoUrl && (
-            <div className="relative w-20 h-20 mb-6 group">
-              <div className={cn(
-                "absolute inset-[-10px] rounded-full blur-2xl opacity-0 group-hover:opacity-40 transition-opacity duration-500",
-                isDark ? "bg-cyan-500" : "bg-blue-500"
-              )} />
-              <div className={cn(
-                "relative h-full w-full p-2.5 rounded-2xl flex items-center justify-center transition-all duration-300",
-                isDark ? "bg-slate-950/40 border border-white/5" : "bg-blue-50/30 border border-blue-100/50"
-              )}>
-                <Image
-                  src={branding.logoUrl}
-                  alt={branding.tenantName}
-                  fill
-                  className="object-contain p-2"
-                  priority
-                />
-              </div>
-            </div>
-          )}
-
           <h1 className={cn(
-            "text-2xl font-black mb-1.5 tracking-tighter",
-            isDark ? "text-white" : "text-slate-900"
+            "text-2xl md:text-3xl font-black mb-1.5 tracking-tighter",
+            useSplitStyle || isDark ? "text-white" : "text-slate-900"
           )}>
             ¡Bienvenido de nuevo!
           </h1>
           <p className={cn(
             "text-sm font-semibold",
-            isDark ? "text-slate-400" : "text-slate-500"
+            useSplitStyle || isDark ? "text-slate-400" : "text-slate-500"
           )}>
-            Accede al portal de {branding.tenantName}
+            Accede al portal de {branding.tenantName || "KaledSoft Academia"}
           </p>
         </div>
 
@@ -115,17 +96,17 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
                     </FormLabel>
                     <FormControl>
                       <div className="relative group">
-                        <Mail className={cn(
+                        <User className={cn(
                           "absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors duration-300",
                           isDark ? "text-slate-600 group-focus-within:text-cyan-400" : "text-slate-400 group-focus-within:text-blue-500"
                         )} />
                         <Input
                           type="email"
-                          placeholder="tu@email.com"
+                          placeholder="correo@empresa.com"
                           className={cn(
                             "pl-12 h-13 rounded-xl transition-all duration-300 font-bold text-sm",
-                            isDark
-                              ? "bg-slate-950/50 border-slate-700/50 text-white placeholder:text-slate-700 focus:border-cyan-500/50 focus:ring-cyan-500/10"
+                            useSplitStyle || isDark
+                              ? "bg-slate-950/60 border-slate-700/50 text-white placeholder:text-slate-600 focus:border-cyan-500/50 focus:ring-cyan-500/10"
                               : "bg-slate-50/50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500/50 focus:ring-blue-500/5"
                           )}
                           {...field}
@@ -181,7 +162,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
                           onClick={() => setShowPassword(!showPassword)}
                           className={cn(
                             "absolute right-4 top-1/2 -translate-y-1/2 transition-colors",
-                            isDark ? "text-slate-500 hover:text-white" : "text-slate-400 hover:text-slate-600"
+                            useSplitStyle || isDark ? "text-slate-500 hover:text-white" : "text-slate-400 hover:text-slate-600"
                           )}
                         >
                           {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -197,7 +178,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
                 type="submit"
                 className={cn(
                   "w-full h-13 mt-6 font-black rounded-2xl transition-all duration-500 group shadow-xl uppercase tracking-widest text-xs",
-                  isDark
+                  useSplitStyle || isDark
                     ? "bg-gradient-to-r from-cyan-600 to-blue-600 hover:scale-[1.02] text-white shadow-cyan-900/20 active:scale-[0.98]"
                     : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white hover:scale-[1.02] shadow-blue-900/10 active:scale-[0.98]"
                 )}

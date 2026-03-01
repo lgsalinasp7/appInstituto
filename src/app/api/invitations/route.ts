@@ -16,6 +16,7 @@ const createInvitationSchema = z.object({
   email: z.email("Email invalido"),
   roleId: z.string().min(1, "Rol requerido"),
   inviterId: z.string().min(1, "Invitador requerido"),
+  academyRole: z.enum(["ACADEMY_STUDENT", "ACADEMY_TEACHER", "ACADEMY_ADMIN"]).optional(),
 });
 
 /**
@@ -88,7 +89,7 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
       );
     }
 
-    const { email, roleId, inviterId } = validation.data;
+    const { email, roleId, inviterId, academyRole } = validation.data;
 
     // Ejecutar todas las verificaciones independientes en paralelo (eliminando waterfall de 5 queries secuenciales)
     const [inviter, existingInvitation, existingUser, role] = await Promise.all([
@@ -165,6 +166,17 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
       );
     }
 
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { slug: true },
+    });
+    if (tenant?.slug === "kaledacademy" && !academyRole) {
+      return NextResponse.json(
+        { success: false, error: "Para Kaled Academy debe seleccionar un rol de Academia (Estudiante, Profesor o Admin)" },
+        { status: 400 }
+      );
+    }
+
     // Generate unique token
     const token = randomUUID();
 
@@ -174,10 +186,11 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
         email,
         roleId,
         inviterId,
-        tenantId, // Agregar tenantId
+        tenantId,
         token,
         expiresAt: addDays(new Date(), 7),
         status: "PENDING",
+        ...(academyRole && { academyRole }),
       },
       include: {
         role: {
@@ -196,11 +209,7 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
       },
     });
 
-    // Obtener tenant slug para construir el link correcto en el email
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { slug: true },
-    });
+    // tenant ya obtenido arriba
 
     // Send invitation email
     try {

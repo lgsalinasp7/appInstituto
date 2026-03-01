@@ -4,6 +4,7 @@
  */
 
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
 import type {
   Tenant,
   TenantWithDetails,
@@ -22,7 +23,7 @@ export const TenantsService = {
     const { search, status, plan, page = 1, limit = 10 } = filters;
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: Prisma.TenantWhereInput = {};
 
     if (search) {
       where.OR = [
@@ -140,13 +141,27 @@ export const TenantsService = {
    * Create a new tenant with optional admin user
    */
   async create(data: CreateTenantData): Promise<TenantWithDetails> {
-    const { name, slug, email, plan = 'BASICO', adminName, adminPassword } = data;
+    const {
+      name,
+      slug,
+      domain,
+      email,
+      plan = 'BASICO',
+      adminName,
+      adminPassword,
+      autoGenerateAdminPassword = false,
+    } = data;
+
+    const generatedPassword =
+      autoGenerateAdminPassword && !adminPassword ? this.generateTemporaryPassword() : undefined;
+    const effectiveAdminPassword = adminPassword || generatedPassword;
 
     // Create tenant
     const tenant = await prisma.tenant.create({
       data: {
         name,
         slug,
+        domain,
         email,
         plan,
         status: 'ACTIVO',
@@ -165,10 +180,10 @@ export const TenantsService = {
 
     // Create admin user if credentials provided
     let adminUser = null;
-    if (email && adminPassword) {
+    if (email && effectiveAdminPassword) {
       // Import bcrypt for password hashing
       const bcrypt = await import('bcryptjs');
-      const hashedPassword = await bcrypt.hash(adminPassword, 10);
+      const hashedPassword = await bcrypt.hash(effectiveAdminPassword, 10);
 
       adminUser = await prisma.user.create({
         data: {
@@ -178,6 +193,7 @@ export const TenantsService = {
           roleId: adminRole.id,
           tenantId: tenant.id,
           isActive: true,
+          mustChangePassword: true,
         },
         include: {
           role: {
@@ -209,6 +225,7 @@ export const TenantsService = {
         role: adminUser.role!,
         createdAt: adminUser.createdAt,
       } : null,
+      generatedAdminPassword: generatedPassword,
     } as TenantWithDetails;
   },
 
@@ -310,7 +327,10 @@ export const TenantsService = {
 
     await prisma.user.update({
       where: { id: adminUser.id },
-      data: { password: hashedPassword },
+      data: {
+        password: hashedPassword,
+        mustChangePassword: true,
+      },
     });
 
     return {
@@ -331,5 +351,14 @@ export const TenantsService = {
     });
 
     return !existing;
+  },
+
+  generateTemporaryPassword(length = 12): string {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%';
+    let password = '';
+    for (let i = 0; i < length; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
   },
 };

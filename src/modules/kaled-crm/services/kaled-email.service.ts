@@ -15,7 +15,7 @@ export class KaledEmailService {
   /**
    * Crear una nueva plantilla de email
    */
-  static async createTemplate(data: CreateTemplateData) {
+  static async createTemplate(tenantId: string, data: CreateTemplateData) {
     return prisma.kaledEmailTemplate.create({
       data: {
         name: data.name,
@@ -26,6 +26,7 @@ export class KaledEmailService {
         campaignId: data.campaignId,
         isLibraryTemplate: (data as any).isLibraryTemplate || false,
         phase: (data as any).phase || null,
+        tenantId,
       },
       include: {
         campaign: true,
@@ -36,9 +37,9 @@ export class KaledEmailService {
   /**
    * Obtener todas las plantillas
    */
-  static async getAllTemplates() {
+  static async getAllTemplates(tenantId: string) {
     return prisma.kaledEmailTemplate.findMany({
-      where: { isActive: true },
+      where: { isActive: true, tenantId },
       include: {
         campaign: {
           select: {
@@ -147,7 +148,7 @@ export class KaledEmailService {
   /**
    * Enviar email automático (sin aprobación)
    */
-  static async sendAutomaticEmail(leadId: string, templateId: string) {
+  static async sendAutomaticEmail(leadId: string, templateId: string, tenantId?: string) {
     const lead = await prisma.kaledLead.findUnique({
       where: { id: leadId },
     });
@@ -173,6 +174,7 @@ export class KaledEmailService {
         kaledLeadId: leadId,
         status: 'PENDING',
         requiresApproval: false,
+        tenantId: tenantId || lead.tenantId || null,
       },
     });
 
@@ -212,7 +214,7 @@ export class KaledEmailService {
   /**
    * Crear email semi-automático (requiere aprobación)
    */
-  static async createSemiAutomaticEmail(leadId: string, templateId: string) {
+  static async createSemiAutomaticEmail(leadId: string, templateId: string, tenantId?: string) {
     const lead = await prisma.kaledLead.findUnique({
       where: { id: leadId },
     });
@@ -241,6 +243,7 @@ export class KaledEmailService {
         metadata: {
           htmlContent: rendered.htmlContent,
         },
+        tenantId: tenantId || lead.tenantId || null,
       },
     });
 
@@ -315,7 +318,8 @@ export class KaledEmailService {
   static async sendManualEmail(
     leadId: string,
     subject: string,
-    htmlContent: string
+    htmlContent: string,
+    tenantId?: string
   ) {
     const lead = await prisma.kaledLead.findUnique({
       where: { id: leadId },
@@ -333,6 +337,7 @@ export class KaledEmailService {
         kaledLeadId: leadId,
         status: 'PENDING',
         requiresApproval: false,
+        tenantId: tenantId || lead.tenantId || null,
       },
     });
 
@@ -376,11 +381,12 @@ export class KaledEmailService {
   /**
    * Obtener emails pendientes de aprobación
    */
-  static async getPendingApprovals() {
+  static async getPendingApprovals(tenantId: string) {
     return prisma.kaledEmailLog.findMany({
       where: {
         requiresApproval: true,
         status: 'PENDING',
+        tenantId,
       },
       include: {
         template: true,
@@ -411,12 +417,12 @@ export class KaledEmailService {
   /**
    * Obtener estadísticas de emails
    */
-  static async getEmailStats() {
+  static async getEmailStats(tenantId: string) {
     const [total, sent, failed, pending] = await Promise.all([
-      prisma.kaledEmailLog.count(),
-      prisma.kaledEmailLog.count({ where: { status: 'SENT' } }),
-      prisma.kaledEmailLog.count({ where: { status: 'FAILED' } }),
-      prisma.kaledEmailLog.count({ where: { status: 'PENDING' } }),
+      prisma.kaledEmailLog.count({ where: { tenantId } }),
+      prisma.kaledEmailLog.count({ where: { status: 'SENT', tenantId } }),
+      prisma.kaledEmailLog.count({ where: { status: 'FAILED', tenantId } }),
+      prisma.kaledEmailLog.count({ where: { status: 'PENDING', tenantId } }),
     ]);
 
     return {

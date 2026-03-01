@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 import CampaignsClient from './CampaignsClient';
 
 export const metadata = {
@@ -7,7 +8,9 @@ export const metadata = {
 };
 
 async function getCampaigns() {
+  const tenantId = await resolveKaledTenantId();
   const campaigns = await prisma.kaledCampaign.findMany({
+    where: { tenantId },
     include: {
       _count: {
         select: {

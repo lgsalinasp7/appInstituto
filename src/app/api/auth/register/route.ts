@@ -6,6 +6,17 @@ import { checkRateLimit, RATE_LIMIT_CONFIGS, RateLimitError } from "@/lib/rate-l
 
 export async function POST(request: NextRequest) {
   try {
+    const tenantSlug = request.headers.get("x-tenant-slug");
+    if (tenantSlug === "kaledacademy") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "El registro publico esta deshabilitado para Kaled Academy. Solicita invitacion al administrador.",
+        },
+        { status: 403 }
+      );
+    }
+
     // Aplicar rate limiting
     const rateLimit = checkRateLimit(request, RATE_LIMIT_CONFIGS.REGISTER, "register");
     

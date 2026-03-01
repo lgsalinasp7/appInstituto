@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 import { EmailAnalyticsClient } from './EmailAnalyticsClient';
 
 export const metadata = {
@@ -7,10 +8,11 @@ export const metadata = {
 };
 
 export default async function EmailAnalyticsPage() {
-  // Obtener todas las plantillas con sus métricas
+  const tenantId = await resolveKaledTenantId();
   const templates = await prisma.kaledEmailTemplate.findMany({
     where: {
       isActive: true,
+      tenantId,
     },
     include: {
       emailLogs: {

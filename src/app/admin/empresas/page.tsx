@@ -5,8 +5,8 @@
 
 import { Suspense } from "react";
 import { TenantsService } from "@/modules/tenants";
-import { TenantsListView } from "@/modules/tenants/components/TenantsListView";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ProductsService } from "@/modules/products";
+import { EmpresasPageClient } from "@/modules/products/components/EmpresasPageClient";
 import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ export default async function EmpresasPage({
   searchParams: Promise<{ search?: string; status?: string; plan?: string; page?: string }>;
 }) {
   const params = await searchParams;
-  const [stats, tenantsData] = await Promise.all([
+  const [stats, tenantsData, products] = await Promise.all([
     TenantsService.getStats(),
     TenantsService.getAll({
       search: params.search,
@@ -26,6 +26,7 @@ export default async function EmpresasPage({
       page: parseInt(params.page || "1"),
       limit: 6,
     }),
+    ProductsService.getAll(),
   ]);
 
   const statCards = [
@@ -42,26 +43,26 @@ export default async function EmpresasPage({
       <DashboardHeader title="Gestión de" titleHighlight="Empresas" subtitle="Administra las empresas registradas en la plataforma" />
 
       {/* Stats Grid */}
-      <div className="grid gap-6 grid-cols-2 lg:grid-cols-5 animate-fade-in-up animation-delay-100">
+      <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-5 animate-fade-in-up animation-delay-100">
         {statCards.map((stat, index) => (
           <div
             key={stat.title}
-            className="glass-card p-6 rounded-[2rem] hover:scale-[1.02] transition-all group relative overflow-hidden"
+            className="glass-card p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] hover:scale-[1.02] transition-all group relative overflow-hidden"
             style={{ animationDelay: `${index * 50}ms` }}
           >
             {/* Background Glow */}
             <div className={`absolute -right-4 -top-4 w-16 h-16 rounded-full blur-2xl opacity-10 transition-opacity group-hover:opacity-20 ${stat.color.split(' ')[0]}`} />
 
             <div className="flex flex-col gap-4 relative z-10">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+              <div className="flex items-center justify-between gap-2 min-w-0">
+                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-500 truncate">
                   {stat.title}
                 </span>
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm border shadow-sm ${stat.color} border-current/20`}>
+                <div className={`flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center text-xs sm:text-sm border shadow-sm ${stat.color} border-current/20`}>
                   {stat.icon}
                 </div>
               </div>
-              <div className="text-3xl font-bold text-white tracking-tight">
+              <div className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
                 {stat.value}
               </div>
             </div>
@@ -69,9 +70,9 @@ export default async function EmpresasPage({
         ))}
       </div>
 
-      {/* Tenants List */}
+      {/* Tabs: Empresas + Productos */}
       <Suspense fallback={<TenantsListSkeleton />}>
-        <TenantsListView
+        <EmpresasPageClient
           tenants={tenantsData.tenants}
           pagination={{
             page: tenantsData.page,
@@ -84,6 +85,7 @@ export default async function EmpresasPage({
             status: params.status || "",
             plan: params.plan || "",
           }}
+          products={products}
         />
       </Suspense>
     </div>

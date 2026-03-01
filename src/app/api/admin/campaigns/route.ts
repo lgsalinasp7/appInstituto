@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledCampaignService } from '@/modules/kaled-crm/services/kaled-campaign.service';
+import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 import { z } from 'zod';
 
 const createCampaignSchema = z.object({
@@ -22,7 +23,8 @@ export const GET = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
   async (request: NextRequest) => {
     try {
-      const campaigns = await KaledCampaignService.getAllCampaigns();
+      const tenantId = await resolveKaledTenantId(request.nextUrl.searchParams.get('tenantId'));
+      const campaigns = await KaledCampaignService.getAllCampaigns(tenantId);
 
       return NextResponse.json({
         success: true,
@@ -62,7 +64,8 @@ export const POST = withPlatformAdmin(
 
       const data = validation.data;
 
-      const campaign = await KaledCampaignService.createCampaign({
+      const tenantId = await resolveKaledTenantId(request.nextUrl.searchParams.get('tenantId'));
+      const campaign = await KaledCampaignService.createCampaign(tenantId, {
         name: data.name,
         description: data.description,
         startDate: data.startDate ? new Date(data.startDate) : undefined,

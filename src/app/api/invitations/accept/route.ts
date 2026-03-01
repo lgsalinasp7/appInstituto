@@ -96,6 +96,7 @@ export async function GET(request: Request) {
         tenantSlug: invitation.tenant?.slug,
         tenantName: invitation.tenant?.name,
         expiresAt: invitation.expiresAt,
+        academyRole: (invitation as { academyRole?: string }).academyRole ?? null,
       },
     });
   } catch (error) {
@@ -135,6 +136,7 @@ export async function POST(request: Request) {
       where: { token },
       include: {
         role: true,
+        tenant: { select: { slug: true } },
       },
     });
 
@@ -178,6 +180,11 @@ export async function POST(request: Request) {
       );
     }
 
+    const platformRole =
+      invitation.tenant?.slug === "kaledacademy" && invitation.academyRole
+        ? invitation.academyRole
+        : undefined;
+
     // Create user with hashed password using transaction
     const result = await prisma.$transaction(async (tx) => {
       // Create user
@@ -187,6 +194,7 @@ export async function POST(request: Request) {
         password,
         roleId: invitation.roleId,
         tenantId: invitation.tenantId,
+        ...(platformRole && { platformRole }),
       });
 
       // Update invitation status

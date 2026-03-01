@@ -14,13 +14,25 @@ export default function LoginPage() {
     const result = await loginAction(data);
 
     if (result.success && result.user) {
-      login(result.user); // Update Zustand Store
+      login(result.user);
       toast.success(`Bienvenido, ${result.user.name}`);
-      router.push(result.user.mustChangePassword ? "/auth/change-password" : "/dashboard");
+
+      if (result.user.mustChangePassword) {
+        router.push("/auth/change-password");
+        return;
+      }
+
+      const academyRoles = ["ACADEMY_STUDENT", "ACADEMY_TEACHER", "ACADEMY_ADMIN"];
+      const isAcademyUser =
+        result.user.tenant?.slug === "kaledacademy" &&
+        result.user.platformRole &&
+        academyRoles.includes(result.user.platformRole);
+
+      router.push(isAcademyUser ? "/academia" : "/dashboard");
     } else {
       toast.error(result.message || "Error al iniciar sesión");
     }
   }
 
-  return <LoginForm onSubmit={handleLogin} />;
+  return <LoginForm onSubmit={handleLogin} variant="split" />;
 }

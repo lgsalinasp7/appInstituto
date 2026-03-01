@@ -1,15 +1,7 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Logo } from "@/components/brand";
 import { headers } from "next/headers";
 import { InstitutionalWrapper } from "@/components/marketing/v2/InstitutionalWrapper";
+import { HeroRobot } from "@/components/marketing/v2/HeroRobot";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -20,43 +12,53 @@ export const metadata: Metadata = {
 
 function TenantWelcome() {
   return (
-    <main className="min-h-screen flex flex-col">
-      {/* Hero Section */}
-      <div className="flex-1 flex items-center justify-center bg-gradient-instituto relative overflow-hidden">
-        {/* Patrón decorativo sutil */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-20 left-20 w-64 h-64 rounded-full bg-white/20" />
-          <div className="absolute bottom-20 right-20 w-96 h-96 rounded-full bg-white/10" />
+    <main className="relative min-h-screen bg-slate-950 font-sans text-slate-200 selection:bg-cyan-500/30 overflow-x-hidden">
+      <section className="relative min-h-[90vh] flex items-center justify-center pt-32 pb-20 overflow-hidden">
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="text-center lg:text-left space-y-8">
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-cyan-400 text-xs font-bold uppercase tracking-[0.2em]">
+                La IA no es opcional. Es el estándar.
+              </span>
+
+              <div className="space-y-5">
+                <h1 className="text-5xl md:text-7xl font-black tracking-tight text-white leading-[1] font-display">
+                  KaledSoft
+                  <br />
+                  <span className="text-slate-500">Academia & Lab</span>
+                </h1>
+                <p className="text-lg md:text-2xl text-slate-400 max-w-2xl mx-auto lg:mx-0 font-medium leading-relaxed">
+                  Plataforma de formación y tecnología para crear productos SaaS con agentes de IA y ejecución real.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+                <Link
+                  href="/auth/login"
+                  className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold transition-all hover:scale-[1.02] shadow-[0_0_40px_rgba(8,145,178,0.3)] text-center"
+                >
+                  Iniciar sesión
+                </Link>
+                <Link
+                  href="/formacion"
+                  className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold border border-white/10 transition-all text-center"
+                >
+                  Ver la Academia
+                </Link>
+              </div>
+            </div>
+
+            <div className="flex justify-center items-center">
+              <HeroRobot />
+            </div>
+          </div>
         </div>
 
-        <Card className="w-full max-w-md mx-4 shadow-instituto-lg animate-fade-in-up relative z-10 border-0">
-          <CardHeader className="text-center pb-2">
-            <div className="flex justify-center mb-6">
-              <Logo size="xl" />
-            </div>
-            <CardTitle className="text-2xl font-bold text-primary">
-              Bienvenido
-            </CardTitle>
-            <CardDescription className="text-base">
-              Sistema de gestión institucional
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6 pt-4">
-            <div className="flex justify-center">
-              <Button
-                asChild
-                className="w-full max-w-xs bg-primary hover:bg-primary-light text-white"
-              >
-                <Link href="/auth/login">Iniciar Sesión</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-cyan-500/5 rounded-full blur-[160px] pointer-events-none" />
+      </section>
 
-      {/* Footer minimalista */}
-      <footer className="py-4 text-center text-sm text-white/70 bg-primary-dark">
-        © {new Date().getFullYear()} Educamos con Valores. Todos los derechos reservados.
+      <footer className="relative z-10 py-6 text-center text-sm text-slate-500 border-t border-white/5">
+        © {new Date().getFullYear()} KaledSoft Academia & Lab. Todos los derechos reservados.
       </footer>
     </main>
   );
@@ -69,6 +71,9 @@ export default async function HomePage() {
   // Si hay un slug de tenant (establecido por el proxy), mostrar la App del Tenant
   if (tenantSlug) {
     const { prisma } = await import("@/lib/prisma");
+    const { getCurrentUser } = await import("@/lib/auth");
+    const { redirect } = await import("next/navigation");
+
     const tenant = await prisma.tenant.findUnique({
       where: { slug: tenantSlug },
       select: { status: true }
@@ -80,8 +85,13 @@ export default async function HomePage() {
     }
 
     if (tenant.status === "SUSPENDIDO" || tenant.status === "CANCELADO") {
-      const { redirect } = await import("next/navigation");
       redirect("/suspended");
+    }
+
+    // Usuario autenticado: redirigir a dashboard (academy users serán redirigidos a /academia desde allí)
+    const user = await getCurrentUser();
+    if (user) {
+      redirect("/dashboard");
     }
 
     return <TenantWelcome />;

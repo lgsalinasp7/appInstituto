@@ -54,6 +54,13 @@ export const POST = withPlatformAdmin(['SUPER_ADMIN', 'ASESOR_COMERCIAL'], async
     );
   }
 
+  if (["admin", "www"].includes(body.slug)) {
+    return NextResponse.json(
+      { success: false, error: "Slug reservado por la plataforma" },
+      { status: 400 }
+    );
+  }
+
   const tenant = await TenantsService.create(body);
 
   return NextResponse.json({ success: true, data: tenant }, { status: 201 });

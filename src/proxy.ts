@@ -96,6 +96,7 @@ export default async function proxy(req: NextRequest) {
     // CONTEXTO: TENANT
     if (context === 'tenant') {
         requestHeaders.set('x-tenant-slug', subdomain);
+        const isAcademyTenant = subdomain === 'kaledacademy';
 
         // NOTA: La validación de existencia y estado del tenant se hace en:
         // 1. API routes: usando withTenantAuth() que valida el tenant
@@ -109,6 +110,11 @@ export default async function proxy(req: NextRequest) {
 
         // Assets estáticos (logos, imágenes) deben ser accesibles sin sesión para que el login muestre el logo
         const isStaticAsset = /\.(png|jpg|jpeg|gif|svg|ico|webp)(\?|$)/i.test(pathname);
+
+        // Kaled Academy solo permite acceso por invitacion (sin registro publico)
+        if (isAcademyTenant && (pathname === '/register' || pathname === '/auth/register')) {
+            return NextResponse.redirect(new URL('/auth/login', req.url));
+        }
 
         if (!isPublicPath && !isStaticAsset) {
             // Verificar sesión para rutas protegidas del tenant

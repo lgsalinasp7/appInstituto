@@ -37,19 +37,22 @@ const INTEREST_LEVELS = {
 
 /**
  * Activa secuencias automáticas cuando un lead cambia de estado
- * @param leadId ID del lead
- * @param newStage Nuevo estado del lead (applied, attended, no_show, etc.)
  */
-export async function triggerSequenceByStage(leadId: string, newStage: string) {
+export async function triggerSequenceByStage(leadId: string, newStage: string, tenantId?: string) {
   try {
     console.log(`🔄 Triggering sequences for lead ${leadId} with stage: ${newStage}`);
 
+    const where: any = {
+      triggerType: 'STAGE_BASED' as KaledTriggerType,
+      isActive: true,
+    };
+    if (tenantId) {
+      where.tenantId = tenantId;
+    }
+
     // Buscar secuencias activas para este stage
     const sequences = await prisma.kaledEmailSequence.findMany({
-      where: {
-        triggerType: 'STAGE_BASED' as KaledTriggerType,
-        isActive: true,
-      },
+      where,
       include: {
         steps: {
           include: {
@@ -77,7 +80,7 @@ export async function triggerSequenceByStage(leadId: string, newStage: string) {
 
     // Ejecutar cada secuencia
     for (const sequence of matchingSequences) {
-      await executeSequence(leadId, sequence.id);
+      await executeSequence(leadId, sequence.id, tenantId);
     }
 
     return { triggered: matchingSequences.length };
@@ -89,10 +92,8 @@ export async function triggerSequenceByStage(leadId: string, newStage: string) {
 
 /**
  * Ejecuta una secuencia de emails para un lead
- * @param leadId ID del lead
- * @param sequenceId ID de la secuencia
  */
-async function executeSequence(leadId: string, sequenceId: string) {
+async function executeSequence(leadId: string, sequenceId: string, tenantId?: string) {
   try {
     const sequence = await prisma.kaledEmailSequence.findUnique({
       where: { id: sequenceId },
@@ -152,6 +153,7 @@ async function executeSequence(leadId: string, sequenceId: string) {
             scheduledFor: scheduledFor.toISOString(),
             htmlContent: renderedContent,
           },
+          tenantId: tenantId || lead.tenantId || null,
         },
       });
 

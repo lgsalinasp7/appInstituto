@@ -24,7 +24,7 @@ describe("LoginForm", () => {
   it("renderiza el formulario con campos email y contraseña", () => {
     renderLoginForm();
 
-    expect(screen.getByPlaceholderText(/tu@email\.com/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/correo@empresa\.com/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/••••••••/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /ingresar al portal/i })).toBeInTheDocument();
   });
@@ -48,7 +48,7 @@ describe("LoginForm", () => {
 
     renderLoginForm({ onSubmit });
 
-    await user.type(screen.getByPlaceholderText(/tu@email\.com/i), "test@example.com");
+    await user.type(screen.getByPlaceholderText(/correo@empresa\.com/i), "test@example.com");
     await user.type(screen.getByPlaceholderText(/••••••••/), "password123");
     await user.click(screen.getByRole("button", { name: /ingresar al portal/i }));
 
@@ -66,7 +66,7 @@ describe("LoginForm", () => {
 
     renderLoginForm({ onSubmit });
 
-    await user.type(screen.getByPlaceholderText(/tu@email\.com/i), "invalid-email");
+    await user.type(screen.getByPlaceholderText(/correo@empresa\.com/i), "invalid-email");
     await user.type(screen.getByPlaceholderText(/••••••••/), "123");
     await user.click(screen.getByRole("button", { name: /ingresar al portal/i }));
 
@@ -83,7 +83,7 @@ describe("LoginForm", () => {
 
     renderLoginForm({ onSubmit });
 
-    fireEvent.change(screen.getByPlaceholderText(/tu@email\.com/i), {
+    fireEvent.change(screen.getByPlaceholderText(/correo@empresa\.com/i), {
       target: { value: "test@example.com" },
     });
     fireEvent.change(screen.getByPlaceholderText(/••••••••/), {

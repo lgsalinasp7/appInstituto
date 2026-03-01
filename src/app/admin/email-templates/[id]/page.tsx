@@ -5,6 +5,7 @@
 
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 import { AdminBreadcrumbs } from '@/modules/admin/components/AdminBreadcrumbs';
 import EmailTemplateForm from '../EmailTemplateForm';
 
@@ -14,8 +15,9 @@ export const metadata = {
 };
 
 async function getEmailTemplate(id: string) {
-  const template = await prisma.kaledEmailTemplate.findUnique({
-    where: { id },
+  const tenantId = await resolveKaledTenantId();
+  const template = await prisma.kaledEmailTemplate.findFirst({
+    where: { id, tenantId },
   });
 
   if (!template) {

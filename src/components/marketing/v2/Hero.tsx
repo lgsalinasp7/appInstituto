@@ -50,7 +50,7 @@ export function HeroV2() {
                             className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-6"
                         >
                             <Link
-                                href="/academia"
+                                href="/formacion"
                                 className="px-10 py-5 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold transition-all hover:scale-105 shadow-[0_0_40px_rgba(8,145,178,0.3)]"
                             >
                                 Ver la Academia

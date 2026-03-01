@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
+import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 import { subDays } from 'date-fns';
 
 export const GET = withPlatformAdmin(
@@ -9,6 +10,7 @@ export const GET = withPlatformAdmin(
   try {
     const { searchParams } = new URL(req.url);
     const days = parseInt(searchParams.get('days') || '7');
+    const tenantId = await resolveKaledTenantId(req.nextUrl.searchParams.get('tenantId'));
 
     if (days < 1 || days > 90) {
       return NextResponse.json(
@@ -20,6 +22,7 @@ export const GET = withPlatformAdmin(
     const cutoffDate = subDays(new Date(), days);
     const leads = await prisma.kaledLead.findMany({
       where: {
+        tenantId,
         deletedAt: null,
         status: { notIn: ['CONVERTIDO', 'PERDIDO'] },
         updatedAt: { lt: cutoffDate },

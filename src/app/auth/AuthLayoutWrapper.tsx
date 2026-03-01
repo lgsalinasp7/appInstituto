@@ -57,6 +57,7 @@ export default async function AuthLayoutWrapper({
     };
 
   const tenantName = tenant?.name || "Plataforma Educativa";
+  const allowRegister = !tenant || tenant.slug !== "kaledacademy";
 
   return (
     <AuthLayoutClient
@@ -65,6 +66,7 @@ export default async function AuthLayoutWrapper({
         darkMode: tenant ? branding.darkMode : true
       }}
       tenantName={tenantName}
+      allowRegister={allowRegister}
     >
       {children}
     </AuthLayoutClient>

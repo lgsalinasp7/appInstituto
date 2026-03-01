@@ -9,16 +9,16 @@ export const metadata: Metadata = {
     description: "Únete a la mejor academia de IA y SaaS en Colombia. Formación de élite en agentes de IA, Next.js y arquitectura moderna para desarrolladores y fundadores.",
     keywords: ["Academia IA Montería", "Curso inteligencia artificial Colombia", "Aprender SaaS", "Desarrollo de software Montería", "KaledSoft Academia"],
     alternates: {
-        canonical: 'https://kaledsoft.tech/academia'
+        canonical: 'https://kaledsoft.tech/formacion'
     }
 };
 
-export default function AcademiaPage() {
+export default function FormacionPage() {
     return (
         <>
             <BreadcrumbSchema items={[
                 { name: 'Inicio', url: 'https://kaledsoft.tech' },
-                { name: 'Academia', url: 'https://kaledsoft.tech/academia' }
+                { name: 'Formación', url: 'https://kaledsoft.tech/formacion' }
             ]} />
             <FAQSchema items={academiaFAQs} />
             <AcademiaContent />

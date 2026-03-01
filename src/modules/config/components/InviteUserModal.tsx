@@ -22,12 +22,20 @@ interface RoleOption {
     label: string;
 }
 
+const ACADEMY_ROLES = [
+    { value: "ACADEMY_STUDENT", label: "Estudiante" },
+    { value: "ACADEMY_TEACHER", label: "Profesor" },
+    { value: "ACADEMY_ADMIN", label: "Administrador Academia" },
+] as const;
+
 export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAdmin = false }: InviteUserModalProps) {
     const [email, setEmail] = useState("");
     const [roleId, setRoleId] = useState("");
+    const [academyRole, setAcademyRole] = useState<string>("");
     const [isLoading, setIsLoading] = useState(false);
     const [roles, setRoles] = useState<RoleOption[]>([]);
     const { user } = useAuthStore();
+    const isAcademyTenant = user?.tenant?.slug === "kaledacademy";
 
     // Fetch available roles on mount
     useEffect(() => {
@@ -36,20 +44,36 @@ export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAd
                 const response = await fetch("/api/roles");
                 const data = await response.json();
                 if (data.success) {
-                    // Filter roles based on user's role
-                    const allowedRoleNames = isSuperAdmin
-                        ? ["VENTAS", "CARTERA", "ADMINISTRADOR"]
-                        : ["VENTAS", "CARTERA"];
-
-                    const filteredRoles = data.data
-                        .filter((r: { name: string }) => allowedRoleNames.includes(r.name))
-                        .map((r: { id: string; name: string }) => ({
-                            id: r.id,
-                            name: r.name,
-                            label: r.name === "ADMINISTRADOR" ? "Administrador" : r.name.charAt(0) + r.name.slice(1).toLowerCase(),
-                        }));
-
-                    setRoles(filteredRoles);
+                    if (isAcademyTenant) {
+                        const filteredRoles = data.data
+                            .filter((r: { name: string }) => ["USUARIO", "ADMINISTRADOR"].includes(r.name.toUpperCase()))
+                            .map((r: { id: string; name: string }) => ({
+                                id: r.id,
+                                name: r.name,
+                                label: r.name === "ADMINISTRADOR" ? "Administrador" : "Usuario",
+                            }));
+                        if (filteredRoles.length === 0 && data.data.length > 0) {
+                            setRoles(data.data.map((r: { id: string; name: string }) => ({
+                                id: r.id,
+                                name: r.name,
+                                label: r.name,
+                            })));
+                        } else {
+                            setRoles(filteredRoles);
+                        }
+                    } else {
+                        const allowedRoleNames = isSuperAdmin
+                            ? ["VENTAS", "CARTERA", "ADMINISTRADOR"]
+                            : ["VENTAS", "CARTERA"];
+                        const filteredRoles = data.data
+                            .filter((r: { name: string }) => allowedRoleNames.includes(r.name))
+                            .map((r: { id: string; name: string }) => ({
+                                id: r.id,
+                                name: r.name,
+                                label: r.name === "ADMINISTRADOR" ? "Administrador" : r.name.charAt(0) + r.name.slice(1).toLowerCase(),
+                            }));
+                        setRoles(filteredRoles);
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching roles:", error);
@@ -59,13 +83,17 @@ export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAd
         if (open) {
             fetchRoles();
         }
-    }, [open, isSuperAdmin]);
+    }, [open, isSuperAdmin, isAcademyTenant]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!email || !roleId) {
-            toast.error("Por favor completa todos los campos");
+        if (!email) {
+            toast.error("Por favor ingresa el correo electrónico");
+            return;
+        }
+        if (isAcademyTenant ? !academyRole : !roleId) {
+            toast.error("Por favor selecciona un rol");
             return;
         }
 
@@ -81,17 +109,32 @@ export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAd
             return;
         }
 
+        let effectiveRoleId = roleId;
+        if (isAcademyTenant) {
+            const adminRole = roles.find((r) => r.name.toUpperCase() === "ADMINISTRADOR");
+            const userRole = roles.find((r) => r.name.toUpperCase() === "USUARIO");
+            effectiveRoleId =
+                academyRole === "ACADEMY_ADMIN" && adminRole
+                    ? adminRole.id
+                    : (userRole || adminRole || roles[0])?.id ?? roleId;
+        }
+
         setIsLoading(true);
 
         try {
+            const body: Record<string, unknown> = {
+                email,
+                roleId: effectiveRoleId,
+                inviterId: user.id,
+            };
+            if (isAcademyTenant && academyRole) {
+                body.academyRole = academyRole;
+            }
+
             const response = await fetch("/api/invitations", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    email,
-                    roleId,
-                    inviterId: user.id,
-                }),
+                body: JSON.stringify(body),
             });
 
             const data = await response.json();
@@ -110,6 +153,7 @@ export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAd
             toast.success(`Invitación enviada a ${email}`);
             setEmail("");
             setRoleId("");
+            setAcademyRole("");
             onOpenChange(false);
             onInviteSuccess?.();
         } catch (error) {
@@ -153,24 +197,45 @@ export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAd
                         />
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="role" className="text-slate-300">Rol del Usuario</Label>
-                        <select
-                            id="role"
-                            value={roleId}
-                            onChange={(e) => setRoleId(e.target.value)}
-                            disabled={isLoading || roles.length === 0}
-                            className="flex h-10 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/40 disabled:cursor-not-allowed disabled:opacity-50"
-                            required
-                        >
-                            <option value="">Selecciona un rol</option>
-                            {roles.map((r) => (
-                                <option key={r.id} value={r.id}>
-                                    {r.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                    {isAcademyTenant ? (
+                        <div className="space-y-2">
+                            <Label htmlFor="academyRole" className="text-slate-300">Rol en Academia</Label>
+                            <select
+                                id="academyRole"
+                                value={academyRole}
+                                onChange={(e) => setAcademyRole(e.target.value)}
+                                disabled={isLoading}
+                                className="flex h-10 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/40 disabled:cursor-not-allowed disabled:opacity-50"
+                                required
+                            >
+                                <option value="">Selecciona un rol</option>
+                                {ACADEMY_ROLES.map((r) => (
+                                    <option key={r.value} value={r.value}>
+                                        {r.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            <Label htmlFor="role" className="text-slate-300">Rol del Usuario</Label>
+                            <select
+                                id="role"
+                                value={roleId}
+                                onChange={(e) => setRoleId(e.target.value)}
+                                disabled={isLoading || roles.length === 0}
+                                className="flex h-10 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/40 disabled:cursor-not-allowed disabled:opacity-50"
+                                required
+                            >
+                                <option value="">Selecciona un rol</option>
+                                {roles.map((r) => (
+                                    <option key={r.id} value={r.id}>
+                                        {r.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     <div className="flex gap-3 pt-4">
                         <Button

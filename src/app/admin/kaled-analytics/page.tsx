@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { KaledAnalyticsService } from '@/modules/kaled-crm/services/kaled-analytics.service';
+import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 import KaledAnalyticsClient from './KaledAnalyticsClient';
 
 export const metadata = {
@@ -8,17 +9,18 @@ export const metadata = {
 };
 
 async function getAnalyticsData() {
+  const tenantId = await resolveKaledTenantId();
   const [overviewMetrics, conversionMetrics, leadsTrend, byStatus] =
     await Promise.all([
-      KaledAnalyticsService.getOverviewMetrics(),
-      KaledAnalyticsService.getConversionMetrics(),
-      KaledAnalyticsService.getLeadsTrend(),
-      KaledAnalyticsService.getLeadsByStatus(),
+      KaledAnalyticsService.getOverviewMetrics(tenantId),
+      KaledAnalyticsService.getConversionMetrics(tenantId),
+      KaledAnalyticsService.getLeadsTrend(tenantId),
+      KaledAnalyticsService.getLeadsByStatus(tenantId),
     ]);
 
-  // Get campaigns with lead counts
   const { prisma } = await import('@/lib/prisma');
   const campaigns = await prisma.kaledCampaign.findMany({
+    where: { tenantId },
     include: {
       _count: {
         select: {

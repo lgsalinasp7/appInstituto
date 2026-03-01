@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { prisma } from '@/lib/prisma';
+import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 import { AdminBreadcrumbs } from '@/modules/admin/components/AdminBreadcrumbs';
 import EmailTemplatesClient from './EmailTemplatesClient';
 
@@ -9,7 +10,9 @@ export const metadata = {
 };
 
 async function getEmailTemplates() {
+  const tenantId = await resolveKaledTenantId();
   const templates = await prisma.kaledEmailTemplate.findMany({
+    where: { tenantId },
     include: {
       _count: {
         select: {

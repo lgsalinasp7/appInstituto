@@ -12,12 +12,23 @@ import { triggerSequenceByStage } from '@/modules/kaled-crm/services/kaled-autom
 export class KaledLeadService {
     /**
      * Capturar lead directo de KaledSoft
+     * tenantId es OPCIONAL para proteger la campaña activa de Facebook Ads.
+     * Si falla la resolución del tenant, el lead se captura igual con tenantId=undefined.
      */
-    static async captureLead(data: LeadRegistration): Promise<{ leadId: string }> {
-        // Verificar si ya existe el lead por email
-        let lead = await prisma.kaledLead.findUnique({
-            where: { email: data.email },
-        });
+    static async captureLead(data: LeadRegistration, tenantId?: string): Promise<{ leadId: string }> {
+        // Buscar lead existente por email + tenantId (composite unique)
+        let lead: KaledLead | null = null;
+
+        if (tenantId) {
+            lead = await prisma.kaledLead.findUnique({
+                where: { email_tenantId: { email: data.email, tenantId } },
+            });
+        } else {
+            // Fallback: buscar por email sin tenantId (registros legacy)
+            lead = await prisma.kaledLead.findFirst({
+                where: { email: data.email, tenantId: null },
+            });
+        }
 
         const filteringData = {
             city: data.city,
@@ -76,12 +87,13 @@ export class KaledLeadService {
                     utmMedium: data.utmMedium,
                     utmCampaign: data.utmCampaign,
                     utmContent: data.utmContent,
+                    tenantId: tenantId || null,
                 },
             });
 
             // Dispara secuencias para el estado inicial del funnel.
             try {
-                await triggerSequenceByStage(lead.id, lead.status);
+                await triggerSequenceByStage(lead.id, lead.status, tenantId);
             } catch (sequenceError) {
                 console.error('Error triggering initial lead sequence:', sequenceError);
             }
@@ -93,9 +105,9 @@ export class KaledLeadService {
     /**
      * Obtener todos los leads para el dashboard
      */
-    static async getAllLeads() {
+    static async getAllLeads(tenantId: string) {
         return prisma.kaledLead.findMany({
-            where: { deletedAt: null },
+            where: { deletedAt: null, tenantId },
             orderBy: { createdAt: 'desc' },
         });
     }
@@ -189,7 +201,7 @@ export class KaledLeadService {
             );
 
             try {
-                await triggerSequenceByStage(id, data.status);
+                await triggerSequenceByStage(id, data.status, currentLead.tenantId || undefined);
             } catch (sequenceError) {
                 console.error('Error triggering sequence on status change:', sequenceError);
             }
@@ -296,7 +308,7 @@ export class KaledLeadService {
     /**
      * Buscar leads con filtros
      */
-    static async searchLeads(params: {
+    static async searchLeads(tenantId: string, params: {
         search?: string;
         status?: string;
         campaignId?: string;
@@ -313,7 +325,7 @@ export class KaledLeadService {
             offset = 0,
         } = params;
 
-        const where: any = {};
+        const where: any = { tenantId };
 
         if (!includeDeleted) {
             where.deletedAt = null;

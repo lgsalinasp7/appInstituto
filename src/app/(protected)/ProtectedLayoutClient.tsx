@@ -1,6 +1,8 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { DashboardSidebar } from "@/modules/dashboard/components/DashboardSidebar";
+import { AcademiaSidebar } from "@/modules/academia/components/AcademiaSidebar";
 import { MobileHeader } from "@/modules/dashboard/components/MobileHeader";
 import { MobileSidebar } from "@/modules/dashboard/components/MobileSidebar";
 import { UserProfileDropdown } from "@/modules/admin/components/UserProfileDropdown";
@@ -16,8 +18,10 @@ export default function ProtectedLayoutClient({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const branding = useBranding();
+  const isAcademia = pathname?.startsWith("/academia");
   const isDark = branding.darkMode !== false;
 
   return (
@@ -48,7 +52,7 @@ export default function ProtectedLayoutClient({
           onClose={() => setIsMobileMenuOpen(false)}
         />
 
-        <DashboardSidebar />
+        {isAcademia ? <AcademiaSidebar /> : <DashboardSidebar />}
 
         <div className="flex-1 flex flex-col min-w-0 lg:ml-72 relative z-10">
           {/* Top Bar - Estilo Amaxoft con colores del tenant */}

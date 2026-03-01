@@ -11,7 +11,7 @@ export class KaledCampaignService {
   /**
    * Crear una nueva campaña
    */
-  static async createCampaign(data: CreateCampaignData) {
+  static async createCampaign(tenantId: string, data: CreateCampaignData) {
     return prisma.kaledCampaign.create({
       data: {
         name: data.name,
@@ -20,6 +20,7 @@ export class KaledCampaignService {
         endDate: data.endDate,
         timeline: data.timeline as any,
         status: 'DRAFT',
+        tenantId,
       },
       include: {
         templates: true,
@@ -32,8 +33,9 @@ export class KaledCampaignService {
   /**
    * Obtener todas las campañas
    */
-  static async getAllCampaigns(): Promise<CampaignWithRelations[]> {
+  static async getAllCampaigns(tenantId: string): Promise<CampaignWithRelations[]> {
     return prisma.kaledCampaign.findMany({
+      where: { tenantId },
       include: {
         templates: {
           where: { isActive: true },
@@ -278,10 +280,11 @@ export class KaledCampaignService {
   /**
    * Obtener campañas activas
    */
-  static async getActiveCampaigns() {
+  static async getActiveCampaigns(tenantId: string) {
     return prisma.kaledCampaign.findMany({
       where: {
         status: 'ACTIVE',
+        tenantId,
       },
       include: {
         _count: {
@@ -319,7 +322,7 @@ export class KaledCampaignService {
   /**
    * Duplicar campaña
    */
-  static async duplicateCampaign(id: string, newName: string) {
+  static async duplicateCampaign(id: string, newName: string, tenantId: string) {
     const original = await prisma.kaledCampaign.findUnique({
       where: { id },
       include: {
@@ -343,6 +346,7 @@ export class KaledCampaignService {
         description: original.description,
         timeline: original.timeline ?? undefined,
         status: 'DRAFT',
+        tenantId,
       },
     });
 
@@ -356,6 +360,7 @@ export class KaledCampaignService {
           variables: template.variables,
           category: template.category,
           campaignId: newCampaign.id,
+          tenantId,
         },
       });
     }
@@ -368,6 +373,7 @@ export class KaledCampaignService {
           triggerType: sequence.triggerType,
           triggerConfig: sequence.triggerConfig || {},
           campaignId: newCampaign.id,
+          tenantId,
         },
       });
 
@@ -380,6 +386,7 @@ export class KaledCampaignService {
             orderIndex: step.orderIndex,
             delayHours: step.delayHours,
             conditions: step.conditions ?? undefined,
+            tenantId,
           },
         });
       }

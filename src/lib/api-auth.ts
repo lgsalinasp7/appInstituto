@@ -38,6 +38,16 @@ export type PlatformAdminHandler = (
 ) => Promise<Response>;
 
 /**
+ * Handler type for Academia LMS routes (tenant kaledacademy + platformRole ACADEMY_*)
+ */
+export type AcademyAuthHandler = (
+  request: NextRequest,
+  user: AuthenticatedUser,
+  tenantId: string,
+  context?: { params: Promise<Record<string, string>> }
+) => Promise<Response>;
+
+/**
  * Resuelve el tenant ID a partir del slug inyectado por middleware
  * El middleware setea x-tenant-slug (no x-tenant-id) porque no puede
  * hacer queries a DB (Edge Runtime). Aquí resolvemos slug → id.
@@ -176,6 +186,62 @@ export function withPermission(requiredPermissions: string[], handler: Authentic
  *   return NextResponse.json(tenants);
  * });
  */
+const ACADEMY_ROLES: PlatformRole[] = [
+  "ACADEMY_STUDENT",
+  "ACADEMY_TEACHER",
+  "ACADEMY_ADMIN",
+];
+
+/**
+ * Wrapper para rutas de Academia LMS (kaledacademy.kaledsoft.tech)
+ * Valida: sesión, tenant = kaledacademy, platformRole en allowedRoles
+ */
+export function withAcademyAuth(
+  allowedRoles: PlatformRole[],
+  handler: AcademyAuthHandler
+) {
+  return async (request: NextRequest, context?: { params: Promise<Record<string, string>> }) => {
+    try {
+      const user = await getCurrentUser();
+      if (!user) throw new UnauthorizedError("Debe iniciar sesión");
+
+      const tenantId = await getCurrentTenantId();
+      if (!tenantId) throw new UnauthorizedError("No se pudo determinar el tenant");
+
+      const { prisma } = await import("@/lib/prisma");
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { slug: true },
+      });
+      if (tenant?.slug !== "kaledacademy") {
+        throw new ForbiddenError("El módulo Academia solo está disponible en Kaled Academy");
+      }
+
+      if (user.tenantId !== tenantId) {
+        throw new ForbiddenError("No tiene acceso a este tenant");
+      }
+
+      const userWithRole = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { platformRole: true },
+      });
+      const platformRole = userWithRole?.platformRole;
+      if (!platformRole || !ACADEMY_ROLES.includes(platformRole)) {
+        throw new ForbiddenError("No tiene permisos de Academia");
+      }
+      if (!allowedRoles.includes(platformRole)) {
+        throw new ForbiddenError(
+          `Acceso denegado. Se requiere uno de: ${allowedRoles.join(", ")}`
+        );
+      }
+
+      return await handler(request, user, tenantId, context);
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+}
+
 export function withPlatformAdmin(
   allowedRoles: PlatformRole[],
   handler: PlatformAdminHandler

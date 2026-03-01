@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { KaledLeadService } from "@/modules/masterclass";
+import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 import LeadsClient from "./LeadsClient";
 
 export const metadata: Metadata = {
@@ -8,7 +9,8 @@ export const metadata: Metadata = {
 };
 
 export default async function LeadsPage() {
-  const leads = await KaledLeadService.getAllLeads();
+  const tenantId = await resolveKaledTenantId();
+  const leads = await KaledLeadService.getAllLeads(tenantId);
 
   return <LeadsClient initialLeads={leads} />;
 }

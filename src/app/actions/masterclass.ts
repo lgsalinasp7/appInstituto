@@ -2,6 +2,7 @@
 
 import { KaledLeadService, publicLeadCaptureSchema } from "@/modules/masterclass";
 import { sendTemplateEmail } from "@/lib/email";
+import { resolveKaledTenantId } from "@/lib/kaled-tenant";
 
 export async function captureMasterclassLead(formData: FormData) {
     try {
@@ -28,8 +29,16 @@ export async function captureMasterclassLead(formData: FormData) {
         // Validar con Zod
         const validated = publicLeadCaptureSchema.parse(rawData);
 
+        // Resolver tenantId de forma segura (no debe bloquear la captura)
+        let tenantId: string | undefined;
+        try {
+            tenantId = await resolveKaledTenantId();
+        } catch (e) {
+            console.error("Error resolviendo tenant para lead masterclass, capturando sin tenantId:", e);
+        }
+
         // Capturar Lead usando el servicio dedicado de KaledSoft
-        const result = await KaledLeadService.captureLead(validated);
+        const result = await KaledLeadService.captureLead(validated, tenantId);
 
         // Enviar Email de Notificación (Opcional pero recomendado)
         try {

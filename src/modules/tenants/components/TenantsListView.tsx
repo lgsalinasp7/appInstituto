@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import type { Tenant, TenantStatus } from "../types";
 import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 import { useConfirmModal } from "@/components/modals/use-confirm-modal";
+import { toast } from "sonner";
 
 interface TenantsListViewProps {
   tenants: Tenant[];
@@ -140,7 +141,7 @@ export function TenantsListView({
           />
         </div>
 
-        <div className="flex items-center gap-2 p-2 bg-slate-950/60 rounded-[2rem] w-full lg:w-auto border border-white/5">
+        <div className="flex flex-wrap items-center gap-2 p-2 bg-slate-950/60 rounded-[2rem] w-full lg:w-auto border border-white/5">
           <Select value={status || "all"} onValueChange={setStatus}>
             <SelectTrigger className="w-full lg:w-[160px] bg-transparent border-0 h-12 text-slate-300 focus:ring-0">
               <SelectValue placeholder="Todos los estados" />
@@ -171,9 +172,9 @@ export function TenantsListView({
           )}
           <Button
             onClick={() => setIsCreating(true)}
-            className="rounded-xl px-6 h-12 bg-gradient-to-r from-cyan-600 to-blue-600 hover:scale-105 transition-all font-bold shadow-lg"
+            className="rounded-xl px-4 sm:px-6 h-11 sm:h-12 text-xs sm:text-sm bg-gradient-to-r from-cyan-600 to-blue-600 hover:scale-105 transition-all font-bold shadow-lg flex-1 sm:flex-initial min-w-[100px]"
           >
-            <Plus className="w-4 h-4 mr-2" /> Empresa
+            <Plus className="w-4 h-4 mr-2 shrink-0" /> Empresa
           </Button>
         </div>
       </div>
@@ -191,7 +192,7 @@ export function TenantsListView({
           <p className="text-slate-500 max-w-xs mx-auto text-sm font-medium">No logramos encontrar ninguna empresa con los parámetros especificados.</p>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
           {tenants.map((tenant) => (
             <TenantCard
               key={tenant.id}
@@ -249,20 +250,20 @@ function TenantCard({
   const theme = statusThemes[tenant.status] || statusThemes.ACTIVO;
 
   return (
-    <div className="glass-card group rounded-[2.5rem] p-8 hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 border border-slate-800/50 hover:border-cyan-500/30 relative">
-      <div className="flex flex-col gap-6 relative z-10">
+    <div className="glass-card group rounded-2xl sm:rounded-[2.5rem] p-4 sm:p-6 lg:p-8 hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 border border-slate-800/50 hover:border-cyan-500/30 relative">
+      <div className="flex flex-col gap-4 sm:gap-6 relative z-10">
         {/* Card Header */}
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform shadow-inner">
+        <div className="flex items-start justify-between gap-3 min-w-0">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+            <div className="flex-shrink-0 w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 flex items-center justify-center text-lg sm:text-2xl group-hover:scale-110 transition-transform shadow-inner">
               🏢
             </div>
-            <div>
-              <h3 className="font-bold text-xl text-white group-hover:text-cyan-400 transition-colors tracking-tight leading-tight">
+            <div className="min-w-0 flex-1">
+              <h3 className="font-bold text-base sm:text-xl text-white group-hover:text-cyan-400 transition-colors tracking-tight leading-tight truncate">
                 {tenant.name}
               </h3>
-              <div className="flex items-center gap-1.5 mt-1 text-slate-500 transition-colors hover:text-cyan-500 group-last:text-blue-400">
-                <span className="text-xs font-medium tracking-tight whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">
+              <div className="flex items-center gap-1.5 mt-0.5 sm:mt-1 text-slate-500 transition-colors hover:text-cyan-500 group-last:text-blue-400 min-w-0">
+                <span className="text-[10px] sm:text-xs font-medium tracking-tight truncate max-w-[120px] sm:max-w-[150px]">
                   {tenantUrl}
                 </span>
                 <ExternalLink className="w-3 h-3 flex-shrink-0" />
@@ -270,7 +271,7 @@ function TenantCard({
             </div>
           </div>
           <div className={cn(
-            "text-[10px] uppercase tracking-widest font-black px-3 py-1.5 rounded-xl border transition-all",
+            "flex-shrink-0 text-[9px] sm:text-[10px] uppercase tracking-widest font-black px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl border transition-all",
             theme.color, theme.bg, theme.border, theme.glow
           )}>
             {statusLabels[tenant.status]}
@@ -278,44 +279,44 @@ function TenantCard({
         </div>
 
         {/* Tenant Info & Stats */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="p-4 rounded-3xl bg-slate-950/40 border border-slate-800 group-hover:border-slate-700 transition-all">
-            <div className="flex items-center gap-2 mb-1 text-slate-500">
-              <Users className="w-3.5 h-3.5" />
-              <span className="text-[10px] font-bold uppercase tracking-widest">Usuarios</span>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-slate-950/40 border border-slate-800 group-hover:border-slate-700 transition-all">
+            <div className="flex items-center gap-2 mb-0.5 sm:mb-1 text-slate-500">
+              <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest">Usuarios</span>
             </div>
-            <div className="text-lg font-black text-white">{tenant._count?.users || 0}</div>
+            <div className="text-base sm:text-lg font-black text-white">{tenant._count?.users || 0}</div>
           </div>
-          <div className="p-4 rounded-3xl bg-slate-950/40 border border-slate-800 group-hover:border-slate-700 transition-all">
-            <div className="flex items-center gap-2 mb-1 text-slate-500">
-              <GraduationCap className="w-3.5 h-3.5" />
-              <span className="text-[10px] font-bold uppercase tracking-widest">Alumnos</span>
+          <div className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-slate-950/40 border border-slate-800 group-hover:border-slate-700 transition-all">
+            <div className="flex items-center gap-2 mb-0.5 sm:mb-1 text-slate-500">
+              <GraduationCap className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest">Alumnos</span>
             </div>
-            <div className="text-lg font-black text-white">{tenant._count?.students || 0}</div>
+            <div className="text-base sm:text-lg font-black text-white">{tenant._count?.students || 0}</div>
           </div>
         </div>
 
         {/* Plan Info */}
-        <div className="flex items-center justify-between p-4 rounded-3xl bg-cyan-500/5 group/plan border border-cyan-500/10 hover:border-cyan-500/30 transition-all">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400">
-              <Shield className="w-4 h-4" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-cyan-500/5 group/plan border border-cyan-500/10 hover:border-cyan-500/30 transition-all">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400">
+              <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
-            <div>
-              <div className="text-[9px] font-black uppercase tracking-widest text-cyan-500/50 leading-none mb-0.5">Plan Contratado</div>
-              <div className="text-sm font-bold text-cyan-400">{tenant.plan}</div>
+            <div className="min-w-0">
+              <div className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-cyan-500/50 leading-none mb-0.5">Plan Contratado</div>
+              <div className="text-xs sm:text-sm font-bold text-cyan-400 truncate">{tenant.plan}</div>
             </div>
           </div>
-          <div className="text-[10px] font-bold text-slate-500 italic">MRR: $0.00</div>
+          <div className="text-[9px] sm:text-[10px] font-bold text-slate-500 italic">MRR: $0.00</div>
         </div>
 
         {/* Actions Button Bar */}
-        <div className="flex gap-2 pt-2">
+        <div className="flex gap-2 pt-1 sm:pt-2">
           {tenant.status === "ACTIVO" ? (
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 h-11 rounded-2xl bg-slate-900 hover:bg-red-500/10 border-slate-800 hover:border-red-500/30 text-slate-400 hover:text-red-400 font-bold text-xs"
+              className="flex-1 h-9 sm:h-11 rounded-xl sm:rounded-2xl bg-slate-900 hover:bg-red-500/10 border-slate-800 hover:border-red-500/30 text-slate-400 hover:text-red-400 font-bold text-[10px] sm:text-xs"
               onClick={onSuspend}
             >
               Suspender
@@ -324,17 +325,17 @@ function TenantCard({
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 h-11 rounded-2xl bg-slate-900 hover:bg-green-500/10 border-slate-800 hover:border-green-500/30 text-slate-400 hover:text-green-400 font-bold text-xs"
+              className="flex-1 h-9 sm:h-11 rounded-xl sm:rounded-2xl bg-slate-900 hover:bg-green-500/10 border-slate-800 hover:border-green-500/30 text-slate-400 hover:text-green-400 font-bold text-[10px] sm:text-xs"
               onClick={onActivate}
             >
               Activar
             </Button>
           ) : null}
-          <Link href={`/admin/empresas/${tenant.id}`} className="flex-1">
+          <Link href={`/admin/empresas/${tenant.id}`} className="flex-1 min-w-0">
             <Button
               variant="outline"
               size="sm"
-              className="w-full h-11 rounded-2xl bg-slate-900 border-slate-800 hover:border-cyan-500/30 text-slate-400 hover:text-cyan-400 font-bold transition-all text-xs"
+              className="w-full h-9 sm:h-11 rounded-xl sm:rounded-2xl bg-slate-900 border-slate-800 hover:border-cyan-500/30 text-slate-400 hover:text-cyan-400 font-bold transition-all text-[10px] sm:text-xs"
             >
               Gestionar
             </Button>

@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledEmailService } from '@/modules/kaled-crm/services/kaled-email.service';
+import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 import { z } from 'zod';
 
 const createTemplateSchema = z.object({
@@ -23,7 +24,8 @@ export const GET = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
   async (request: NextRequest) => {
     try {
-      const templates = await KaledEmailService.getAllTemplates();
+      const tenantId = await resolveKaledTenantId(request.nextUrl.searchParams.get('tenantId'));
+      const templates = await KaledEmailService.getAllTemplates(tenantId);
 
       return NextResponse.json({
         success: true,
@@ -61,7 +63,8 @@ export const POST = withPlatformAdmin(
         );
       }
 
-      const template = await KaledEmailService.createTemplate(validation.data);
+      const tenantId = await resolveKaledTenantId(request.nextUrl.searchParams.get('tenantId'));
+      const template = await KaledEmailService.createTemplate(tenantId, validation.data);
 
       return NextResponse.json({
         success: true,

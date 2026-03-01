@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 import CommercialEmailDashboardClient from './CommercialEmailDashboardClient';
 
 export const metadata = {
@@ -7,7 +8,9 @@ export const metadata = {
 };
 
 async function getTemplates() {
+  const tenantId = await resolveKaledTenantId();
   return prisma.kaledEmailTemplate.findMany({
+    where: { tenantId },
     include: {
       _count: {
         select: {
@@ -28,9 +31,11 @@ async function getTemplates() {
 }
 
 async function getAnalytics() {
+  const tenantId = await resolveKaledTenantId();
   const templates = await prisma.kaledEmailTemplate.findMany({
     where: {
       isActive: true,
+      tenantId,
     },
     include: {
       emailLogs: {

@@ -6,7 +6,7 @@ const baseUrl = 'https://kaledsoft.tech';
 export default function sitemap(): MetadataRoute.Sitemap {
     const staticRoutes = [
         '',
-        '/academia',
+        '/formacion',
         '/desarrollo',
         '/vision',
         '/aplicar',

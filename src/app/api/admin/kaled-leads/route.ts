@@ -6,12 +6,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledLeadService } from '@/modules/masterclass/services/kaled-lead.service';
+import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 
 export const GET = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
   async (request: NextRequest) => {
     try {
       const searchParams = request.nextUrl.searchParams;
+
+      const tenantId = await resolveKaledTenantId(searchParams.get('tenantId'));
 
       const search = searchParams.get('search') || undefined;
       const status = searchParams.get('status') || undefined;
@@ -20,7 +23,7 @@ export const GET = withPlatformAdmin(
       const limit = parseInt(searchParams.get('limit') || '50');
       const offset = parseInt(searchParams.get('offset') || '0');
 
-      const result = await KaledLeadService.searchLeads({
+      const result = await KaledLeadService.searchLeads(tenantId, {
         search,
         status,
         campaignId,

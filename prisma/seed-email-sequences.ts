@@ -29,26 +29,32 @@ async function seedEmailSequences() {
   // SECUENCIA A: Pre-Masterclass (3 emails)
   // ============================================
   try {
-    const seqA = await prisma.kaledEmailSequence.upsert({
+    const existingA = await prisma.kaledEmailSequence.findFirst({
       where: { name: 'Pre-Masterclass Nurturing' },
-      update: {
-        triggerType: 'STAGE_BASED' as KaledTriggerType,
-        triggerConfig: {
-          targetStage: 'NUEVO',
-          description: 'Se activa cuando el lead entra al funnel',
-        },
-        isActive: true,
-      },
-      create: {
-        name: 'Pre-Masterclass Nurturing',
-        triggerType: 'STAGE_BASED' as KaledTriggerType,
-        triggerConfig: {
-          targetStage: 'NUEVO',
-          description: 'Se activa cuando el lead entra al funnel',
-        },
-        isActive: true,
-      },
     });
+    const seqA = existingA
+      ? await prisma.kaledEmailSequence.update({
+          where: { id: existingA.id },
+          data: {
+            triggerType: 'STAGE_BASED' as KaledTriggerType,
+            triggerConfig: {
+              targetStage: 'NUEVO',
+              description: 'Se activa cuando el lead entra al funnel',
+            },
+            isActive: true,
+          },
+        })
+      : await prisma.kaledEmailSequence.create({
+          data: {
+            name: 'Pre-Masterclass Nurturing',
+            triggerType: 'STAGE_BASED' as KaledTriggerType,
+            triggerConfig: {
+              targetStage: 'NUEVO',
+              description: 'Se activa cuando el lead entra al funnel',
+            },
+            isActive: true,
+          },
+        });
     console.log('✅ Created/Updated: Pre-Masterclass Nurturing');
 
     // Borrar steps existentes
@@ -88,26 +94,32 @@ async function seedEmailSequences() {
   // SECUENCIA B: Event Reminders (2 emails)
   // ============================================
   try {
-    const seqB = await prisma.kaledEmailSequence.upsert({
+    const existingB = await prisma.kaledEmailSequence.findFirst({
       where: { name: 'Event Reminders' },
-      update: {
-        triggerType: 'TIME_BASED' as KaledTriggerType,
-        triggerConfig: {
-          triggerDate: 'eventDate',
-          description: 'Se activa basándose en la fecha del evento de la campaña',
-        },
-        isActive: true,
-      },
-      create: {
-        name: 'Event Reminders',
-        triggerType: 'TIME_BASED' as KaledTriggerType,
-        triggerConfig: {
-          triggerDate: 'eventDate',
-          description: 'Se activa basándose en la fecha del evento de la campaña',
-        },
-        isActive: true,
-      },
     });
+    const seqB = existingB
+      ? await prisma.kaledEmailSequence.update({
+          where: { id: existingB.id },
+          data: {
+            triggerType: 'TIME_BASED' as KaledTriggerType,
+            triggerConfig: {
+              triggerDate: 'eventDate',
+              description: 'Se activa basándose en la fecha del evento de la campaña',
+            },
+            isActive: true,
+          },
+        })
+      : await prisma.kaledEmailSequence.create({
+          data: {
+            name: 'Event Reminders',
+            triggerType: 'TIME_BASED' as KaledTriggerType,
+            triggerConfig: {
+              triggerDate: 'eventDate',
+              description: 'Se activa basándose en la fecha del evento de la campaña',
+            },
+            isActive: true,
+          },
+        });
     console.log('✅ Created/Updated: Event Reminders');
 
     await prisma.kaledEmailSequenceStep.deleteMany({
@@ -139,26 +151,32 @@ async function seedEmailSequences() {
   // SECUENCIA C: Sales Sequence - Attended (4 emails)
   // ============================================
   try {
-    const seqC = await prisma.kaledEmailSequence.upsert({
+    const existingC = await prisma.kaledEmailSequence.findFirst({
       where: { name: 'Sales Sequence - Attended' },
-      update: {
-        triggerType: 'STAGE_BASED' as KaledTriggerType,
-        triggerConfig: {
-          targetStage: 'CONTACTADO',
-          description: 'Se activa cuando el lead está contactado',
-        },
-        isActive: true,
-      },
-      create: {
-        name: 'Sales Sequence - Attended',
-        triggerType: 'STAGE_BASED' as KaledTriggerType,
-        triggerConfig: {
-          targetStage: 'CONTACTADO',
-          description: 'Se activa cuando el lead está contactado',
-        },
-        isActive: true,
-      },
     });
+    const seqC = existingC
+      ? await prisma.kaledEmailSequence.update({
+          where: { id: existingC.id },
+          data: {
+            triggerType: 'STAGE_BASED' as KaledTriggerType,
+            triggerConfig: {
+              targetStage: 'CONTACTADO',
+              description: 'Se activa cuando el lead está contactado',
+            },
+            isActive: true,
+          },
+        })
+      : await prisma.kaledEmailSequence.create({
+          data: {
+            name: 'Sales Sequence - Attended',
+            triggerType: 'STAGE_BASED' as KaledTriggerType,
+            triggerConfig: {
+              targetStage: 'CONTACTADO',
+              description: 'Se activa cuando el lead está contactado',
+            },
+            isActive: true,
+          },
+        });
     console.log('✅ Created/Updated: Sales Sequence - Attended');
 
     await prisma.kaledEmailSequenceStep.deleteMany({
@@ -202,26 +220,32 @@ async function seedEmailSequences() {
   // SECUENCIA D: No-Show Recovery (2 emails)
   // ============================================
   try {
-    const seqD = await prisma.kaledEmailSequence.upsert({
+    const existingD = await prisma.kaledEmailSequence.findFirst({
       where: { name: 'No-Show Recovery' },
-      update: {
-        triggerType: 'STAGE_BASED' as KaledTriggerType,
-        triggerConfig: {
-          targetStage: 'DEMO',
-          description: 'Se activa cuando el lead tiene demo agendada',
-        },
-        isActive: true,
-      },
-      create: {
-        name: 'No-Show Recovery',
-        triggerType: 'STAGE_BASED' as KaledTriggerType,
-        triggerConfig: {
-          targetStage: 'DEMO',
-          description: 'Se activa cuando el lead tiene demo agendada',
-        },
-        isActive: true,
-      },
     });
+    const seqD = existingD
+      ? await prisma.kaledEmailSequence.update({
+          where: { id: existingD.id },
+          data: {
+            triggerType: 'STAGE_BASED' as KaledTriggerType,
+            triggerConfig: {
+              targetStage: 'DEMO',
+              description: 'Se activa cuando el lead tiene demo agendada',
+            },
+            isActive: true,
+          },
+        })
+      : await prisma.kaledEmailSequence.create({
+          data: {
+            name: 'No-Show Recovery',
+            triggerType: 'STAGE_BASED' as KaledTriggerType,
+            triggerConfig: {
+              targetStage: 'DEMO',
+              description: 'Se activa cuando el lead tiene demo agendada',
+            },
+            isActive: true,
+          },
+        });
     console.log('✅ Created/Updated: No-Show Recovery');
 
     await prisma.kaledEmailSequenceStep.deleteMany({

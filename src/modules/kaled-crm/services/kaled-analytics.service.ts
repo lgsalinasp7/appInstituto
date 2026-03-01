@@ -10,7 +10,7 @@ export class KaledAnalyticsService {
   /**
    * Obtener métricas generales del CRM
    */
-  static async getOverviewMetrics(): Promise<OverviewMetrics> {
+  static async getOverviewMetrics(tenantId: string): Promise<OverviewMetrics> {
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -22,28 +22,31 @@ export class KaledAnalyticsService {
       lostLeads,
       emailsSentThisMonth,
     ] = await Promise.all([
-      prisma.kaledLead.count({ where: { deletedAt: null } }),
+      prisma.kaledLead.count({ where: { deletedAt: null, tenantId } }),
       prisma.kaledLead.count({
         where: {
           deletedAt: null,
+          tenantId,
           createdAt: { gte: firstDayOfMonth },
         },
       }),
       prisma.kaledLead.count({
         where: {
           deletedAt: null,
+          tenantId,
           status: { in: ['NUEVO', 'CONTACTADO', 'DEMO'] },
         },
       }),
       prisma.kaledLead.count({
-        where: { deletedAt: null, status: 'CONVERTIDO' },
+        where: { deletedAt: null, tenantId, status: 'CONVERTIDO' },
       }),
       prisma.kaledLead.count({
-        where: { deletedAt: null, status: 'PERDIDO' },
+        where: { deletedAt: null, tenantId, status: 'PERDIDO' },
       }),
       prisma.kaledEmailLog.count({
         where: {
           status: 'SENT',
+          tenantId,
           sentAt: { gte: firstDayOfMonth },
         },
       }),
@@ -55,7 +58,7 @@ export class KaledAnalyticsService {
 
     // Calcular tiempo promedio de conversión (en días)
     const convertedLeadsData = await prisma.kaledLead.findMany({
-      where: { status: 'CONVERTIDO', deletedAt: null },
+      where: { status: 'CONVERTIDO', deletedAt: null, tenantId },
       select: { createdAt: true, updatedAt: true },
     });
 
@@ -71,10 +74,17 @@ export class KaledAnalyticsService {
     }
 
     // Calcular velocidad de respuesta promedio (en horas)
+    const leadIds = await prisma.kaledLead.findMany({
+      where: { deletedAt: null, tenantId },
+      select: { id: true },
+    });
+    const leadIdList = leadIds.map((l) => l.id);
+
     const interactions = await prisma.kaledLeadInteraction.findMany({
       where: {
         type: { in: ['LLAMADA', 'CORREO', 'WHATSAPP'] },
         createdAt: { gte: firstDayOfMonth },
+        kaledLeadId: { in: leadIdList },
       },
       include: {
         kaledLead: {
@@ -112,9 +122,9 @@ export class KaledAnalyticsService {
   /**
    * Obtener métricas de conversión detalladas
    */
-  static async getConversionMetrics(): Promise<ConversionMetrics> {
+  static async getConversionMetrics(tenantId: string): Promise<ConversionMetrics> {
     const leads = await prisma.kaledLead.findMany({
-      where: { deletedAt: null },
+      where: { deletedAt: null, tenantId },
       select: {
         id: true,
         status: true,
@@ -158,6 +168,7 @@ export class KaledAnalyticsService {
 
     // Conversión por campaña
     const campaigns = await prisma.kaledCampaign.findMany({
+      where: { tenantId },
       include: {
         leads: {
           where: { deletedAt: null },
@@ -200,8 +211,17 @@ export class KaledAnalyticsService {
   /**
    * Obtener métricas de actividad
    */
-  static async getActivityMetrics(userId?: string): Promise<ActivityMetrics> {
-    const where: any = {};
+  static async getActivityMetrics(tenantId: string, userId?: string): Promise<ActivityMetrics> {
+    // Get lead IDs for this tenant
+    const tenantLeads = await prisma.kaledLead.findMany({
+      where: { tenantId },
+      select: { id: true },
+    });
+    const tenantLeadIds = tenantLeads.map((l) => l.id);
+
+    const where: any = {
+      kaledLeadId: { in: tenantLeadIds },
+    };
     if (userId) {
       where.userId = userId;
     }
@@ -278,10 +298,10 @@ export class KaledAnalyticsService {
   /**
    * Obtener leads por estado (para gráficos)
    */
-  static async getLeadsByStatus() {
+  static async getLeadsByStatus(tenantId: string) {
     const leads = await prisma.kaledLead.groupBy({
       by: ['status'],
-      where: { deletedAt: null },
+      where: { deletedAt: null, tenantId },
       _count: true,
     });
 
@@ -294,10 +314,10 @@ export class KaledAnalyticsService {
   /**
    * Obtener leads por fuente (para gráficos)
    */
-  static async getLeadsBySource() {
+  static async getLeadsBySource(tenantId: string) {
     const leads = await prisma.kaledLead.groupBy({
       by: ['source'],
-      where: { deletedAt: null },
+      where: { deletedAt: null, tenantId },
       _count: true,
     });
 
@@ -310,13 +330,14 @@ export class KaledAnalyticsService {
   /**
    * Obtener tendencia de leads (últimos 30 días)
    */
-  static async getLeadsTrend() {
+  static async getLeadsTrend(tenantId: string) {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const leads = await prisma.kaledLead.findMany({
       where: {
         deletedAt: null,
+        tenantId,
         createdAt: { gte: thirtyDaysAgo },
       },
       select: { createdAt: true },
@@ -335,7 +356,7 @@ export class KaledAnalyticsService {
       .sort((a, b) => a.date.localeCompare(b.date));
   }
 
-  static async getFunnelValidationMetrics(): Promise<FunnelValidationMetrics> {
+  static async getFunnelValidationMetrics(tenantId: string): Promise<FunnelValidationMetrics> {
     const now = new Date();
     const sevenDaysAgo = new Date(now);
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -343,6 +364,7 @@ export class KaledAnalyticsService {
     const leadsThisWeekData = await prisma.kaledLead.findMany({
       where: {
         deletedAt: null,
+        tenantId,
         createdAt: { gte: sevenDaysAgo },
       },
       select: {

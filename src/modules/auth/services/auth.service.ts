@@ -61,7 +61,13 @@ export class AuthService {
   /**
    * Create a new user with hashed password
    */
-  static async createUser(data: RegisterData & { roleId: string; tenantId?: string }) {
+  static async createUser(
+    data: RegisterData & {
+      roleId: string;
+      tenantId?: string;
+      platformRole?: string;
+    }
+  ) {
     const hashedPassword = await this.hashPassword(data.password);
     const tenantId = data.tenantId || await getCurrentTenantId();
 
@@ -76,6 +82,7 @@ export class AuthService {
         name: data.name,
         roleId: data.roleId,
         tenantId,
+        ...(data.platformRole && { platformRole: data.platformRole as "ACADEMY_STUDENT" | "ACADEMY_TEACHER" | "ACADEMY_ADMIN" }),
       },
       include: {
         role: true,

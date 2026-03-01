@@ -7,6 +7,7 @@ export interface CreateInteractionData {
   metadata?: Record<string, any>;
   kaledLeadId: string;
   userId?: string;
+  tenantId?: string;
 }
 
 export class KaledInteractionService {
