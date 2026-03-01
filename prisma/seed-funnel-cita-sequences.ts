@@ -2,11 +2,13 @@ import { PrismaClient, KaledTriggerType } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+const PLATFORM_TENANT_ID = null; // Secuencias de plataforma (tenantId null)
+
 async function seedFunnelCitaSequences() {
   console.log("Seeding funnel cita sequences...");
 
   const templates = await prisma.kaledEmailTemplate.findMany({
-    where: { isLibraryTemplate: true },
+    where: { isLibraryTemplate: true, tenantId: PLATFORM_TENANT_ID },
     select: { id: true, name: true },
   });
 
@@ -17,7 +19,7 @@ async function seedFunnelCitaSequences() {
   };
 
   const existing = await prisma.kaledEmailSequence.findFirst({
-    where: { name: "Funnel Citas - CONTACTADO" },
+    where: { name: "Funnel Citas - CONTACTADO", tenantId: PLATFORM_TENANT_ID },
   });
   const sequence = existing
     ? await prisma.kaledEmailSequence.update({
@@ -34,6 +36,7 @@ async function seedFunnelCitaSequences() {
     : await prisma.kaledEmailSequence.create({
         data: {
           name: "Funnel Citas - CONTACTADO",
+          tenantId: PLATFORM_TENANT_ID,
           triggerType: "STAGE_BASED" as KaledTriggerType,
           triggerConfig: {
             targetStage: "CONTACTADO",

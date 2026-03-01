@@ -9,12 +9,14 @@ import { PrismaClient, KaledTriggerType } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+const PLATFORM_TENANT_ID = null; // Secuencias de plataforma (tenantId null)
+
 async function seedEmailSequences() {
   console.log('🌱 Seeding email sequences...\n');
 
-  // Obtener todas las plantillas para mapear sus IDs
+  // Obtener plantillas de plataforma para mapear sus IDs
   const templates = await prisma.kaledEmailTemplate.findMany({
-    where: { isLibraryTemplate: true },
+    where: { isLibraryTemplate: true, tenantId: PLATFORM_TENANT_ID },
   });
 
   const getTemplateId = (name: string) => {
@@ -47,6 +49,7 @@ async function seedEmailSequences() {
       : await prisma.kaledEmailSequence.create({
           data: {
             name: 'Pre-Masterclass Nurturing',
+            tenantId: PLATFORM_TENANT_ID,
             triggerType: 'STAGE_BASED' as KaledTriggerType,
             triggerConfig: {
               targetStage: 'NUEVO',
@@ -95,7 +98,7 @@ async function seedEmailSequences() {
   // ============================================
   try {
     const existingB = await prisma.kaledEmailSequence.findFirst({
-      where: { name: 'Event Reminders' },
+      where: { name: 'Event Reminders', tenantId: PLATFORM_TENANT_ID },
     });
     const seqB = existingB
       ? await prisma.kaledEmailSequence.update({
@@ -112,6 +115,7 @@ async function seedEmailSequences() {
       : await prisma.kaledEmailSequence.create({
           data: {
             name: 'Event Reminders',
+            tenantId: PLATFORM_TENANT_ID,
             triggerType: 'TIME_BASED' as KaledTriggerType,
             triggerConfig: {
               triggerDate: 'eventDate',
@@ -152,7 +156,7 @@ async function seedEmailSequences() {
   // ============================================
   try {
     const existingC = await prisma.kaledEmailSequence.findFirst({
-      where: { name: 'Sales Sequence - Attended' },
+      where: { name: 'Sales Sequence - Attended', tenantId: PLATFORM_TENANT_ID },
     });
     const seqC = existingC
       ? await prisma.kaledEmailSequence.update({
@@ -169,6 +173,7 @@ async function seedEmailSequences() {
       : await prisma.kaledEmailSequence.create({
           data: {
             name: 'Sales Sequence - Attended',
+            tenantId: PLATFORM_TENANT_ID,
             triggerType: 'STAGE_BASED' as KaledTriggerType,
             triggerConfig: {
               targetStage: 'CONTACTADO',
@@ -221,7 +226,7 @@ async function seedEmailSequences() {
   // ============================================
   try {
     const existingD = await prisma.kaledEmailSequence.findFirst({
-      where: { name: 'No-Show Recovery' },
+      where: { name: 'No-Show Recovery', tenantId: PLATFORM_TENANT_ID },
     });
     const seqD = existingD
       ? await prisma.kaledEmailSequence.update({
@@ -238,6 +243,7 @@ async function seedEmailSequences() {
       : await prisma.kaledEmailSequence.create({
           data: {
             name: 'No-Show Recovery',
+            tenantId: PLATFORM_TENANT_ID,
             triggerType: 'STAGE_BASED' as KaledTriggerType,
             triggerConfig: {
               targetStage: 'DEMO',
