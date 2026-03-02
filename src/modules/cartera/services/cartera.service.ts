@@ -158,10 +158,11 @@ export class CarteraService {
       status: "EN_COMPROMISO",
       rescheduledDate: newDate,
       comments,
-    });
+    }, tenantId);
   }
 
-  static async getAlerts(advisorId?: string): Promise<CarteraAlert[]> {
+  static async getAlerts(tenantId: string, advisorId?: string): Promise<CarteraAlert[]> {
+    assertTenantContext(tenantId);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
