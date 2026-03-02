@@ -3,7 +3,7 @@ import { PaymentService } from "@/modules/payments";
 import { withTenantAuth } from "@/lib/api-auth";
 
 export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) => {
-  const result = await PaymentService.getTodayPayments();
+  const result = await PaymentService.getTodayPayments(tenantId);
 
   return NextResponse.json({
     success: true,

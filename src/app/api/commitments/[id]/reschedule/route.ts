@@ -32,7 +32,8 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
   const commitment = await CarteraService.reschedule(
     id,
     validationResult.data.newDate,
-    validationResult.data.comments
+    tenantId,
+    validationResult.data.comments,
   );
 
   return NextResponse.json({

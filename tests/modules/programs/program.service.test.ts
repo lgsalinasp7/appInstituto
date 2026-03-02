@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ProgramService } from "@/modules/programs/services/program.service";
 
-vi.mock("@/lib/tenant", () => ({
-  getCurrentTenantId: vi.fn().mockResolvedValue("tenant-1"),
+vi.mock("@/lib/tenant-guard", () => ({
+  assertTenantContext: vi.fn((id: string | null | undefined) => {
+    if (!id) throw new Error("Contexto de tenant requerido. El tenantId no puede ser null o undefined.");
+  }),
 }));
 
 const mockProgram = {
@@ -33,30 +35,24 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 import prisma from "@/lib/prisma";
-import { getCurrentTenantId } from "@/lib/tenant";
 
 describe("ProgramService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getCurrentTenantId).mockResolvedValue("tenant-1");
     vi.mocked(prisma.program.findMany).mockResolvedValue([mockProgram]);
     vi.mocked(prisma.program.count).mockResolvedValue(1);
     vi.mocked(prisma.program.findFirst).mockResolvedValue(mockProgram);
   });
 
   describe("getPrograms", () => {
-    it("retorna lista vacía cuando no hay tenantId", async () => {
-      vi.mocked(getCurrentTenantId).mockResolvedValue(null);
-
-      const result = await ProgramService.getPrograms();
-
-      expect(result.programs).toEqual([]);
-      expect(result.total).toBe(0);
-      expect(prisma.program.findMany).not.toHaveBeenCalled();
+    it("lanza error cuando tenantId es inválido", async () => {
+      await expect(
+        ProgramService.getPrograms(false, "" as any)
+      ).rejects.toThrow(/Contexto de tenant requerido/);
     });
 
     it("retorna programas activos por defecto", async () => {
-      const result = await ProgramService.getPrograms();
+      const result = await ProgramService.getPrograms(false, "tenant-1");
 
       expect(result.programs).toHaveLength(1);
       expect(result.programs[0].name).toBe("Programa A");
@@ -68,7 +64,7 @@ describe("ProgramService", () => {
     });
 
     it("incluye inactivos cuando includeInactive es true", async () => {
-      await ProgramService.getPrograms(true);
+      await ProgramService.getPrograms(true, "tenant-1");
 
       expect(prisma.program.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -82,7 +78,7 @@ describe("ProgramService", () => {
     it("retorna programa por id", async () => {
       vi.mocked(prisma.program.findFirst).mockResolvedValue(mockProgram);
 
-      const result = await ProgramService.getProgramById("p1");
+      const result = await ProgramService.getProgramById("p1", "tenant-1");
 
       expect(result).not.toBeNull();
       expect(result?.name).toBe("Programa A");
@@ -91,7 +87,7 @@ describe("ProgramService", () => {
     it("retorna null para id inexistente", async () => {
       vi.mocked(prisma.program.findFirst).mockResolvedValue(null);
 
-      const result = await ProgramService.getProgramById("no-existe");
+      const result = await ProgramService.getProgramById("no-existe", "tenant-1");
 
       expect(result).toBeNull();
     });

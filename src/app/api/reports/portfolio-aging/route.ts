@@ -3,7 +3,7 @@ import { ReportsService } from "@/modules/reports";
 import { withTenantAuth } from "@/lib/api-auth";
 
 export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) => {
-  const aging = await ReportsService.getPortfolioAging();
+  const aging = await ReportsService.getPortfolioAging(tenantId);
 
   return NextResponse.json({
     success: true,

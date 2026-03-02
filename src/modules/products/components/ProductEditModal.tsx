@@ -62,19 +62,19 @@ export function ProductEditModal({ product, onClose, onSuccess }: ProductEditMod
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="glass-card rounded-[2rem] w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/60 backdrop-blur-sm">
+      <div className="glass-card rounded-[2rem] w-full max-w-lg flex flex-col max-h-[min(90vh,calc(100vh-2rem))] overflow-hidden my-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/5">
-          <h2 className="text-lg font-semibold text-white">Editar {product.name}</h2>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-white/5 text-slate-400">
+        <div className="flex-shrink-0 flex items-center justify-between p-4 sm:p-6 border-b border-white/5">
+          <h2 className="text-base sm:text-lg font-semibold text-white truncate pr-2">Editar {product.name}</h2>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-white/5 text-slate-400 flex-shrink-0" type="button" aria-label="Cerrar">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        {/* Form - scrollable area */}
+        <form onSubmit={handleSubmit} className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-slate-400 mb-1.5">Nombre</label>
               <input
@@ -107,7 +107,7 @@ export function ProductEditModal({ product, onClose, onSuccess }: ProductEditMod
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-slate-400 mb-1.5">Icono</label>
               <select
@@ -136,61 +136,64 @@ export function ProductEditModal({ product, onClose, onSuccess }: ProductEditMod
           </div>
 
           {/* Colors */}
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm text-slate-400 mb-1.5">Color Primario</label>
-              <div className="flex items-center gap-2">
+          <div>
+            <p className="text-sm text-slate-400 mb-3">Colores del producto</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
                 <input
                   type="color"
                   value={form.primaryColor}
                   onChange={(e) => updateField('primaryColor', e.target.value)}
-                  className="w-10 h-10 rounded-lg cursor-pointer border-0"
+                  className="w-12 h-12 sm:w-10 sm:h-10 shrink-0 rounded-lg cursor-pointer border border-white/20 p-0.5"
                 />
-                <input
-                  type="text"
-                  value={form.primaryColor}
-                  onChange={(e) => updateField('primaryColor', e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-blue-500/50"
-                />
+                <div className="min-w-0 flex-1">
+                  <label className="block text-xs text-slate-500 mb-0.5">Primario</label>
+                  <input
+                    type="text"
+                    value={form.primaryColor}
+                    onChange={(e) => updateField('primaryColor', e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-900/50 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-blue-500/50"
+                  />
+                </div>
               </div>
-            </div>
-            <div>
-              <label className="block text-sm text-slate-400 mb-1.5">Secundario</label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
                 <input
                   type="color"
                   value={form.secondaryColor}
                   onChange={(e) => updateField('secondaryColor', e.target.value)}
-                  className="w-10 h-10 rounded-lg cursor-pointer border-0"
+                  className="w-12 h-12 sm:w-10 sm:h-10 shrink-0 rounded-lg cursor-pointer border border-white/20 p-0.5"
                 />
-                <input
-                  type="text"
-                  value={form.secondaryColor}
-                  onChange={(e) => updateField('secondaryColor', e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-blue-500/50"
-                />
+                <div className="min-w-0 flex-1">
+                  <label className="block text-xs text-slate-500 mb-0.5">Secundario</label>
+                  <input
+                    type="text"
+                    value={form.secondaryColor}
+                    onChange={(e) => updateField('secondaryColor', e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-900/50 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-blue-500/50"
+                  />
+                </div>
               </div>
-            </div>
-            <div>
-              <label className="block text-sm text-slate-400 mb-1.5">Acento</label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
                 <input
                   type="color"
                   value={form.accentColor}
                   onChange={(e) => updateField('accentColor', e.target.value)}
-                  className="w-10 h-10 rounded-lg cursor-pointer border-0"
+                  className="w-12 h-12 sm:w-10 sm:h-10 shrink-0 rounded-lg cursor-pointer border border-white/20 p-0.5"
                 />
-                <input
-                  type="text"
-                  value={form.accentColor}
-                  onChange={(e) => updateField('accentColor', e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-blue-500/50"
-                />
+                <div className="min-w-0 flex-1">
+                  <label className="block text-xs text-slate-500 mb-0.5">Acento</label>
+                  <input
+                    type="text"
+                    value={form.accentColor}
+                    onChange={(e) => updateField('accentColor', e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-900/50 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-blue-500/50"
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-slate-400 mb-1.5">Dominio</label>
               <input
@@ -213,7 +216,7 @@ export function ProductEditModal({ product, onClose, onSuccess }: ProductEditMod
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-slate-400 mb-1.5">Admin Email</label>
               <input
@@ -244,7 +247,7 @@ export function ProductEditModal({ product, onClose, onSuccess }: ProductEditMod
             />
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6">
             <label className="flex items-center gap-2 text-sm text-slate-400">
               <input
                 type="checkbox"

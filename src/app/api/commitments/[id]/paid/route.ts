@@ -9,7 +9,7 @@ interface Params {
 export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, tenantId, context?: { params: Promise<Record<string, string>> }) => {
   const { id } = await context!.params;
 
-  const commitment = await CarteraService.markAsPaid(id);
+  const commitment = await CarteraService.markAsPaid(id, tenantId);
 
   return NextResponse.json({
     success: true,

@@ -3,6 +3,7 @@ import { PaymentMethod, PaymentType } from "@prisma/client";
 export type { PaymentMethod };
 
 export interface PaymentFilters {
+  tenantId: string;
   studentId?: string;
   advisorId?: string;
   search?: string;
@@ -11,7 +12,6 @@ export interface PaymentFilters {
   endDate?: Date;
   page?: number;
   limit?: number;
-  tenantId?: string;
 }
 
 export interface CreatePaymentData {

@@ -17,6 +17,7 @@ export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) =
   const endDate = endDateParam ? new Date(endDateParam) : undefined;
 
   const data = await CommitmentService.getCommitments({
+    tenantId,
     status,
     studentId,
     startDate,

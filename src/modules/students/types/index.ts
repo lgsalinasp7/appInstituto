@@ -3,6 +3,7 @@ import { StudentStatus, PaymentFrequency, PaymentMethod } from "@prisma/client";
 export type { StudentStatus }; // Re-export if needed or just use it
 
 export interface StudentFilters {
+  tenantId: string;
   search?: string;
   status?: StudentStatus;
   programId?: string;

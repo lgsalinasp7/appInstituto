@@ -19,7 +19,7 @@ export class AiToolsService {
    * Obtiene estadísticas de estudiantes y recaudos
    */
   static async getStudentStats(input: GetStudentStatsInput, tenantId: string) {
-    const stats = await ReportsService.getDashboardStats();
+    const stats = await ReportsService.getDashboardStats(tenantId);
 
     const formatCurrency = (amount: number) =>
       new Intl.NumberFormat("es-CO", {
@@ -61,7 +61,7 @@ export class AiToolsService {
   static async getProgramInfo(input: GetProgramInfoInput, tenantId: string) {
     if (input.programId) {
       // Obtener programa específico
-      const program = await ProgramService.getProgramById(input.programId);
+      const program = await ProgramService.getProgramById(input.programId, tenantId);
       if (!program) {
         return { error: "Programa no encontrado" };
       }
@@ -85,7 +85,7 @@ export class AiToolsService {
       };
     } else {
       // Listar todos los programas
-      const programs = await ProgramService.getPrograms(true);
+      const programs = await ProgramService.getPrograms(true, tenantId);
 
       const formatCurrency = (amount: number) =>
         new Intl.NumberFormat("es-CO", {
@@ -126,7 +126,7 @@ export class AiToolsService {
       }).format(new Date(date));
 
     if (input.type === "summary") {
-      const summary = await CarteraService.getSummary();
+      const summary = await CarteraService.getSummary(tenantId);
 
       return {
         tipo: "Resumen de Cartera",
@@ -146,7 +146,7 @@ export class AiToolsService {
         },
       };
     } else if (input.type === "aging") {
-      const aging = await ReportsService.getPortfolioAging();
+      const aging = await ReportsService.getPortfolioAging(tenantId);
 
       return {
         tipo: "Reporte de Antigüedad de Cartera",
@@ -158,7 +158,7 @@ export class AiToolsService {
         })),
       };
     } else if (input.type === "alerts") {
-      const alerts = await CarteraService.getAlerts();
+      const alerts = await CarteraService.getAlerts(tenantId);
 
       return {
         tipo: "Alertas de Cartera",
@@ -186,6 +186,7 @@ export class AiToolsService {
    */
   static async searchStudents(input: SearchStudentsInput, tenantId: string) {
     const result = await StudentService.getStudents({
+      tenantId,
       search: input.query,
       page: 1,
       limit: input.limit || 10,
@@ -217,7 +218,7 @@ export class AiToolsService {
    * Obtiene reportes de rendimiento de asesores
    */
   static async getAdvisorPerformance(tenantId: string) {
-    const advisors = await ReportsService.getAdvisorReports("month");
+    const advisors = await ReportsService.getAdvisorReports(tenantId, "month");
 
     const formatCurrency = (amount: number) =>
       new Intl.NumberFormat("es-CO", {

@@ -7,7 +7,7 @@ export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) =
   const period = (searchParams.get("period") as "week" | "month") || "month";
   const advisorId = searchParams.get("advisorId") || undefined;
 
-  const chartData = await ReportsService.getRevenueChartData(period, advisorId);
+  const chartData = await ReportsService.getRevenueChartData(tenantId, period, advisorId);
 
   return NextResponse.json({
     success: true,

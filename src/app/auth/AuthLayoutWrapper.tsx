@@ -66,6 +66,7 @@ export default async function AuthLayoutWrapper({
         darkMode: tenant ? branding.darkMode : true
       }}
       tenantName={tenantName}
+      tenantSlug={tenant?.slug ?? null}
       allowRegister={allowRegister}
     >
       {children}

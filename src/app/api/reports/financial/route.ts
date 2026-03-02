@@ -6,6 +6,7 @@ export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) =
   const searchParams = request.nextUrl.searchParams;
 
   const filters = {
+    tenantId,
     advisorId: searchParams.get("advisorId") || undefined,
     programId: searchParams.get("programId") || undefined,
     startDate: searchParams.get("startDate")

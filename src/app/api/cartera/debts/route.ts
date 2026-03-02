@@ -6,6 +6,7 @@ import { withTenantAuth } from "@/lib/api-auth";
 export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) => {
   const searchParams = request.nextUrl.searchParams;
   const result = await PaymentService.getDebts({
+    tenantId,
     search: searchParams.get("search") || undefined,
     page: Number(searchParams.get("page")) || 1,
     limit: Number(searchParams.get("limit")) || 10,

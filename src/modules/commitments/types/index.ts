@@ -18,6 +18,7 @@ export interface UpdateCommitmentData {
 }
 
 export interface CommitmentFilters {
+    tenantId: string;
     studentId?: string;
     status?: CommitmentStatus;
     startDate?: Date;

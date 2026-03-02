@@ -21,6 +21,7 @@ export interface Tenant {
     students: number;
     payments: number;
   };
+  branding?: { logoUrl: string | null } | null;
 }
 
 export interface TenantWithDetails extends Tenant {

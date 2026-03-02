@@ -13,8 +13,8 @@ export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) =
   const programId = searchParams.get("programId") || undefined;
 
   const [stats, revenueChart] = await Promise.all([
-    ReportsService.getDashboardStats(advisorId, programId),
-    ReportsService.getRevenueChartData("month", advisorId)
+    ReportsService.getDashboardStats(tenantId, advisorId, programId),
+    ReportsService.getRevenueChartData(tenantId, "month", advisorId),
   ]);
 
   return NextResponse.json({

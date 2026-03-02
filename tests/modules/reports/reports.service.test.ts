@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ReportsService } from "@/modules/reports/services/reports.service";
 
-vi.mock("@/lib/tenant", () => ({
-  getCurrentTenantId: vi.fn().mockResolvedValue("tenant-1"),
+vi.mock("@/lib/tenant-guard", () => ({
+  assertTenantContext: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -72,6 +72,7 @@ describe("ReportsService", () => {
         .mockResolvedValueOnce([] as any);
 
       const result = await ReportsService.getFinancialReport({
+        tenantId: "tenant-1",
         startDate,
         endDate,
       });

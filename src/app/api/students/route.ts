@@ -14,6 +14,7 @@ export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) =
     : searchParams.get("advisorId") || undefined;
 
   const filters = {
+    tenantId,
     search: searchParams.get("search") || undefined,
     status: (searchParams.get("status") as StudentStatus) || undefined,
     programId: searchParams.get("programId") || undefined,
@@ -46,7 +47,7 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
     );
   }
 
-  const student = await StudentService.createStudent(validationResult.data);
+  const student = await StudentService.createStudent(validationResult.data, tenantId);
 
   return NextResponse.json({
     success: true,

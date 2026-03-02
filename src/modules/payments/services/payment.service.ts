@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { assertTenantContext } from "@/lib/tenant-guard";
 import type {
   CreatePaymentData,
   PaymentFilters,
@@ -38,10 +38,10 @@ export class PaymentService {
   }
 
   static async getPayments(filters: PaymentFilters): Promise<PaymentsListResponse> {
-    const { studentId, advisorId, method, startDate, endDate, page = 1, limit = 10 } = filters;
-
+    const { tenantId, studentId, advisorId, method, startDate, endDate, page = 1, limit = 10 } = filters;
+    assertTenantContext(tenantId);
     const where: Prisma.PaymentWhereInput = {
-      tenantId: filters.tenantId
+      tenantId,
     };
 
     if (studentId) {
@@ -125,9 +125,10 @@ export class PaymentService {
     };
   }
 
-  static async getPaymentById(id: string): Promise<PaymentWithRelations | null> {
+  static async getPaymentById(id: string, tenantId: string): Promise<PaymentWithRelations | null> {
+    assertTenantContext(tenantId);
     const payment = await prisma.payment.findFirst({
-      where: { id, tenantId: await getCurrentTenantId() as string },
+      where: { id, tenantId },
       include: {
         student: {
           select: {
@@ -412,12 +413,14 @@ export class PaymentService {
   }
 
   static async getPaymentStats(filters: {
+    tenantId: string;
     advisorId?: string;
     startDate?: Date;
-    endDate?: Date
+    endDate?: Date;
   }): Promise<PaymentStats> {
+    assertTenantContext(filters.tenantId);
     const where: Prisma.PaymentWhereInput = {
-      tenantId: await getCurrentTenantId() as string
+      tenantId: filters.tenantId,
     };
 
     if (filters.advisorId) {
@@ -468,30 +471,28 @@ export class PaymentService {
     };
   }
 
-  static async getTodayPayments() {
+  static async getTodayPayments(tenantId: string) {
+    assertTenantContext(tenantId);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-
     return this.getPayments({
+      tenantId,
       startDate: today,
       endDate: tomorrow,
       limit: 100,
     });
   }
 
-  static async getCarteraStats() {
+  static async getCarteraStats(tenantId: string) {
+    assertTenantContext(tenantId);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-
     const sevenDaysLater = new Date(today);
     sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
-
-    const tenantId = await getCurrentTenantId() as string;
 
     // Ejecutar las 4 consultas en paralelo (eliminando waterfall)
     const [totalPending, overdue, dueToday, upcoming] = await Promise.all([
@@ -528,14 +529,13 @@ export class PaymentService {
     };
   }
 
-  static async getDebts(params: { search?: string; page?: number; limit?: number }) {
-    const { search, page = 1, limit = 10 } = params;
+  static async getDebts(params: { tenantId: string; search?: string; page?: number; limit?: number }) {
+    const { tenantId, search, page = 1, limit = 10 } = params;
+    assertTenantContext(tenantId);
 
     // Find students with pending commitments
-    // If search provided, filter by student name/doc
-
     const where: Prisma.StudentWhereInput = {
-      tenantId: await getCurrentTenantId() as string,
+      tenantId,
       commitments: {
         some: {
           status: { not: "PAGADO" }
@@ -627,8 +627,8 @@ export class PaymentService {
 
     const paymentsSum = await prisma.payment.groupBy({
       by: ['studentId'],
-      where: { studentId: { in: studentIds }, tenantId: await getCurrentTenantId() as string },
-      _sum: { amount: true }
+      where: { studentId: { in: studentIds }, tenantId },
+      _sum: { amount: true },
     });
 
     const paymentsMap = new Map(paymentsSum.map(p => [p.studentId, Number(p._sum.amount)]));
@@ -648,12 +648,13 @@ export class PaymentService {
     };
   }
 
-  static async updatePayment(id: string, data: UpdatePaymentData) {
+  static async updatePayment(id: string, data: UpdatePaymentData, tenantId: string) {
+    assertTenantContext(tenantId);
     const normalizedCity = data.city?.trim();
 
     return await prisma.$transaction(async (tx) => {
-      const payment = await tx.payment.findUnique({
-        where: { id },
+      const payment = await tx.payment.findFirst({
+        where: { id, tenantId },
         select: { studentId: true },
       });
 

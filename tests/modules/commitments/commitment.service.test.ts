@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { CommitmentService } from "@/modules/commitments/services/commitment.service";
 
-vi.mock("@/lib/tenant", () => ({
-  getCurrentTenantId: vi.fn().mockResolvedValue("tenant-1"),
+vi.mock("@/lib/tenant-guard", () => ({
+  assertTenantContext: vi.fn(),
 }));
 
 const mockCommitment = {
@@ -41,6 +41,7 @@ describe("CommitmentService", () => {
   describe("getCommitments", () => {
     it("retorna lista paginada de compromisos", async () => {
       const result = await CommitmentService.getCommitments({
+        tenantId: "tenant-1",
         page: 1,
         limit: 10,
       });
@@ -59,6 +60,7 @@ describe("CommitmentService", () => {
 
     it("aplica filtro de studentId", async () => {
       await CommitmentService.getCommitments({
+        tenantId: "tenant-1",
         studentId: "s1",
       });
 
@@ -81,7 +83,7 @@ describe("CommitmentService", () => {
         status: "PAGADO",
       } as any);
 
-      const result = await CommitmentService.markAsPaid("c1");
+      const result = await CommitmentService.markAsPaid("c1", "tenant-1");
 
       expect(result.status).toBe("PAGADO");
       expect(prisma.paymentCommitment.update).toHaveBeenCalledWith({
@@ -93,7 +95,7 @@ describe("CommitmentService", () => {
     it("lanza error cuando compromiso no existe", async () => {
       vi.mocked(prisma.paymentCommitment.findFirst).mockResolvedValue(null);
 
-      await expect(CommitmentService.markAsPaid("no-existe")).rejects.toThrow(
+      await expect(CommitmentService.markAsPaid("no-existe", "tenant-1")).rejects.toThrow(
         "Compromiso no encontrado"
       );
       expect(prisma.paymentCommitment.update).not.toHaveBeenCalled();
@@ -104,7 +106,7 @@ describe("CommitmentService", () => {
     it("retorna compromisos vencidos", async () => {
       vi.mocked(prisma.paymentCommitment.findMany).mockResolvedValue([mockCommitment]);
 
-      const result = await CommitmentService.getOverdueCommitments();
+      const result = await CommitmentService.getOverdueCommitments("tenant-1");
 
       expect(result).toHaveLength(1);
       expect(prisma.paymentCommitment.findMany).toHaveBeenCalledWith(

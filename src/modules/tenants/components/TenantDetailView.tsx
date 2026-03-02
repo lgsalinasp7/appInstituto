@@ -31,7 +31,9 @@ import {
   Loader2,
   Pencil
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { getTenantLogo } from "@/lib/tenant-logo";
 import type { TenantWithDetails, TenantStatus, TenantUser } from "../types";
 import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 import { TenantEditModal } from "./TenantEditModal";
@@ -181,9 +183,30 @@ export function TenantDetailView({ tenant }: TenantDetailViewProps) {
 
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
           <div className="flex items-center gap-6">
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 flex items-center justify-center text-4xl shadow-2xl">
-              🏢
-            </div>
+            {(() => {
+              const logoConfig = getTenantLogo(tenant);
+              return (
+                <div className={cn(
+                  "w-20 h-20 rounded-3xl border border-slate-700 flex items-center justify-center overflow-hidden shadow-2xl",
+                  logoConfig?.whiteBg ? "bg-white" : "bg-gradient-to-br from-slate-800 to-slate-900"
+                )}>
+                  {logoConfig ? (
+                    <Image
+                      src={logoConfig.src}
+                      alt={logoConfig.alt}
+                      width={80}
+                      height={80}
+                      className={cn(
+                        "w-full h-full object-contain p-1",
+                        logoConfig.blendMultiply && "mix-blend-multiply"
+                      )}
+                    />
+                  ) : (
+                    <span className="text-4xl">🏢</span>
+                  )}
+                </div>
+              );
+            })()}
             <div>
               <div className="flex items-center gap-4">
                 <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tighter">
@@ -269,14 +292,16 @@ export function TenantDetailView({ tenant }: TenantDetailViewProps) {
         </div>
 
         <div className="glass-card p-6 rounded-[2rem] border border-white/5 relative group overflow-hidden">
-          <div className="flex flex-col gap-4 relative z-10">
+          <div className="flex flex-col gap-3 relative z-10">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Alumnos Totales</span>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                <GraduationCap size={18} />
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Descripción del software</span>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                <Target size={18} />
               </div>
             </div>
-            <div className="text-2xl font-black text-white tracking-tight">{tenant._count?.students || 0}</div>
+            <p className="text-sm text-slate-400 leading-relaxed">
+              KaledSoft es una plataforma de gestión educativa para instituciones colombianas. Gestiona matrículas, estudiantes, programas académicos, pagos y reportes en un solo lugar.
+            </p>
           </div>
         </div>
       </div>

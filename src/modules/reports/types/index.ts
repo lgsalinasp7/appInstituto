@@ -4,6 +4,7 @@ export interface DateRange {
 }
 
 export interface ReportFilters {
+  tenantId: string;
   advisorId?: string;
   programId?: string;
   startDate?: Date;

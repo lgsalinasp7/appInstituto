@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { assertTenantContext } from "@/lib/tenant-guard";
 import type {
   ReportFilters,
   FinancialReport,
@@ -28,9 +28,8 @@ function getPeriodStartDate(period: ReportPeriod): Date {
 
 export class ReportsService {
   static async getFinancialReport(filters: ReportFilters): Promise<FinancialReport> {
-    const { advisorId, startDate, endDate } = filters;
-    const tenantId = await getCurrentTenantId() as string;
-
+    const { tenantId, advisorId, startDate, endDate } = filters;
+    assertTenantContext(tenantId);
     const where: Prisma.PaymentWhereInput = { tenantId };
 
     if (advisorId) {
@@ -96,8 +95,8 @@ export class ReportsService {
     };
   }
 
-  static async getAdvisorReports(period: ReportPeriod = "month"): Promise<AdvisorReport[]> {
-    const tenantId = await getCurrentTenantId() as string;
+  static async getAdvisorReports(tenantId: string, period: ReportPeriod = "month"): Promise<AdvisorReport[]> {
+    assertTenantContext(tenantId);
     const periodStart = getPeriodStartDate(period);
 
     const advisors = await prisma.user.findMany({
@@ -171,9 +170,8 @@ export class ReportsService {
     }).sort((a, b) => b.totalCollected - a.totalCollected);
   }
 
-  static async getProgramReports(): Promise<ProgramReport[]> {
-    const tenantId = await getCurrentTenantId() as string;
-
+  static async getProgramReports(tenantId: string): Promise<ProgramReport[]> {
+    assertTenantContext(tenantId);
     const programs = await prisma.program.findMany({
       where: { tenantId, isActive: true },
       include: {
@@ -223,17 +221,15 @@ export class ReportsService {
     }).sort((a, b) => b.totalStudents - a.totalStudents);
   }
 
-  static async getDashboardStats(advisorId?: string, programId?: string): Promise<DashboardStats> {
+  static async getDashboardStats(tenantId: string, advisorId?: string, programId?: string): Promise<DashboardStats> {
+    assertTenantContext(tenantId);
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-
-    const tenantId = await getCurrentTenantId() as string;
 
     const studentWhere: Prisma.StudentWhereInput = {
       tenantId,
@@ -343,13 +339,14 @@ export class ReportsService {
   }
 
   static async getRevenueChartData(
+    tenantId: string,
     period: "week" | "month" = "month",
     advisorId?: string
   ): Promise<RevenueChartData[]> {
+    assertTenantContext(tenantId);
     const now = new Date();
     let startDate: Date;
     let groupFormat: string;
-
     if (period === "week") {
       startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       groupFormat = "day";
@@ -357,9 +354,6 @@ export class ReportsService {
       startDate = new Date(now.getFullYear(), now.getMonth(), 1);
       groupFormat = "week";
     }
-
-    const tenantId = await getCurrentTenantId() as string;
-
     const where: Prisma.PaymentWhereInput = {
       tenantId,
       paymentDate: { gte: startDate },
@@ -412,10 +406,9 @@ export class ReportsService {
     }
   }
 
-  static async getPortfolioAging(): Promise<PortfolioAgingReport> {
+  static async getPortfolioAging(tenantId: string): Promise<PortfolioAgingReport> {
+    assertTenantContext(tenantId);
     const now = new Date();
-    const tenantId = await getCurrentTenantId() as string;
-
     // Traer todos los compromisos pendientes vencidos
     const overdueCommitments = await prisma.paymentCommitment.findMany({
       where: {
@@ -468,8 +461,8 @@ export class ReportsService {
     };
   }
 
-  static async getCarteraUserReports(period: ReportPeriod = "month"): Promise<CarteraUserReport[]> {
-    const tenantId = await getCurrentTenantId() as string;
+  static async getCarteraUserReports(tenantId: string, period: ReportPeriod = "month"): Promise<CarteraUserReport[]> {
+    assertTenantContext(tenantId);
     const periodStart = getPeriodStartDate(period);
 
     const carteraUsers = await prisma.user.findMany({

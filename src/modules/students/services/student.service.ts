@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { assertTenantContext } from "@/lib/tenant-guard";
 import type {
   CreateStudentData,
   UpdateStudentData,
@@ -11,11 +11,10 @@ import { Prisma } from "@prisma/client";
 
 export class StudentService {
   static async getStudents(filters: StudentFilters): Promise<StudentsListResponse> {
-    const { search, status, programId, advisorId, page = 1, limit = 10 } = filters;
-
-    const tenantId = await getCurrentTenantId() as string;
+    const { tenantId, search, status, programId, advisorId, page = 1, limit = 10 } = filters;
+    assertTenantContext(tenantId);
     const where: Prisma.StudentWhereInput = {
-      tenantId
+      tenantId,
     };
 
     if (search) {
@@ -107,8 +106,8 @@ export class StudentService {
     };
   }
 
-  static async getStudentById(id: string): Promise<StudentWithRelations | null> {
-    const tenantId = await getCurrentTenantId() as string;
+  static async getStudentById(id: string, tenantId: string): Promise<StudentWithRelations | null> {
+    assertTenantContext(tenantId);
     const student = await prisma.student.findFirst({
       where: { id, tenantId },
       include: {
@@ -163,8 +162,8 @@ export class StudentService {
     };
   }
 
-  static async createStudent(data: CreateStudentData) {
-    const tenantId = await getCurrentTenantId() as string;
+  static async createStudent(data: CreateStudentData, tenantId: string) {
+    assertTenantContext(tenantId);
     const existingStudent = await prisma.student.findFirst({
       where: { documentNumber: data.documentNumber, tenantId },
     });
@@ -297,9 +296,8 @@ export class StudentService {
     };
   }
 
-  static async updateStudent(id: string, data: UpdateStudentData) {
-    const tenantId = await getCurrentTenantId() as string;
-
+  static async updateStudent(id: string, data: UpdateStudentData, tenantId: string) {
+    assertTenantContext(tenantId);
     // Verificamos que el estudiante existe y pertenece al tenant antes de actualizar
     const existing = await prisma.student.findFirst({
       where: { id, tenantId }
@@ -330,9 +328,8 @@ export class StudentService {
     return student;
   }
 
-  static async deleteStudent(id: string) {
-    const tenantId = await getCurrentTenantId() as string;
-
+  static async deleteStudent(id: string, tenantId: string) {
+    assertTenantContext(tenantId);
     await prisma.$transaction(async (tx) => {
       // 0. Verificar pertenencia al tenant
       const existing = await tx.student.findFirst({
@@ -379,8 +376,8 @@ export class StudentService {
     });
   }
 
-  static async getStudentPaymentsSummary(studentId: string) {
-    const tenantId = await getCurrentTenantId() as string;
+  static async getStudentPaymentsSummary(studentId: string, tenantId: string) {
+    assertTenantContext(tenantId);
     const student = await prisma.student.findFirst({
       where: { id: studentId, tenantId },
       include: {
@@ -426,8 +423,8 @@ export class StudentService {
     };
   }
 
-  static async getMatriculaReceipt(studentId: string) {
-    const tenantId = await getCurrentTenantId() as string;
+  static async getMatriculaReceipt(studentId: string, tenantId: string) {
+    assertTenantContext(tenantId);
     const student = await prisma.student.findFirst({
       where: { id: studentId, tenantId },
       include: {

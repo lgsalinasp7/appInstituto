@@ -55,6 +55,9 @@ export const TenantsService = {
               payments: true,
             },
           },
+          branding: {
+            select: { logoUrl: true },
+          },
         },
       }),
       prisma.tenant.count({ where }),
@@ -93,6 +96,9 @@ export const TenantsService = {
             students: true,
             payments: true,
           },
+        },
+        branding: {
+          select: { logoUrl: true },
         },
       },
     });

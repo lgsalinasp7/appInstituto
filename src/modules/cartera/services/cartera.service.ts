@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { assertTenantContext } from "@/lib/tenant-guard";
 import type {
   CreateCommitmentData,
   UpdateCommitmentData,
@@ -13,9 +13,8 @@ import { Prisma } from "@prisma/client";
 
 export class CarteraService {
   static async getCommitments(filters: CarteraFilters) {
-    const { advisorId, status, startDate, endDate, page = 1, limit = 10 } = filters;
-    const tenantId = await getCurrentTenantId() as string;
-
+    const { tenantId, advisorId, status, startDate, endDate, page = 1, limit = 10 } = filters;
+    assertTenantContext(tenantId);
     const where: Prisma.PaymentCommitmentWhereInput = { tenantId };
 
     if (status) {
@@ -84,8 +83,8 @@ export class CarteraService {
     };
   }
 
-  static async createCommitment(data: CreateCommitmentData) {
-    const tenantId = await getCurrentTenantId() as string;
+  static async createCommitment(data: CreateCommitmentData, tenantId: string) {
+    assertTenantContext(tenantId);
     const commitment = await prisma.paymentCommitment.create({
       data: {
         scheduledDate: data.scheduledDate,
@@ -113,9 +112,8 @@ export class CarteraService {
     return commitment;
   }
 
-  static async updateCommitment(id: string, data: UpdateCommitmentData) {
-    const tenantId = await getCurrentTenantId() as string;
-
+  static async updateCommitment(id: string, data: UpdateCommitmentData, tenantId: string) {
+    assertTenantContext(tenantId);
     // Verificar pertenencia al tenant
     const existing = await prisma.paymentCommitment.findFirst({
       where: { id, tenantId }
@@ -151,11 +149,11 @@ export class CarteraService {
     return commitment;
   }
 
-  static async markAsPaid(id: string) {
-    return this.updateCommitment(id, { status: "PAGADO" });
+  static async markAsPaid(id: string, tenantId: string) {
+    return this.updateCommitment(id, { status: "PAGADO" }, tenantId);
   }
 
-  static async reschedule(id: string, newDate: Date, comments?: string) {
+  static async reschedule(id: string, newDate: Date, tenantId: string, comments?: string) {
     return this.updateCommitment(id, {
       status: "EN_COMPROMISO",
       rescheduledDate: newDate,
@@ -172,8 +170,6 @@ export class CarteraService {
 
     const nextWeek = new Date(today);
     nextWeek.setDate(nextWeek.getDate() + 7);
-
-    const tenantId = await getCurrentTenantId() as string;
 
     const where: Prisma.PaymentCommitmentWhereInput = {
       tenantId,
@@ -239,17 +235,14 @@ export class CarteraService {
     });
   }
 
-  static async getSummary(advisorId?: string): Promise<CarteraSummary> {
+  static async getSummary(tenantId: string, advisorId?: string): Promise<CarteraSummary> {
+    assertTenantContext(tenantId);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-
     const nextWeek = new Date(today);
     nextWeek.setDate(nextWeek.getDate() + 7);
-
-    const tenantId = await getCurrentTenantId() as string;
 
     const baseWhere: Prisma.PaymentCommitmentWhereInput = {
       tenantId,
@@ -302,9 +295,8 @@ export class CarteraService {
     };
   }
 
-  static async getStudentsWithDebt(advisorId?: string): Promise<StudentDebt[]> {
-    const tenantId = await getCurrentTenantId() as string;
-
+  static async getStudentsWithDebt(tenantId: string, advisorId?: string): Promise<StudentDebt[]> {
+    assertTenantContext(tenantId);
     const where: Prisma.StudentWhereInput = {
       tenantId,
       status: "MATRICULADO",

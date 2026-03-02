@@ -1,18 +1,11 @@
 import prisma from "@/lib/prisma";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { assertTenantContext } from "@/lib/tenant-guard";
 import type { CreateProgramData, UpdateProgramData, Program, ProgramsListResponse } from "../types";
 
 export class ProgramService {
-  private static async resolveTenantId(providedTenantId?: string): Promise<string | null> {
-    return providedTenantId || await getCurrentTenantId();
-  }
-
-  static async getPrograms(includeInactive = false, tenantId?: string): Promise<ProgramsListResponse> {
-    const resolvedTenantId = await this.resolveTenantId(tenantId);
-    if (!resolvedTenantId) {
-      return { programs: [], total: 0 };
-    }
-    const where = includeInactive ? { tenantId: resolvedTenantId } : { isActive: true, tenantId: resolvedTenantId };
+  static async getPrograms(includeInactive: boolean, tenantId: string): Promise<ProgramsListResponse> {
+    assertTenantContext(tenantId);
+    const where = includeInactive ? { tenantId } : { isActive: true, tenantId };
 
     const [programs, total] = await Promise.all([
       prisma.program.findMany({
@@ -46,11 +39,10 @@ export class ProgramService {
     return { programs: programsList, total };
   }
 
-  static async getProgramById(id: string, tenantId?: string): Promise<Program | null> {
-    const resolvedTenantId = await this.resolveTenantId(tenantId);
-    if (!resolvedTenantId) return null;
+  static async getProgramById(id: string, tenantId: string): Promise<Program | null> {
+    assertTenantContext(tenantId);
     const program = await prisma.program.findFirst({
-      where: { id, tenantId: resolvedTenantId },
+      where: { id, tenantId },
       include: {
         _count: {
           select: {
@@ -77,13 +69,10 @@ export class ProgramService {
     };
   }
 
-  static async createProgram(data: CreateProgramData, tenantId?: string): Promise<Program> {
-    const resolvedTenantId = await this.resolveTenantId(tenantId);
-    if (!resolvedTenantId) {
-      throw new Error("No se puede crear programa: No hay institución seleccionada. Accede desde un subdominio válido.");
-    }
+  static async createProgram(data: CreateProgramData, tenantId: string): Promise<Program> {
+    assertTenantContext(tenantId);
     const existing = await prisma.program.findFirst({
-      where: { name: data.name, tenantId: resolvedTenantId },
+      where: { name: data.name, tenantId },
     });
 
     if (existing) {
@@ -98,7 +87,7 @@ export class ProgramService {
         matriculaValue: data.matriculaValue,
         modulesCount: data.modulesCount,
         isActive: data.isActive ?? true,
-        tenantId: resolvedTenantId,
+        tenantId,
       },
     });
 
@@ -115,14 +104,10 @@ export class ProgramService {
     };
   }
 
-  static async updateProgram(id: string, data: UpdateProgramData, tenantId?: string): Promise<Program> {
-    const resolvedTenantId = await this.resolveTenantId(tenantId);
-    if (!resolvedTenantId) {
-      throw new Error("No se puede actualizar programa: No hay institución seleccionada.");
-    }
-
+  static async updateProgram(id: string, data: UpdateProgramData, tenantId: string): Promise<Program> {
+    assertTenantContext(tenantId);
     const existingProgram = await prisma.program.findFirst({
-      where: { id, tenantId: resolvedTenantId }
+      where: { id, tenantId },
     });
 
     if (!existingProgram) {
@@ -133,7 +118,7 @@ export class ProgramService {
       const existing = await prisma.program.findFirst({
         where: {
           name: data.name,
-          tenantId: resolvedTenantId,
+          tenantId,
           NOT: { id },
         },
       });
@@ -164,13 +149,10 @@ export class ProgramService {
     };
   }
 
-  static async deleteProgram(id: string, tenantId?: string): Promise<void> {
-    const resolvedTenantId = await this.resolveTenantId(tenantId);
-    if (!resolvedTenantId) {
-      throw new Error("No se puede eliminar programa: No hay institución seleccionada.");
-    }
+  static async deleteProgram(id: string, tenantId: string): Promise<void> {
+    assertTenantContext(tenantId);
     const program = await prisma.program.findFirst({
-      where: { id, tenantId: resolvedTenantId },
+      where: { id, tenantId },
       include: {
         _count: {
           select: { students: true },

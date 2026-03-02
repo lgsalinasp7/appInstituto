@@ -6,7 +6,7 @@ export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) =
   const searchParams = request.nextUrl.searchParams;
   const advisorId = searchParams.get("advisorId") || undefined;
 
-  const summary = await CarteraService.getSummary(advisorId);
+  const summary = await CarteraService.getSummary(tenantId, advisorId);
 
   return NextResponse.json({
     success: true,

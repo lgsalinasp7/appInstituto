@@ -9,7 +9,7 @@ interface Params {
 
 export const GET = withTenantAuth(async (request: NextRequest, user, tenantId, context?: { params: Promise<Record<string, string>> }) => {
   const { id } = await context!.params;
-  const student = await StudentService.getStudentById(id);
+  const student = await StudentService.getStudentById(id, tenantId);
 
   if (!student) {
     return NextResponse.json(
@@ -41,7 +41,7 @@ export const PATCH = withTenantAuthAndCSRF(async (request: NextRequest, user, te
     );
   }
 
-  const student = await StudentService.updateStudent(id, validationResult.data);
+  const student = await StudentService.updateStudent(id, validationResult.data, tenantId);
 
   return NextResponse.json({
     success: true,
@@ -52,7 +52,7 @@ export const PATCH = withTenantAuthAndCSRF(async (request: NextRequest, user, te
 
 export const DELETE = withTenantAuthAndCSRF(async (request: NextRequest, user, tenantId, context?: { params: Promise<Record<string, string>> }) => {
   const { id } = await context!.params;
-  await StudentService.deleteStudent(id);
+  await StudentService.deleteStudent(id, tenantId);
 
   return NextResponse.json({
     success: true,

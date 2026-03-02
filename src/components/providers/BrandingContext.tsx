@@ -14,6 +14,7 @@ import { createContext, useContext, type ReactNode } from "react";
 
 export interface BrandingData {
   tenantName: string;
+  tenantSlug?: string | null;
   logoUrl: string | null;
   primaryColor: string;
   secondaryColor: string;

@@ -33,7 +33,7 @@ export const PUT = withTenantAuthAndCSRF(async (
     );
   }
 
-  const updatedPayment = await PaymentService.updatePayment(id, validationResult.data);
+  const updatedPayment = await PaymentService.updatePayment(id, validationResult.data, tenantId);
 
   return NextResponse.json({
     success: true,

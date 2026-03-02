@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { CarteraService } from "@/modules/cartera/services/cartera.service";
 
-vi.mock("@/lib/tenant", () => ({
-  getCurrentTenantId: vi.fn().mockResolvedValue("tenant-1"),
+vi.mock("@/lib/tenant-guard", () => ({
+  assertTenantContext: vi.fn(),
 }));
 
 const mockCommitment = {
@@ -47,6 +47,7 @@ describe("CarteraService", () => {
   describe("getCommitments", () => {
     it("retorna lista paginada de compromisos", async () => {
       const result = await CarteraService.getCommitments({
+        tenantId: "tenant-1",
         page: 1,
         limit: 10,
       });
@@ -65,6 +66,7 @@ describe("CarteraService", () => {
 
     it("aplica filtro de status", async () => {
       await CarteraService.getCommitments({
+        tenantId: "tenant-1",
         status: "PENDIENTE",
       });
 

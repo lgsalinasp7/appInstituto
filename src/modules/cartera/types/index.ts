@@ -40,6 +40,7 @@ export interface UpdateCommitmentData {
 }
 
 export interface CarteraFilters {
+  tenantId: string;
   advisorId?: string;
   status?: CommitmentStatus;
   startDate?: Date;

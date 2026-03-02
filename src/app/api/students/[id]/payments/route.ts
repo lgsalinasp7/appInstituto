@@ -8,7 +8,7 @@ interface Params {
 
 export const GET = withTenantAuth(async (request: NextRequest, user, tenantId, context?: { params: Promise<Record<string, string>> }) => {
   const { id } = await context!.params;
-  const summary = await StudentService.getStudentPaymentsSummary(id);
+  const summary = await StudentService.getStudentPaymentsSummary(id, tenantId);
 
   if (!summary) {
     return NextResponse.json(

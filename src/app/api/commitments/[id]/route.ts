@@ -32,7 +32,7 @@ export const PATCH = withTenantAuthAndCSRF(async (request: NextRequest, user, te
     );
   }
 
-  const commitment = await CarteraService.updateCommitment(id, validationResult.data);
+  const commitment = await CarteraService.updateCommitment(id, validationResult.data, tenantId);
 
   return NextResponse.json({
     success: true,

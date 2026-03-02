@@ -8,6 +8,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, ExternalLink, Users, GraduationCap, Shield, MoreVertical, Loader2, X, ArrowLeft } from "lucide-react";
+import { Search, Plus, ExternalLink, Users, GraduationCap, Shield, MoreVertical, Loader2, X, ArrowLeft, LayoutGrid, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Tenant, TenantStatus } from "../types";
 import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
@@ -55,6 +56,8 @@ const statusLabels: Record<TenantStatus, string> = {
   CANCELADO: "Cancelado",
 };
 
+import { getTenantLogo } from "@/lib/tenant-logo";
+
 export function TenantsListView({
   tenants,
   pagination,
@@ -65,6 +68,7 @@ export function TenantsListView({
   const [search, setSearch] = useState(filters.search);
   const [status, setStatus] = useState(filters.status);
   const [isCreating, setIsCreating] = useState(false);
+  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   const { confirm, confirmModal } = useConfirmModal();
 
   useEffect(() => {
@@ -118,6 +122,14 @@ export function TenantsListView({
     }
   };
 
+  const sortedTenants = [...tenants].sort((a, b) => {
+    const aIsKaled = a.slug?.toLowerCase() === "kaledsoft";
+    const bIsKaled = b.slug?.toLowerCase() === "kaledsoft";
+    if (aIsKaled && !bIsKaled) return -1;
+    if (!aIsKaled && bIsKaled) return 1;
+    return 0;
+  });
+
   if (!mounted) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -170,6 +182,34 @@ export function TenantsListView({
               <X className="w-4 h-4" />
             </Button>
           )}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-900/50 border border-white/5">
+            <button
+              onClick={() => setViewMode("cards")}
+              className={cn(
+                "p-2 rounded-lg transition-all",
+                viewMode === "cards"
+                  ? "bg-cyan-500/20 text-cyan-400"
+                  : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
+              )}
+              title="Vista en tarjetas"
+              aria-label="Vista en tarjetas"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode("table")}
+              className={cn(
+                "p-2 rounded-lg transition-all",
+                viewMode === "table"
+                  ? "bg-cyan-500/20 text-cyan-400"
+                  : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
+              )}
+              title="Vista en tabla"
+              aria-label="Vista en tabla"
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
           <Button
             onClick={() => setIsCreating(true)}
             className="rounded-xl px-4 sm:px-6 h-11 sm:h-12 text-xs sm:text-sm bg-gradient-to-r from-cyan-600 to-blue-600 hover:scale-105 transition-all font-bold shadow-lg flex-1 sm:flex-initial min-w-[100px]"
@@ -184,16 +224,16 @@ export function TenantsListView({
         <CreateTenantModal onClose={() => setIsCreating(false)} />
       )}
 
-      {/* Tenants Grid */}
+      {/* Tenants Content */}
       {tenants.length === 0 ? (
         <div className="glass-card p-24 text-center rounded-[3rem]">
           <Search className="w-16 h-16 text-slate-700 mx-auto mb-6 opacity-20" />
           <h3 className="text-xl font-bold text-slate-300 mb-2">Sin coincidencias</h3>
           <p className="text-slate-500 max-w-xs mx-auto text-sm font-medium">No logramos encontrar ninguna empresa con los parámetros especificados.</p>
         </div>
-      ) : (
+      ) : viewMode === "cards" ? (
         <div className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {tenants.map((tenant) => (
+          {sortedTenants.map((tenant) => (
             <TenantCard
               key={tenant.id}
               tenant={tenant}
@@ -202,6 +242,12 @@ export function TenantsListView({
             />
           ))}
         </div>
+      ) : (
+        <TenantsTable
+          tenants={sortedTenants}
+          onSuspend={handleSuspend}
+          onActivate={handleActivate}
+        />
       )}
 
       {/* Pagination */}
@@ -248,6 +294,7 @@ function TenantCard({
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "kaledsoft.tech";
   const tenantUrl = `${tenant.slug}.${rootDomain}`;
   const theme = statusThemes[tenant.status] || statusThemes.ACTIVO;
+  const logoConfig = getTenantLogo(tenant);
 
   return (
     <div className="glass-card group rounded-2xl sm:rounded-[2.5rem] p-4 sm:p-6 lg:p-8 hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 border border-slate-800/50 hover:border-cyan-500/30 relative">
@@ -255,8 +302,26 @@ function TenantCard({
         {/* Card Header */}
         <div className="flex items-start justify-between gap-3 min-w-0">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-            <div className="flex-shrink-0 w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 flex items-center justify-center text-lg sm:text-2xl group-hover:scale-110 transition-transform shadow-inner">
-              🏢
+            <div
+              className={cn(
+                "flex-shrink-0 w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl border border-slate-700 flex items-center justify-center overflow-hidden group-hover:scale-110 transition-transform shadow-inner",
+                logoConfig?.whiteBg ? "bg-white" : "bg-gradient-to-br from-slate-800 to-slate-900"
+              )}
+            >
+              {logoConfig ? (
+                <Image
+                  src={logoConfig.src}
+                  alt={logoConfig.alt}
+                  width={56}
+                  height={56}
+                  className={cn(
+                    "w-full h-full object-contain p-1 sm:p-1.5",
+                    logoConfig.blendMultiply && "mix-blend-multiply"
+                  )}
+                />
+              ) : (
+                <span className="text-lg sm:text-2xl">🏢</span>
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="font-bold text-base sm:text-xl text-white group-hover:text-cyan-400 transition-colors tracking-tight leading-tight truncate">
@@ -341,6 +406,127 @@ function TenantCard({
             </Button>
           </Link>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function TenantsTable({
+  tenants,
+  onSuspend,
+  onActivate,
+}: {
+  tenants: Tenant[];
+  onSuspend: (id: string) => void;
+  onActivate: (id: string) => void;
+}) {
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "kaledsoft.tech";
+
+  return (
+    <div className="glass-card rounded-2xl sm:rounded-[2rem] border border-slate-800/50 overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-white/5">
+              <th className="text-left px-4 sm:px-6 py-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-500">Empresa</th>
+              <th className="text-left px-4 sm:px-6 py-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-500">Slug / URL</th>
+              <th className="text-center px-4 sm:px-6 py-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-500">Estado</th>
+              <th className="text-center px-4 sm:px-6 py-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-500">Plan</th>
+              <th className="text-center px-4 sm:px-6 py-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-500">Usuarios</th>
+              <th className="text-right px-4 sm:px-6 py-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-500">Acciones</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {tenants.map((tenant) => {
+              const theme = statusThemes[tenant.status] || statusThemes.ACTIVO;
+              const logoConfig = getTenantLogo(tenant);
+
+              return (
+                <tr
+                  key={tenant.id}
+                  className="group hover:bg-white/[0.02] transition-colors"
+                >
+                  <td className="px-4 sm:px-6 py-3 sm:py-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className={cn(
+                          "flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-xl border border-slate-700 flex items-center justify-center overflow-hidden",
+                          logoConfig?.whiteBg ? "bg-white" : "bg-gradient-to-br from-slate-800 to-slate-900"
+                        )}
+                      >
+                        {logoConfig ? (
+                          <Image
+                            src={logoConfig.src}
+                            alt={logoConfig.alt}
+                            width={40}
+                            height={40}
+                            className="w-full h-full object-contain p-1"
+                          />
+                        ) : (
+                          <span className="text-sm">🏢</span>
+                        )}
+                      </div>
+                      <span className="text-sm font-semibold text-white truncate max-w-[160px]">{tenant.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 sm:px-6 py-3 sm:py-4">
+                    <div className="flex items-center gap-1.5 text-slate-400 hover:text-cyan-400 transition-colors">
+                      <span className="text-xs font-mono truncate max-w-[140px]">{tenant.slug}.{rootDomain}</span>
+                      <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                    </div>
+                  </td>
+                  <td className="px-4 sm:px-6 py-3 sm:py-4 text-center">
+                    <span className={cn(
+                      "inline-flex text-[9px] sm:text-[10px] uppercase tracking-widest font-black px-2.5 py-1 rounded-lg border",
+                      theme.color, theme.bg, theme.border
+                    )}>
+                      {statusLabels[tenant.status]}
+                    </span>
+                  </td>
+                  <td className="px-4 sm:px-6 py-3 sm:py-4 text-center">
+                    <span className="text-xs font-bold text-cyan-400">{tenant.plan}</span>
+                  </td>
+                  <td className="px-4 sm:px-6 py-3 sm:py-4 text-center">
+                    <span className="text-sm font-bold text-white">{tenant._count?.users || 0}</span>
+                  </td>
+                  <td className="px-4 sm:px-6 py-3 sm:py-4">
+                    <div className="flex items-center justify-end gap-2">
+                      {tenant.status === "ACTIVO" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-3 rounded-lg bg-transparent hover:bg-red-500/10 border-slate-800 hover:border-red-500/30 text-slate-500 hover:text-red-400 font-bold text-[10px]"
+                          onClick={() => onSuspend(tenant.id)}
+                        >
+                          Suspender
+                        </Button>
+                      )}
+                      {tenant.status === "SUSPENDIDO" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-3 rounded-lg bg-transparent hover:bg-green-500/10 border-slate-800 hover:border-green-500/30 text-slate-500 hover:text-green-400 font-bold text-[10px]"
+                          onClick={() => onActivate(tenant.id)}
+                        >
+                          Activar
+                        </Button>
+                      )}
+                      <Link href={`/admin/empresas/${tenant.id}`}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-3 rounded-lg bg-transparent border-slate-800 hover:border-cyan-500/30 text-slate-500 hover:text-cyan-400 font-bold text-[10px]"
+                        >
+                          Gestionar
+                        </Button>
+                      </Link>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );

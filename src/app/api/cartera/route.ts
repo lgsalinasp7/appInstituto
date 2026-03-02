@@ -7,6 +7,7 @@ export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) =
   const searchParams = request.nextUrl.searchParams;
 
   const filters = {
+    tenantId,
     advisorId: searchParams.get("advisorId") || undefined,
     status: (searchParams.get("status") as CommitmentStatus) || undefined,
     startDate: searchParams.get("startDate")

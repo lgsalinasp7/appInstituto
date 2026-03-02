@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { StudentService } from "@/modules/students/services/student.service";
 
-vi.mock("@/lib/tenant", () => ({
-  getCurrentTenantId: vi.fn().mockResolvedValue("tenant-1"),
+vi.mock("@/lib/tenant-guard", () => ({
+  assertTenantContext: vi.fn(),
 }));
 
 const mockStudent = {
@@ -46,6 +46,7 @@ describe("StudentService", () => {
   describe("getStudents", () => {
     it("retorna lista paginada de estudiantes", async () => {
       const result = await StudentService.getStudents({
+        tenantId: "tenant-1",
         page: 1,
         limit: 10,
       });
@@ -59,6 +60,7 @@ describe("StudentService", () => {
 
     it("calcula remainingBalance correctamente", async () => {
       const result = await StudentService.getStudents({
+        tenantId: "tenant-1",
         page: 1,
         limit: 10,
       });
@@ -69,6 +71,7 @@ describe("StudentService", () => {
 
     it("aplica filtro de búsqueda", async () => {
       await StudentService.getStudents({
+        tenantId: "tenant-1",
         search: "Juan",
       });
 
@@ -87,7 +90,7 @@ describe("StudentService", () => {
     it("retorna estudiante por id", async () => {
       vi.mocked(prisma.student.findFirst).mockResolvedValue(mockStudent);
 
-      const result = await StudentService.getStudentById("s1");
+      const result = await StudentService.getStudentById("s1", "tenant-1");
 
       expect(result).not.toBeNull();
       expect(result?.fullName).toBe("Juan Pérez");
@@ -96,7 +99,7 @@ describe("StudentService", () => {
     it("retorna null para id inexistente", async () => {
       vi.mocked(prisma.student.findFirst).mockResolvedValue(null);
 
-      const result = await StudentService.getStudentById("no-existe");
+      const result = await StudentService.getStudentById("no-existe", "tenant-1");
 
       expect(result).toBeNull();
     });

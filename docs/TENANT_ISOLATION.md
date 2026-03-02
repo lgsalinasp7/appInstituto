@@ -114,3 +114,25 @@ prisma.kaledLead.findUnique({
 - `src/lib/tenant-guard.ts` - Helper assertTenantContext()
 - `prisma/migrate-kaled-tenantid.ts` - Script de migracion de datos existentes
 - `src/modules/kaled-crm/types/index.ts` - Interfaces con tenantId
+
+## Convenciones de UI - Lista de Tenants (Admin)
+
+Ubicacion: `src/modules/tenants/components/TenantsListView.tsx`
+
+### Logos por Tenant
+
+Mapeo por `slug` del tenant. Para agregar un nuevo tenant con logo custom:
+
+1. Colocar el archivo en `public/` (ej: `logo-{slug}.png`)
+2. Agregar entrada en `getTenantLogo()` dentro de TenantsListView:
+
+| Slug        | Logo                       | Notas                          |
+|-------------|----------------------------|--------------------------------|
+| kaledacademy| `/logo%20kalebAcademy.png` | Kaleb Academy                  |
+| kaledsoft   | `/kaledsoft-logo-transparent.png` | KaledSoft (plataforma)  |
+| edutec      | `/logo-edutec2.png`        | Fondo blanco (`whiteBg: true`) |
+| *otros*     | Emoji fallback             | Por defecto                    |
+
+### Orden de Listado
+
+KaledSoft siempre aparece primero en la lista de tenants, independientemente del filtro (busqueda, estado, etc.). Implementado en el `.sort()` previo al `.map()` de las tarjetas.

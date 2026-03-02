@@ -68,10 +68,10 @@ export function ProductDeployModal({ product, onClose, onSuccess }: ProductDeplo
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="glass-card rounded-[2rem] w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/60 backdrop-blur-sm">
+      <div className="glass-card rounded-[2rem] w-full max-w-lg flex flex-col max-h-[min(90vh,calc(100vh-2rem))] overflow-hidden my-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/5">
+        <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-white/5">
           <div className="flex items-center gap-3">
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center text-white"
@@ -89,8 +89,8 @@ export function ProductDeployModal({ product, onClose, onSuccess }: ProductDeplo
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6">
+        {/* Content - scrollable */}
+        <div className="flex-1 min-h-0 overflow-y-auto p-6">
           {result ? (
             // Success view
             <div className="space-y-4">

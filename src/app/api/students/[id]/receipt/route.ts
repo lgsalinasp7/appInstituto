@@ -17,7 +17,7 @@ export const GET = withTenantAuth(async (
     );
   }
 
-  const receiptData = await StudentService.getMatriculaReceipt(id);
+  const receiptData = await StudentService.getMatriculaReceipt(id, tenantId);
 
   return NextResponse.json({ success: true, data: receiptData });
 });

@@ -1,11 +1,11 @@
 import prisma from "@/lib/prisma";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { assertTenantContext } from "@/lib/tenant-guard";
 import { CreateCommitmentData, UpdateCommitmentData, CommitmentFilters } from "../types";
 import { Prisma } from "@prisma/client";
 
 export class CommitmentService {
-    static async createCommitment(data: CreateCommitmentData) {
-        const tenantId = await getCurrentTenantId() as string;
+    static async createCommitment(data: CreateCommitmentData, tenantId: string) {
+        assertTenantContext(tenantId);
         return prisma.paymentCommitment.create({
             data: {
                 scheduledDate: data.scheduledDate,
@@ -19,9 +19,8 @@ export class CommitmentService {
         });
     }
 
-    static async updateCommitment(id: string, data: UpdateCommitmentData) {
-        const tenantId = await getCurrentTenantId() as string;
-
+    static async updateCommitment(id: string, data: UpdateCommitmentData, tenantId: string) {
+        assertTenantContext(tenantId);
         // Verificar pertenencia al tenant
         const existing = await prisma.paymentCommitment.findFirst({
             where: { id, tenantId }
@@ -38,8 +37,8 @@ export class CommitmentService {
     }
 
     static async getCommitments(filters: CommitmentFilters) {
-        const { studentId, status, startDate, endDate, page = 1, limit = 10 } = filters;
-        const tenantId = await getCurrentTenantId() as string;
+        const { tenantId, studentId, status, startDate, endDate, page = 1, limit = 10 } = filters;
+        assertTenantContext(tenantId);
         const where: Prisma.PaymentCommitmentWhereInput = { tenantId };
 
         if (studentId) where.studentId = studentId;
@@ -74,9 +73,8 @@ export class CommitmentService {
         };
     }
 
-    static async markAsPaid(id: string) {
-        const tenantId = await getCurrentTenantId() as string;
-
+    static async markAsPaid(id: string, tenantId: string) {
+        assertTenantContext(tenantId);
         // Verificar pertenencia
         const existing = await prisma.paymentCommitment.findFirst({
             where: { id, tenantId }
@@ -94,10 +92,9 @@ export class CommitmentService {
         });
     }
 
-    static async getOverdueCommitments() {
+    static async getOverdueCommitments(tenantId: string) {
+        assertTenantContext(tenantId);
         const today = new Date();
-        const tenantId = await getCurrentTenantId() as string;
-
         return prisma.paymentCommitment.findMany({
             where: {
                 tenantId,
