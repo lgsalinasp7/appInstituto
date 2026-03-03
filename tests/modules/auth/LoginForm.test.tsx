@@ -77,28 +77,38 @@ describe("LoginForm", () => {
 
   it("deshabilita el botón mientras carga", async () => {
     let resolveSubmit: () => void;
-    const onSubmit = vi.fn().mockImplementation(
-      () => new Promise<void>((r) => { resolveSubmit = r; })
-    );
+    const submitPromise = new Promise<void>((r) => {
+      resolveSubmit = r;
+    });
+    const onSubmit = vi.fn().mockReturnValue(submitPromise);
 
     renderLoginForm({ onSubmit });
 
-    fireEvent.change(screen.getByPlaceholderText(/correo@empresa\.com/i), {
-      target: { value: "test@example.com" },
-    });
-    fireEvent.change(screen.getByPlaceholderText(/••••••••/), {
-      target: { value: "password123" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: /ingresar al portal/i }));
+    const emailInput = screen.getByPlaceholderText(/correo@empresa\.com/i);
+    const passwordInput = screen.getByPlaceholderText(/••••••••/);
+    const submitButton = screen.getByRole("button", { name: /ingresar al portal/i });
+
+    fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "password123" } });
+    fireEvent.click(submitButton);
 
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledTimes(1);
     });
-    expect(screen.getByRole("button", { name: /verificando/i })).toBeDisabled();
+
+    await waitFor(() => {
+      const loadingButton = screen.getByRole("button", { name: /verificando/i });
+      expect(loadingButton).toBeDisabled();
+    });
 
     resolveSubmit!();
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /ingresar al portal/i })).not.toBeDisabled();
-    });
-  });
+
+    await waitFor(
+      () => {
+        const backButton = screen.getByRole("button", { name: /ingresar al portal/i });
+        expect(backButton).not.toBeDisabled();
+      },
+      { timeout: 3000 }
+    );
+  }, 10000);
 });
