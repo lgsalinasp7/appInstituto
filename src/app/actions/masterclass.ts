@@ -1,5 +1,6 @@
 "use server";
 
+import { track } from "@vercel/analytics/server";
 import { KaledLeadService, publicLeadCaptureSchema } from "@/modules/masterclass";
 import { sendTemplateEmail } from "@/lib/email";
 import { resolveKaledTenantId } from "@/lib/kaled-tenant";
@@ -67,6 +68,11 @@ export async function captureMasterclassLead(formData: FormData) {
         } catch (emailError) {
             console.error("Error al enviar email de notificación:", emailError);
         }
+
+        await track("Masterclass Lead", {
+            campaign: "masterclass-ia",
+            source: "server",
+        });
 
         return { success: true, leadId: result.leadId };
     } catch (error: unknown) {

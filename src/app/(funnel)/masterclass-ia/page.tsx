@@ -1,5 +1,6 @@
 import { MasterclassHero, MasterclassProblem, MasterclassPromise, MasterclassCurriculum, MasterclassUrgencyStrip } from "@/components/marketing/v2/MasterclassSections";
 import { MasterclassForm } from "@/components/marketing/v2/MasterclassForm";
+import { MasterclassLandingTracker } from "@/components/marketing/v2/MasterclassLandingTracker";
 import { FunnelLayout } from "@/components/marketing/v2/FunnelLayout";
 import { Metadata } from "next";
 import { Suspense } from "react";
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
 export default function MasterclassPage() {
     return (
         <FunnelLayout>
+            <MasterclassLandingTracker />
             <MasterclassHero />
 
             <MasterclassProblem />

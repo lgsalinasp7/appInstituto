@@ -94,6 +94,10 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
 # Auth Secret (genera con: openssl rand -base64 32)
 AUTH_SECRET="tu-secreto-aqui"
+
+# Vercel Feature Flags (opcional; para integrar flags con Web Analytics)
+# Genera con: node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+# FLAGS_SECRET="tu-clave-base64url-de-32-bytes"
 ```
 
 ### 2. Base de datos

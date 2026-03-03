@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ReactNode } from "react";
 import Image from "next/image";
+import { FunnelFlagValues } from "./FunnelFlagValues";
 
 interface FunnelLayoutProps {
     children: ReactNode;
@@ -11,6 +12,7 @@ interface FunnelLayoutProps {
 export function FunnelLayout({ children }: FunnelLayoutProps) {
     return (
         <div className="relative min-h-screen bg-[#020617] text-white selection:bg-cyan-500/30">
+            <FunnelFlagValues />
             {/* Minimal Header */}
             <header className="absolute top-0 left-0 w-full p-8 z-50 flex justify-between items-center pointer-events-none">
                 <Link href="/" className="pointer-events-auto group">
