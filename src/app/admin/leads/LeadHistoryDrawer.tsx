@@ -22,9 +22,11 @@ import {
   FileText,
   PhoneCall,
   Video,
+  Rocket,
 } from 'lucide-react';
 import type { KaledLead } from '@prisma/client';
 import type { InteractionWithUser } from '@/modules/kaled-crm/types';
+import { toast } from 'sonner';
 
 interface LeadHistoryDrawerProps {
   lead: KaledLead | null;
@@ -65,6 +67,7 @@ export function LeadHistoryDrawer({
 }: LeadHistoryDrawerProps) {
   const [timeline, setTimeline] = useState<InteractionWithUser[]>([]);
   const [loading, setLoading] = useState(false);
+  const [triggeringSequence, setTriggeringSequence] = useState(false);
 
   useEffect(() => {
     if (open && lead) {
@@ -97,6 +100,34 @@ export function LeadHistoryDrawer({
       fetchTimeline();
       onRefresh?.();
     }, 500);
+  };
+
+  const handleTriggerSequence = async () => {
+    if (!lead) return;
+    setTriggeringSequence(true);
+    try {
+      const res = await fetch(
+        `/api/admin/kaled-leads/${lead.id}/trigger-sequence`,
+        { method: 'POST' }
+      );
+      const json = await res.json();
+      if (json.success) {
+        toast.success(json.data.message);
+        if (json.data.triggered > 0) {
+          setTimeout(() => {
+            fetchTimeline();
+            onRefresh?.();
+          }, 500);
+        }
+      } else {
+        toast.error(json.error || 'Error al activar la secuencia');
+      }
+    } catch (error) {
+      console.error('Error triggering sequence:', error);
+      toast.error('Error al activar la secuencia');
+    } finally {
+      setTriggeringSequence(false);
+    }
   };
 
   if (!lead) return null;
@@ -170,6 +201,21 @@ export function LeadHistoryDrawer({
               >
                 <Mail className="h-4 w-4" />
                 Enviar Email
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleTriggerSequence}
+                disabled={triggeringSequence}
+                className="h-10 border-slate-800/60 bg-slate-950/40 px-3.5 text-slate-300 hover:border-emerald-500/30 hover:bg-slate-900/70 hover:text-white"
+                title="Programa los correos automáticos según el estado del lead (ej. Pre-Masterclass para NUEVO)"
+              >
+                {triggeringSequence ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Rocket className="h-4 w-4" />
+                )}
+                Activar secuencia
               </Button>
             </div>
           </section>
@@ -290,6 +336,9 @@ export function LeadHistoryDrawer({
                 <p className="text-sm">No hay interacciones registradas</p>
                 <p className="mt-1 text-xs">
                   Agrega una nota o registra una llamada para comenzar
+                </p>
+                <p className="mt-2 text-xs text-slate-500">
+                  Si este lead no recibió los correos automáticos, usa &quot;Activar secuencia&quot; en Acciones Rápidas para programarlos.
                 </p>
               </div>
             ) : (
