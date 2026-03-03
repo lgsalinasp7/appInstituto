@@ -5,26 +5,36 @@ import { KaledLeadService, publicLeadCaptureSchema } from "@/modules/masterclass
 import { sendTemplateEmail } from "@/lib/email";
 import { resolveKaledTenantId } from "@/lib/kaled-tenant";
 
+function formStr(formData: FormData, key: string): string | undefined {
+    const v = formData.get(key);
+    if (v == null || v === "") return undefined;
+    return String(v);
+}
+
+function formStrRequired(formData: FormData, key: string): string {
+    return (formData.get(key) as string | null) ?? "";
+}
+
 export async function captureMasterclassLead(formData: FormData) {
     try {
-        // Extraer datos del FormData
+        // Extraer datos del FormData (null/empty → undefined para campos opcionales)
         const rawData = {
-            name: formData.get("name") as string,
-            email: formData.get("email") as string,
-            phone: formData.get("phone") as string,
-            city: formData.get("city") as string,
-            studyStatus: formData.get("studyStatus") as string,
-            programmingLevel: formData.get("programmingLevel") as string,
-            saasInterest: formData.get("saasInterest") as string,
-            investmentReady: formData.get("investmentReady") as string,
-            masterclassSlug: formData.get("masterclassSlug") as string || "masterclass-ia",
-            utmSource: formData.get("utmSource") as string,
-            utmMedium: formData.get("utmMedium") as string,
-            utmCampaign: formData.get("utmCampaign") as string,
-            utmContent: formData.get("utmContent") as string,
-            fbclid: formData.get("fbclid") as string,
-            gclid: formData.get("gclid") as string,
-            ttclid: formData.get("ttclid") as string,
+            name: formStrRequired(formData, "name"),
+            email: formStrRequired(formData, "email"),
+            phone: formStrRequired(formData, "phone"),
+            city: formStr(formData, "city"),
+            studyStatus: formStr(formData, "studyStatus"),
+            programmingLevel: formStr(formData, "programmingLevel"),
+            saasInterest: formStr(formData, "saasInterest"),
+            investmentReady: formStr(formData, "investmentReady"),
+            masterclassSlug: (formData.get("masterclassSlug") as string) || "masterclass-ia",
+            utmSource: formStr(formData, "utmSource"),
+            utmMedium: formStr(formData, "utmMedium"),
+            utmCampaign: formStr(formData, "utmCampaign"),
+            utmContent: formStr(formData, "utmContent"),
+            fbclid: formStr(formData, "fbclid"),
+            gclid: formStr(formData, "gclid"),
+            ttclid: formStr(formData, "ttclid"),
         };
 
         // Validar con Zod

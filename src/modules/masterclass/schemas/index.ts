@@ -17,24 +17,25 @@ export const createMasterclassSchema = z.object({
 
 export const updateMasterclassSchema = createMasterclassSchema.partial();
 
+// nullish() = .nullable().optional() → accepts string | null | undefined
 export const publicLeadCaptureSchema = z.object({
   name: z.string().min(2, 'Nombre requerido'),
   phone: z.string().min(7, 'Teléfono requerido'),
   email: z.string().email('Email inválido'),
-  city: z.string().trim().min(2, 'Ciudad inválida'),
-  programId: z.string().optional(),
-  masterclassSlug: z.string().optional(),
-  utmSource: z.string().optional(),
-  utmMedium: z.string().optional(),
-  utmCampaign: z.string().optional(),
-  utmContent: z.string().optional(),
-  fbclid: z.string().optional(),
-  gclid: z.string().optional(),
-  ttclid: z.string().optional(),
+  city: z.string().trim().min(2, 'Ciudad inválida').nullish(),
+  programId: z.string().nullish(),
+  masterclassSlug: z.string().nullish(),
+  utmSource: z.string().nullish(),
+  utmMedium: z.string().nullish(),
+  utmCampaign: z.string().nullish(),
+  utmContent: z.string().nullish(),
+  fbclid: z.string().nullish(),
+  gclid: z.string().nullish(),
+  ttclid: z.string().nullish(),
 
   // Filtering fields
-  studyStatus: z.string().optional(),
-  programmingLevel: z.string().optional(),
-  saasInterest: z.string().optional(),
-  investmentReady: z.string().optional(),
+  studyStatus: z.string().nullish(),
+  programmingLevel: z.string().nullish(),
+  saasInterest: z.string().nullish(),
+  investmentReady: z.string().nullish(),
 });

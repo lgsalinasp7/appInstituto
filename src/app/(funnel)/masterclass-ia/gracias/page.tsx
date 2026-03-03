@@ -4,8 +4,8 @@ import { Metadata } from "next";
 import { MasterclassThankYouActions } from "@/components/marketing/v2/MasterclassThankYouActions";
 
 export const metadata: Metadata = {
-    title: "¡Aplicación Recibida! | KaledSoft",
-    description: "Tu aplicación a la Masterclass ha sido recibida con éxito. Revisa el siguiente paso.",
+    title: "¡Cupo Confirmado! | KaledSoft",
+    description: "Tu cupo en la Masterclass ha sido confirmado. Únete al grupo de WhatsApp para recibir todos los detalles.",
 };
 
 export default function MasterclassGraciasPage() {
@@ -21,11 +21,11 @@ export default function MasterclassGraciasPage() {
                         </div>
 
                         <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-6">
-                            Tu aplicacion fue <span className="text-cyan-500">recibida</span>
+                            Cupo <span className="text-cyan-500">confirmado</span>
                         </h1>
 
                         <p className="text-slate-300 text-lg md:text-xl max-w-2xl mx-auto font-medium leading-relaxed mb-10">
-                            Revisa tu WhatsApp ahora para confirmar tu cupo.
+                            Únete al grupo de WhatsApp ahora para recibir fecha, hora y enlace de la masterclass.
                         </p>
 
                         <MasterclassThankYouActions whatsappGroupUrl="https://chat.whatsapp.com/FujGpSwq5Yv6MD7ZkxY2Vb?mode=gi_t" />

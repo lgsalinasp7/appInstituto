@@ -24,20 +24,20 @@ export interface LeadRegistration {
   name: string;
   phone: string;
   email: string;
-  city: string;
-  programId?: string;
-  masterclassSlug?: string;
-  utmSource?: string;
-  utmMedium?: string;
-  utmCampaign?: string;
-  utmContent?: string;
-  fbclid?: string;
-  gclid?: string;
-  ttclid?: string;
+  city?: string | null;
+  programId?: string | null;
+  masterclassSlug?: string | null;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  utmContent?: string | null;
+  fbclid?: string | null;
+  gclid?: string | null;
+  ttclid?: string | null;
 
   // Masterclass filtering fields
-  studyStatus?: string;
-  programmingLevel?: string;
-  saasInterest?: string;
-  investmentReady?: string;
+  studyStatus?: string | null;
+  programmingLevel?: string | null;
+  saasInterest?: string | null;
+  investmentReady?: string | null;
 }

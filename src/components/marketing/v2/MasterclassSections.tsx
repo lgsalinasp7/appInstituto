@@ -44,8 +44,8 @@ export function MasterclassHero() {
                             transition={{ delay: 0.2 }}
                             className="flex flex-wrap gap-4 justify-center lg:justify-start"
                         >
-                            <a href="#aplicar" className="px-8 py-4 bg-cyan-600 hover:bg-cyan-500 text-white font-black rounded-2xl transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)]">
-                                Aplicar ahora
+                            <a href="#reservar" className="px-8 py-4 bg-cyan-600 hover:bg-cyan-500 text-white font-black rounded-2xl transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+                                Reservar mi cupo gratis
                             </a>
                         </motion.div>
                     </div>
@@ -373,8 +373,7 @@ export function MasterclassUrgencyStrip() {
                             La informacion completa se entrega por WhatsApp privado
                         </h3>
                         <p className="text-slate-300 text-base md:text-lg max-w-3xl mx-auto">
-                            Si quieres fecha, hora, acceso y bono de la masterclass, debes completar tu aplicacion.
-                            Al finalizar, te enviaremos al canal de WhatsApp donde recibes todos los detalles paso a paso.
+                            Reserva tu cupo gratis y te llevamos directo al canal de WhatsApp donde recibes fecha, hora, enlace y bono de la masterclass.
                         </p>
                     </div>
 
@@ -382,8 +381,8 @@ export function MasterclassUrgencyStrip() {
                         {[
                             {
                                 icon: ShieldCheck,
-                                title: "Paso 1: Aplica",
-                                desc: "Completa el formulario y reserva tu cupo.",
+                                title: "Paso 1: Reserva tu cupo",
+                                desc: "Completa el formulario con tus datos.",
                             },
                             {
                                 icon: MessageCircle,
@@ -406,10 +405,10 @@ export function MasterclassUrgencyStrip() {
 
                     <div className="mt-8 flex justify-center">
                         <a
-                            href="#aplicar"
+                            href="#reservar"
                             className="px-8 py-4 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-black transition-all shadow-[0_0_24px_rgba(6,182,212,0.35)]"
                         >
-                            Quiero mi acceso por WhatsApp
+                            Reservar mi cupo gratis
                         </a>
                     </div>
                 </motion.div>

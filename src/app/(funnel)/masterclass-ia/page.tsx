@@ -24,13 +24,13 @@ export default function MasterclassPage() {
 
             <MasterclassUrgencyStrip />
 
-            <section id="aplicar" className="py-24 bg-slate-950/20">
+            <section id="reservar" className="py-24 bg-slate-950/20">
                 <div className="container mx-auto px-6">
                     <div className="max-w-4xl mx-auto text-center space-y-16">
                         <div className="space-y-4">
-                            <h2 className="text-4xl md:text-5xl font-black text-white italic tracking-tighter">Ultimo paso: Reserva y acceso a WhatsApp</h2>
+                            <h2 className="text-4xl md:text-5xl font-black text-white italic tracking-tighter">Reserva tu cupo gratis</h2>
                             <p className="text-slate-400 text-lg max-w-2xl mx-auto font-medium">
-                                Completa este formulario para confirmar tu perfil. Al finalizar tu registro te llevamos al canal privado de WhatsApp con toda la informacion de la masterclass.
+                                Ingresa tus datos para reservar. Al finalizar te llevamos directo al WhatsApp con toda la información de la masterclass.
                             </p>
                         </div>
 
