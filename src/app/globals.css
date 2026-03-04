@@ -119,7 +119,6 @@
   --color-info: var(--info);
   --color-border: var(--border);
   --color-input: var(--input);
-  --color-input: var(--input);
   --color-ring: var(--ring);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
@@ -209,6 +208,147 @@ body {
 
 .sidebar-active-strip {
   @apply absolute left-0 w-1 h-6 bg-cyan-500 rounded-r-full;
+}
+
+/* ============================================
+   ACADEMIA SHELL (HENRY-LIKE)
+   ============================================ */
+
+.academy-shell {
+  background: #f7f9fc;
+  color: #0b0f19;
+}
+
+.academy-card {
+  background: #ffffff;
+  border: 1px solid #e8eaf0;
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03);
+}
+
+.academy-topbar {
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid #e4e9f2;
+  backdrop-filter: blur(10px);
+}
+
+.academy-pill {
+  border-radius: 9999px;
+  border: 1px solid #e7eaf1;
+  background: #ffffff;
+  color: #5d6472;
+}
+
+.academy-pill-active {
+  border-color: rgb(30 58 95 / 0.2);
+  background: rgb(30 58 95 / 0.08);
+  color: #1e3a5f;
+}
+
+.academy-sidebar-rail {
+  background: #ffffff;
+  border-right: 1px solid #e4e9f2;
+}
+
+.academy-menu-item-active {
+  background: #f4f7fc;
+  border: 1px solid rgb(30 58 95 / 0.12);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.academy-menu-highlight {
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 9999px;
+  background: #1e3a5f;
+}
+
+/* ============================================
+   ACADEMIA SHELL DARK (KALEDACADEMY LOGIN COHERENCE)
+   Fondos tipo login: radial gradients, glass, cyan/blue accents
+   ============================================ */
+
+.academy-shell-dark {
+  background: radial-gradient(ellipse 120% 80% at 50% 0%, #1e293b 0%, #0f172a 50%, #020617 100%);
+  color: #f1f5f9;
+}
+
+.academy-card-dark {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(12px);
+}
+
+.academy-topbar-dark {
+  background: rgba(15, 23, 42, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
+}
+
+.academy-pill-dark {
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: #94a3b8;
+}
+
+.academy-pill-active-dark {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.academy-sidebar-rail-dark {
+  background: rgba(2, 6, 23, 0.95);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.academy-menu-item-active-dark {
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border: none;
+}
+
+.academy-menu-item-inactive-dark {
+  background: rgba(255, 255, 255, 0.03);
+  color: #e2e8f0;
+}
+
+.academy-menu-highlight-dark {
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 9999px;
+  background: var(--accent);
+}
+
+.academy-banner-dark {
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.25) 0%, rgba(30, 58, 95, 0.35) 50%, rgba(37, 99, 235, 0.25) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  color: #ffffff;
+}
+
+.academy-btn-vermas-dark {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.academy-btn-vermas-dark:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(34, 211, 238, 0.3);
+  color: #fff;
 }
 
 /* ============================================

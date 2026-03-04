@@ -15,15 +15,21 @@ interface UserProfileDropdownProps {
     profileHref?: string;
     /** Variante compacta para header móvil */
     compact?: boolean;
+    /** Fuerza variante clara (usado en shell no-Academia) */
+    forceLight?: boolean;
+    /** Fuerza variante oscura Academia (pill oscuro, avatar con gradiente acento) */
+    forceDark?: boolean;
 }
 
 export function UserProfileDropdown({
     configHref = "/admin/configuracion",
     profileHref,
     compact = false,
+    forceLight = false,
+    forceDark = false,
 }: UserProfileDropdownProps = {}) {
     const branding = useBranding();
-    const isDark = branding.darkMode !== false;
+    const isDark = forceDark || (forceLight ? false : branding.darkMode !== false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const { user } = useAuthStore();
@@ -83,11 +89,11 @@ export function UserProfileDropdown({
 
                 <div
                     className={cn(
-                        "rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300",
+                        "rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300",
                         compact ? "w-8 h-8" : "w-9 h-9",
                         isDark
-                            ? "bg-gradient-to-br from-cyan-500 to-blue-600"
-                            : "bg-gradient-to-br from-blue-500 to-blue-700"
+                            ? "bg-gradient-to-br from-cyan-500 to-blue-600 text-white"
+                            : "bg-gradient-to-br from-primary to-primary-light text-white"
                     )}
                 >
                     <span className="text-sm font-bold font-display">
@@ -146,7 +152,7 @@ export function UserProfileDropdown({
                                     : "text-slate-600 hover:text-blue-600 hover:bg-slate-50"
                             )}
                         >
-                            <User size={18} className="text-slate-400 group-hover:text-blue-600" />
+                        <User size={18} className={cn("text-slate-400", isDark ? "group-hover:text-cyan-400" : "group-hover:text-blue-600")} />
                             <span>Mi Perfil</span>
                         </Link>
 

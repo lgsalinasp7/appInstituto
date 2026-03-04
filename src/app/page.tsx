@@ -23,9 +23,7 @@ function TenantWelcome() {
 
               <div className="space-y-5">
                 <h1 className="text-5xl md:text-7xl font-black tracking-tight text-white leading-[1] font-display">
-                  KaledSoft
-                  <br />
-                  <span className="text-slate-500">Academia & Lab</span>
+                  Kaledacademy
                 </h1>
                 <p className="text-lg md:text-2xl text-slate-400 max-w-2xl mx-auto lg:mx-0 font-medium leading-relaxed">
                   Plataforma de formación y tecnología para crear productos SaaS con agentes de IA y ejecución real.
@@ -58,7 +56,7 @@ function TenantWelcome() {
       </section>
 
       <footer className="relative z-10 py-6 text-center text-sm text-slate-500 border-t border-white/5">
-        © {new Date().getFullYear()} KaledSoft Academia & Lab. Todos los derechos reservados.
+        © {new Date().getFullYear()} Kaledacademy. Todos los derechos reservados.
       </footer>
     </main>
   );

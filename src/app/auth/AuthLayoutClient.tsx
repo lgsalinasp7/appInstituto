@@ -138,9 +138,7 @@ export default function AuthLayoutClient({
                       <div className="max-w-2xl mx-auto space-y-8">
                         <div className="space-y-4">
                           <h2 className="text-5xl xl:text-6xl font-black tracking-tight text-white leading-[1] font-display">
-                            KaledSoft
-                            <br />
-                            <span className="text-slate-500">Academia & Lab</span>
+                            Kaledacademy
                           </h2>
                           <p className="text-slate-400 text-lg leading-relaxed max-w-xl">
                             Entrena, construye y escala productos SaaS con agentes de IA en una sola plataforma.

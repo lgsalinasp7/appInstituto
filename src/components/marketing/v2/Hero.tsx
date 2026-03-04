@@ -29,8 +29,7 @@ export function HeroV2() {
                                 transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
                                 className="text-5xl md:text-8xl font-black tracking-tight text-white leading-[1] font-display"
                             >
-                                KaledSoft<br />
-                                <span className="text-slate-500">Academia & Lab</span>
+                                Kaledacademy
                             </motion.h1>
 
                             <motion.p

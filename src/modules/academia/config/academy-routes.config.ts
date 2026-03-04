@@ -20,12 +20,16 @@ export const ACADEMY_ROUTES = {
     { path: "/academia/student", label: "Inicio" },
     { path: "/academia/student/courses", label: "Mis Cursos" },
     { path: "/academia/student/progress", label: "Mi Progreso" },
+    { path: "/academia/student/calendar", label: "Calendario" },
+    { path: "/academia/student/leaderboard", label: "Leaderboard" },
   ],
   teacher: [
     { path: "/academia/teacher", label: "Inicio" },
     { path: "/academia/teacher/students", label: "Estudiantes" },
     { path: "/academia/teacher/courses", label: "Cursos" },
     { path: "/academia/teacher/messages", label: "Mensajes" },
+    { path: "/academia/teacher/calendar", label: "Calendario" },
+    { path: "/academia/teacher/leaderboard", label: "Leaderboard" },
   ],
   admin: [
     { path: "/academia/admin", label: "Inicio" },
@@ -33,6 +37,8 @@ export const ACADEMY_ROUTES = {
     { path: "/academia/admin/cohorts", label: "Cohortes" },
     { path: "/academia/admin/users", label: "Usuarios" },
     { path: "/academia/admin/analytics", label: "Analytics" },
+    { path: "/academia/admin/calendar", label: "Calendario" },
+    { path: "/academia/admin/leaderboard", label: "Leaderboard" },
   ],
 } as const;
 

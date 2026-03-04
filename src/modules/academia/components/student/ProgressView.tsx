@@ -29,9 +29,9 @@ export function ProgressView() {
 
   if (loading) {
     return (
-      <div className="p-8">
-        <h1 className="text-2xl font-bold mb-6">Mi Progreso</h1>
-        <p className="text-muted-foreground">Cargando...</p>
+      <div className="academy-card-dark p-8">
+        <h1 className="text-2xl font-bold text-white mb-6 font-display tracking-tight">Mi Progreso</h1>
+        <p className="text-slate-400">Cargando...</p>
       </div>
     );
   }
@@ -42,56 +42,56 @@ export function ProgressView() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold">Mi Progreso</h1>
+      <h1 className="text-3xl font-black tracking-tight text-white font-display">Mi Progreso</h1>
 
-      <Card>
+      <Card className="academy-card-dark border-white/[0.08] shadow-none">
         <CardHeader>
-          <CardTitle>Progreso General</CardTitle>
+          <CardTitle className="text-white font-display">Progreso General</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-4 rounded-full bg-muted overflow-hidden">
+          <div className="h-2 rounded-full bg-white/10 overflow-hidden">
             <div
-              className="h-full bg-primary rounded-full transition-all"
+              className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-300"
               style={{ width: `${overallPercent}%` }}
             />
           </div>
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className="text-sm text-slate-400 mt-2">
             {totalCompleted} de {totalLessons} lecciones completadas
           </p>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="academy-card-dark border-white/[0.08] shadow-none">
         <CardHeader>
-          <CardTitle>Por Curso</CardTitle>
+          <CardTitle className="text-white font-display">Por Curso</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3">
           {summaries.map((s) => (
             <Link
               key={s.courseId}
               href={`/academia/student/courses/${s.courseId}`}
-              className="flex items-center gap-4 p-4 rounded-lg border hover:bg-muted/50 transition-colors"
+              className="group flex items-center gap-4 p-4 rounded-xl border border-white/[0.06] hover:border-cyan-500/20 hover:bg-white/[0.03] transition-all duration-200"
             >
-              <div className="p-2 rounded-lg bg-primary/10">
-                <BookOpen className="w-6 h-6 text-primary" />
+              <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                <BookOpen className="w-5 h-5 text-cyan-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium">{s.courseTitle}</p>
-                <div className="h-2 rounded-full bg-muted mt-2 overflow-hidden">
+                <p className="font-semibold text-white">{s.courseTitle}</p>
+                <div className="h-1.5 rounded-full bg-white/10 mt-2 overflow-hidden">
                   <div
-                    className="h-full bg-primary rounded-full transition-all"
+                    className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-300"
                     style={{ width: `${s.progressPercent}%` }}
                   />
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-slate-400 mt-1.5">
                   {s.completedLessons} / {s.totalLessons} lecciones
                 </p>
               </div>
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-cyan-400 shrink-0" />
             </Link>
           ))}
           {summaries.length === 0 && (
-            <p className="text-muted-foreground">No tienes cursos inscritos.</p>
+            <p className="text-slate-400">No tienes cursos inscritos.</p>
           )}
         </CardContent>
       </Card>

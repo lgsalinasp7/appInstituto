@@ -35,3 +35,17 @@ export interface CourseProgressSummary {
   completedLessons: number;
   progressPercent: number;
 }
+
+export interface LeaderboardEntry {
+  userId: string;
+  name: string;
+  image: string | null;
+  role: string;
+  points: number;
+  rank: number;
+}
+
+export interface LeaderboardResponse {
+  entries: LeaderboardEntry[];
+  currentUserEntry: LeaderboardEntry | null;
+}
