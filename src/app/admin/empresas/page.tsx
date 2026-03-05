@@ -4,8 +4,10 @@
  */
 
 import { Suspense } from "react";
+import prisma from "@/lib/prisma";
 import { TenantsService } from "@/modules/tenants";
 import { ProductsService } from "@/modules/products";
+import { AdminService } from "@/modules/admin/services/admin.service";
 import { EmpresasPageClient } from "@/modules/products/components/EmpresasPageClient";
 import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 
@@ -17,7 +19,7 @@ export default async function EmpresasPage({
   searchParams: Promise<{ search?: string; status?: string; plan?: string; page?: string }>;
 }) {
   const params = await searchParams;
-  const [stats, tenantsData, products] = await Promise.all([
+  const [stats, tenantsData, products, roles, platformConfigs] = await Promise.all([
     TenantsService.getStats(),
     TenantsService.getAll({
       search: params.search,
@@ -27,7 +29,24 @@ export default async function EmpresasPage({
       limit: 6,
     }),
     ProductsService.getAll(),
+    AdminService.getRoles().catch(() => []),
+    prisma.systemConfig.findMany({
+      where: { tenantId: null as unknown as string },
+      select: { key: true, value: true },
+    }).catch(() => []),
   ]);
+
+  const configMap: Record<string, string> = {};
+  for (const cfg of platformConfigs) {
+    configMap[cfg.key] = cfg.value;
+  }
+  const configRoles = roles.map((r) => ({
+    id: r.id,
+    name: r.name,
+    description: r.description ?? "",
+    permissions: r.permissions as string[],
+    usersCount: r._count?.users ?? 0,
+  }));
 
   const statCards = [
     { title: "Total", value: stats.total, color: "bg-slate-50 text-slate-600", icon: "🏢" },
@@ -86,6 +105,10 @@ export default async function EmpresasPage({
             plan: params.plan || "",
           }}
           products={products}
+          configData={{
+            roles: configRoles,
+            platformConfig: configMap,
+          }}
         />
       </Suspense>
     </div>
