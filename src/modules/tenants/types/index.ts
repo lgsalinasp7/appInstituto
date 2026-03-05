@@ -53,6 +53,8 @@ export interface CreateTenantData {
   adminPassword?: string;
   autoGenerateAdminPassword?: boolean;
   subscriptionEndsAt?: Date;
+  /** Límite de invitaciones para el usuario admin inicial. Si no se informa, se usa el valor por defecto (p. ej. 10). */
+  adminInvitationLimit?: number;
 }
 
 export interface UpdateTenantData {

@@ -107,6 +107,8 @@ prisma.kaledLead.findUnique({
 
 **PROHIBIDO:** Usar `withAuth` (sin rol) en rutas admin que acceden a datos sensibles.
 
+El flujo estándar de **autenticación e invitaciones por tenant** (login en subdominio, crear invitación, aceptar y crear usuario) está descrito en [TENANT_AUTENTICACION_E_INVITACIONES.md](TENANT_AUTENTICACION_E_INVITACIONES.md).
+
 ## Archivos Clave
 
 - `prisma/schema.prisma` - Definicion de modelos con tenantId

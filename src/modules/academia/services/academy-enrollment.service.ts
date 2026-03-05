@@ -23,6 +23,7 @@ export class AcademyEnrollmentService {
             },
           },
         },
+        cohort: { select: { id: true, name: true } },
       },
     });
   }
@@ -43,11 +44,19 @@ export class AcademyEnrollmentService {
       },
     });
     if (existing) {
+      if (data.cohortId && existing.cohortId !== data.cohortId) {
+        return prisma.academyEnrollment.update({
+          where: { userId_courseId: { userId: data.userId, courseId: data.courseId } },
+          data: { cohortId: data.cohortId },
+        });
+      }
       return existing;
     }
     return prisma.academyEnrollment.create({
       data: {
-        ...data,
+        userId: data.userId,
+        courseId: data.courseId,
+        cohortId: data.cohortId ?? undefined,
         status: "ACTIVE",
         progress: 0,
       },

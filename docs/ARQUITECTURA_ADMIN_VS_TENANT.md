@@ -23,6 +23,7 @@ Cada contexto tiene UI, rutas y autorizacion distintas.
 3. **Auth por contexto**
    - **Admin:** `withAuth` + verificacion de `platformRole`.
    - **Tenant:** `withTenantAuth` + `tenantId` obligatorio.
+   - Cada tenant tiene el mismo flujo de login e invitaciones (crear invitación, correo, aceptar y crear usuario en el tenant). Detalle en [TENANT_AUTENTICACION_E_INVITACIONES.md](TENANT_AUTENTICACION_E_INVITACIONES.md).
 
 4. **Headers**
    - `x-tenant-slug` solo aplica a contexto tenant.

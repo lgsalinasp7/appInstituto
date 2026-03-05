@@ -308,6 +308,7 @@ Este script:
 - Se crea rol "Administrador" para el tenant
 - Si hay password, se crea usuario admin
 - El tenant queda activo inmediatamente
+- **El nuevo tenant queda listo para invitar usuarios:** el usuario admin inicial recibe un límite de invitaciones por defecto (ver [Autenticación e invitaciones por tenant](#67-autenticación-e-invitaciones-por-tenant)).
 
 ### 6.2 Crear Tenant por Línea de Comandos
 
@@ -361,6 +362,10 @@ Mismo proceso que suspender, pero el botón dice **"Activar"**.
 | `PENDIENTE` | 🟡 Amarillo | Esperando activación |
 | `SUSPENDIDO` | 🔴 Rojo | Acceso bloqueado temporalmente |
 | `CANCELADO` | ⚫ Gris | Dado de baja (soft delete) |
+
+### 6.7 Autenticación e invitaciones por tenant
+
+Cada tenant tiene el mismo flujo de **login en su subdominio** e **invitaciones** (crear invitación, enviar correo, aceptar y crear usuario en el tenant). El detalle del patrón estándar (URLs, APIs, requisito de `invitationLimit`, diagrama de flujo) está documentado en **[TENANT_AUTENTICACION_E_INVITACIONES.md](TENANT_AUTENTICACION_E_INVITACIONES.md)**.
 
 ---
 

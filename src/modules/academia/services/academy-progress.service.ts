@@ -49,6 +49,34 @@ export class AcademyProgressService {
     };
   }
 
+  static async updateVideoProgress(
+    userId: string,
+    lessonId: string,
+    videoProgress: number,
+    timeSpentSecDelta: number
+  ): Promise<AcademyStudentProgress> {
+    const existing = await prisma.academyStudentProgress.findUnique({
+      where: { userId_lessonId: { userId, lessonId } },
+    });
+    const newTimeSpentSec = (existing?.timeSpentSec ?? 0) + timeSpentSecDelta;
+    return prisma.academyStudentProgress.upsert({
+      where: { userId_lessonId: { userId, lessonId } },
+      create: {
+        userId,
+        lessonId,
+        completed: false,
+        videoWatchedAt: new Date(),
+        videoProgress,
+        timeSpentSec: timeSpentSecDelta,
+      },
+      update: {
+        videoProgress,
+        timeSpentSec: newTimeSpentSec,
+        ...(existing && !existing.videoWatchedAt ? { videoWatchedAt: new Date() } : {}),
+      },
+    });
+  }
+
   static async completeLesson(userId: string, lessonId: string): Promise<AcademyStudentProgress> {
     const progress = await prisma.academyStudentProgress.upsert({
       where: {
@@ -126,6 +154,7 @@ export class AcademyProgressService {
         totalLessons,
         completedLessons,
         progressPercent,
+        cohortId: e.cohortId ?? undefined,
       };
     });
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { BookOpen, ChevronRight, Clock3 } from "lucide-react";
 
 interface Course {
@@ -44,7 +45,8 @@ export function CoursesManagement() {
 
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {courses.map((c) => (
-          <article key={c.id} className="group academy-card-dark overflow-hidden transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-lg">
+          <Link key={c.id} href={`/academia/admin/courses/${c.id}`}>
+          <article className="group academy-card-dark overflow-hidden transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-lg cursor-pointer">
             <div className="h-36 bg-gradient-to-br from-slate-800 via-slate-700 to-slate-800 relative">
               <div className="absolute left-4 top-4 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider academy-pill-dark">
                 {c.category}
@@ -66,13 +68,14 @@ export function CoursesManagement() {
                   <Clock3 className="w-3.5 h-3.5" />
                   Nivel {c.level}
                 </span>
-                <span className="font-semibold text-blue-400 inline-flex items-center gap-1">
+                <span className="font-semibold text-cyan-400 group-hover:text-cyan-300 inline-flex items-center gap-1 transition-colors">
                   Gestionar
                   <ChevronRight className="w-4 h-4" />
                 </span>
               </div>
             </div>
           </article>
+          </Link>
         ))}
       </div>
 

@@ -34,10 +34,17 @@ export const createLessonSchema = z.object({
 export const createEnrollmentSchema = z.object({
   userId: z.string().min(1),
   courseId: z.string().min(1),
+  cohortId: z.string().min(1).optional(),
 });
 
 export const completeLessonSchema = z.object({
   lessonId: z.string().min(1),
+});
+
+export const updateVideoProgressSchema = z.object({
+  lessonId: z.string().min(1),
+  videoProgress: z.number().int().min(0).max(100),
+  timeSpentSec: z.number().int().min(0),
 });
 
 export const createCohortSchema = z.object({
@@ -50,9 +57,27 @@ export const createCohortSchema = z.object({
   courseId: z.string().min(1),
 });
 
+export const createCohortEventSchema = z.object({
+  title: z.string().min(1),
+  type: z.string().min(1),
+  dayOfWeek: z.number().int().min(0).max(6).optional(),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+  scheduledAt: z.coerce.date().optional(),
+});
+
+export const createAssessmentSchema = z.object({
+  title: z.string().min(1),
+  type: z.string().min(1),
+  scheduledAt: z.coerce.date(),
+  durationMinutes: z.number().int().min(0).optional(),
+});
+
 export type CreateCourseInput = z.infer<typeof createCourseSchema>;
 export type CreateModuleInput = z.infer<typeof createModuleSchema>;
 export type CreateLessonInput = z.infer<typeof createLessonSchema>;
 export type CreateEnrollmentInput = z.infer<typeof createEnrollmentSchema>;
 export type CompleteLessonInput = z.infer<typeof completeLessonSchema>;
 export type CreateCohortInput = z.infer<typeof createCohortSchema>;
+export type CreateCohortEventInput = z.infer<typeof createCohortEventSchema>;
+export type CreateAssessmentInput = z.infer<typeof createAssessmentSchema>;

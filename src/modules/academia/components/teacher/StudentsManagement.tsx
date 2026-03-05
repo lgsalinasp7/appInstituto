@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface User {
   id: string;
@@ -26,40 +25,40 @@ export function StudentsManagement() {
 
   if (loading) {
     return (
-      <div className="p-8">
-        <h1 className="text-2xl font-bold mb-6">Estudiantes</h1>
-        <p className="text-muted-foreground">Cargando...</p>
+      <div className="academy-card-dark p-8">
+        <h1 className="text-2xl font-bold text-white mb-6 font-display tracking-tight">Estudiantes</h1>
+        <p className="text-slate-400">Cargando...</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold">Estudiantes</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de estudiantes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {users.map((u) => (
-              <div
-                key={u.id}
-                className="flex items-center justify-between p-3 rounded-lg border"
-              >
-                <div>
-                  <p className="font-medium">{u.name || u.email}</p>
-                  <p className="text-sm text-muted-foreground">{u.email}</p>
-                </div>
-                <span className="text-xs">{u.platformRole || "—"}</span>
+      <h1 className="text-3xl font-black tracking-tight text-white font-display">Estudiantes</h1>
+      <div className="academy-card-dark p-6 flex flex-col gap-6 rounded-xl border border-white/[0.08] shadow-none">
+        <div>
+          <h2 className="text-lg font-bold text-white font-display">Lista de estudiantes</h2>
+        </div>
+        <div className="space-y-2">
+          {users.map((u) => (
+            <div
+              key={u.id}
+              className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-white/[0.02]"
+            >
+              <div>
+                <p className="font-semibold text-white">{u.name || u.email}</p>
+                <p className="text-sm text-slate-400">{u.email}</p>
               </div>
-            ))}
-          </div>
-          {users.length === 0 && (
-            <p className="text-muted-foreground">No hay estudiantes.</p>
-          )}
-        </CardContent>
-      </Card>
+              <span className="text-xs font-medium text-slate-400 px-2 py-1 rounded-lg border border-white/[0.08] bg-white/[0.04]">
+                {u.platformRole || "—"}
+              </span>
+            </div>
+          ))}
+        </div>
+        {users.length === 0 && (
+          <p className="text-slate-500">No hay estudiantes.</p>
+        )}
+      </div>
     </div>
   );
 }

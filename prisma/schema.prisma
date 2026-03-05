@@ -88,9 +88,11 @@ model User {
   kaledInteractions  KaledLeadInteraction[]
 
   // Academia LMS
-  academyEnrollments   AcademyEnrollment[]
-  academyProgress      AcademyStudentProgress[]
-  academyCoursesCreated AcademyCourse[] @relation("AcademyCourseCreator")
+  academyEnrollments       AcademyEnrollment[]
+  academyProgress          AcademyStudentProgress[]
+  academyCoursesCreated    AcademyCourse[] @relation("AcademyCourseCreator")
+  academyAssessmentResults AcademyAssessmentResult[]
+  academyTaskCompletions   AcademyTaskCompletion[]
 
   @@index([email])
   @@index([roleId])
@@ -1277,15 +1279,48 @@ model AcademyLesson {
 
   module    AcademyModule          @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   progress  AcademyStudentProgress[]
+  tasks     AcademyLessonTask[]
 
   @@index([moduleId])
   @@index([order])
+}
+
+model AcademyLessonTask {
+  id          String   @id @default(cuid())
+  lessonId    String
+  title       String
+  type        String   // HOMEWORK, EXERCISE, QUIZ
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  lesson      AcademyLesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completions AcademyTaskCompletion[]
+
+  @@index([lessonId])
+}
+
+model AcademyTaskCompletion {
+  id          String   @id @default(cuid())
+  userId      String
+  taskId      String
+  completed   Boolean  @default(false)
+  completedAt DateTime?
+  score       Decimal? @db.Decimal(5, 2)
+  createdAt   DateTime @default(now())
+
+  user User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task AcademyLessonTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, taskId])
+  @@index([userId])
+  @@index([taskId])
 }
 
 model AcademyEnrollment {
   id         String   @id @default(cuid())
   userId     String
   courseId   String
+  cohortId   String?
   status     String   @default("ACTIVE")
   progress   Decimal  @default(0) @db.Decimal(5, 2)
   enrolledAt DateTime @default(now())
@@ -1293,44 +1328,101 @@ model AcademyEnrollment {
 
   user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   course AcademyCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  cohort AcademyCohort? @relation(fields: [cohortId], references: [id], onDelete: SetNull)
 
   @@unique([userId, courseId])
   @@index([userId])
   @@index([courseId])
+  @@index([cohortId])
   @@index([status])
 }
 
 model AcademyCohort {
-  id              String             @id @default(cuid())
+  id              String                   @id @default(cuid())
   name            String
   startDate       DateTime
   endDate         DateTime
   maxStudents     Int
-  currentStudents Int                @default(0)
+  currentStudents Int                      @default(0)
   status          AcademyCohortStatus
   schedule        Json
   courseId        String
   tenantId        String
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
 
-  course AcademyCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  tenant Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  course      AcademyCourse           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  tenant      Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  enrollments AcademyEnrollment[]
+  events      AcademyCohortEvent[]
+  assessments AcademyAssessment[]
 
   @@index([courseId])
   @@index([tenantId])
   @@index([status])
 }
 
-model AcademyStudentProgress {
-  id          String    @id @default(cuid())
-  userId      String
-  lessonId    String
-  completed   Boolean   @default(false)
-  completedAt DateTime?
-  createdAt   DateTime  @default(now())
+model AcademyCohortEvent {
+  id          String       @id @default(cuid())
+  cohortId    String
+  title       String
+  type        String       // HANDS_ON, LECTURE, LIVE, etc.
+  dayOfWeek   Int?         // 0-6 (domingo-sábado)
+  startTime   String?      // "09:00"
+  endTime     String?
+  scheduledAt DateTime?    // para eventos puntuales
+  createdAt   DateTime     @default(now())
 
-  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cohort AcademyCohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+
+  @@index([cohortId])
+}
+
+model AcademyAssessment {
+  id               String   @id @default(cuid())
+  cohortId         String
+  title            String
+  type             String   // CHECKPOINT, EXAM, QUIZ
+  scheduledAt      DateTime
+  durationMinutes  Int?
+  createdAt        DateTime @default(now())
+
+  cohort AcademyCohort            @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  results AcademyAssessmentResult[]
+
+  @@index([cohortId])
+}
+
+model AcademyAssessmentResult {
+  id           String   @id @default(cuid())
+  userId       String
+  assessmentId String
+  score        Decimal? @db.Decimal(5, 2)
+  completed    Boolean  @default(false)
+  completedAt  DateTime?
+  createdAt    DateTime @default(now())
+
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assessment AcademyAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, assessmentId])
+  @@index([userId])
+  @@index([assessmentId])
+}
+
+model AcademyStudentProgress {
+  id             String    @id @default(cuid())
+  userId         String
+  lessonId       String
+  completed      Boolean   @default(false)
+  completedAt    DateTime?
+  videoWatchedAt DateTime?
+  videoProgress  Int?      // % del video visto (0-100)
+  timeSpentSec   Int?      // tiempo total en la lección (segundos)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson AcademyLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])

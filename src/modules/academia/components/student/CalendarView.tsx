@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { ChevronLeft, ChevronRight, CalendarDays, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -226,10 +227,14 @@ export function CalendarView() {
               ) : (
                 <div className="space-y-2">
                   {selectedDayEvents.map((e) => (
-                    <div key={e.id} className={cn(
-                      "flex items-start gap-3 p-3 rounded-xl border",
-                      STATUS_COLOR[e.status] ?? "bg-slate-700/30 border-slate-600 text-slate-300"
-                    )}>
+                    <Link
+                      key={e.id}
+                      href={`/academia/student/cohort/${e.id}`}
+                      className={cn(
+                        "flex items-start gap-3 p-3 rounded-xl border hover:border-cyan-500/30 transition-colors block",
+                        STATUS_COLOR[e.status] ?? "bg-slate-700/30 border-slate-600 text-slate-300"
+                      )}
+                    >
                       <Circle className="w-2 h-2 mt-1.5 shrink-0 fill-current" />
                       <div className="min-w-0">
                         <p className="text-sm font-semibold truncate">{e.name}</p>
@@ -240,7 +245,7 @@ export function CalendarView() {
                           {new Date(e.endDate).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
                         </p>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -260,7 +265,11 @@ export function CalendarView() {
             ) : (
               <div className="space-y-3">
                 {upcomingEvents.map((e) => (
-                  <div key={e.id} className="flex flex-col gap-1 p-3 rounded-xl border border-white/[0.06] hover:border-cyan-500/20 transition-colors">
+                  <Link
+                    key={e.id}
+                    href={`/academia/student/cohort/${e.id}`}
+                    className="flex flex-col gap-1 p-3 rounded-xl border border-white/[0.06] hover:border-cyan-500/20 transition-colors block"
+                  >
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-white truncate">{e.name}</p>
                       <span className={cn(
@@ -276,7 +285,7 @@ export function CalendarView() {
                       {" — "}
                       {new Date(e.endDate).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
                     </p>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

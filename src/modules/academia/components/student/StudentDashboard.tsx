@@ -11,6 +11,7 @@ interface CourseSummary {
   totalLessons: number;
   completedLessons: number;
   progressPercent: number;
+  cohortId?: string | null;
 }
 
 interface CalendarEvent {
@@ -87,7 +88,7 @@ export function StudentDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Próxima cohorte */}
         <Link
-          href="/academia/student/calendar"
+          href={nextCohort ? `/academia/student/cohort/${nextCohort.id}` : "/academia/student/calendar"}
           className="academy-card-dark p-5 flex items-start gap-4 hover:border-cyan-500/20 transition-colors group"
         >
           <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 shrink-0">
@@ -146,10 +147,12 @@ export function StudentDashboard() {
           <p className="text-slate-400">No tienes cursos inscritos.</p>
         ) : (
           <div className="space-y-3">
-            {summaries.map((s) => (
+            {summaries.map((s) => {
+              const href = s.cohortId ? `/academia/student/cohort/${s.cohortId}` : `/academia/student/courses/${s.courseId}`;
+              return (
               <Link
                 key={s.courseId}
-                href={`/academia/student/courses/${s.courseId}`}
+                href={href}
                 className={cn(
                   "group flex items-center gap-4 p-4 rounded-xl border border-white/[0.06] hover:border-cyan-500/20 hover:bg-white/[0.03] transition-all duration-200"
                 )}
@@ -171,7 +174,8 @@ export function StudentDashboard() {
                 </div>
                 <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-cyan-400 shrink-0" />
               </Link>
-            ))}
+            );
+            })}
           </div>
         )}
       </div>

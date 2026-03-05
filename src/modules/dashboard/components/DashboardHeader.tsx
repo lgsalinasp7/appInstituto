@@ -32,6 +32,11 @@ const routeNames: Record<string, string> = {
   "/admin": "Administración",
   "/admin/users": "Usuarios",
   "/admin/config/roles": "Roles",
+  "/academia/admin/analytics": "Dashboard",
+  "/academia/admin/courses": "Cursos",
+  "/academia/admin/calendar": "Calendario",
+  "/academia/admin/leaderboard": "Leaderboard",
+  "/academia/admin/users": "Usuarios",
 };
 
 export function DashboardHeader({ title, titleHighlight, subtitle, onFilterChange, children }: DashboardHeaderProps) {

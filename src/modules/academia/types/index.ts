@@ -34,6 +34,7 @@ export interface CourseProgressSummary {
   totalLessons: number;
   completedLessons: number;
   progressPercent: number;
+  cohortId?: string | null;
 }
 
 export interface LeaderboardEntry {

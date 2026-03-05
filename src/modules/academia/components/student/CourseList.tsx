@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 interface Enrollment {
   id: string;
   courseId: string;
+  cohortId?: string | null;
   progress: number;
   course: {
     id: string;
@@ -57,8 +58,10 @@ export function CourseList() {
       <h2 className="text-xl font-bold text-white font-display tracking-tight">Carreras</h2>
 
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {enrollments.map((e) => (
-          <Link key={e.id} href={`/academia/student/courses/${e.courseId}`} className="group">
+        {enrollments.map((e) => {
+          const href = e.cohortId ? `/academia/student/cohort/${e.cohortId}` : `/academia/student/courses/${e.courseId}`;
+          return (
+          <Link key={e.id} href={href} className="group">
             <article className="academy-card-dark overflow-hidden transition-all duration-200 group-hover:border-cyan-500/20 group-hover:-translate-y-0.5">
               <div className="h-36 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-slate-800/80 via-slate-800/60 to-slate-900/80" />
@@ -103,7 +106,8 @@ export function CourseList() {
               </div>
             </article>
           </Link>
-        ))}
+        );
+        })}
       </div>
       {enrollments.length === 0 && (
         <div className="academy-card-dark p-8 text-center">

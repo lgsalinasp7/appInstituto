@@ -27,10 +27,24 @@ export const GET = withPlatformAdmin(['SUPER_ADMIN', 'ASESOR_COMERCIAL'], async 
 
 // POST /api/admin/tenants - Create new tenant
 export const POST = withPlatformAdmin(['SUPER_ADMIN', 'ASESOR_COMERCIAL'], async (request: NextRequest) => {
-  const body: CreateTenantData = await request.json();
+  const body = await request.json();
+
+  // Build CreateTenantData (allow optional adminInvitationLimit from body)
+  const data: CreateTenantData = {
+    name: body.name,
+    slug: body.slug,
+    domain: body.domain,
+    email: body.email,
+    plan: body.plan,
+    adminName: body.adminName,
+    adminPassword: body.adminPassword,
+    autoGenerateAdminPassword: body.autoGenerateAdminPassword,
+    subscriptionEndsAt: body.subscriptionEndsAt ? new Date(body.subscriptionEndsAt) : undefined,
+    adminInvitationLimit: typeof body.adminInvitationLimit === 'number' ? body.adminInvitationLimit : undefined,
+  };
 
   // Validate required fields
-  if (!body.name || !body.slug || !body.email) {
+  if (!data.name || !data.slug || !data.email) {
     return NextResponse.json(
       { success: false, error: 'Nombre, slug y email son requeridos' },
       { status: 400 }
@@ -38,7 +52,7 @@ export const POST = withPlatformAdmin(['SUPER_ADMIN', 'ASESOR_COMERCIAL'], async
   }
 
   // Check slug availability
-  const slugAvailable = await TenantsService.isSlugAvailable(body.slug);
+  const slugAvailable = await TenantsService.isSlugAvailable(data.slug);
   if (!slugAvailable) {
     return NextResponse.json(
       { success: false, error: 'El slug ya está en uso' },
@@ -47,21 +61,21 @@ export const POST = withPlatformAdmin(['SUPER_ADMIN', 'ASESOR_COMERCIAL'], async
   }
 
   // Validate slug format (alphanumeric and hyphens only)
-  if (!/^[a-z0-9-]+$/.test(body.slug)) {
+  if (!/^[a-z0-9-]+$/.test(data.slug)) {
     return NextResponse.json(
       { success: false, error: 'El slug solo puede contener letras minúsculas, números y guiones' },
       { status: 400 }
     );
   }
 
-  if (["admin", "www"].includes(body.slug)) {
+  if (["admin", "www"].includes(data.slug)) {
     return NextResponse.json(
       { success: false, error: "Slug reservado por la plataforma" },
       { status: 400 }
     );
   }
 
-  const tenant = await TenantsService.create(body);
+  const tenant = await TenantsService.create(data);
 
   return NextResponse.json({ success: true, data: tenant }, { status: 201 });
 });

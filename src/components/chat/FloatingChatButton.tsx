@@ -5,8 +5,7 @@
 "use client";
 
 import { useState } from "react";
-import { MessageCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { ChatWindow } from "./ChatWindow";
 
 export function FloatingChatButton() {
@@ -22,14 +21,21 @@ export function FloatingChatButton() {
 
   return (
     <>
-      {/* Botón flotante */}
-      <Button
+      {/* Logo flotante - fuera del círculo, más realista */}
+      <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 shadow-lg transition-all hover:scale-110 hover:shadow-xl"
-        size="icon"
+        className="fixed bottom-4 right-4 z-50 cursor-pointer transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded-lg"
+        aria-label="Abrir chat"
       >
-        <MessageCircle className="h-6 w-6 text-white" />
-      </Button>
+        <Image
+          src="/logo Chatbot.png"
+          alt="Chatbot"
+          width={64}
+          height={64}
+          className="object-contain drop-shadow-lg"
+        />
+      </button>
 
       {/* Ventana del chat */}
       {isOpen && (

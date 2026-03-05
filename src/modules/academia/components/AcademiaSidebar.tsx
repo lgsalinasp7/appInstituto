@@ -15,21 +15,19 @@ const iconMap: Record<string, ComponentType<{ size?: number; className?: string 
   "/academia/student": LayoutDashboard,
   "/academia/student/courses": BookOpen,
   "/academia/student/progress": BarChart3,
+  "/academia/student/calendar": CalendarDays,
+  "/academia/student/leaderboard": Trophy,
   "/academia/teacher": LayoutDashboard,
   "/academia/teacher/students": Users,
   "/academia/teacher/courses": BookOpen,
   "/academia/teacher/messages": MessageSquare,
-  "/academia/admin": LayoutDashboard,
-  "/academia/admin/courses": BookOpen,
-  "/academia/admin/cohorts": Users,
-  "/academia/admin/users": Users,
-  "/academia/admin/analytics": BarChart3,
-  "/academia/student/calendar": CalendarDays,
-  "/academia/student/leaderboard": Trophy,
-  "/academia/admin/calendar": CalendarDays,
-  "/academia/admin/leaderboard": Trophy,
   "/academia/teacher/calendar": CalendarDays,
   "/academia/teacher/leaderboard": Trophy,
+  "/academia/admin/analytics": LayoutDashboard,
+  "/academia/admin/courses": BookOpen,
+  "/academia/admin/calendar": CalendarDays,
+  "/academia/admin/leaderboard": Trophy,
+  "/academia/admin/users": Users,
 };
 
 export function AcademiaSidebar() {
@@ -96,7 +94,11 @@ export function AcademiaSidebar() {
         )}
         {routes.map((item) => {
           const Icon = iconMap[item.path] || LayoutDashboard;
-          const isDashboardRoute = ["/academia/admin", "/academia/student", "/academia/teacher"].includes(item.path);
+          const isDashboardRoute = [
+            "/academia/admin/analytics",
+            "/academia/student",
+            "/academia/teacher",
+          ].includes(item.path);
           const isActive = pathname === item.path || (!isDashboardRoute && pathname.startsWith(item.path + "/"));
           if (collapsed) {
             return (

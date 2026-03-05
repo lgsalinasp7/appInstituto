@@ -15,6 +15,9 @@ import type {
   TenantStats,
 } from '../types';
 
+/** Valor por defecto de invitationLimit para el usuario admin al crear un tenant. */
+const DEFAULT_ADMIN_INVITATION_LIMIT = 10;
+
 export const TenantsService = {
   /**
    * Get all tenants with pagination and filters
@@ -156,6 +159,7 @@ export const TenantsService = {
       adminName,
       adminPassword,
       autoGenerateAdminPassword = false,
+      adminInvitationLimit,
     } = data;
 
     const generatedPassword =
@@ -184,8 +188,19 @@ export const TenantsService = {
       },
     });
 
+    // Create optional "Usuario" role so admin can invite users with a non-admin role
+    await prisma.role.create({
+      data: {
+        name: 'Usuario',
+        description: 'Usuario estándar del tenant',
+        tenantId: tenant.id,
+      },
+    });
+
     // Create admin user if credentials provided
     let adminUser = null;
+    const effectiveInvitationLimit = adminInvitationLimit ?? DEFAULT_ADMIN_INVITATION_LIMIT;
+
     if (email && effectiveAdminPassword) {
       // Import bcrypt for password hashing
       const bcrypt = await import('bcryptjs');
@@ -200,6 +215,7 @@ export const TenantsService = {
           tenantId: tenant.id,
           isActive: true,
           mustChangePassword: true,
+          invitationLimit: effectiveInvitationLimit,
         },
         include: {
           role: {

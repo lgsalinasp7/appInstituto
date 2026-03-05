@@ -29,14 +29,15 @@ export class AcademyCourseService {
       where: { id, tenantId },
       include: {
         modules: {
-          where: { isActive: true },
           orderBy: { order: "asc" },
           include: {
             lessons: {
-              where: { isActive: true },
               orderBy: { order: "asc" },
             },
           },
+        },
+        cohorts: {
+          orderBy: { startDate: "desc" },
         },
         createdBy: {
           select: { id: true, name: true, email: true },
@@ -73,5 +74,30 @@ export class AcademyCourseService {
         videoUrl: data.videoUrl || undefined,
       },
     });
+  }
+
+  static async updateModule(id: string, data: { title?: string; description?: string; order?: number }) {
+    return prisma.academyModule.update({
+      where: { id },
+      data,
+    });
+  }
+
+  static async deleteModule(id: string) {
+    return prisma.academyModule.delete({ where: { id } });
+  }
+
+  static async updateLesson(
+    id: string,
+    data: { title?: string; description?: string; content?: string; videoUrl?: string; duration?: number; order?: number }
+  ) {
+    return prisma.academyLesson.update({
+      where: { id },
+      data: { ...data, videoUrl: data.videoUrl === "" ? null : data.videoUrl },
+    });
+  }
+
+  static async deleteLesson(id: string) {
+    return prisma.academyLesson.delete({ where: { id } });
   }
 }

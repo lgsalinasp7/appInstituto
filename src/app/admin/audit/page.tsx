@@ -1,4 +1,6 @@
 
+import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { AdminService } from "@/modules/admin/services/admin.service";
 import { AuditLogTable } from "@/modules/admin";
 import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
@@ -6,6 +8,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const headersList = await headers();
+  const host = headersList.get("host") || "admin.kaledsoft.tech";
+  const protocol = headersList.get("x-forwarded-proto") === "https" ? "https" : "http";
+  const canonical = `${protocol}://${host}/admin/audit`;
+  return {
+    title: "Registro de Auditoría | Admin KaledSoft",
+    description: "Monitorización y trazabilidad de todas las acciones del ecosistema KaledSoft.",
+    alternates: { canonical },
+    robots: { index: false, follow: true },
+  };
+}
 
 export default async function AdminAuditPage() {
   // Fetch latest 100 logs

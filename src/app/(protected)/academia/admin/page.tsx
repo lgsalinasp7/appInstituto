@@ -1,5 +1,5 @@
-import { AdminAcademyDashboard } from "@/modules/academia/components/admin/AdminAcademyDashboard";
+import { redirect } from "next/navigation";
 
 export default function AcademiaAdminPage() {
-  return <AdminAcademyDashboard />;
+  redirect("/academia/admin/analytics");
 }

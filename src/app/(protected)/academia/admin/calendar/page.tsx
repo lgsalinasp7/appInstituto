@@ -1,5 +1,5 @@
-import { CalendarView } from "@/modules/academia/components/student/CalendarView";
+import { AdminCalendarAndCohortsView } from "@/modules/academia/components/admin/AdminCalendarAndCohortsView";
 
 export default function AcademiaAdminCalendarPage() {
-  return <CalendarView />;
+  return <AdminCalendarAndCohortsView />;
 }

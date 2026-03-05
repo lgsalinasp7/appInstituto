@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronRight, Play, CalendarDays, Clock3, ChevronDown } from "lucide-react";
+import { VideoProgressTracker } from "./VideoProgressTracker";
 import { cn } from "@/lib/utils";
 
 interface Lesson {
@@ -282,13 +283,11 @@ export function LessonViewer({ courseId }: LessonViewerProps) {
                 </div>
 
                 {selectedLesson.videoUrl && (
-                  <div className="rounded-xl overflow-hidden bg-black">
-                    <video
-                      src={selectedLesson.videoUrl}
-                      controls
-                      className="w-full"
-                    />
-                  </div>
+                  <VideoProgressTracker
+                    lessonId={selectedLesson.id}
+                    videoUrl={selectedLesson.videoUrl}
+                    className="rounded-xl overflow-hidden bg-black"
+                  />
                 )}
 
                 <div

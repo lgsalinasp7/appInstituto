@@ -99,6 +99,8 @@ El endpoint `POST /api/admin/tenants/bootstrap-academy` y el boton "Crear Kaled 
 - `docs/TENANT_ISOLATION.md` - Aislamiento de datos por tenant
 - `docs/IMPLEMENTACION_PRODUCTOS_AISLAMIENTO.md` - Resumen completo de la implementacion
 
+Kaled Academy utiliza el **mismo patrón de autenticación e invitaciones** que el resto de tenants (login en subdominio, invitaciones vía `POST /api/invitations`, aceptación y creación de usuario en el tenant). Lo específico de Academia es el bloqueo de registro público, los roles ACADEMY_* y la UI en Academia > Usuarios. Detalle del patrón estándar: [TENANT_AUTENTICACION_E_INVITACIONES.md](TENANT_AUTENTICACION_E_INVITACIONES.md).
+
 ## Notas para siguiente iteracion (frontend/backend profundo)
 
 - Integrar flujo completo de invitaciones UI para Academia.
