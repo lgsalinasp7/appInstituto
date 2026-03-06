@@ -14,6 +14,8 @@ interface InviteUserModalProps {
     onOpenChange: (open: boolean) => void;
     onInviteSuccess?: () => void;
     isSuperAdmin?: boolean;
+    /** Cuando se usa desde Academia → Usuarios, pre-selecciona Estudiante */
+    defaultAcademyRole?: string;
 }
 
 interface RoleOption {
@@ -28,10 +30,10 @@ const ACADEMY_ROLES = [
     { value: "ACADEMY_ADMIN", label: "Administrador Academia" },
 ] as const;
 
-export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAdmin = false }: InviteUserModalProps) {
+export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAdmin = false, defaultAcademyRole }: InviteUserModalProps) {
     const [email, setEmail] = useState("");
     const [roleId, setRoleId] = useState("");
-    const [academyRole, setAcademyRole] = useState<string>("");
+    const [academyRole, setAcademyRole] = useState<string>(defaultAcademyRole ?? "");
     const [isLoading, setIsLoading] = useState(false);
     const [roles, setRoles] = useState<RoleOption[]>([]);
     const { user } = useAuthStore();
@@ -84,6 +86,13 @@ export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAd
             fetchRoles();
         }
     }, [open, isSuperAdmin, isAcademyTenant]);
+
+    // Pre-seleccionar rol de Academia cuando se abre desde Academia → Usuarios o Configuración → Invitar estudiante
+    useEffect(() => {
+        if (open) {
+            setAcademyRole(defaultAcademyRole ?? "");
+        }
+    }, [open, defaultAcademyRole]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

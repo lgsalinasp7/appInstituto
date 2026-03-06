@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { UserPlus } from "lucide-react";
+import { InviteUserModal } from "@/modules/config/components/InviteUserModal";
+import { useAuthStore } from "@/lib/store/auth-store";
 
 interface User {
   id: string;
@@ -12,8 +15,16 @@ interface User {
 export function StudentsManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const { user } = useAuthStore();
+  // Pueden invitar: Super Admin, Admin de Academia, o Administrador del tenant. Los profesores (ACADEMY_TEACHER) no pueden invitar.
+  const canInvite =
+    (user?.role?.name?.toUpperCase() === "SUPERADMIN") ||
+    user?.platformRole === "SUPER_ADMIN" ||
+    user?.platformRole === "ACADEMY_ADMIN" ||
+    user?.role?.name === "ADMINISTRADOR";
 
-  useEffect(() => {
+  const fetchStudents = useCallback(() => {
     fetch("/api/academy/students")
       .then((r) => r.json())
       .then((res) => {
@@ -22,6 +33,10 @@ export function StudentsManagement() {
       })
       .catch(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetchStudents();
+  }, [fetchStudents]);
 
   if (loading) {
     return (
@@ -34,7 +49,19 @@ export function StudentsManagement() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-black tracking-tight text-white font-display">Estudiantes</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 className="text-3xl font-black tracking-tight text-white font-display">Estudiantes</h1>
+        {canInvite && (
+          <button
+            type="button"
+            onClick={() => setIsInviteModalOpen(true)}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20 hover:from-cyan-400 hover:to-blue-500 transition-all"
+          >
+            <UserPlus className="w-4 h-4" />
+            Invitar estudiante
+          </button>
+        )}
+      </div>
       <div className="academy-card-dark p-6 flex flex-col gap-6 rounded-xl border border-white/[0.08] shadow-none">
         <div>
           <h2 className="text-lg font-bold text-white font-display">Lista de estudiantes</h2>
@@ -59,6 +86,13 @@ export function StudentsManagement() {
           <p className="text-slate-500">No hay estudiantes.</p>
         )}
       </div>
+
+      <InviteUserModal
+        open={isInviteModalOpen}
+        onOpenChange={setIsInviteModalOpen}
+        onInviteSuccess={fetchStudents}
+        defaultAcademyRole="ACADEMY_STUDENT"
+      />
     </div>
   );
 }

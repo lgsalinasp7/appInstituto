@@ -24,6 +24,11 @@ export interface AuthenticatedUser {
     name: string;
     permissions: string[];
   } | null;
+  tenant?: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
   isActive: boolean;
   mustChangePassword: boolean;
   invitationLimit: number;
@@ -105,6 +110,7 @@ export const getCurrentUser = cache(async (): Promise<AuthenticatedUser | null> 
       user: {
         include: {
           role: true,
+          tenant: true,
         },
       },
     },
@@ -144,6 +150,13 @@ export const getCurrentUser = cache(async (): Promise<AuthenticatedUser | null> 
           id: session.user.role.id,
           name: session.user.role.name,
           permissions: session.user.role.permissions,
+        }
+      : null,
+    tenant: session.user.tenant
+      ? {
+          id: session.user.tenant.id,
+          name: session.user.tenant.name,
+          slug: session.user.tenant.slug,
         }
       : null,
     isActive: session.user.isActive,

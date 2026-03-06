@@ -582,21 +582,21 @@ function CreateTenantModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <Card className="w-full max-w-lg mx-4 shadow-xl">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <Card className="glass-card rounded-[2rem] border border-white/5 w-full max-w-lg mx-4 shadow-xl text-slate-200">
         <CardHeader>
-          <CardTitle className="text-[#1e3a5f]">Crear Nuevo Tenant</CardTitle>
+          <CardTitle className="text-slate-200">Crear Nuevo Tenant</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+              <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive text-sm">
                 {error}
               </div>
             )}
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#1e3a5f]">
+              <label className="text-sm font-medium text-slate-200">
                 Nombre de la empresa
               </label>
               <Input
@@ -608,7 +608,7 @@ function CreateTenantModal({ onClose }: { onClose: () => void }) {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#1e3a5f]">
+              <label className="text-sm font-medium text-slate-200">
                 Slug (URL)
               </label>
               <Input
@@ -619,13 +619,13 @@ function CreateTenantModal({ onClose }: { onClose: () => void }) {
                 placeholder="Ej: edutec"
                 required
               />
-              <p className="text-xs text-[#64748b]">
+              <p className="text-xs text-slate-400">
                 URL: https://{formData.slug || "slug"}.kaledsoft.tech
               </p>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#1e3a5f]">
+              <label className="text-sm font-medium text-slate-200">
                 Email del administrador
               </label>
               <Input
@@ -641,7 +641,7 @@ function CreateTenantModal({ onClose }: { onClose: () => void }) {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#1e3a5f]">
+                <label className="text-sm font-medium text-slate-200">
                   Nombre del admin
                 </label>
                 <Input
@@ -653,7 +653,7 @@ function CreateTenantModal({ onClose }: { onClose: () => void }) {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#1e3a5f]">
+                <label className="text-sm font-medium text-slate-200">
                   Contraseña temporal
                 </label>
                 <Input
@@ -668,7 +668,7 @@ function CreateTenantModal({ onClose }: { onClose: () => void }) {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#1e3a5f]">Plan</label>
+              <label className="text-sm font-medium text-slate-200">Plan</label>
               <Select
                 value={formData.plan}
                 onValueChange={(value) =>
@@ -689,7 +689,7 @@ function CreateTenantModal({ onClose }: { onClose: () => void }) {
             <div className="flex gap-3 pt-4">
               <Button
                 type="button"
-                variant="outline"
+                variant="outline-dark"
                 onClick={onClose}
                 className="flex-1"
               >

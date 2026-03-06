@@ -7,13 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Mail, UserCheck, Save, Loader2 } from "lucide-react";
+import { Plus, Search, Mail, UserCheck, Save, Loader2, UserPlus } from "lucide-react";
 import { type User } from "@/modules/users";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 import { useTablePagination } from "@/hooks/use-table-pagination";
 import { TablePagination } from "@/components/ui/table-pagination";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 interface UsersClientProps {
     initialUsers: User[];
@@ -26,6 +34,10 @@ export default function UsersClient({ initialUsers, initialInvitations }: UsersC
     const { user: currentUser } = useAuthStore();
     const [searchTerm, setSearchTerm] = useState("");
     const [users, setUsers] = useState(initialUsers);
+    const [isAcademyInviteOpen, setIsAcademyInviteOpen] = useState(false);
+    const [academyInviteEmail, setAcademyInviteEmail] = useState("");
+    const [academyInviteRole, setAcademyInviteRole] = useState<"ACADEMY_STUDENT" | "ACADEMY_TEACHER" | "ACADEMY_ADMIN">("ACADEMY_STUDENT");
+    const [isAcademyInviteLoading, setIsAcademyInviteLoading] = useState(false);
 
     // useEffect-1: handle hydration (mounted pattern)
     useEffect(() => {
@@ -71,8 +83,8 @@ export default function UsersClient({ initialUsers, initialInvitations }: UsersC
         }
     }, [searchTerm, activeTab, resetUsersPage, resetInvitationsPage]);
 
-    const canInvite = currentUser?.role?.name === "SUPERADMIN" || (currentUser?.role?.name === "ADMINISTRADOR" && (currentUser?.invitationLimit || 0) > 0);
-    const isSuperAdmin = currentUser?.role?.name === "SUPERADMIN";
+    const canInvite = (currentUser?.role?.name?.toUpperCase() === "SUPERADMIN" || currentUser?.platformRole === "SUPER_ADMIN") || (currentUser?.role?.name === "ADMINISTRADOR" && (currentUser?.invitationLimit || 0) > 0);
+    const isSuperAdmin = currentUser?.role?.name?.toUpperCase() === "SUPERADMIN" || currentUser?.platformRole === "SUPER_ADMIN";
 
     const handleLimitChange = (userId: string, newLimit: string) => {
         const limit = parseInt(newLimit);
@@ -86,6 +98,39 @@ export default function UsersClient({ initialUsers, initialInvitations }: UsersC
     const handleSaveLimit = (userId: string) => {
         // TODO: Connect to backend update (Server Action)
         toast.success("Límite de invitaciones actualizado");
+    };
+
+    const handleAcademyInviteSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!academyInviteEmail.trim()) {
+            toast.error("Ingresa un correo electrónico");
+            return;
+        }
+        setIsAcademyInviteLoading(true);
+        try {
+            const res = await fetch("/api/admin/tenants/kaledacademy/invitations", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                    email: academyInviteEmail.trim(),
+                    academyRole: academyInviteRole,
+                }),
+            });
+            const data = await res.json();
+            if (!data.success) {
+                toast.error(data.error || "Error al enviar la invitación");
+                return;
+            }
+            toast.success(`Invitación enviada a ${academyInviteEmail}`);
+            setAcademyInviteEmail("");
+            setAcademyInviteRole("ACADEMY_STUDENT");
+            setIsAcademyInviteOpen(false);
+        } catch (err) {
+            toast.error("Error al enviar la invitación");
+        } finally {
+            setIsAcademyInviteLoading(false);
+        }
     };
 
     // Prevent hydration mismatch by only rendering full UI on client
@@ -105,11 +150,22 @@ export default function UsersClient({ initialUsers, initialInvitations }: UsersC
                 titleHighlight="Usuarios"
                 subtitle="Administra los accesos y privilegios del ecosistema."
             >
-                {canInvite && (
-                    <Button className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:scale-105 transition-all rounded-2xl px-8 py-7 font-bold shadow-[0_0_30px_rgba(8,145,178,0.3)] border border-white/10">
-                        <Plus className="mr-2 h-6 w-6" /> Invitar nuevo usuario
-                    </Button>
-                )}
+                <div className="flex flex-wrap gap-3">
+                    {canInvite && (
+                        <Button className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:scale-105 transition-all rounded-2xl px-8 py-7 font-bold shadow-[0_0_30px_rgba(8,145,178,0.3)] border border-white/10">
+                            <Plus className="mr-2 h-6 w-6" /> Invitar nuevo usuario
+                        </Button>
+                    )}
+                    {isSuperAdmin && (
+                        <Button
+                            type="button"
+                            onClick={() => setIsAcademyInviteOpen(true)}
+                            className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 hover:scale-105 transition-all rounded-2xl px-8 py-7 font-bold shadow-[0_0_30px_rgba(20,184,166,0.25)] border border-white/10"
+                        >
+                            <UserPlus className="mr-2 h-6 w-6" /> Invitar estudiante (Academia)
+                        </Button>
+                    )}
+                </div>
             </DashboardHeader>
 
             {/* Tabs & Search Unified Bar */}
@@ -314,6 +370,76 @@ export default function UsersClient({ initialUsers, initialInvitations }: UsersC
                     </div>
                 )}
             </div>
+
+            {/* Modal Invitar estudiante a Academia */}
+            <Dialog open={isAcademyInviteOpen} onOpenChange={setIsAcademyInviteOpen}>
+                <DialogContent className="sm:max-w-md bg-slate-900 border-slate-800 text-slate-100">
+                    <div className="h-2 w-full bg-gradient-to-r from-cyan-500 to-blue-600 rounded-t-lg -mx-6 -mt-6 mb-4" />
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-white">
+                            <UserPlus className="w-5 h-5 text-cyan-400" />
+                            Invitar estudiante a Kaled Academy
+                        </DialogTitle>
+                        <DialogDescription className="text-slate-400">
+                            Se enviará un correo con el enlace para registrarse en la Academia. El usuario podrá elegir su contraseña al aceptar.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleAcademyInviteSubmit} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="academy-email" className="text-slate-300">Correo electrónico</Label>
+                            <Input
+                                id="academy-email"
+                                type="email"
+                                placeholder="estudiante@ejemplo.com"
+                                value={academyInviteEmail}
+                                onChange={(e) => setAcademyInviteEmail(e.target.value)}
+                                required
+                                disabled={isAcademyInviteLoading}
+                                className="bg-slate-950/70 border-slate-700 text-white"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="academy-role" className="text-slate-300">Rol en Academia</Label>
+                            <select
+                                id="academy-role"
+                                value={academyInviteRole}
+                                onChange={(e) => setAcademyInviteRole(e.target.value as typeof academyInviteRole)}
+                                disabled={isAcademyInviteLoading}
+                                className="flex h-10 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/40"
+                            >
+                                <option value="ACADEMY_STUDENT">Estudiante</option>
+                                <option value="ACADEMY_TEACHER">Profesor</option>
+                                <option value="ACADEMY_ADMIN">Administrador Academia</option>
+                            </select>
+                        </div>
+                        <div className="flex gap-3 pt-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsAcademyInviteOpen(false)}
+                                disabled={isAcademyInviteLoading}
+                                className="flex-1 border-slate-700 text-slate-300 hover:bg-slate-800"
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={isAcademyInviteLoading}
+                                className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500"
+                            >
+                                {isAcademyInviteLoading ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        Enviando...
+                                    </>
+                                ) : (
+                                    "Enviar invitación"
+                                )}
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

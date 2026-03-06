@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Pencil, Trash2, Save, X, Loader2, RefreshCw, ChevronLeft, ChevronRight, Users } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Save, X, Loader2, RefreshCw, ChevronLeft, ChevronRight, Users, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { InviteUserModal } from "./InviteUserModal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -52,6 +52,7 @@ export function UsersManager() {
     const [editingUserId, setEditingUserId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState({ name: "", email: "", invitationLimit: 0 });
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [inviteModalDefaultAcademyRole, setInviteModalDefaultAcademyRole] = useState<string | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isProcessingAction, setIsProcessingAction] = useState(false);
@@ -270,6 +271,16 @@ export function UsersManager() {
             toast.error("Has alcanzado el límite de invitaciones permitidas");
             return;
         }
+        setInviteModalDefaultAcademyRole(undefined);
+        setIsInviteModalOpen(true);
+    };
+
+    const handleInviteStudentClick = () => {
+        if (isAdmin && remainingInvitations <= 0) {
+            toast.error("Has alcanzado el límite de invitaciones permitidas");
+            return;
+        }
+        setInviteModalDefaultAcademyRole("ACADEMY_STUDENT");
         setIsInviteModalOpen(true);
     };
 
@@ -318,7 +329,7 @@ export function UsersManager() {
                         )}
                     </p>
                 </div>
-                <div className="flex gap-2 w-full sm:w-auto">
+                <div className="flex gap-2 w-full sm:w-auto flex-wrap">
                     <Button
                         variant="outline"
                         size="icon"
@@ -337,6 +348,17 @@ export function UsersManager() {
                         <span className="hidden sm:inline">Invitar Usuario</span>
                         <span className="sm:hidden">Invitar</span>
                     </Button>
+                    {currentUser?.tenant?.slug === "kaledacademy" && (
+                        <Button
+                            onClick={handleInviteStudentClick}
+                            className="flex-1 sm:flex-none gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl h-10 font-bold px-6 shadow-lg shadow-cyan-500/20 hover:from-cyan-400 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={isAdmin && remainingInvitations <= 0}
+                        >
+                            <UserPlus size={18} />
+                            <span className="hidden sm:inline">Invitar estudiante</span>
+                            <span className="sm:hidden">Estudiante</span>
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -709,6 +731,7 @@ export function UsersManager() {
                 onOpenChange={setIsInviteModalOpen}
                 onInviteSuccess={handleInviteSuccess}
                 isSuperAdmin={isSuperAdmin}
+                defaultAcademyRole={inviteModalDefaultAcademyRole}
             />
 
             {/* Confirm Dialog */}

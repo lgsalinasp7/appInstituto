@@ -29,7 +29,8 @@ import {
   CreditCard,
   Target,
   Loader2,
-  Pencil
+  Pencil,
+  UserPlus,
 } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -41,9 +42,20 @@ import { TenantUserEditModal } from "./TenantUserEditModal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useTablePagination } from "@/hooks/use-table-pagination";
 import { TablePagination } from "@/components/ui/table-pagination";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 interface TenantDetailViewProps {
   tenant: TenantWithDetails;
+  /** Si true, muestra el botón "Invitar estudiante" (solo para Super Admin en KaledAcademy) */
+  canInviteAcademy?: boolean;
 }
 
 const statusThemes: Record<TenantStatus, { color: string; bg: string; border: string; glow: string }> = {
@@ -60,7 +72,7 @@ const statusLabels: Record<TenantStatus, string> = {
   CANCELADO: "Cancelado",
 };
 
-export function TenantDetailView({ tenant }: TenantDetailViewProps) {
+export function TenantDetailView({ tenant, canInviteAcademy = false }: TenantDetailViewProps) {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
@@ -494,6 +506,7 @@ export function TenantDetailView({ tenant }: TenantDetailViewProps) {
                 tenantId={tenant.id}
                 tenantSlug={tenant.slug}
                 onUserUpdated={() => router.refresh()}
+                showInviteAcademy={canInviteAcademy}
               />
             </div>
           </TabsContent>
@@ -584,13 +597,21 @@ function UsersTab({
   tenantId,
   tenantSlug,
   onUserUpdated,
+  showInviteAcademy = false,
 }: {
   users: TenantUser[];
   tenantId: string;
   tenantSlug: string;
   onUserUpdated: () => void;
+  showInviteAcademy?: boolean;
 }) {
   const [editingUser, setEditingUser] = useState<TenantUser | null>(null);
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<"ACADEMY_STUDENT" | "ACADEMY_TEACHER" | "ACADEMY_ADMIN">("ACADEMY_STUDENT");
+  const [inviteLoading, setInviteLoading] = useState(false);
+
+  const canShowInvite = showInviteAcademy;
   const {
     page,
     totalPages,
@@ -600,7 +621,38 @@ function UsersTab({
     setPage,
   } = useTablePagination(users, 6);
 
-  if (users.length === 0) {
+  const handleInviteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail.trim()) {
+      toast.error("Ingresa un correo electrónico");
+      return;
+    }
+    setInviteLoading(true);
+    try {
+      const res = await fetch("/api/admin/tenants/kaledacademy/invitations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: inviteEmail.trim(), academyRole: inviteRole }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        toast.error(data.error || "Error al enviar la invitación");
+        return;
+      }
+      toast.success(`Invitación enviada a ${inviteEmail}`);
+      setInviteEmail("");
+      setInviteRole("ACADEMY_STUDENT");
+      setIsInviteOpen(false);
+      onUserUpdated();
+    } catch {
+      toast.error("Error al enviar la invitación");
+    } finally {
+      setInviteLoading(false);
+    }
+  };
+
+  if (users.length === 0 && !canShowInvite) {
     return (
       <div className="text-center py-12">
         <Users className="w-12 h-12 text-slate-800 mx-auto mb-4 opacity-20" />
@@ -613,6 +665,68 @@ function UsersTab({
 
   return (
     <>
+      {canShowInvite && (
+        <div className="flex justify-end mb-6">
+          <Button
+            type="button"
+            onClick={() => setIsInviteOpen(true)}
+            className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 rounded-xl px-6 py-2.5 font-bold"
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            Invitar estudiante
+          </Button>
+        </div>
+      )}
+
+      <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
+        <DialogContent className="sm:max-w-md bg-slate-900 border-slate-800 text-slate-100">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-white">
+              <UserPlus className="w-5 h-5 text-cyan-400" />
+              Invitar estudiante a Kaled Academy
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              El usuario recibirá un correo con el enlace para crear su cuenta.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleInviteSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="invite-email" className="text-slate-400">Email</Label>
+              <Input
+                id="invite-email"
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="estudiante@ejemplo.com"
+                className="mt-1.5 bg-slate-800 border-slate-700"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="invite-role" className="text-slate-400">Rol</Label>
+              <select
+                id="invite-role"
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value as typeof inviteRole)}
+                className="mt-1.5 w-full h-10 rounded-lg bg-slate-800 border border-slate-700 text-white px-3"
+              >
+                <option value="ACADEMY_STUDENT">Estudiante</option>
+                <option value="ACADEMY_TEACHER">Profesor</option>
+                <option value="ACADEMY_ADMIN">Administrador</option>
+              </select>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button type="submit" disabled={inviteLoading} className="flex-1">
+                {inviteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Enviar invitación"}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => setIsInviteOpen(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>

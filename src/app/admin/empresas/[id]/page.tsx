@@ -4,6 +4,7 @@
  */
 
 import { notFound } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
 import { TenantsService } from "@/modules/tenants";
 import { TenantDetailView } from "@/modules/tenants/components/TenantDetailView";
 
@@ -15,11 +16,25 @@ interface PageProps {
 
 export default async function TenantDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const tenant = await TenantsService.getById(id);
+  const [tenant, user] = await Promise.all([
+    TenantsService.getByIdOrSlug(id),
+    getCurrentUser(),
+  ]);
 
   if (!tenant) {
     notFound();
   }
 
-  return <TenantDetailView tenant={tenant} />;
+  const isSuperAdmin =
+    user?.role?.name?.toUpperCase() === "SUPERADMIN" ||
+    user?.platformRole === "SUPER_ADMIN";
+  const canInviteAcademy =
+    tenant.slug === "kaledacademy" && isSuperAdmin;
+
+  return (
+    <TenantDetailView
+      tenant={tenant}
+      canInviteAcademy={canInviteAcademy}
+    />
+  );
 }

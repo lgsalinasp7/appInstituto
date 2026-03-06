@@ -76,6 +76,67 @@ export const TenantsService = {
   },
 
   /**
+   * Get tenant by ID or slug with full details (for detail page)
+   * Slug lookup is case-insensitive. Also accepts "kaledacademy" -> "kaled-academy".
+   */
+  async getByIdOrSlug(idOrSlug: string): Promise<TenantWithDetails | null> {
+    const slugVariants =
+      idOrSlug.toLowerCase() === 'kaledacademy'
+        ? ['kaledacademy', 'kaled-academy']
+        : [idOrSlug];
+
+    const tenant = await prisma.tenant.findFirst({
+      where: {
+        OR: [
+          { id: idOrSlug },
+          ...slugVariants.map((s) => ({ slug: { equals: s, mode: 'insensitive' as const } })),
+        ],
+      },
+      include: {
+        users: {
+          include: {
+            role: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+        _count: {
+          select: {
+            users: true,
+            students: true,
+            payments: true,
+          },
+        },
+        branding: {
+          select: { logoUrl: true },
+        },
+      },
+    });
+
+    if (!tenant) return null;
+
+    const adminUser = tenant.users.find(
+      (u) => u.role?.name?.toLowerCase().includes('admin')
+    ) || tenant.users[0] || null;
+
+    return {
+      ...tenant,
+      adminUser: adminUser ? {
+        id: adminUser.id,
+        name: adminUser.name,
+        email: adminUser.email,
+        isActive: adminUser.isActive,
+        role: adminUser.role!,
+        createdAt: adminUser.createdAt,
+      } : null,
+    } as TenantWithDetails;
+  },
+
+  /**
    * Get tenant by ID with details
    */
   async getById(id: string): Promise<TenantWithDetails | null> {

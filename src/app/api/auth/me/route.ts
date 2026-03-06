@@ -32,6 +32,13 @@ export async function GET(request: NextRequest) {
             permissions: user.role.permissions,
           }
         : null,
+      tenant: user.tenant
+        ? {
+            id: user.tenant.id,
+            name: user.tenant.name,
+            slug: user.tenant.slug,
+          }
+        : null,
       isActive: user.isActive,
       mustChangePassword: user.mustChangePassword,
       invitationLimit: user.invitationLimit,

@@ -18,9 +18,9 @@ El flujo de invitación y creación de estudiantes de Academia es una **aplicaci
 | **Validar token** | `GET /api/invitations/accept?token=xxx` | Devuelve datos de la invitación (email, rol, tenant, inviter) |
 | **Aceptar y crear usuario** | `POST /api/invitations/accept` + página `/auth/invitation/[token]` | Crea usuario en el tenant con `platformRole` (ACADEMY_STUDENT, etc.) |
 
-### Lo que no se ve / falta
+### Lo que no se ve / falta (actualizado)
 
-1. **Academia → Usuarios** (`/academia/admin/users`): solo muestra lista de estudiantes (`StudentsManagement`). No hay botón "Invitar estudiante" ni modal.
+1. **Academia → Usuarios** (`/academia/admin/users`): ~~solo muestra lista de estudiantes~~ **Implementado:** botón "Invitar estudiante" y modal reutilizando `InviteUserModal` con `defaultAcademyRole="ACADEMY_STUDENT"`. Solo visible para `ACADEMY_ADMIN`.
 2. **Configuración → Usuarios**: el botón "Invitar Usuario" está arriba de la tabla; si la vista es solo la tabla (p. ej. pantalla pequeña o pestaña "Usuarios" dentro de otro layout), puede no verse.
 3. **Asignación a cohorte**: la invitación no pide cohorte; el enrollment a curso/cohorte se hace después (por ahora manual o por otro flujo).
 
@@ -46,9 +46,11 @@ Admin Academia → [Invitar estudiante] → Email + Nombre + Rol (Estudiante)
 
 ---
 
-## Fase 1: Hacer visible la invitación en Academia
+## Fase 1: Hacer visible la invitación en Academia ✅ (implementada)
 
 **Objetivo:** Que desde **Academia → Usuarios** se pueda invitar estudiantes sin depender de Configuración.
+
+**Implementado:** En `StudentsManagement` se añadió el botón "Invitar estudiante" (visible solo para `ACADEMY_ADMIN`), estado para el modal y reutilización de `InviteUserModal` con `defaultAcademyRole="ACADEMY_STUDENT"`. En `InviteUserModal` se añadió la prop opcional `defaultAcademyRole` para pre-seleccionar el rol al abrir desde Academia.
 
 ### 1.1 Cambios en `StudentsManagement`
 
@@ -165,9 +167,9 @@ Con esto el usuario queda creado en el tenant correcto con el rol de Academia.
 
 ## Checklist de validación
 
-- [ ] Admin Academia entra a **Academia → Usuarios** y ve botón **Invitar estudiante**.
-- [ ] Al hacer clic se abre un modal para email y rol (Estudiante por defecto).
-- [ ] Al enviar, se crea la invitación y se envía el correo con link a `/auth/invitation/{token}`.
+- [x] Admin Academia entra a **Academia → Usuarios** y ve botón **Invitar estudiante**. *(Fase 1 implementada)*
+- [x] Al hacer clic se abre un modal para email y rol (Estudiante por defecto).
+- [ ] Al enviar, se crea la invitación y se envía el correo con link a `/auth/invitation/{token}`. *(verificar E2E)*
 - [ ] El link abre la página de aceptación en el dominio del tenant (ej. kaledacademy.kaledsoft.tech).
 - [ ] El estudiante completa nombre y contraseña; al enviar se crea el usuario en el tenant con `platformRole = ACADEMY_STUDENT`.
 - [ ] Tras crear la cuenta, se redirige al login del tenant y el estudiante puede entrar y ver Academia (estudiante).
