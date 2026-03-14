@@ -464,7 +464,7 @@ export const TenantsService = {
     const updateData: { name?: string; email?: string; password?: string; mustChangePassword?: boolean } = {};
 
     if (data.name !== undefined) {
-      updateData.name = data.name.trim() || null;
+      updateData.name = data.name.trim() || undefined;
     }
     if (data.email !== undefined) {
       const email = data.email.trim();
