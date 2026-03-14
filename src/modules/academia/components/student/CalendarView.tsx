@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, CalendarDays, Circle } from "lucide-react";
+import { motion } from "framer-motion";
+import { ChevronLeft, ChevronRight, CalendarDays, Circle, CalendarCheck, CalendarClock, CalendarX2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface CalendarEvent {
@@ -13,7 +14,6 @@ interface CalendarEvent {
   startDate: string;
   endDate: string;
   status: string;
-  schedule: unknown;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -66,24 +66,19 @@ function dateIsInRange(date: Date, start: Date, end: Date): boolean {
     d <= new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime();
 }
 
-export function CalendarView() {
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+interface CalendarViewProps {
+  events: CalendarEvent[];
+}
+
+const fadeUp = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
+const stagger = { show: { transition: { staggerChildren: 0.06 } } };
+
+export function CalendarView({ events }: CalendarViewProps) {
   const [selected, setSelected] = useState<Date | null>(null);
 
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
-
-  useEffect(() => {
-    fetch("/api/academy/student/calendar")
-      .then((r) => r.json())
-      .then((res) => {
-        if (res.success) setEvents(res.data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
 
   const prevMonth = () => {
     if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); }
@@ -117,31 +112,50 @@ export function CalendarView() {
     .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
     .slice(0, 5);
 
-  if (loading) {
-    return (
-      <div className="academy-card-dark p-8">
-        <h1 className="text-2xl font-bold text-white mb-4 font-display tracking-tight">Calendario</h1>
-        <p className="text-slate-400">Cargando eventos...</p>
-      </div>
-    );
-  }
+  const activeCount = events.filter((e) => e.status === "ACTIVE").length;
+  const completedCount = events.filter((e) => e.status === "COMPLETED").length;
+  const cancelledCount = events.filter((e) => e.status === "CANCELLED").length;
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-3xl font-black tracking-tight text-white font-display">Calendario</h1>
-        <p className="text-slate-400 mt-1 text-base">Fechas de inicio y fin de tus cohortes.</p>
-      </header>
+    <motion.div
+      variants={stagger}
+      initial="hidden"
+      animate="show"
+      className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8"
+    >
+      {/* Header */}
+      <motion.div variants={fadeUp}>
+        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight font-display mb-1">
+          Calendario
+        </h1>
+        <p className="text-slate-500 text-sm">Fechas de inicio y fin de tus cohortes</p>
+      </motion.div>
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
-        {/* Calendario mensual */}
-        <div className="academy-card-dark p-5">
-          {/* Header del mes */}
+      {/* Stats */}
+      <motion.div variants={fadeUp} className="grid grid-cols-3 gap-3 sm:gap-4">
+        {[
+          { label: "Activas", value: activeCount, icon: CalendarCheck, color: "#38bdf8" },
+          { label: "Completadas", value: completedCount, icon: CalendarClock, color: "#34d399" },
+          { label: "Canceladas", value: cancelledCount, icon: CalendarX2, color: "#f87171" },
+        ].map((s) => (
+          <div key={s.label} className="academy-card-dark rounded-xl sm:rounded-2xl p-4 sm:p-5 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <s.icon className="w-4 h-4 shrink-0" style={{ color: s.color }} />
+              <span className="text-[10px] sm:text-xs text-slate-500 truncate">{s.label}</span>
+            </div>
+            <div className="text-xl sm:text-2xl font-black text-white">{s.value}</div>
+          </div>
+        ))}
+      </motion.div>
+
+      <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
+        {/* Calendar */}
+        <motion.div variants={fadeUp} className="academy-card-dark rounded-xl sm:rounded-2xl p-5 sm:p-6">
           <div className="flex items-center justify-between mb-5">
             <button
               type="button"
               onClick={prevMonth}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 border border-white/[0.06] transition-colors"
             >
               <ChevronLeft size={18} />
             </button>
@@ -151,13 +165,12 @@ export function CalendarView() {
             <button
               type="button"
               onClick={nextMonth}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 border border-white/[0.06] transition-colors"
             >
               <ChevronRight size={18} />
             </button>
           </div>
 
-          {/* Días de la semana */}
           <div className="grid grid-cols-7 mb-2">
             {WEEKDAYS.map((day) => (
               <div key={day} className="text-center text-[11px] font-bold text-slate-500 uppercase tracking-wider py-1">
@@ -166,7 +179,6 @@ export function CalendarView() {
             ))}
           </div>
 
-          {/* Celdas del calendario */}
           <div className="grid grid-cols-7 gap-px">
             {Array.from({ length: totalCells }).map((_, idx) => {
               const dayNum = idx - firstDayOffset + 1;
@@ -216,7 +228,6 @@ export function CalendarView() {
             })}
           </div>
 
-          {/* Detalle del día seleccionado */}
           {selected && (
             <div className="mt-5 border-t border-white/[0.06] pt-4">
               <h3 className="text-sm font-bold text-slate-300 mb-3">
@@ -251,11 +262,11 @@ export function CalendarView() {
               )}
             </div>
           )}
-        </div>
+        </motion.div>
 
-        {/* Panel lateral: próximos eventos */}
+        {/* Sidebar */}
         <div className="space-y-4">
-          <div className="academy-card-dark p-5">
+          <motion.div variants={fadeUp} className="academy-card-dark rounded-xl sm:rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-4">
               <CalendarDays className="w-4 h-4 text-cyan-400" />
               <h3 className="text-sm font-bold text-white font-display">Próximas Cohortes</h3>
@@ -289,10 +300,9 @@ export function CalendarView() {
                 ))}
               </div>
             )}
-          </div>
+          </motion.div>
 
-          {/* Leyenda */}
-          <div className="academy-card-dark p-4">
+          <motion.div variants={fadeUp} className="academy-card-dark rounded-xl sm:rounded-2xl p-4">
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Leyenda</p>
             <div className="space-y-2">
               {Object.entries(STATUS_LABEL).map(([key, label]) => (
@@ -302,9 +312,9 @@ export function CalendarView() {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Package, GraduationCap, School, Settings, Rocket, Pencil } from 'lucide-react';
+import { Package, GraduationCap, School, Settings, Car, Rocket, Pencil } from 'lucide-react';
 import type { ProductTemplate } from '@prisma/client';
 import { ProductDeployModal } from './ProductDeployModal';
 import { ProductEditModal } from './ProductEditModal';
@@ -12,6 +12,7 @@ const iconMap: Record<string, React.ReactNode> = {
   GraduationCap: <GraduationCap className="w-6 h-6" />,
   School: <School className="w-6 h-6" />,
   Settings: <Settings className="w-6 h-6" />,
+  Car: <Car className="w-6 h-6" />,
 };
 
 interface ProductsGridViewProps {

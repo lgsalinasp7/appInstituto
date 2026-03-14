@@ -97,6 +97,7 @@ export async function GET(request: Request) {
         tenantName: invitation.tenant?.name,
         expiresAt: invitation.expiresAt,
         academyRole: (invitation as { academyRole?: string }).academyRole ?? null,
+        lavaderoRole: (invitation as { lavaderoRole?: string }).lavaderoRole ?? null,
       },
     });
   } catch (error) {
@@ -180,10 +181,16 @@ export async function POST(request: Request) {
       );
     }
 
-    const platformRole =
-      invitation.tenant?.slug === "kaledacademy" && invitation.academyRole
-        ? invitation.academyRole
-        : undefined;
+    // Determine platformRole from academyRole or lavaderoRole
+    const invitationWithRoles = invitation as typeof invitation & {
+      lavaderoRole?: string;
+    };
+    let platformRole: string | undefined;
+    if (invitation.tenant?.slug === "kaledacademy" && invitation.academyRole) {
+      platformRole = invitation.academyRole;
+    } else if (invitationWithRoles.lavaderoRole) {
+      platformRole = invitationWithRoles.lavaderoRole;
+    }
 
     // Create user with hashed password using transaction
     const result = await prisma.$transaction(async (tx) => {

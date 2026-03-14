@@ -75,7 +75,9 @@ const statusLabels: Record<TenantStatus, string> = {
 export function TenantDetailView({ tenant, canInviteAcademy = false }: TenantDetailViewProps) {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const [tempPassword, setTempPassword] = useState<string | null>(
+    tenant.generatedAdminPassword ?? null
+  );
   const [resettingPassword, setResettingPassword] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
@@ -447,10 +449,19 @@ export function TenantDetailView({ tenant, canInviteAcademy = false }: TenantDet
                   className="bg-slate-900/50 border-slate-800 h-12 rounded-xl text-white font-medium pr-12 focus:ring-0"
                 />
                 <button
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+                  type="button"
+                  onClick={() => {
+                    if (!tempPassword) {
+                      toast.info("Haz clic en el botón de actualizar para generar una contraseña temporal");
+                      return;
+                    }
+                    setShowPassword(!showPassword);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-slate-800/80 transition-colors cursor-pointer"
+                  aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
               <Button

@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ComponentType } from "react";
-import { BookOpen, Users, MessageSquare, BarChart3, LayoutDashboard, ChevronLeft, ChevronRight, House, CalendarDays, Trophy } from "lucide-react";
+import { BookOpen, Users, MessageSquare, UserCircle, LayoutDashboard, ChevronLeft, ChevronRight, House, CalendarDays, Trophy } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useBranding } from "@/components/providers/BrandingContext";
 import { getAcademyRoutesForRole } from "../config/academy-routes.config";
@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 const iconMap: Record<string, ComponentType<{ size?: number; className?: string }>> = {
   "/academia/student": LayoutDashboard,
   "/academia/student/courses": BookOpen,
-  "/academia/student/progress": BarChart3,
+  "/academia/student/profile": UserCircle,
   "/academia/student/calendar": CalendarDays,
   "/academia/student/leaderboard": Trophy,
   "/academia/teacher": LayoutDashboard,

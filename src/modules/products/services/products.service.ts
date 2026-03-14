@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { TenantsService } from '@/modules/tenants/services/tenants.service';
+import { bootstrapLavaderoTenant } from '@/modules/lavadero/services/lavadero-bootstrap.service';
 import type {
   CreateProductTemplateData,
   UpdateProductTemplateData,
@@ -89,6 +90,22 @@ export class ProductsService {
       adminPassword: data.adminPassword,
       autoGenerateAdminPassword: data.autoGeneratePassword !== false && !data.adminPassword,
     });
+
+    // Asignar platformRole al admin si es un template de Lavadero Pro
+    if (template.slug === 'lavadero-pro') {
+      const adminUser = await prisma.user.findFirst({
+        where: { tenantId: tenantResult.id },
+        orderBy: { createdAt: 'asc' },
+      });
+      if (adminUser) {
+        await prisma.user.update({
+          where: { id: adminUser.id },
+          data: { platformRole: 'LAVADERO_ADMIN' },
+        });
+      }
+      // Bootstrap servicios default del lavadero
+      await bootstrapLavaderoTenant(tenantResult.id);
+    }
 
     // Aplicar branding desde template
     await prisma.tenantBranding.upsert({

@@ -19,7 +19,7 @@ export const ACADEMY_ROUTES = {
   student: [
     { path: "/academia/student", label: "Inicio" },
     { path: "/academia/student/courses", label: "Mis Cursos" },
-    { path: "/academia/student/progress", label: "Mi Progreso" },
+    { path: "/academia/student/profile", label: "Mi Perfil" },
     { path: "/academia/student/calendar", label: "Calendario" },
     { path: "/academia/student/leaderboard", label: "Leaderboard" },
   ],
@@ -34,6 +34,7 @@ export const ACADEMY_ROUTES = {
   admin: [
     { path: "/academia/admin/analytics", label: "Dashboard" },
     { path: "/academia/admin/courses", label: "Cursos" },
+    { path: "/academia/admin/cohorts", label: "Cohortes" },
     { path: "/academia/admin/calendar", label: "Calendario" },
     { path: "/academia/admin/leaderboard", label: "Leaderboard" },
     { path: "/academia/admin/users", label: "Usuarios" },

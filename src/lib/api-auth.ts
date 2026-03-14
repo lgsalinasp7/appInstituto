@@ -48,6 +48,16 @@ export type AcademyAuthHandler = (
 ) => Promise<Response>;
 
 /**
+ * Handler type for Lavadero Pro routes (cualquier tenant + platformRole LAVADERO_*)
+ */
+export type LavaderoAuthHandler = (
+  request: NextRequest,
+  user: AuthenticatedUser,
+  tenantId: string,
+  context?: { params: Promise<Record<string, string>> }
+) => Promise<Response>;
+
+/**
  * Resuelve el tenant ID a partir del slug inyectado por middleware
  * El middleware setea x-tenant-slug (no x-tenant-id) porque no puede
  * hacer queries a DB (Edge Runtime). Aquí resolvemos slug → id.
@@ -192,6 +202,11 @@ const ACADEMY_ROLES: PlatformRole[] = [
   "ACADEMY_ADMIN",
 ];
 
+const LAVADERO_ROLES: PlatformRole[] = [
+  "LAVADERO_ADMIN",
+  "LAVADERO_SUPERVISOR",
+];
+
 /**
  * Wrapper para rutas de Academia LMS (kaledacademy.kaledsoft.tech)
  * Valida: sesión, tenant = kaledacademy, platformRole en allowedRoles
@@ -228,6 +243,52 @@ export function withAcademyAuth(
       const platformRole = userWithRole?.platformRole;
       if (!platformRole || !ACADEMY_ROLES.includes(platformRole)) {
         throw new ForbiddenError("No tiene permisos de Academia");
+      }
+      if (!allowedRoles.includes(platformRole)) {
+        throw new ForbiddenError(
+          `Acceso denegado. Se requiere uno de: ${allowedRoles.join(", ")}`
+        );
+      }
+
+      return await handler(request, user, tenantId, context);
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+}
+
+/**
+ * Wrapper para rutas de Lavadero Pro (cualquier tenant con roles LAVADERO_*)
+ * Valida: sesión, tenant, platformRole en allowedRoles
+ * NO verifica slug fijo (a diferencia de Academia)
+ */
+export function withLavaderoAuth(
+  allowedRoles: PlatformRole[],
+  handler: LavaderoAuthHandler
+) {
+  return async (request: NextRequest, context?: { params: Promise<Record<string, string>> }) => {
+    try {
+      const user = await getCurrentUser();
+      if (!user) throw new UnauthorizedError("Debe iniciar sesión");
+
+      let tenantId = await getCurrentTenantId();
+      if (!tenantId && user.tenantId) {
+        tenantId = user.tenantId;
+      }
+      if (!tenantId) throw new UnauthorizedError("No se pudo determinar el tenant");
+
+      if (user.tenantId && user.tenantId !== tenantId) {
+        throw new ForbiddenError("No tiene acceso a este tenant");
+      }
+
+      const { prisma } = await import("@/lib/prisma");
+      const userWithRole = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { platformRole: true },
+      });
+      const platformRole = userWithRole?.platformRole;
+      if (!platformRole || !LAVADERO_ROLES.includes(platformRole)) {
+        throw new ForbiddenError("No tiene permisos de Lavadero Pro");
       }
       if (!allowedRoles.includes(platformRole)) {
         throw new ForbiddenError(

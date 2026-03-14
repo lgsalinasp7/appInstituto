@@ -15,6 +15,7 @@
     "db:migrate": "prisma migrate dev",
     "db:seed-migration": "tsx prisma/seed-migration.ts",
     "db:seed-academy-stack": "npx tsx prisma/seed-academy-stack.ts",
+    "db:seed-kaledacademy": "npx tsx prisma/seed-kaledacademy.ts",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage"

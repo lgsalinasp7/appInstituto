@@ -1,0 +1,9 @@
+import { withAcademyAuth } from "@/lib/api-auth";
+import { GET_pendingDeliverables } from "@/modules/academy/api/handlers";
+import { INSTRUCTOR_ROLES } from "@/modules/academy/config/roles";
+
+export const GET = withAcademyAuth(
+  INSTRUCTOR_ROLES,
+  (req, user, tenantId, context) =>
+    GET_pendingDeliverables(req, user, tenantId, context)
+);

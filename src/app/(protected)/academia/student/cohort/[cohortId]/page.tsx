@@ -1,3 +1,7 @@
+import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { redirect, notFound } from "next/navigation";
+import { AcademyCohortService } from "@/modules/academia";
 import { CohortView } from "@/modules/academia/components/student/CohortView";
 
 interface PageProps {
@@ -5,6 +9,22 @@ interface PageProps {
 }
 
 export default async function StudentCohortPage({ params }: PageProps) {
+  const user = await getCurrentUser();
+  if (!user) redirect("/auth/login");
+
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { platformRole: true },
+  });
+
   const { cohortId } = await params;
-  return <CohortView cohortId={cohortId} />;
+  const data = await AcademyCohortService.getCohortDataForStudent(
+    user.id,
+    cohortId,
+    dbUser?.platformRole ?? "ACADEMY_STUDENT"
+  );
+
+  if (!data) notFound();
+
+  return <CohortView data={data} />;
 }

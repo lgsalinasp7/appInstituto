@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import { withAcademyAuth } from "@/lib/api-auth";
 import { AcademyCourseService } from "@/modules/academia";
 import { createLessonSchema } from "@/modules/academia/schemas";
+import { GET_lesson } from "@/modules/academy/api/handlers";
+import { ACADEMY_ROLES } from "@/modules/academy/config/roles";
+
+export const GET = withAcademyAuth(
+  ACADEMY_ROLES,
+  (req, user, tenantId, context) => GET_lesson(req, user, tenantId, context)
+);
 
 export const PATCH = withAcademyAuth(
   ["ACADEMY_ADMIN"],

@@ -7,10 +7,10 @@ import { BookOpen, ChevronRight, Clock3 } from "lucide-react";
 interface Course {
   id: string;
   title: string;
-  description: string;
-  category: string;
-  level: string;
-  isActive: boolean;
+  description?: string;
+  category?: string;
+  level?: string;
+  isActive?: boolean;
 }
 
 export function CoursesManagement() {
@@ -21,7 +21,9 @@ export function CoursesManagement() {
     fetch("/api/academy/courses")
       .then((r) => r.json())
       .then((res) => {
-        if (res.success) setCourses(res.data);
+        const data = res?.data ?? res;
+        const list = Array.isArray(data) ? data : (data?.id ? [data] : []);
+        setCourses(list);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -52,7 +54,7 @@ export function CoursesManagement() {
                 {c.category}
               </div>
               <div className="absolute right-4 top-4 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider academy-pill-dark">
-                {c.isActive ? "Activo" : "Inactivo"}
+                {c.isActive !== false ? "Activo" : "Inactivo"}
               </div>
               <div className="absolute left-4 bottom-4 w-11 h-11 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center">
                 <BookOpen className="w-5 h-5 text-white" />
@@ -61,12 +63,12 @@ export function CoursesManagement() {
             <div className="p-5 space-y-4">
               <div>
                 <h3 className="text-xl font-bold tracking-tight text-white">{c.title}</h3>
-                <p className="text-sm text-slate-300 line-clamp-2 mt-1">{c.description}</p>
+                <p className="text-sm text-slate-300 line-clamp-2 mt-1">{c.description ?? ""}</p>
               </div>
               <div className="flex items-center justify-between text-xs text-slate-400">
                 <span className="inline-flex items-center gap-1.5">
                   <Clock3 className="w-3.5 h-3.5" />
-                  Nivel {c.level}
+                  {c.level ? `Nivel ${c.level}` : "Bootcamp"}
                 </span>
                 <span className="font-semibold text-cyan-400 group-hover:text-cyan-300 inline-flex items-center gap-1 transition-colors">
                   Gestionar

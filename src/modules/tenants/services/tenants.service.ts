@@ -444,4 +444,51 @@ export const TenantsService = {
     }
     return password;
   },
+
+  /**
+   * Update a tenant user (name, email, and optionally set temp password)
+   */
+  async updateTenantUser(
+    tenantId: string,
+    userId: string,
+    data: { name?: string; email?: string; setTempPassword?: boolean }
+  ): Promise<{ tempPassword?: string }> {
+    const user = await prisma.user.findFirst({
+      where: { id: userId, tenantId },
+    });
+
+    if (!user) {
+      throw new Error('Usuario no encontrado o no pertenece al tenant');
+    }
+
+    const updateData: { name?: string; email?: string; password?: string; mustChangePassword?: boolean } = {};
+
+    if (data.name !== undefined) {
+      updateData.name = data.name.trim() || null;
+    }
+    if (data.email !== undefined) {
+      const email = data.email.trim();
+      if (!email) throw new Error('El email no puede estar vacío');
+      const existing = await prisma.user.findFirst({
+        where: { email, NOT: { id: userId } },
+      });
+      if (existing) throw new Error('Ya existe un usuario con ese email');
+      updateData.email = email;
+    }
+
+    let tempPassword: string | undefined;
+    if (data.setTempPassword) {
+      tempPassword = this.generateTemporaryPassword(12);
+      const bcrypt = await import('bcryptjs');
+      updateData.password = await bcrypt.hash(tempPassword, 10);
+      updateData.mustChangePassword = true;
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    return tempPassword ? { tempPassword } : {};
+  },
 };

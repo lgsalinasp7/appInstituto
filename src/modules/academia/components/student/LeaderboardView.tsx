@@ -1,10 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Trophy, Medal, Star, Flame } from "lucide-react";
+import { motion } from "framer-motion";
+import { Trophy, Medal, Star, Flame, Users, TrendingUp, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import type { LeaderboardResponse } from "@/modules/academia/types";
+
+interface LeaderboardEntry {
+  userId: string;
+  name: string;
+  image: string | null;
+  points: number;
+  rank: number;
+}
 
 const RANK_STYLES: Record<number, { bg: string; text: string; icon: React.ReactNode; label: string }> = {
   1: {
@@ -43,46 +50,82 @@ function UserAvatar({ name, image }: { name: string; image: string | null }) {
   );
 }
 
-export function LeaderboardView() {
-  const [data, setData] = useState<LeaderboardResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+interface LeaderboardViewProps {
+  cohortId: string | null;
+  currentUserId?: string;
+  entries: LeaderboardEntry[];
+}
 
-  useEffect(() => {
-    fetch("/api/academy/student/leaderboard")
-      .then((r) => r.json())
-      .then((res) => {
-        if (res.success) setData(res.data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
+const fadeUp = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
+const stagger = { show: { transition: { staggerChildren: 0.06 } } };
 
-  const maxPoints = data?.entries[0]?.points ?? 1;
+export function LeaderboardView({
+  cohortId,
+  currentUserId,
+  entries,
+}: LeaderboardViewProps) {
+  const maxPoints = entries[0]?.points ?? 1;
+  const currentUser = currentUserId
+    ? entries.find((e) => e.userId === currentUserId) ?? null
+    : null;
+  const totalPoints = entries.reduce((s, e) => s + e.points, 0);
+  const topScore = entries[0]?.points ?? 0;
 
-  if (loading) {
+  if (!cohortId) {
     return (
-      <div className="academy-card-dark p-8">
-        <h1 className="text-2xl font-bold text-white mb-4 font-display tracking-tight">Leaderboard</h1>
-        <p className="text-slate-400">Calculando ranking...</p>
-      </div>
+      <motion.div
+        variants={stagger}
+        initial="hidden"
+        animate="show"
+        className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8"
+      >
+        <motion.div variants={fadeUp}>
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight font-display mb-1">Leaderboard</h1>
+          <p className="text-slate-500 text-sm">Ranking de progreso por lecciones completadas</p>
+        </motion.div>
+        <motion.div variants={fadeUp} className="academy-card-dark rounded-xl sm:rounded-2xl p-8 text-center">
+          <Users className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+          <p className="text-slate-400">No estás inscrito en ninguna cohorte. Únete a una cohorte para ver el ranking.</p>
+        </motion.div>
+      </motion.div>
     );
   }
 
-  const entries = data?.entries ?? [];
-  const currentUser = data?.currentUserEntry;
-
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-3xl font-black tracking-tight text-white font-display">Leaderboard</h1>
-        <p className="text-slate-400 mt-1 text-base">Ranking de progreso por lecciones completadas.</p>
-      </header>
+    <motion.div
+      variants={stagger}
+      initial="hidden"
+      animate="show"
+      className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8"
+    >
+      {/* Header */}
+      <motion.div variants={fadeUp}>
+        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight font-display mb-1">Leaderboard</h1>
+        <p className="text-slate-500 text-sm">Ranking de progreso por lecciones completadas</p>
+      </motion.div>
+
+      {/* Stats */}
+      <motion.div variants={fadeUp} className="grid grid-cols-3 gap-3 sm:gap-4">
+        {[
+          { label: "Participantes", value: entries.length, icon: Users, color: "#38bdf8" },
+          { label: "Top Score", value: topScore, icon: TrendingUp, color: "#fbbf24" },
+          { label: "Lecciones Totales", value: totalPoints, icon: Award, color: "#34d399" },
+        ].map((s) => (
+          <div key={s.label} className="academy-card-dark rounded-xl sm:rounded-2xl p-4 sm:p-5 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <s.icon className="w-4 h-4 shrink-0" style={{ color: s.color }} />
+              <span className="text-[10px] sm:text-xs text-slate-500 truncate">{s.label}</span>
+            </div>
+            <div className="text-xl sm:text-2xl font-black text-white">{s.value}</div>
+          </div>
+        ))}
+      </motion.div>
 
       {/* Podio top-3 */}
       {entries.length >= 3 && (
-        <div className="grid grid-cols-3 gap-3">
+        <motion.div variants={fadeUp} className="grid grid-cols-3 gap-3">
           {/* 2° puesto */}
-          <div className="academy-card-dark flex flex-col items-center gap-2 p-4 pt-5">
+          <div className="academy-card-dark rounded-xl sm:rounded-2xl flex flex-col items-center gap-2 p-4 pt-6">
             <UserAvatar name={entries[1].name} image={entries[1].image} />
             <div className="flex items-center gap-1">
               <Medal className="w-4 h-4 text-slate-300" />
@@ -93,13 +136,13 @@ export function LeaderboardView() {
           </div>
 
           {/* 1° puesto */}
-          <div className="academy-card-dark flex flex-col items-center gap-2 p-4 border-amber-500/30 relative">
+          <div className="academy-card-dark rounded-xl sm:rounded-2xl flex flex-col items-center gap-2 p-4 border-amber-500/30 relative">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
               <div className="bg-amber-500/20 border border-amber-500/30 rounded-full p-1.5">
                 <Trophy className="w-4 h-4 text-amber-300" />
               </div>
             </div>
-            <div className="mt-2">
+            <div className="mt-3">
               <UserAvatar name={entries[0].name} image={entries[0].image} />
             </div>
             <span className="text-xs font-bold text-amber-300">1°</span>
@@ -108,7 +151,7 @@ export function LeaderboardView() {
           </div>
 
           {/* 3° puesto */}
-          <div className="academy-card-dark flex flex-col items-center gap-2 p-4 pt-5">
+          <div className="academy-card-dark rounded-xl sm:rounded-2xl flex flex-col items-center gap-2 p-4 pt-6">
             <UserAvatar name={entries[2].name} image={entries[2].image} />
             <div className="flex items-center gap-1">
               <Medal className="w-4 h-4 text-orange-400" />
@@ -117,35 +160,44 @@ export function LeaderboardView() {
             <p className="text-sm font-semibold text-white text-center truncate max-w-full">{entries[2].name.split(" ")[0]}</p>
             <p className="text-xs text-slate-400">{entries[2].points} pts</p>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Mi posición */}
       {currentUser && (
-        <div className={cn(
-          "academy-card-dark p-4 flex items-center gap-4",
-          currentUser.rank <= 3 ? RANK_STYLES[currentUser.rank]?.bg ?? "" : "border-cyan-500/20"
-        )}>
-          <div className="flex items-center gap-2 shrink-0">
-            <Star className="w-4 h-4 text-cyan-400" />
-            <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Mi posición</span>
-          </div>
-          <div className="flex items-center gap-3 min-w-0">
-            <UserAvatar name={currentUser.name} image={currentUser.image} />
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-white truncate">{currentUser.name}</p>
-              <p className="text-xs text-slate-400">{currentUser.points} lecciones completadas</p>
+        <motion.div
+          variants={fadeUp}
+          className={cn(
+            "academy-card-dark rounded-xl sm:rounded-2xl p-4 sm:p-5 flex items-center gap-4 relative overflow-hidden",
+            currentUser.rank <= 3 ? RANK_STYLES[currentUser.rank]?.bg ?? "" : "border-cyan-500/20"
+          )}
+        >
+          <div
+            className="absolute inset-0 rounded-2xl pointer-events-none opacity-20"
+            style={{ background: "radial-gradient(ellipse 60% 50% at 80% 50%, rgba(56,189,248,0.15), transparent)" }}
+          />
+          <div className="relative flex items-center gap-4 w-full">
+            <div className="flex items-center gap-2 shrink-0">
+              <Star className="w-4 h-4 text-cyan-400" />
+              <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Mi posición</span>
+            </div>
+            <div className="flex items-center gap-3 min-w-0">
+              <UserAvatar name={currentUser.name} image={currentUser.image} />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-white truncate">{currentUser.name}</p>
+                <p className="text-xs text-slate-400">{currentUser.points} lecciones completadas</p>
+              </div>
+            </div>
+            <div className="ml-auto shrink-0 text-right">
+              <p className="text-2xl sm:text-3xl font-black text-white font-display">#{currentUser.rank}</p>
+              <p className="text-xs text-slate-500">de {entries.length}</p>
             </div>
           </div>
-          <div className="ml-auto shrink-0 text-right">
-            <p className="text-2xl font-black text-white font-display">#{currentUser.rank}</p>
-            <p className="text-xs text-slate-500">de {entries.length}</p>
-          </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Tabla completa */}
-      <div className="academy-card-dark overflow-hidden">
+      <motion.div variants={fadeUp} className="academy-card-dark rounded-xl sm:rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-2">
           <Flame className="w-4 h-4 text-cyan-400" />
           <h2 className="text-sm font-bold text-white font-display">Ranking Completo</h2>
@@ -170,7 +222,6 @@ export function LeaderboardView() {
                   isCurrentUser && "bg-cyan-500/[0.05]"
                 )}
               >
-                {/* Rank */}
                 <div className={cn(
                   "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold border",
                   rankStyle ? cn(rankStyle.bg, rankStyle.text) : "bg-white/[0.04] text-slate-400 border-white/[0.06]"
@@ -178,7 +229,6 @@ export function LeaderboardView() {
                   {rankStyle ? rankStyle.icon : entry.rank}
                 </div>
 
-                {/* Avatar + nombre */}
                 <UserAvatar name={entry.name} image={entry.image} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -191,16 +241,16 @@ export function LeaderboardView() {
                       </span>
                     )}
                   </div>
-                  {/* Barra proporcional */}
                   <div className="h-1.5 rounded-full bg-white/[0.06] mt-1.5 overflow-hidden w-full max-w-[200px]">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-500"
-                      style={{ width: `${barWidth}%` }}
+                    <motion.div
+                      className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${barWidth}%` }}
+                      transition={{ duration: 0.5, ease: "easeOut" }}
                     />
                   </div>
                 </div>
 
-                {/* Puntos */}
                 <div className="shrink-0 text-right">
                   <p className={cn("text-sm font-bold", rankStyle ? rankStyle.text : "text-slate-300")}>
                     {entry.points}
@@ -211,7 +261,7 @@ export function LeaderboardView() {
             );
           })}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

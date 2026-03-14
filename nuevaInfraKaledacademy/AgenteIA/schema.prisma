@@ -1,0 +1,158 @@
+// Agrega al final del schema.prisma existente
+
+model KaledCodeReview {
+  id             String    @id @default(cuid())
+  tenantId       String
+  userId         String
+  lessonId       String?
+  cralPhase      String
+  codeSubmitted  String    @db.Text
+  feedback       String    @db.Text
+  errorPatterns  String[]
+  weekNumber     Int?
+  sessionNumber  Int?
+  status         String    @default("PENDING_APPROVAL")
+  approvedBy     String?
+  approvedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([userId])
+  @@index([tenantId])
+  @@index([status])
+  @@map("kaled_code_reviews")
+}
+
+model KaledStudentErrorPattern {
+  id           String    @id @default(cuid())
+  tenantId     String
+  userId       String
+  errorPattern String
+  errorLabel   String
+  occurrences  Int       @default(1)
+  firstSeenAt  DateTime  @default(now())
+  lastSeenAt   DateTime  @updatedAt
+  lessonIds    String[]
+  resolved     Boolean   @default(false)
+  resolvedAt   DateTime?
+
+  @@index([userId, tenantId])
+  @@map("kaled_student_error_patterns")
+}
+
+model KaledInstructorTask {
+  id           String    @id @default(cuid())
+  tenantId     String
+  instructorId String
+  studentId    String
+  type         String
+  priority     String    @default("MEDIUM")
+  title        String
+  diagnosis    String    @db.Text
+  suggestion   String    @db.Text
+  metadata     Json?
+  status       String    @default("PENDING")
+  reviewedAt   DateTime?
+  resolvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([instructorId, status])
+  @@index([tenantId])
+  @@map("kaled_instructor_tasks")
+}
+
+model KaledDeliverableEvaluation {
+  id                  String    @id @default(cuid())
+  tenantId            String
+  submissionId        String
+  userId              String
+  cralPhase           String
+  codeReviewed        String?   @db.Text
+  feedbackConstruir   String?   @db.Text
+  feedbackRomper      String?   @db.Text
+  feedbackAuditar     String?   @db.Text
+  feedbackLanzar      String?   @db.Text
+  overallFeedback     String    @db.Text
+  strengths           String[]
+  improvements        String[]
+  socraticQuestions   String[]
+  status              String    @default("PENDING_APPROVAL")
+  approvedBy          String?
+  approvedAt          DateTime?
+  visibleToStudent    Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+
+  @@index([submissionId])
+  @@index([status])
+  @@map("kaled_deliverable_evaluations")
+}
+
+model KaledCohortMetrics {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  cohortId            String
+  snapshotDate        DateTime @db.Date
+  totalStudents       Int      @default(0)
+  studentsOnTrack     Int      @default(0)
+  studentsAtRisk      Int      @default(0)
+  saasDeployedCount   Int      @default(0)
+  avgProgress         Decimal? @db.Decimal(5,2)
+  totalKaledQueries   Int      @default(0)
+  cacheHitRate        Decimal? @db.Decimal(5,2)
+  tokensSaved         Int      @default(0)
+  deliverablesApproved Int     @default(0)
+
+  @@unique([cohortId, snapshotDate])
+  @@map("kaled_cohort_metrics")
+}
+```
+
+---
+
+## FASE 1 — Agente Kaled Core (Semana 1 antes del lanzamiento)
+*El agente que habla con los estudiantes*
+
+### Estructura de archivos a crear:
+```
+src/
+├── lib/
+│   └── academia/
+│       ├── kaled-classifier.ts      ← portero de modelos
+│       ├── kaled-embeddings.ts      ← embeddings para caché
+│       ├── kaled-cache.ts           ← caché semántico pgvector
+│       ├── kaled-prompt.ts          ← system prompt completo
+│       ├── kaled-middleware.ts      ← guardrail CRAL
+│       ├── kaled-socratic.ts        ← método socrático        ← NUEVO
+│       ├── kaled-code-reviewer.ts   ← revisor de código CRAL  ← NUEVO
+│       ├── kaled-error-memory.ts    ← memoria de errores       ← NUEVO
+│       └── kaled-alert-engine.ts    ← motor de alertas         ← NUEVO
+│
+├── app/
+│   └── api/
+│       └── academia/
+│           ├── kaled/
+│           │   └── route.ts          ← chat principal
+│           ├── kaled/review-code/
+│           │   └── route.ts          ← revisar código          ← NUEVO
+│           ├── kaled/evaluate-deliverable/
+│           │   └── route.ts          ← evaluar entregable      ← NUEVO
+│           └── instructor/
+│               ├── dashboard/
+│               │   └── route.ts      ← panel instructor
+│               ├── tasks/
+│               │   └── route.ts      ← tareas de Kaled         ← NUEVO
+│               ├── pre-class-brief/
+│               │   └── route.ts      ← briefing pre-sesión     ← NUEVO
+│               └── approve-evaluation/
+│                   └── route.ts      ← aprobar evaluación      ← NUEVO
+│
+└── modules/
+    └── academia/
+        └── components/
+            ├── student/
+            │   ├── KaledChat.tsx      ← chat mejorado
+            │   └── CodeReviewer.tsx   ← panel de revisión      ← NUEVO
+            └── teacher/
+                ├── InstructorPanel.tsx    ← panel completo      ← NUEVO
+                ├── PreClassBrief.tsx      ← briefing pre-clase  ← NUEVO
+                ├── StudentDiagnosis.tsx   ← diagnóstico        ← NUEVO
+                └── EvaluationQueue.tsx    ← cola aprobaciones  ← NUEVO

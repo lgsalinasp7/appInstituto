@@ -42,6 +42,20 @@ const templates = [
     allowPublicRegistration: true,
   },
   {
+    name: 'Lavadero Pro',
+    slug: 'lavadero-pro',
+    description:
+      'Sistema completo de gestión para lavaderos de autos. Incluye control de órdenes tipo Kanban, clientes, vehículos, facturación y notificaciones WhatsApp.',
+    icon: 'Car',
+    primaryColor: '#0e7490',
+    secondaryColor: '#06b6d4',
+    accentColor: '#10b981',
+    darkMode: false,
+    footerText: 'Lavadero Pro - Powered by KaledSoft',
+    plan: 'PROFESIONAL',
+    allowPublicRegistration: false,
+  },
+  {
     name: 'Personalizado',
     slug: 'personalizado',
     description:

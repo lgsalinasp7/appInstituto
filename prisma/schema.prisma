@@ -56,6 +56,27 @@ model Tenant {
   academyCourses  AcademyCourse[]
   academyCohorts  AcademyCohort[]
 
+  // KaledAcademy extensión
+  academyLessonMetas      AcademyLessonMeta[]
+  academyCRALChallenges   AcademyCRALChallenge[]
+  academyCRALCompletions  AcademyCRALCompletion[]
+  academyQuizzes          AcademyQuiz[]
+  academyQuizResults      AcademyQuizResult[]
+  academyDeliverables     AcademyDeliverable[]
+  academyKaledSessions    AcademyKaledSession[]
+  academyStudentSnapshots AcademyStudentSnapshot[]
+  academySaasProjects     AcademySaasProject[]
+  academyDemoDayResults   AcademyDemoDayResult[]
+  academyBadges           AcademyBadge[]
+  academyAnnouncements    AcademyAnnouncement[]
+
+  // Lavadero Pro
+  lavaderoCustomers LavaderoCustomer[]
+  lavaderoVehicles  LavaderoVehicle[]
+  lavaderoServices  LavaderoService[]
+  lavaderoOrders    LavaderoOrder[]
+  lavaderoPayments  LavaderoPayment[]
+
   @@index([slug])
   @@index([status])
 }
@@ -92,7 +113,21 @@ model User {
   academyProgress          AcademyStudentProgress[]
   academyCoursesCreated    AcademyCourse[] @relation("AcademyCourseCreator")
   academyAssessmentResults AcademyAssessmentResult[]
-  academyTaskCompletions   AcademyTaskCompletion[]
+
+  // KaledAcademy extensión
+  academyCRALCompletions         AcademyCRALCompletion[]
+  academyQuizResults             AcademyQuizResult[]
+  academyDeliverableSubmissions  AcademyDeliverableSubmission[]
+  academyDeliverableReviews      AcademyDeliverableSubmission[] @relation("DeliverableReviewer")
+  academyKaledSessions           AcademyKaledSession[]
+  academyStudentSnapshots        AcademyStudentSnapshot[]
+  academySaasProjects            AcademySaasProject[]
+  academyBadgesEarned            AcademyBadgeEarned[]
+  academyAnnouncements           AcademyAnnouncement[]
+
+  // Lavadero Pro
+  lavaderoOrdersCreated   LavaderoOrder[]   @relation("LavaderoOrderCreator")
+  lavaderoPaymentsCreated LavaderoPayment[] @relation("LavaderoPaymentCreator")
 
   @@index([email])
   @@index([roleId])
@@ -637,8 +672,9 @@ model Invitation {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   tenantId    String
-  academyRole String?          // ACADEMY_STUDENT, ACADEMY_TEACHER, ACADEMY_ADMIN (solo tenant kaledacademy)
-  inviter     User             @relation("SentInvitations", fields: [inviterId], references: [id])
+  academyRole  String?          // ACADEMY_STUDENT, ACADEMY_TEACHER, ACADEMY_ADMIN (solo tenant kaledacademy)
+  lavaderoRole String?          // LAVADERO_ADMIN, LAVADERO_SUPERVISOR (solo tenants tipo lavadero)
+  inviter      User             @relation("SentInvitations", fields: [inviterId], references: [id])
   role        Role             @relation(fields: [roleId], references: [id])
   tenant      Tenant           @relation(fields: [tenantId], references: [id])
 
@@ -675,6 +711,8 @@ enum PlatformRole {
   ACADEMY_STUDENT
   ACADEMY_TEACHER
   ACADEMY_ADMIN
+  LAVADERO_ADMIN
+  LAVADERO_SUPERVISOR
 }
 
 enum StudentStatus {
@@ -1239,11 +1277,12 @@ model AcademyCourse {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  createdBy    User             @relation("AcademyCourseCreator", fields: [createdById], references: [id])
-  modules      AcademyModule[]
-  enrollments  AcademyEnrollment[]
-  cohorts      AcademyCohort[]
+  tenant        Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdBy     User               @relation("AcademyCourseCreator", fields: [createdById], references: [id])
+  modules       AcademyModule[]
+  enrollments   AcademyEnrollment[]
+  cohorts       AcademyCohort[]
+  announcements AcademyAnnouncement[]
 
   @@index([tenantId])
   @@index([isActive])
@@ -1258,8 +1297,9 @@ model AcademyModule {
   courseId    String
   createdAt   DateTime @default(now())
 
-  course  AcademyCourse  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  lessons AcademyLesson[]
+  course        AcademyCourse      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons       AcademyLesson[]
+  kaledSessions AcademyKaledSession[]
 
   @@index([courseId])
   @@index([order])
@@ -1277,43 +1317,16 @@ model AcademyLesson {
   moduleId    String
   createdAt   DateTime @default(now())
 
-  module    AcademyModule          @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  progress  AcademyStudentProgress[]
-  tasks     AcademyLessonTask[]
+  module         AcademyModule          @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  progress       AcademyStudentProgress[]
+  meta           AcademyLessonMeta?
+  cralChallenges AcademyCRALChallenge[]
+  quizzes        AcademyQuiz[]
+  deliverables   AcademyDeliverable[]
+  kaledSessions  AcademyKaledSession[]
 
   @@index([moduleId])
   @@index([order])
-}
-
-model AcademyLessonTask {
-  id          String   @id @default(cuid())
-  lessonId    String
-  title       String
-  type        String   // HOMEWORK, EXERCISE, QUIZ
-  order       Int      @default(0)
-  createdAt   DateTime @default(now())
-
-  lesson      AcademyLesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  completions AcademyTaskCompletion[]
-
-  @@index([lessonId])
-}
-
-model AcademyTaskCompletion {
-  id          String   @id @default(cuid())
-  userId      String
-  taskId      String
-  completed   Boolean  @default(false)
-  completedAt DateTime?
-  score       Decimal? @db.Decimal(5, 2)
-  createdAt   DateTime @default(now())
-
-  user User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  task AcademyLessonTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, taskId])
-  @@index([userId])
-  @@index([taskId])
 }
 
 model AcademyEnrollment {
@@ -1326,9 +1339,10 @@ model AcademyEnrollment {
   enrolledAt DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course AcademyCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  cohort AcademyCohort? @relation(fields: [cohortId], references: [id], onDelete: SetNull)
+  user     User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course   AcademyCourse          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  cohort   AcademyCohort?          @relation(fields: [cohortId], references: [id], onDelete: SetNull)
+  snapshot AcademyStudentSnapshot?
 
   @@unique([userId, courseId])
   @@index([userId])
@@ -1351,11 +1365,16 @@ model AcademyCohort {
   createdAt       DateTime                 @default(now())
   updatedAt       DateTime                 @updatedAt
 
-  course      AcademyCourse           @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  tenant      Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  enrollments AcademyEnrollment[]
-  events      AcademyCohortEvent[]
-  assessments AcademyAssessment[]
+  course           AcademyCourse           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  tenant           Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  enrollments      AcademyEnrollment[]
+  events           AcademyCohortEvent[]
+  assessments      AcademyAssessment[]
+  kaledSessions    AcademyKaledSession[]
+  studentSnapshots AcademyStudentSnapshot[]
+  saasProjects     AcademySaasProject[]
+  demoDayResults   AcademyDemoDayResult[]
+  announcements    AcademyAnnouncement[]
 
   @@index([courseId])
   @@index([tenantId])
@@ -1430,6 +1449,419 @@ model AcademyStudentProgress {
   @@index([lessonId])
 }
 
+// ============================================================
+// KALEDACADEMY — Modelos extendidos (bootcamp AI SaaS)
+// ============================================================
+
+model AcademyLessonMeta {
+  id          String      @id @default(cuid())
+  lessonId    String      @unique
+  sessionType SessionType @default(TEORIA)
+  weekNumber  Int
+  dayOfWeek   DayOfWeek
+  phaseTarget CRALPhase?
+  videoUrl    String?
+  videoTitle  String?
+  analogyText String?     @db.Text
+  kaledIntro  String?     @db.Text
+  concepts    Json?
+  tenantId    String
+
+  lesson AcademyLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  tenant Tenant        @relation(fields: [tenantId], references: [id])
+
+  @@index([lessonId])
+  @@index([weekNumber])
+  @@index([tenantId])
+}
+
+model AcademyCRALChallenge {
+  id          String    @id @default(cuid())
+  lessonId    String
+  phase       CRALPhase
+  title       String
+  description String    @db.Text
+  taskCode    String?    @db.Text
+  order       Int       @default(0)
+  tenantId    String
+
+  lesson      AcademyLesson          @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  tenant      Tenant                 @relation(fields: [tenantId], references: [id])
+  completions AcademyCRALCompletion[]
+
+  @@index([lessonId])
+  @@index([phase])
+  @@index([tenantId])
+}
+
+model AcademyCRALCompletion {
+  id          String    @id @default(cuid())
+  userId      String
+  challengeId String
+  phase       CRALPhase
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  githubUrl   String?
+  notes       String?   @db.Text
+  tenantId    String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge AcademyCRALChallenge  @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  tenant    Tenant               @relation(fields: [tenantId], references: [id])
+
+  @@unique([userId, challengeId])
+  @@index([userId])
+  @@index([challengeId])
+  @@index([phase])
+  @@index([tenantId])
+}
+
+model AcademyQuiz {
+  id       String  @id @default(cuid())
+  lessonId String
+  question String  @db.Text
+  tenantId String
+  order    Int     @default(0)
+
+  lesson   AcademyLesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  tenant   Tenant           @relation(fields: [tenantId], references: [id])
+  options  AcademyQuizOption[]
+  results  AcademyQuizResult[]
+
+  @@index([lessonId])
+  @@index([tenantId])
+}
+
+model AcademyQuizOption {
+  id        String  @id @default(cuid())
+  quizId    String
+  label     String
+  text      String  @db.Text
+  isCorrect Boolean @default(false)
+  feedback  String? @db.Text
+
+  quiz AcademyQuiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([quizId])
+}
+
+model AcademyQuizResult {
+  id               String    @id @default(cuid())
+  userId           String
+  quizId           String
+  selectedOptionId String?
+  isCorrect        Boolean   @default(false)
+  answeredAt      DateTime   @default(now())
+  tenantId         String
+
+  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz  AcademyQuiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  tenant Tenant     @relation(fields: [tenantId], references: [id])
+
+  @@unique([userId, quizId])
+  @@index([userId])
+  @@index([quizId])
+  @@index([tenantId])
+}
+
+model AcademyDeliverable {
+  id          String  @id @default(cuid())
+  lessonId    String
+  weekNumber  Int
+  title       String
+  description String  @db.Text
+  isFinal     Boolean @default(false)
+  tenantId    String
+
+  lesson       AcademyLesson             @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  tenant       Tenant                    @relation(fields: [tenantId], references: [id])
+  checkItems   AcademyDeliverableItem[]
+  submissions  AcademyDeliverableSubmission[]
+
+  @@index([lessonId])
+  @@index([weekNumber])
+  @@index([tenantId])
+}
+
+model AcademyDeliverableItem {
+  id            String @id @default(cuid())
+  deliverableId String
+  text          String
+  order         Int    @default(0)
+
+  deliverable AcademyDeliverable @relation(fields: [deliverableId], references: [id], onDelete: Cascade)
+
+  @@index([deliverableId])
+}
+
+model AcademyDeliverableSubmission {
+  id            String           @id @default(cuid())
+  userId        String
+  deliverableId String
+  githubUrl     String?
+  deployUrl     String?
+  status        DeliverableStatus @default(PENDIENTE)
+  score         Decimal?          @db.Decimal(5, 2)
+  feedback      String?           @db.Text
+  checkedItems  String[]
+  submittedAt   DateTime?
+  reviewedAt    DateTime?
+  reviewedById  String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliverable AcademyDeliverable @relation(fields: [deliverableId], references: [id], onDelete: Cascade)
+  reviewedBy  User?              @relation("DeliverableReviewer", fields: [reviewedById], references: [id])
+
+  @@unique([userId, deliverableId])
+  @@index([userId])
+  @@index([deliverableId])
+  @@index([status])
+  @@index([reviewedById])
+}
+
+model AcademyKaledSession {
+  id             String          @id @default(cuid())
+  conversationId String          @unique
+  userId         String
+  lessonId       String?
+  moduleId       String?
+  cohortId       String?
+  sessionType    KaledSessionType @default(LESSON_SUPPORT)
+  tenantId       String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson  AcademyLesson?  @relation(fields: [lessonId], references: [id])
+  module  AcademyModule?  @relation(fields: [moduleId], references: [id])
+  cohort  AcademyCohort?  @relation(fields: [cohortId], references: [id])
+  tenant  Tenant         @relation(fields: [tenantId], references: [id])
+
+  @@index([userId])
+  @@index([lessonId])
+  @@index([tenantId])
+}
+
+model AcademyStudentSnapshot {
+  id                   String   @id @default(cuid())
+  userId               String
+  cohortId             String
+  enrollmentId         String   @unique
+  overallProgress      Decimal  @default(0) @db.Decimal(5, 2)
+  lessonsCompleted     Int      @default(0)
+  lessonsTotal         Int      @default(0)
+  quizzesPassed        Int      @default(0)
+  quizzesTotal         Int      @default(0)
+  deliverablesSubmitted Int     @default(0)
+  deliverablesApproved Int      @default(0)
+  cralCompleted        Json?
+  currentStreak        Int      @default(0)
+  totalTimeSpentSec    Int      @default(0)
+  lastActivityAt       DateTime?
+  kaledInteractions    Int      @default(0)
+  snapshotAt           DateTime @default(now())
+  tenantId             String
+
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cohort     AcademyCohort   @relation(fields: [cohortId], references: [id])
+  enrollment AcademyEnrollment @relation(fields: [enrollmentId], references: [id])
+  tenant     Tenant         @relation(fields: [tenantId], references: [id])
+
+  @@index([userId])
+  @@index([cohortId])
+  @@index([tenantId])
+  @@index([overallProgress])
+}
+
+model AcademySaasProject {
+  id                    String            @id @default(cuid())
+  userId                String
+  cohortId              String
+  name                  String
+  description           String?           @db.Text
+  githubUrl             String?
+  deployUrl             String?
+  domainUrl             String?
+  techStack             Json?
+  planFree              String?           @db.Text
+  planPro               String?           @db.Text
+  realUsers             Int               @default(0)
+  status                SaasProjectStatus @default(EN_CONSTRUCCION)
+  lightScorePerformance Decimal?          @db.Decimal(5, 2)
+  lightScoreAccessibility Decimal?        @db.Decimal(5, 2)
+  tenantId              String
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cohort         AcademyCohort        @relation(fields: [cohortId], references: [id])
+  tenant         Tenant               @relation(fields: [tenantId], references: [id])
+  weeklyUpdates  AcademySaasUpdate[]
+  demoDayResult  AcademyDemoDayResult?
+
+  @@unique([userId, cohortId])
+  @@index([userId])
+  @@index([cohortId])
+  @@index([status])
+  @@index([tenantId])
+}
+
+model AcademySaasUpdate {
+  id         String   @id @default(cuid())
+  projectId  String
+  weekNumber Int
+  githubUrl  String?
+  deployUrl  String?
+  summary    String   @db.Text
+  cralDone   Json?
+  createdAt  DateTime @default(now())
+
+  project AcademySaasProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, weekNumber])
+  @@index([projectId])
+}
+
+model AcademyDemoDayResult {
+  id                 String   @id @default(cuid())
+  projectId          String   @unique
+  cohortId           String
+  presentedAt        DateTime
+  scoreTotal         Decimal? @db.Decimal(5, 2)
+  scoreFunctionality Decimal? @db.Decimal(5, 2)
+  scoreArchitecture  Decimal? @db.Decimal(5, 2)
+  scoreCode          Decimal? @db.Decimal(5, 2)
+  scoreRealUsers     Decimal? @db.Decimal(5, 2)
+  scoreAICriteria    Decimal? @db.Decimal(5, 2)
+  passed             Boolean  @default(false)
+  instructorNotes    String?   @db.Text
+  nintyDayPlan       String?   @db.Text
+  linkedinPostUrl    String?
+  tenantId           String
+  createdAt          DateTime @default(now())
+
+  project AcademySaasProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  cohort  AcademyCohort      @relation(fields: [cohortId], references: [id])
+  tenant  Tenant            @relation(fields: [tenantId], references: [id])
+
+  @@index([cohortId])
+  @@index([tenantId])
+}
+
+model AcademyBadge {
+  id          String        @id @default(cuid())
+  tenantId    String
+  name        String
+  description String
+  icon        String
+  condition   BadgeCondition
+  threshold   Int?
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+
+  tenant Tenant              @relation(fields: [tenantId], references: [id])
+  earned AcademyBadgeEarned[]
+
+  @@unique([name, tenantId])
+  @@index([tenantId])
+  @@index([condition])
+}
+
+model AcademyBadgeEarned {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  earnedAt  DateTime @default(now())
+
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge AcademyBadge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+  @@index([badgeId])
+}
+
+model AcademyAnnouncement {
+  id        String   @id @default(cuid())
+  cohortId  String?
+  courseId  String?
+  title     String
+  content   String   @db.Text
+  isPinned  Boolean  @default(false)
+  authorId  String
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cohort  AcademyCohort? @relation(fields: [cohortId], references: [id])
+  course  AcademyCourse? @relation(fields: [courseId], references: [id])
+  author  User           @relation(fields: [authorId], references: [id])
+  tenant  Tenant         @relation(fields: [tenantId], references: [id])
+
+  @@index([cohortId])
+  @@index([tenantId])
+  @@index([isPinned])
+}
+
+// Enums KaledAcademy
+enum SessionType {
+  TEORIA
+  PRACTICA
+  LIVE
+  ENTREGABLE
+}
+
+enum DayOfWeek {
+  LUNES
+  MIERCOLES
+  VIERNES
+}
+
+enum CRALPhase {
+  CONSTRUIR
+  ROMPER
+  AUDITAR
+  LANZAR
+}
+
+enum KaledSessionType {
+  LESSON_SUPPORT
+  CODE_REVIEW
+  DELIVERABLE_HELP
+  GENERAL_QUESTION
+  PROJECT_REVIEW
+}
+
+enum DeliverableStatus {
+  PENDIENTE
+  ENTREGADO
+  EN_REVISION
+  APROBADO
+  RECHAZADO
+}
+
+enum SaasProjectStatus {
+  EN_CONSTRUCCION
+  EN_STAGING
+  EN_PRODUCCION
+  LANZADO
+}
+
+enum BadgeCondition {
+  LESSONS_COMPLETED
+  DELIVERABLES_APPROVED
+  STREAK_DAYS
+  QUIZ_PERFECT_SCORE
+  FIRST_DEPLOY
+  REAL_USERS_3
+  DEMO_DAY_PASSED
+  ALL_CRAL_DONE
+}
+
 enum AcademyCohortStatus {
   DRAFT
   ACTIVE
@@ -1464,4 +1896,144 @@ model ProductTemplate {
 
   @@index([slug])
   @@index([isActive])
+}
+
+// ============================================
+// LAVADERO PRO - Gestión de Lavaderos de Autos
+// ============================================
+
+enum LavaderoVehicleType {
+  CAR
+  SUV
+  MOTORCYCLE
+}
+
+enum LavaderoOrderStatus {
+  RECEIVED
+  WASHING
+  READY
+  DELIVERED
+}
+
+enum LavaderoPaymentMethod {
+  CASH
+  NEQUI
+  CARD
+}
+
+model LavaderoCustomer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  email     String?
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant   Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  vehicles LavaderoVehicle[]
+  orders   LavaderoOrder[]
+
+  @@unique([phone, tenantId])
+  @@index([name])
+  @@index([phone])
+  @@index([tenantId])
+}
+
+model LavaderoVehicle {
+  id         String              @id @default(cuid())
+  plate      String
+  type       LavaderoVehicleType
+  color      String?
+  brand      String?
+  customerId String
+  tenantId   String
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  customer LavaderoCustomer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  tenant   Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orders   LavaderoOrder[]
+
+  @@unique([plate, tenantId])
+  @@index([plate])
+  @@index([customerId])
+  @@index([tenantId])
+}
+
+model LavaderoService {
+  id        String   @id @default(cuid())
+  name      String
+  price     Decimal  @db.Decimal(10, 2)
+  active    Boolean  @default(true)
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant        Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orderServices LavaderoOrderService[]
+
+  @@unique([name, tenantId])
+  @@index([name])
+  @@index([active])
+  @@index([tenantId])
+}
+
+model LavaderoOrder {
+  id         String              @id @default(cuid())
+  vehicleId  String
+  customerId String
+  status     LavaderoOrderStatus @default(RECEIVED)
+  total      Decimal             @db.Decimal(10, 2)
+  notes      String?
+  createdBy  String
+  tenantId   String
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  vehicle       LavaderoVehicle        @relation(fields: [vehicleId], references: [id])
+  customer      LavaderoCustomer       @relation(fields: [customerId], references: [id])
+  creator       User                   @relation("LavaderoOrderCreator", fields: [createdBy], references: [id])
+  tenant        Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orderServices LavaderoOrderService[]
+  payments      LavaderoPayment[]
+
+  @@index([status])
+  @@index([customerId])
+  @@index([vehicleId])
+  @@index([createdBy])
+  @@index([tenantId])
+  @@index([createdAt])
+}
+
+model LavaderoOrderService {
+  id          String  @id @default(cuid())
+  orderId     String
+  serviceId   String
+  priceAtTime Decimal @db.Decimal(10, 2)
+
+  order   LavaderoOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  service LavaderoService @relation(fields: [serviceId], references: [id])
+
+  @@index([orderId])
+  @@index([serviceId])
+}
+
+model LavaderoPayment {
+  id        String                @id @default(cuid())
+  orderId   String
+  method    LavaderoPaymentMethod
+  amount    Decimal               @db.Decimal(10, 2)
+  createdBy String
+  tenantId  String
+  createdAt DateTime              @default(now())
+
+  order   LavaderoOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  creator User          @relation("LavaderoPaymentCreator", fields: [createdBy], references: [id])
+  tenant  Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([createdBy])
+  @@index([tenantId])
+  @@index([createdAt])
 }

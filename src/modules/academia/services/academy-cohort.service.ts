@@ -41,7 +41,10 @@ export class AcademyCohortService {
             modules: {
               orderBy: { order: "asc" },
               include: {
-                lessons: { orderBy: { order: "asc" } },
+                lessons: {
+                  orderBy: { order: "asc" },
+                  include: { meta: { select: { weekNumber: true, dayOfWeek: true } } },
+                },
               },
             },
           },
@@ -55,6 +58,93 @@ export class AcademyCohortService {
         },
       },
     });
+  }
+
+  /** Obtiene datos del cohorte para vista de estudiante (server-side). */
+  static async getCohortDataForStudent(userId: string, cohortId: string, userPlatformRole: string) {
+    const cohort = await prisma.academyCohort.findFirst({
+      where: { id: cohortId },
+      include: {
+        course: {
+          include: {
+            modules: {
+              orderBy: { order: "asc" },
+              include: {
+                lessons: {
+                  orderBy: { order: "asc" },
+                  include: { meta: { select: { weekNumber: true, dayOfWeek: true } } },
+                },
+              },
+            },
+          },
+        },
+        events: { orderBy: { scheduledAt: "asc" } },
+        assessments: { orderBy: { scheduledAt: "asc" } },
+        enrollments: {
+          include: {
+            user: { select: { id: true, name: true, email: true, image: true } },
+          },
+        },
+      },
+    });
+
+    if (!cohort) return null;
+
+    const enrollment = await prisma.academyEnrollment.findFirst({
+      where: {
+        userId,
+        courseId: cohort.courseId,
+        status: "ACTIVE",
+      },
+    });
+
+    const hasAccess =
+      !!enrollment ||
+      userPlatformRole === "ACADEMY_ADMIN" ||
+      userPlatformRole === "ACADEMY_TEACHER";
+
+    if (!hasAccess) return null;
+
+    const lessonIds = cohort.course.modules.flatMap((m) => m.lessons.map((l) => l.id));
+    const progressRecords = await prisma.academyStudentProgress.findMany({
+      where: { userId, lessonId: { in: lessonIds }, completed: true },
+      select: { lessonId: true },
+    });
+    const completedLessonIds = progressRecords.map((r) => r.lessonId);
+
+    return {
+      cohort: {
+        id: cohort.id,
+        name: cohort.name,
+        startDate: cohort.startDate.toISOString(),
+        endDate: cohort.endDate.toISOString(),
+        status: cohort.status,
+        courseId: cohort.courseId,
+      },
+      course: cohort.course,
+      events: cohort.events.map((e) => ({
+        id: e.id,
+        title: e.title,
+        type: e.type,
+        dayOfWeek: e.dayOfWeek,
+        startTime: e.startTime,
+        endTime: e.endTime,
+        scheduledAt: e.scheduledAt?.toISOString?.() ?? "",
+      })),
+      assessments: cohort.assessments.map((a) => ({
+        id: a.id,
+        title: a.title,
+        type: a.type,
+        scheduledAt: a.scheduledAt?.toISOString?.() ?? "",
+      })),
+      members: cohort.enrollments.map((e) => ({
+        id: e.user.id,
+        name: e.user.name,
+        email: e.user.email,
+        image: e.user.image,
+      })),
+      completedLessonIds,
+    };
   }
 
   static async update(

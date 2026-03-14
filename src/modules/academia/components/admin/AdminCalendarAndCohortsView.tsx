@@ -8,7 +8,21 @@ import { cn } from "@/lib/utils";
 
 type TabId = "calendar" | "cohorts";
 
-export function AdminCalendarAndCohortsView() {
+interface CalendarEvent {
+  id: string;
+  name: string;
+  courseId: string;
+  courseTitle: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+}
+
+interface AdminCalendarAndCohortsViewProps {
+  events: CalendarEvent[];
+}
+
+export function AdminCalendarAndCohortsView({ events }: AdminCalendarAndCohortsViewProps) {
   const [tab, setTab] = useState<TabId>("calendar");
 
   const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
@@ -44,7 +58,7 @@ export function AdminCalendarAndCohortsView() {
         ))}
       </div>
 
-      {tab === "calendar" && <CalendarView />}
+      {tab === "calendar" && <CalendarView events={events} />}
       {tab === "cohorts" && <CohortsManagement />}
     </div>
   );
