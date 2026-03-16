@@ -404,6 +404,7 @@ async function main() {
         discountAmountCop,
         netRevenueCop,
         paidAmountCop,
+        refundedAmountCop: 0,
         paymentStatus: paidAmountCop >= netRevenueCop ? "PAID" : "PARTIAL",
       },
     });
