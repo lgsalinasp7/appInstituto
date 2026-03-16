@@ -41,6 +41,7 @@ export interface TenantUser {
   };
   createdAt: Date;
   platformRole?: string | null;
+  academyEnrollments?: { id: string }[];
 }
 
 export interface CreateTenantData {

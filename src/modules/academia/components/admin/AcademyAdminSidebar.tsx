@@ -13,6 +13,7 @@ import {
   Trophy,
   LogOut,
   UserCircle,
+  Sparkles,
 } from "lucide-react";
 
 interface Props {
@@ -28,6 +29,7 @@ const NAV = [
   { href: "/academia/admin/calendar", label: "Calendario", icon: Calendar },
   { href: "/academia/admin/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/academia/admin/users", label: "Usuarios", icon: Users },
+  { href: "/academia/admin/trial-activity", label: "Usuarios de prueba", icon: Sparkles },
   { href: "/academia/admin/profile", label: "Mi Perfil", icon: UserCircle },
 ];
 

@@ -1,0 +1,1 @@
+CRON_SECRET=un_string_secreto_aleatorio_largo

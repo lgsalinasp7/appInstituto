@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { courseService } from "@/modules/academy/services/academy.service";
 import { StudentDashboardClient } from "@/modules/academia/components/student/StudentDashboardClient";
+import { logTrialActivity, TRIAL_ACTIONS } from "@/lib/trial-activity";
+import { getStudentErrorSummary } from "@/lib/academia/kaled-error-memory";
 
 export default async function StudentDashboardPage() {
   const user = await getCurrentUser();
@@ -32,8 +34,11 @@ export default async function StudentDashboardPage() {
     },
   });
 
-  const enrollment = dbUser?.academyEnrollments[0];
-  if (!enrollment) {
+  type EnrollmentWithTrial = NonNullable<typeof dbUser>["academyEnrollments"][number] & {
+    isTrial?: boolean;
+  };
+  const enrollment = dbUser?.academyEnrollments[0] as EnrollmentWithTrial | undefined;
+  if (!enrollment || !dbUser) {
     return (
       <div className="academy-card-dark p-8 rounded-2xl">
         <h1 className="text-xl font-bold text-white mb-2">Sin matrícula activa</h1>
@@ -43,6 +48,9 @@ export default async function StudentDashboardPage() {
   }
 
   const tenantId = dbUser.tenantId ?? "";
+  if (enrollment?.isTrial && tenantId) {
+    logTrialActivity(dbUser.id, tenantId, TRIAL_ACTIONS.DASHBOARD_VIEW, "dashboard").catch(() => {});
+  }
   const course = await courseService.getBootcampCourse(tenantId);
   const snapshot = await prisma.academyStudentSnapshot.findFirst({
     where: { userId: user.id },
@@ -69,7 +77,7 @@ export default async function StudentDashboardPage() {
           module: { courseId: course.id },
         },
         include: {
-          meta: { select: { weekNumber: true, dayOfWeek: true, sessionType: true } },
+          meta: { select: { weekNumber: true, dayOfWeek: true, sessionType: true, phaseTarget: true } },
           module: { select: { title: true, order: true } },
         },
         orderBy: [{ module: { order: "asc" } }, { order: "asc" }],
@@ -86,6 +94,9 @@ export default async function StudentDashboardPage() {
 
   const cralCompleted = (snapshot?.cralCompleted as Record<string, number>) ?? {};
   const modules = course?.modules ?? [];
+  const errorSummary = tenantId
+    ? await getStudentErrorSummary(user.id, tenantId)
+    : "";
   const totalLessons = modules.reduce((acc, m) => acc + (m.lessons?.length ?? 12), 0) || 48;
 
   const moduleProgress = modules.map((m, i) => {
@@ -128,6 +139,8 @@ export default async function StudentDashboardPage() {
       }))}
       cohortName={enrollment.cohort?.name ?? "Cohorte"}
       courseId={enrollment.courseId}
+      errorSummary={errorSummary}
+      nextLessonPhase={nextLessons[0]?.meta?.phaseTarget as string | undefined}
     />
   );
 }

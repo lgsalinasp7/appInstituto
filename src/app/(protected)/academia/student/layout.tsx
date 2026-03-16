@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { StudentSidebar } from "@/modules/academia/components/student/StudentSidebar";
 import { StudentTopbar } from "@/modules/academia/components/student/StudentTopbar";
+import { TrialBanner } from "@/modules/academia/components/student/TrialBanner";
 import { MainContent } from "./MainContent";
 
 export default async function StudentLayout({
@@ -34,7 +35,12 @@ export default async function StudentLayout({
 
   if (dbUser?.platformRole !== "ACADEMY_STUDENT") redirect("/academia");
 
-  const enrollment = dbUser.academyEnrollments[0];
+  const enrollment = dbUser.academyEnrollments[0] as
+    | (typeof dbUser.academyEnrollments[0] & {
+        isTrial?: boolean;
+        trialExpiresAt?: Date | null;
+      })
+    | undefined;
   const snapshot = await prisma.academyStudentSnapshot.findFirst({
     where: { userId: user.id },
     select: {
@@ -59,6 +65,13 @@ export default async function StudentLayout({
       />
 
       <div className="w-full flex flex-col min-w-0 min-h-0 lg:pl-[260px]">
+        {enrollment?.isTrial && enrollment.trialExpiresAt && (
+          <TrialBanner
+            trialExpiresAt={enrollment.trialExpiresAt}
+            nextCohortDate={null}
+            isExpired={new Date() > enrollment.trialExpiresAt}
+          />
+        )}
         <StudentTopbar
           userName={dbUser.name ?? "Estudiante"}
           userImage={dbUser.image ?? undefined}

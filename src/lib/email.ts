@@ -1,11 +1,10 @@
 /**
  * Email Service using Resend
- * Handles all email sending functionality
+ * Multi-tenant: mismo dominio Resend, nombre visible y branding distintos por tenant.
  */
 
 import { Resend } from "resend";
 
-// Lazy initialization of Resend client
 let resendClient: Resend | null = null;
 
 function getResendClient(): Resend {
@@ -19,18 +18,92 @@ function getResendClient(): Resend {
   return resendClient;
 }
 
-// Email configuration
-const APP_NAME = process.env.RESEND_FROM_NAME || "Instituto";
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL
-  ? `${APP_NAME} <${process.env.RESEND_FROM_EMAIL}>`
-  : (process.env.EMAIL_FROM || `${APP_NAME} <notificaciones@tu-dominio.com>`);
+// ---------------------------------------------------------------------------
+// Tipos y configuración de branding por tenant
+// ---------------------------------------------------------------------------
+
+export interface TenantEmailBranding {
+  /** Nombre visible en el subject y cuerpo del email */
+  name: string;
+  /** Color del header del email (hex) */
+  primaryColor: string;
+  /** Color del botón CTA (hex) */
+  secondaryColor: string;
+  /** Subtítulo debajo del nombre en el header */
+  subtitle: string;
+}
+
+/**
+ * Branding por defecto para cada tenant conocido.
+ * Si el slug no está aquí se usará DEFAULT_EMAIL_BRANDING.
+ * Exportado para que las API routes puedan pasarlo directamente sin DB hit.
+ */
+export const TENANT_EMAIL_DEFAULTS: Record<string, TenantEmailBranding> = {
+  kaledacademy: {
+    name: "Kaled Academy",
+    primaryColor: "#1e3a5f",
+    secondaryColor: "#3b82f6",
+    subtitle: "Bootcamp de Ingeniería SaaS con IA",
+  },
+  edutec: {
+    name: "Edutec",
+    primaryColor: "#1e3a5f",
+    secondaryColor: "#2563eb",
+    subtitle: "Sistema de Gestión Académica",
+  },
+};
+
+const DEFAULT_EMAIL_BRANDING: TenantEmailBranding = {
+  name: process.env.RESEND_FROM_NAME || "KaledSoft",
+  primaryColor: "#1e3a5f",
+  secondaryColor: "#3b82f6",
+  subtitle: "Plataforma Educativa",
+};
+
+/** Dirección de origen verificada en Resend (igual para todos los tenants) */
+const FROM_ADDRESS = process.env.RESEND_FROM_EMAIL || "noreply@kaledsoft.tech";
+
+/** Construye el campo `from` con nombre visible del tenant */
+function buildFrom(branding: TenantEmailBranding): string {
+  return `${branding.name} <${FROM_ADDRESS}>`;
+}
+
+/** Resuelve el branding efectivo: prioriza el pasado explícitamente,
+ *  luego el mapa por slug, luego el default. */
+function resolveBranding(
+  tenantSlug?: string,
+  branding?: TenantEmailBranding,
+): TenantEmailBranding {
+  return (
+    branding ??
+    (tenantSlug ? (TENANT_EMAIL_DEFAULTS[tenantSlug] ?? null) : null) ??
+    DEFAULT_EMAIL_BRANDING
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Interfaces de parámetros
+// ---------------------------------------------------------------------------
 
 interface SendInvitationEmailParams {
   to: string;
   token: string;
+  /** Rol técnico (ej. ADMINISTRADOR, USUARIO). Se usa como fallback si no hay roleDisplayLabel. */
   roleName: string;
+  /** Etiqueta amigable para el email (ej. "Estudiante", "Administrador"). Prioridad sobre roleName. */
+  roleDisplayLabel?: string;
   inviterName: string;
   tenantSlug?: string;
+  branding?: TenantEmailBranding;
+}
+
+interface SendTrialInvitationEmailParams {
+  to: string;
+  token: string;
+  trialCohortName: string;
+  trialNextCohortDate: Date;
+  tenantSlug?: string;
+  branding?: TenantEmailBranding;
 }
 
 interface SendPasswordResetEmailParams {
@@ -38,6 +111,7 @@ interface SendPasswordResetEmailParams {
   token: string;
   userName?: string;
   tenantSlug?: string;
+  branding?: TenantEmailBranding;
 }
 
 interface SendReceiptEmailParams {
@@ -47,19 +121,31 @@ interface SendReceiptEmailParams {
   amount: number;
   paymentType: string;
   programName: string;
+  tenantSlug?: string;
+  branding?: TenantEmailBranding;
 }
 
+// ---------------------------------------------------------------------------
+// Funciones de envío
+// ---------------------------------------------------------------------------
+
 /**
- * Send invitation email to new user
+ * Envía el email de invitación a un nuevo usuario.
+ * El branding (nombre, colores, subtítulo) se adapta al tenant.
  */
 export async function sendInvitationEmail({
   to,
   token,
   roleName,
+  roleDisplayLabel,
   inviterName,
   tenantSlug,
+  branding,
 }: SendInvitationEmailParams) {
+  const roleLabel = roleDisplayLabel ?? roleName;
   const resend = getResendClient();
+  const b = resolveBranding(tenantSlug, branding);
+
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "kaledsoft.tech";
   const isDev = process.env.NODE_ENV === "development";
   const baseUrl = tenantSlug
@@ -70,32 +156,32 @@ export async function sendInvitationEmail({
   const inviteUrl = `${baseUrl}/auth/invitation/${token}`;
 
   const { data, error } = await resend.emails.send({
-    from: FROM_EMAIL,
+    from: buildFrom(b),
     to,
-    subject: `Invitación a ${APP_NAME}`,
+    subject: `Invitación a ${b.name}`,
     html: `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Invitación a ${APP_NAME}</title>
+          <title>Invitación a ${b.name}</title>
         </head>
         <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
-            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Sistema de Gestión Académica</p>
+          <div style="background: linear-gradient(135deg, ${b.primaryColor} 0%, ${b.secondaryColor} 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">${b.name}</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">${b.subtitle}</p>
           </div>
 
           <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
             <h2 style="color: #333; margin-top: 0;">Has sido invitado</h2>
 
-            <p><strong>${inviterName}</strong> te ha invitado a unirte a la plataforma ${APP_NAME} con el rol de <strong>${roleName}</strong>.</p>
+            <p>Te han invitado a unirte a la plataforma ${b.name} con el rol de <strong>${roleLabel}</strong>.</p>
 
             <p>Para aceptar la invitación y crear tu cuenta, haz clic en el siguiente botón:</p>
 
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${inviteUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+              <a href="${inviteUrl}" style="background: linear-gradient(135deg, ${b.primaryColor} 0%, ${b.secondaryColor} 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
                 Aceptar Invitación
               </a>
             </div>
@@ -124,16 +210,119 @@ export async function sendInvitationEmail({
   return data;
 }
 
+const WHATSAPP_CTA = "https://wa.me/573337226157";
+
 /**
- * Send password reset email
+ * Envía el email de invitación a versión prueba (2 días, primera lección).
+ */
+export async function sendTrialInvitationEmail({
+  to,
+  token,
+  trialCohortName,
+  trialNextCohortDate,
+  tenantSlug,
+  branding,
+}: SendTrialInvitationEmailParams) {
+  const resend = getResendClient();
+  const b = resolveBranding(tenantSlug, branding);
+
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "kaledsoft.tech";
+  const isDev = process.env.NODE_ENV === "development";
+  const baseUrl = tenantSlug
+    ? isDev
+      ? `http://${tenantSlug}.localhost:3000`
+      : `https://${tenantSlug}.${rootDomain}`
+    : process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const inviteUrl = `${baseUrl}/auth/invitation/${token}`;
+
+  const formattedDate = new Intl.DateTimeFormat("es-CO", {
+    dateStyle: "long",
+  }).format(new Date(trialNextCohortDate));
+
+  const whatsappMsg = encodeURIComponent(
+    `Hola, quiero consultar sobre el acceso completo a Kaled Academy (cohorte ${trialCohortName})`
+  );
+  const whatsappUrl = `${WHATSAPP_CTA}?text=${whatsappMsg}`;
+
+  const { data, error } = await resend.emails.send({
+    from: buildFrom(b),
+    to,
+    subject: `Acceso de prueba a ${b.name} - 2 días gratis`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Acceso de prueba - ${b.name}</title>
+        </head>
+        <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, ${b.primaryColor} 0%, ${b.secondaryColor} 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">${b.name}</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">${b.subtitle}</p>
+          </div>
+
+          <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+            <h2 style="color: #333; margin-top: 0;">Acceso de prueba por 2 días</h2>
+
+            <p>Te han invitado a probar el acceso a la primera lección del Módulo 1 durante 2 días.</p>
+
+            <p><strong>Cohorte de prueba:</strong> ${trialCohortName}</p>
+            <p><strong>Próximo cohorte completo:</strong> ${formattedDate}</p>
+
+            <p>Para activar tu acceso de prueba, haz clic en el siguiente botón:</p>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${inviteUrl}" style="background: linear-gradient(135deg, ${b.primaryColor} 0%, ${b.secondaryColor} 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                Activar acceso de prueba
+              </a>
+            </div>
+
+            <p style="color: #666; font-size: 14px;">O copia y pega este enlace en tu navegador:</p>
+            <p style="background: #e9ecef; padding: 10px; border-radius: 5px; word-break: break-all; font-size: 12px;">
+              ${inviteUrl}
+            </p>
+
+            <hr style="border: none; border-top: 1px solid #dee2e6; margin: 20px 0;">
+
+            <p>¿Quieres comprar el acceso completo? Contáctanos por WhatsApp:</p>
+            <div style="text-align: center; margin: 20px 0;">
+              <a href="${whatsappUrl}" style="background: #25D366; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                Contáctanos para comprar
+              </a>
+            </div>
+
+            <p style="color: #999; font-size: 12px; margin-bottom: 0;">
+              Este enlace expirará en 2 días. Si no solicitaste esta invitación, puedes ignorar este correo.
+            </p>
+          </div>
+        </body>
+      </html>
+    `,
+  });
+
+  if (error) {
+    console.error("Error sending trial invitation email:", error);
+    throw new Error(`Failed to send trial invitation email: ${error.message}`);
+  }
+
+  return data;
+}
+
+/**
+ * Envía el email de restablecimiento de contraseña.
+ * El branding se adapta al tenant igual que en el email de invitación.
  */
 export async function sendPasswordResetEmail({
   to,
   token,
   userName,
   tenantSlug,
+  branding,
 }: SendPasswordResetEmailParams) {
   const resend = getResendClient();
+  const b = resolveBranding(tenantSlug, branding);
+
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "kaledsoft.tech";
   const isDev = process.env.NODE_ENV === "development";
   const baseUrl = tenantSlug
@@ -144,19 +333,21 @@ export async function sendPasswordResetEmail({
   const resetUrl = `${baseUrl}/auth/reset-password/${token}`;
 
   const { data, error } = await resend.emails.send({
-    from: FROM_EMAIL,
+    from: buildFrom(b),
     to,
-    subject: `Restablecer contraseña - ${APP_NAME}`,
+    subject: `Restablecer contraseña - ${b.name}`,
     html: `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Restablecer contraseña - ${b.name}</title>
         </head>
         <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
+          <div style="background: linear-gradient(135deg, ${b.primaryColor} 0%, ${b.secondaryColor} 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">${b.name}</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">${b.subtitle}</p>
           </div>
 
           <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
@@ -164,10 +355,10 @@ export async function sendPasswordResetEmail({
 
             <p>Hola${userName ? ` ${userName}` : ""},</p>
 
-            <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta. Haz clic en el botón de abajo para continuar:</p>
+            <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta en ${b.name}. Haz clic en el botón de abajo para continuar:</p>
 
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+              <a href="${resetUrl}" style="background: linear-gradient(135deg, ${b.primaryColor} 0%, ${b.secondaryColor} 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
                 Restablecer Contraseña
               </a>
             </div>
@@ -192,7 +383,7 @@ export async function sendPasswordResetEmail({
 }
 
 /**
- * Send receipt email to student
+ * Envía el recibo de pago al estudiante.
  */
 export async function sendReceiptEmail({
   to,
@@ -201,8 +392,12 @@ export async function sendReceiptEmail({
   amount,
   paymentType,
   programName,
+  tenantSlug,
+  branding,
 }: SendReceiptEmailParams) {
   const resend = getResendClient();
+  const b = resolveBranding(tenantSlug, branding);
+
   const formattedAmount = new Intl.NumberFormat("es-CO", {
     style: "currency",
     currency: "COP",
@@ -210,9 +405,9 @@ export async function sendReceiptEmail({
   }).format(amount);
 
   const { data, error } = await resend.emails.send({
-    from: FROM_EMAIL,
+    from: buildFrom(b),
     to,
-    subject: `Recibo de Pago ${receiptNumber} - ${APP_NAME}`,
+    subject: `Recibo de Pago ${receiptNumber} - ${b.name}`,
     html: `
       <!DOCTYPE html>
       <html>
@@ -221,8 +416,8 @@ export async function sendReceiptEmail({
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">${APP_NAME}</h1>
+          <div style="background: linear-gradient(135deg, ${b.primaryColor} 0%, ${b.secondaryColor} 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">${b.name}</h1>
             <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Recibo de Pago</p>
           </div>
 
@@ -270,16 +465,20 @@ export async function sendReceiptEmail({
 }
 
 /**
- * Send email with custom HTML template
+ * Envía un email con plantilla HTML personalizada.
  */
 export async function sendTemplateEmail(params: {
   to: string;
   subject: string;
   html: string;
+  tenantSlug?: string;
+  branding?: TenantEmailBranding;
 }): Promise<{ id: string }> {
   const resend = getResendClient();
+  const b = resolveBranding(params.tenantSlug, params.branding);
+
   const { data, error } = await resend.emails.send({
-    from: FROM_EMAIL,
+    from: buildFrom(b),
     to: params.to,
     subject: params.subject,
     html: params.html,
@@ -293,5 +492,4 @@ export async function sendTemplateEmail(params: {
   return data!;
 }
 
-// Export the getter function instead of the client directly
 export { getResendClient };

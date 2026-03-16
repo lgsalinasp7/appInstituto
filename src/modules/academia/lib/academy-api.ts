@@ -19,7 +19,16 @@ export async function fetchCourseSidebar(courseId: string) {
 
 export async function fetchLesson(lessonId: string) {
   const res = await fetch(`${BASE}/lessons/${lessonId}`);
-  if (!res.ok) throw new Error("Error al cargar lección");
+  if (!res.ok) {
+    let message = "Error al cargar lección";
+    try {
+      const body = await res.json();
+      if (typeof body?.error === "string") message = body.error;
+    } catch {
+      // usar mensaje por defecto
+    }
+    throw new Error(message);
+  }
   return res.json();
 }
 

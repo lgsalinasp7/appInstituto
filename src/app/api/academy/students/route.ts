@@ -17,6 +17,11 @@ export const GET = withAcademyAuth(
         email: true,
         platformRole: true,
         createdAt: true,
+        academyEnrollments: {
+          where: { isTrial: true },
+          take: 1,
+          select: { id: true },
+        },
       },
     });
     return NextResponse.json({ success: true, data: users });

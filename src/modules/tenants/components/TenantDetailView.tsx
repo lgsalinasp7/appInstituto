@@ -5,7 +5,7 @@
  * Displays full tenant details with tabs
  */
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +31,9 @@ import {
   Loader2,
   Pencil,
   UserPlus,
+  Mail,
+  Trash2,
+  Sparkles,
 } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -40,6 +43,7 @@ import { getAcademyRoleLabel } from "@/lib/academy-role-labels";
 import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 import { TenantEditModal } from "./TenantEditModal";
 import { TenantUserEditModal } from "./TenantUserEditModal";
+import { InviteTrialModal } from "@/modules/academia/components/InviteTrialModal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useTablePagination } from "@/hooks/use-table-pagination";
 import { TablePagination } from "@/components/ui/table-pagination";
@@ -514,6 +518,14 @@ export function TenantDetailView({ tenant, canInviteAcademy = false }: TenantDet
               >
                 <Settings size={16} /> Configuración Plan
               </TabsTrigger>
+              {canInviteAcademy && (
+                <TabsTrigger
+                  value="invitaciones"
+                  className="data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 data-[state=active]:border-b-2 data-[state=active]:border-cyan-400 rounded-none px-0 py-4 text-slate-500 font-bold tracking-tight transition-all flex items-center gap-2"
+                >
+                  <Mail size={16} /> Invitaciones
+                </TabsTrigger>
+              )}
             </TabsList>
           </div>
 
@@ -554,6 +566,13 @@ export function TenantDetailView({ tenant, canInviteAcademy = false }: TenantDet
               <ConfigurationTab tenant={tenant} />
             </div>
           </TabsContent>
+          {canInviteAcademy && (
+            <TabsContent value="invitaciones" className="m-0 focus-visible:ring-0">
+              <div className="p-8">
+                <InvitationsTab tenantId={tenant.id} tenantSlug={tenant.slug} onUpdated={() => router.refresh()} />
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
 
@@ -625,6 +644,7 @@ function UsersTab({
 }) {
   const [editingUser, setEditingUser] = useState<TenantUser | null>(null);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isTrialModalOpen, setIsTrialModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"ACADEMY_STUDENT" | "ACADEMY_TEACHER" | "ACADEMY_ADMIN">("ACADEMY_STUDENT");
   const [inviteLoading, setInviteLoading] = useState(false);
@@ -684,7 +704,15 @@ function UsersTab({
   return (
     <>
       {canShowInvite && (
-        <div className="flex justify-end mb-6">
+        <div className="flex justify-end gap-2 mb-6">
+          <Button
+            type="button"
+            onClick={() => setIsTrialModalOpen(true)}
+            className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 rounded-xl px-6 py-2.5 font-bold"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Invitar a versión prueba
+          </Button>
           <Button
             type="button"
             onClick={() => setIsInviteOpen(true)}
@@ -737,13 +765,20 @@ function UsersTab({
               <Button type="submit" disabled={inviteLoading} className="flex-1">
                 {inviteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Enviar invitación"}
               </Button>
-              <Button type="button" variant="outline" onClick={() => setIsInviteOpen(false)}>
+              <Button type="button" variant="outline-dark" onClick={() => setIsInviteOpen(false)}>
                 Cancelar
               </Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
+
+      <InviteTrialModal
+        open={isTrialModalOpen}
+        onOpenChange={setIsTrialModalOpen}
+        onInviteSuccess={onUserUpdated}
+        useAdminApi={true}
+      />
 
       <div className="overflow-x-auto">
         <table className="w-full">
@@ -777,11 +812,18 @@ function UsersTab({
                 </td>
                 <td className="py-4 px-4 text-sm font-medium text-slate-400">{user.email}</td>
                 <td className="py-4 px-4 text-sm">
-                  <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-500 text-[10px] font-black uppercase tracking-widest">
-                    {user.platformRole?.startsWith("ACADEMY_")
-                      ? getAcademyRoleLabel(user.platformRole, "Sin rol")
-                      : (user.role?.name || "Sin rol")}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {user.academyEnrollments?.length ? (
+                      <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px]">
+                        Prueba
+                      </Badge>
+                    ) : null}
+                    <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                      {user.platformRole?.startsWith("ACADEMY_")
+                        ? getAcademyRoleLabel(user.platformRole, "Sin rol")
+                        : (user.role?.name || "Sin rol")}
+                    </span>
+                  </div>
                 </td>
                 <td className="py-4 px-4">
                   <div className={cn(
@@ -839,6 +881,151 @@ function UsersTab({
         />
       )}
     </>
+  );
+}
+
+function InvitationsTab({
+  tenantId,
+  tenantSlug,
+  onUpdated,
+}: {
+  tenantId: string;
+  tenantSlug: string;
+  onUpdated: () => void;
+}) {
+  const [invitations, setInvitations] = useState<Array<{
+    id: string;
+    email: string;
+    status: string;
+    academyRole: string | null;
+    createdAt: string;
+    inviter: { name: string | null; email: string };
+    role: { name: string };
+  }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const fetchInvitations = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/tenants/${tenantSlug}/invitations`);
+      const data = await res.json();
+      if (data.success) setInvitations(data.data);
+    } catch {
+      toast.error("Error al cargar invitaciones");
+    } finally {
+      setLoading(false);
+    }
+  }, [tenantSlug]);
+
+  useEffect(() => {
+    fetchInvitations();
+  }, [fetchInvitations]);
+
+  const handleDelete = async (invitationId: string) => {
+    setDeletingId(invitationId);
+    try {
+      const res = await fetch(`/api/admin/tenants/${tenantSlug}/invitations/${invitationId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Invitación eliminada. Puedes enviar una nueva.");
+        fetchInvitations();
+        onUpdated();
+      } else {
+        toast.error(data.error || "Error al eliminar");
+      }
+    } catch {
+      toast.error("Error al eliminar invitación");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-cyan-500" />
+      </div>
+    );
+  }
+
+  if (invitations.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <Mail className="w-12 h-12 text-slate-800 mx-auto mb-4 opacity-20" />
+        <p className="text-slate-500 font-bold">No hay invitaciones enviadas</p>
+        <p className="text-slate-600 text-sm mt-1">Las invitaciones aparecerán aquí cuando las envíes desde la pestaña Usuarios.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <h3 className="text-lg font-bold text-white">Invitaciones enviadas</h3>
+      <p className="text-sm text-slate-400">
+        Puedes eliminar invitaciones pendientes para reenviar en caso de error (email incorrecto, rol equivocado, etc.).
+      </p>
+      <div className="overflow-x-auto rounded-xl border border-white/5">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-white/5 bg-slate-900/60">
+              <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">Email</th>
+              <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">Rol</th>
+              <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">Estado</th>
+              <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">Fecha</th>
+              <th className="text-left py-4 px-4 text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {invitations.map((inv) => (
+              <tr key={inv.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]">
+                <td className="py-4 px-4 text-sm font-medium text-white">{inv.email}</td>
+                <td className="py-4 px-4 text-sm text-slate-400">
+                  {inv.academyRole ? getAcademyRoleLabel(inv.academyRole) : inv.role.name}
+                </td>
+                <td className="py-4 px-4">
+                  <Badge
+                    className={cn(
+                      "text-[10px]",
+                      inv.status === "PENDING"
+                        ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                        : inv.status === "ACCEPTED"
+                          ? "bg-green-500/15 text-green-400 border-green-500/30"
+                          : "bg-slate-500/15 text-slate-400 border-slate-500/30"
+                    )}
+                  >
+                    {inv.status === "PENDING" ? "Pendiente" : inv.status === "ACCEPTED" ? "Aceptada" : "Expirada"}
+                  </Badge>
+                </td>
+                <td className="py-4 px-4 text-sm text-slate-500">
+                  {new Date(inv.createdAt).toLocaleDateString("es-CO")}
+                </td>
+                <td className="py-4 px-4">
+                  {inv.status === "PENDING" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10"
+                      onClick={() => handleDelete(inv.id)}
+                      disabled={deletingId === inv.id}
+                      title="Eliminar para reenviar"
+                    >
+                      {deletingId === inv.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </Button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 

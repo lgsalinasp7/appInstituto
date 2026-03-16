@@ -105,7 +105,8 @@ export default async function proxy(req: NextRequest) {
 
         // Rutas públicas del tenant (login, registro, etc.)
         // Incluir /api/auth para que GuestGuard pueda verificar sesión con /api/auth/me (devuelve 401 si no hay sesión)
-        const publicTenantPaths = ['/auth', '/login', '/register', '/forgot-password', '/reset-password', '/suspended', '/api-docs', '/api/openapi', '/api/auth', '/lp', '/api/public'];
+        // Incluir /api/invitations para que usuarios invitados puedan validar y aceptar invitaciones sin sesión
+        const publicTenantPaths = ['/auth', '/login', '/register', '/forgot-password', '/reset-password', '/suspended', '/api-docs', '/api/openapi', '/api/auth', '/api/invitations', '/lp', '/api/public'];
         const isPublicPath = publicTenantPaths.some(path => pathname.startsWith(path));
 
         // Assets estáticos (logos, imágenes) deben ser accesibles sin sesión para que el login muestre el logo

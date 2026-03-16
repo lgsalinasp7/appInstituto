@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Mail, UserCheck, Save, Loader2, UserPlus } from "lucide-react";
+import { Plus, Search, Mail, UserCheck, Save, Loader2, UserPlus, Sparkles } from "lucide-react";
 import { type User } from "@/modules/users";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -22,6 +22,7 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { InviteTrialModal } from "@/modules/academia/components/InviteTrialModal";
 
 interface UsersClientProps {
     initialUsers: User[];
@@ -35,6 +36,7 @@ export default function UsersClient({ initialUsers, initialInvitations }: UsersC
     const [searchTerm, setSearchTerm] = useState("");
     const [users, setUsers] = useState(initialUsers);
     const [isAcademyInviteOpen, setIsAcademyInviteOpen] = useState(false);
+    const [isTrialModalOpen, setIsTrialModalOpen] = useState(false);
     const [academyInviteEmail, setAcademyInviteEmail] = useState("");
     const [academyInviteRole, setAcademyInviteRole] = useState<"ACADEMY_STUDENT" | "ACADEMY_TEACHER" | "ACADEMY_ADMIN">("ACADEMY_STUDENT");
     const [isAcademyInviteLoading, setIsAcademyInviteLoading] = useState(false);
@@ -157,13 +159,22 @@ export default function UsersClient({ initialUsers, initialInvitations }: UsersC
                         </Button>
                     )}
                     {isSuperAdmin && (
-                        <Button
-                            type="button"
-                            onClick={() => setIsAcademyInviteOpen(true)}
-                            className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 hover:scale-105 transition-all rounded-2xl px-8 py-7 font-bold shadow-[0_0_30px_rgba(20,184,166,0.25)] border border-white/10"
-                        >
-                            <UserPlus className="mr-2 h-6 w-6" /> Invitar estudiante (Academia)
-                        </Button>
+                        <>
+                            <Button
+                                type="button"
+                                onClick={() => setIsTrialModalOpen(true)}
+                                className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 hover:scale-105 transition-all rounded-2xl px-8 py-7 font-bold shadow-[0_0_30px_rgba(245,158,11,0.25)] border border-white/10"
+                            >
+                                <Sparkles className="mr-2 h-6 w-6" /> Invitar a versión prueba
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={() => setIsAcademyInviteOpen(true)}
+                                className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 hover:scale-105 transition-all rounded-2xl px-8 py-7 font-bold shadow-[0_0_30px_rgba(20,184,166,0.25)] border border-white/10"
+                            >
+                                <UserPlus className="mr-2 h-6 w-6" /> Invitar estudiante (Academia)
+                            </Button>
+                        </>
                     )}
                 </div>
             </DashboardHeader>
@@ -415,10 +426,10 @@ export default function UsersClient({ initialUsers, initialInvitations }: UsersC
                         <div className="flex gap-3 pt-2">
                             <Button
                                 type="button"
-                                variant="outline"
+                                variant="outline-dark"
                                 onClick={() => setIsAcademyInviteOpen(false)}
                                 disabled={isAcademyInviteLoading}
-                                className="flex-1 border-slate-700 text-slate-300 hover:bg-slate-800"
+                                className="flex-1"
                             >
                                 Cancelar
                             </Button>
@@ -440,6 +451,12 @@ export default function UsersClient({ initialUsers, initialInvitations }: UsersC
                     </form>
                 </DialogContent>
             </Dialog>
+
+            <InviteTrialModal
+                open={isTrialModalOpen}
+                onOpenChange={setIsTrialModalOpen}
+                useAdminApi={true}
+            />
         </div>
     );
 }

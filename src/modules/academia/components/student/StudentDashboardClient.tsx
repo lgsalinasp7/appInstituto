@@ -59,6 +59,8 @@ interface Props {
   badges: Array<{ name: string; icon: string; earnedAt: string }>;
   cohortName: string;
   courseId: string;
+  errorSummary?: string;
+  nextLessonPhase?: string;
 }
 
 const fadeUp = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
@@ -86,11 +88,13 @@ export function StudentDashboardClient({
   badges,
   cohortName,
   courseId,
+  errorSummary = "",
+  nextLessonPhase,
 }: Props) {
   const [kaledOpen, setKaledOpen] = useState(false);
   const activeModule = Math.min(4, Math.ceil((progress / 100) * 4) + 1);
   const mc = MODULE_META[activeModule] || MODULE_META[1];
-  const activePhase = getActivePhase(cralCompleted);
+  const activePhase = (nextLessonPhase && CRAL[nextLessonPhase]) ? nextLessonPhase : getActivePhase(cralCompleted);
   const cral = CRAL[activePhase];
   const weekCurrent = Math.ceil((lessonsCompleted / lessonsTotal) * 16) || 1;
 
@@ -374,9 +378,19 @@ export function StudentDashboardClient({
               </div>
             </div>
             <div className="p-4">
+              {errorSummary ? (
+                <div className="mb-3 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-amber-400 mb-1">
+                    Errores recurrentes
+                  </p>
+                  <p className="text-[11px] text-slate-400 leading-relaxed whitespace-pre-line">
+                    {errorSummary}
+                  </p>
+                </div>
+              ) : null}
               <p className="text-[11px] text-slate-400 italic leading-relaxed mb-3">
                 &quot;Llevas {lessonsCompleted} sesiones. ¡Vas muy bien!
-                ¿Practicaste el reto de la fase {CRAL[activePhase]?.label}?&quot;
+                ¿Practicaste el reto de la fase {cral?.label}?&quot;
               </p>
               <button
                 onClick={() => setKaledOpen(true)}

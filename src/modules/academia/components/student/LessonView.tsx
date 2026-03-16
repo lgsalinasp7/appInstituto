@@ -18,9 +18,12 @@ import {
   ExternalLink,
   Bot,
   List,
+  Lock,
+  Code2,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { KaledChat } from "./KaledChat";
+import { CodeReviewPanel } from "./CodeReviewPanel";
 
 // ── Tipos ──────────────────────────────────────────────────
 interface ConceptItem {
@@ -98,6 +101,7 @@ export interface LessonViewProps {
     weekNumber: number;
     dayOfWeek: string;
     isCompleted: boolean;
+    isLocked?: boolean;
     isCurrent: boolean;
   }>;
   prevLessonId?: string;
@@ -173,6 +177,7 @@ export function LessonView({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [kaledOpen, setKaledOpen] = useState(false);
+  const [codeReviewOpen, setCodeReviewOpen] = useState(false);
 
   const lessonUrl = (lid: string) => `/academia/student/courses/${courseId}/lesson/${lid}`;
 
@@ -308,54 +313,78 @@ export function LessonView({
                     <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 px-2 py-2">
                       Semana {week}
                     </div>
-                    {wl.map((ml, idx) => (
-                      <Link
-                        key={ml.id}
-                        href={lessonUrl(ml.id)}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1 transition-all text-[13px] ${
-                          ml.isCurrent
-                            ? "text-white"
+                    {wl.map((ml, idx) => {
+                      const isLocked = ml.isLocked ?? false;
+                      const content = (
+                        <>
+                          <div
+                            className="w-5 h-5 rounded-full border flex items-center justify-center shrink-0"
+                            style={{
+                              borderColor: ml.isCompleted
+                                ? "#34d399"
+                                : ml.isCurrent
+                                  ? mc
+                                  : isLocked
+                                    ? "rgba(255,255,255,0.08)"
+                                    : "rgba(255,255,255,0.12)",
+                              background: ml.isCompleted
+                                ? "#34d399"
+                                : ml.isCurrent
+                                  ? `${mc}30`
+                                  : "transparent",
+                            }}
+                          >
+                            {ml.isCompleted && (
+                              <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 8 8">
+                                <path
+                                  d="M1 4l2 2 4-4"
+                                  stroke="#000"
+                                  strokeWidth="1.5"
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                            )}
+                            {!ml.isCompleted && ml.isCurrent && (
+                              <div className="w-2 h-2 rounded-full" style={{ background: mc }} />
+                            )}
+                            {isLocked && !ml.isCompleted && (
+                              <Lock className="w-2.5 h-2.5 text-slate-500" />
+                            )}
+                          </div>
+                          <span className="flex-1 truncate leading-tight font-medium">{ml.title}</span>
+                          <span className="text-[10px] text-slate-600 shrink-0">S{idx + 1}</span>
+                        </>
+                      );
+                      const baseClass = `flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1 transition-all text-[13px] ${
+                        ml.isCurrent
+                          ? "text-white"
+                          : isLocked
+                            ? "text-slate-500 cursor-not-allowed"
                             : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
-                        }`}
-                        style={
-                          ml.isCurrent
-                            ? { background: `${mc}25`, borderLeft: `3px solid ${mc}` }
-                            : {}
-                        }
-                      >
+                      }`;
+                      const baseStyle = ml.isCurrent
+                        ? { background: `${mc}25`, borderLeft: `3px solid ${mc}` }
+                        : {};
+                      return isLocked ? (
                         <div
-                          className="w-5 h-5 rounded-full border flex items-center justify-center shrink-0"
-                          style={{
-                            borderColor: ml.isCompleted
-                              ? "#34d399"
-                              : ml.isCurrent
-                                ? mc
-                                : "rgba(255,255,255,0.12)",
-                            background: ml.isCompleted
-                              ? "#34d399"
-                              : ml.isCurrent
-                                ? `${mc}30`
-                                : "transparent",
-                          }}
+                          key={ml.id}
+                          className={baseClass}
+                          style={baseStyle}
+                          title="Contáctanos para desbloquear"
                         >
-                          {ml.isCompleted && (
-                            <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 8 8">
-                              <path
-                                d="M1 4l2 2 4-4"
-                                stroke="#000"
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                              />
-                            </svg>
-                          )}
-                          {!ml.isCompleted && ml.isCurrent && (
-                            <div className="w-2 h-2 rounded-full" style={{ background: mc }} />
-                          )}
+                          {content}
                         </div>
-                        <span className="flex-1 truncate leading-tight font-medium">{ml.title}</span>
-                        <span className="text-[10px] text-slate-600 shrink-0">S{idx + 1}</span>
-                      </Link>
-                    ))}
+                      ) : (
+                        <Link
+                          key={ml.id}
+                          href={lessonUrl(ml.id)}
+                          className={baseClass}
+                          style={baseStyle}
+                        >
+                          {content}
+                        </Link>
+                      );
+                    })}
                   </div>
                 );
               })}
@@ -741,6 +770,16 @@ export function LessonView({
                   );
                 })}
               </div>
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() => setCodeReviewOpen(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold text-cyan-400 border border-cyan-500/30 bg-cyan-500/10 hover:bg-cyan-500/20 transition-colors"
+                >
+                  <Code2 className="w-4 h-4" />
+                  Kaled revisa mi código
+                </button>
+              </div>
             </div>
           )}
 
@@ -995,55 +1034,79 @@ export function LessonView({
                   <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 px-2 py-2">
                     Semana {week}
                   </div>
-                  {wl.map((ml, idx) => (
-                    <Link
-                      key={ml.id}
-                      href={lessonUrl(ml.id)}
-                      onClick={() => setMobileSidebarOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1 transition-all text-[13px] ${
-                        ml.isCurrent
-                          ? "text-white"
+                  {wl.map((ml, idx) => {
+                    const isLocked = ml.isLocked ?? false;
+                    const content = (
+                      <>
+                        <div
+                          className="w-5 h-5 rounded-full border flex items-center justify-center shrink-0"
+                          style={{
+                            borderColor: ml.isCompleted
+                              ? "#34d399"
+                              : ml.isCurrent
+                                ? mc
+                                : isLocked
+                                  ? "rgba(255,255,255,0.08)"
+                                  : "rgba(255,255,255,0.12)",
+                            background: ml.isCompleted
+                              ? "#34d399"
+                              : ml.isCurrent
+                                ? `${mc}30`
+                                : "transparent",
+                          }}
+                        >
+                          {ml.isCompleted && (
+                            <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 8 8">
+                              <path
+                                d="M1 4l2 2 4-4"
+                                stroke="#000"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          )}
+                          {!ml.isCompleted && ml.isCurrent && (
+                            <div className="w-2 h-2 rounded-full" style={{ background: mc }} />
+                          )}
+                          {isLocked && !ml.isCompleted && (
+                            <Lock className="w-2.5 h-2.5 text-slate-500" />
+                          )}
+                        </div>
+                        <span className="flex-1 truncate leading-tight font-medium">{ml.title}</span>
+                        <span className="text-[10px] text-slate-600 shrink-0">S{idx + 1}</span>
+                      </>
+                    );
+                    const baseClass = `flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1 transition-all text-[13px] ${
+                      ml.isCurrent
+                        ? "text-white"
+                        : isLocked
+                          ? "text-slate-500 cursor-not-allowed"
                           : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
-                      }`}
-                      style={
-                        ml.isCurrent
-                          ? { background: `${mc}25`, borderLeft: `3px solid ${mc}` }
-                          : {}
-                      }
-                    >
+                    }`;
+                    const baseStyle = ml.isCurrent
+                      ? { background: `${mc}25`, borderLeft: `3px solid ${mc}` }
+                      : {};
+                    return isLocked ? (
                       <div
-                        className="w-5 h-5 rounded-full border flex items-center justify-center shrink-0"
-                        style={{
-                          borderColor: ml.isCompleted
-                            ? "#34d399"
-                            : ml.isCurrent
-                              ? mc
-                              : "rgba(255,255,255,0.12)",
-                          background: ml.isCompleted
-                            ? "#34d399"
-                            : ml.isCurrent
-                              ? `${mc}30`
-                              : "transparent",
-                        }}
+                        key={ml.id}
+                        className={baseClass}
+                        style={baseStyle}
+                        title="Contáctanos para desbloquear"
                       >
-                        {ml.isCompleted && (
-                          <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 8 8">
-                            <path
-                              d="M1 4l2 2 4-4"
-                              stroke="#000"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                        )}
-                        {!ml.isCompleted && ml.isCurrent && (
-                          <div className="w-2 h-2 rounded-full" style={{ background: mc }} />
-                        )}
+                        {content}
                       </div>
-                      <span className="flex-1 truncate leading-tight font-medium">{ml.title}</span>
-                      <span className="text-[10px] text-slate-600 shrink-0">S{idx + 1}</span>
-                    </Link>
-                  ))}
+                    ) : (
+                      <Link
+                        key={ml.id}
+                        href={lessonUrl(ml.id)}
+                        onClick={() => setMobileSidebarOpen(false)}
+                        className={baseClass}
+                        style={baseStyle}
+                      >
+                        {content}
+                      </Link>
+                    );
+                  })}
                 </div>
               );
             })}
@@ -1054,6 +1117,13 @@ export function LessonView({
       {kaledOpen && (
         <KaledChat onClose={() => setKaledOpen(false)} lessonId={lesson.id} />
       )}
+      <CodeReviewPanel
+        open={codeReviewOpen}
+        onOpenChange={setCodeReviewOpen}
+        lessonId={lesson.id}
+        lessonTitle={lesson.title}
+        weekNumber={lesson.weekNumber}
+      />
     </div>
   );
 }

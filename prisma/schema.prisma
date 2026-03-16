@@ -73,6 +73,7 @@ model Tenant {
   academyDemoDayResults   AcademyDemoDayResult[]
   academyBadges           AcademyBadge[]
   academyAnnouncements    AcademyAnnouncement[]
+  trialUserActivities     TrialUserActivity[]
 
   // Lavadero Pro
   lavaderoCustomers LavaderoCustomer[]
@@ -128,6 +129,7 @@ model User {
   academySaasProjects            AcademySaasProject[]
   academyBadgesEarned            AcademyBadgeEarned[]
   academyAnnouncements           AcademyAnnouncement[]
+  trialUserActivities            TrialUserActivity[]
 
   // Lavadero Pro
   lavaderoOrdersCreated   LavaderoOrder[]   @relation("LavaderoOrderCreator")
@@ -679,6 +681,10 @@ model Invitation {
   tenantId    String
   academyRole  String?          // ACADEMY_STUDENT, ACADEMY_TEACHER, ACADEMY_ADMIN (solo tenant kaledacademy)
   lavaderoRole String?          // LAVADERO_ADMIN, LAVADERO_SUPERVISOR (solo tenants tipo lavadero)
+  isTrialInvitation   Boolean   @default(false)
+  trialExpiresAt      DateTime?
+  trialCohortName     String?
+  trialNextCohortDate DateTime?
   inviter      User             @relation("SentInvitations", fields: [inviterId], references: [id])
   role        Role             @relation(fields: [roleId], references: [id])
   tenant      Tenant           @relation(fields: [tenantId], references: [id])
@@ -686,6 +692,25 @@ model Invitation {
   @@index([email])
   @@index([token])
   @@index([inviterId])
+}
+
+model TrialUserActivity {
+  id          String   @id @default(cuid())
+  userId      String
+  action      String   // PAGE_VIEW, LESSON_VIEW, CLICK_CONTACT, etc.
+  entityType  String?  // lesson, dashboard, sidebar
+  entityId    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  tenantId    String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([userId])
+  @@index([tenantId])
+  @@index([createdAt])
+  @@index([action])
 }
 
 model TenantBranding {
@@ -1457,6 +1482,9 @@ model AcademyEnrollment {
   paymentStatus     FinancePaymentStatus @default(PENDING)
   enrolledAt DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  isTrial             Boolean   @default(false)
+  trialExpiresAt      DateTime?
+  trialAllowedLessonId String?
 
   user     User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   course   AcademyCourse          @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -1926,6 +1954,119 @@ model AcademyAnnouncement {
   @@index([cohortId])
   @@index([tenantId])
   @@index([isPinned])
+}
+
+// ============================================
+// Agente Kaled AI - Tablas del tutor inteligente
+// ============================================
+
+model KaledCodeReview {
+  id             String    @id @default(cuid())
+  tenantId       String
+  userId         String
+  lessonId       String?
+  cralPhase      String
+  codeSubmitted  String    @db.Text
+  feedback       String    @db.Text
+  errorPatterns  String[]
+  weekNumber     Int?
+  sessionNumber  Int?
+  status         String    @default("PENDING_APPROVAL")
+  approvedBy     String?
+  approvedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([userId])
+  @@index([tenantId])
+  @@index([status])
+  @@map("kaled_code_reviews")
+}
+
+model KaledStudentErrorPattern {
+  id           String    @id @default(cuid())
+  tenantId     String
+  userId       String
+  errorPattern String
+  errorLabel   String
+  occurrences  Int       @default(1)
+  firstSeenAt  DateTime  @default(now())
+  lastSeenAt   DateTime  @updatedAt
+  lessonIds    String[]
+  resolved     Boolean   @default(false)
+  resolvedAt   DateTime?
+
+  @@index([userId, tenantId])
+  @@map("kaled_student_error_patterns")
+}
+
+model KaledInstructorTask {
+  id           String    @id @default(cuid())
+  tenantId     String
+  instructorId String
+  studentId    String
+  type         String
+  priority     String    @default("MEDIUM")
+  title        String
+  diagnosis    String    @db.Text
+  suggestion   String    @db.Text
+  metadata     Json?
+  status       String    @default("PENDING")
+  reviewedAt   DateTime?
+  resolvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([instructorId, status])
+  @@index([tenantId])
+  @@index([studentId])
+  @@map("kaled_instructor_tasks")
+}
+
+model KaledDeliverableEvaluation {
+  id                  String    @id @default(cuid())
+  tenantId            String
+  submissionId        String
+  userId              String
+  cralPhase           String
+  codeReviewed        String?   @db.Text
+  feedbackConstruir   String?   @db.Text
+  feedbackRomper      String?   @db.Text
+  feedbackAuditar     String?   @db.Text
+  feedbackLanzar      String?   @db.Text
+  overallFeedback     String    @db.Text
+  strengths           String[]
+  improvements        String[]
+  socraticQuestions   String[]
+  status              String    @default("PENDING_APPROVAL")
+  approvedBy          String?
+  approvedAt          DateTime?
+  visibleToStudent    Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+
+  @@index([submissionId])
+  @@index([tenantId])
+  @@index([status])
+  @@map("kaled_deliverable_evaluations")
+}
+
+model KaledCohortMetrics {
+  id                   String   @id @default(cuid())
+  tenantId             String
+  cohortId             String
+  snapshotDate         DateTime @db.Date
+  totalStudents        Int      @default(0)
+  studentsOnTrack      Int      @default(0)
+  studentsAtRisk       Int      @default(0)
+  saasDeployedCount    Int      @default(0)
+  avgProgress          Decimal? @db.Decimal(5, 2)
+  totalKaledQueries    Int      @default(0)
+  cacheHitRate         Decimal? @db.Decimal(5, 2)
+  tokensSaved          Int      @default(0)
+  deliverablesApproved Int      @default(0)
+
+  @@unique([cohortId, snapshotDate])
+  @@index([tenantId])
+  @@index([cohortId])
+  @@map("kaled_cohort_metrics")
 }
 
 // Enums KaledAcademy

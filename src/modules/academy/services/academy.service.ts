@@ -45,6 +45,26 @@ export const courseService = {
     });
   },
 
+  /** Obtiene el ID de la primera lección del Módulo 1 (para acceso trial) */
+  async getFirstLessonOfModule1(tenantId: string): Promise<string | null> {
+    const module = await prisma.academyModule.findFirst({
+      where: {
+        course: { tenantId, isActive: true },
+        isActive: true,
+      },
+      orderBy: { order: "asc" },
+      include: {
+        lessons: {
+          where: { isActive: true },
+          orderBy: { order: "asc" },
+          take: 1,
+          select: { id: true },
+        },
+      },
+    });
+    return module?.lessons[0]?.id ?? null;
+  },
+
   async getLessonWithProgress(lessonId: string, tenantId: string, userId?: string) {
     const lesson = await prisma.academyLesson.findUnique({
       where: { id: lessonId },
@@ -62,6 +82,23 @@ export const courseService = {
     if (!lesson) throw new Error("Lección no encontrada");
 
     if (!userId) return { lesson, progress: null };
+
+    // Validar acceso trial
+    const enrollment = await prisma.academyEnrollment.findFirst({
+      where: {
+        userId,
+        courseId: lesson.module.courseId,
+        status: "ACTIVE",
+      },
+    });
+    if (enrollment?.isTrial) {
+      if (enrollment.trialExpiresAt && new Date() > enrollment.trialExpiresAt) {
+        throw new Error("Tu acceso de prueba ha expirado");
+      }
+      if (enrollment.trialAllowedLessonId && lesson.id !== enrollment.trialAllowedLessonId) {
+        throw new Error("Esta lección no está incluida en tu acceso de prueba");
+      }
+    }
 
     const [progress, quizResults, cralCompletions, deliverySubmission] =
       await Promise.all([
@@ -93,22 +130,28 @@ export const courseService = {
   },
 
   async getSidebarModules(courseId: string, userId: string, tenantId: string) {
-    const modules = await prisma.academyModule.findMany({
-      where: { courseId, isActive: true },
-      orderBy: { order: "asc" },
-      include: {
-        lessons: {
-          where: { isActive: true },
-          orderBy: { order: "asc" },
-          select: {
-            id: true,
-            title: true,
-            order: true,
-            meta: { select: { weekNumber: true, dayOfWeek: true } },
+    const [modules, enrollment] = await Promise.all([
+      prisma.academyModule.findMany({
+        where: { courseId, isActive: true },
+        orderBy: { order: "asc" },
+        include: {
+          lessons: {
+            where: { isActive: true },
+            orderBy: { order: "asc" },
+            select: {
+              id: true,
+              title: true,
+              order: true,
+              meta: { select: { weekNumber: true, dayOfWeek: true } },
+            },
           },
         },
-      },
-    });
+      }),
+      prisma.academyEnrollment.findFirst({
+        where: { userId, courseId, status: "ACTIVE" },
+        select: { isTrial: true, trialExpiresAt: true, trialAllowedLessonId: true },
+      }),
+    ]);
 
     const lessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
     const completedLessons = await prisma.academyStudentProgress.findMany({
@@ -117,15 +160,29 @@ export const courseService = {
     });
     const completedSet = new Set(completedLessons.map((p) => p.lessonId));
 
-    return modules.map((mod) => ({
+    const isTrial = enrollment?.isTrial ?? false;
+    const trialExpired = isTrial && enrollment?.trialExpiresAt && new Date() > enrollment.trialExpiresAt;
+    const trialAllowedLessonId = enrollment?.trialAllowedLessonId ?? null;
+
+    const result = modules.map((mod) => ({
       ...mod,
       lessons: mod.lessons.map((l) => ({
         ...l,
         isCompleted: completedSet.has(l.id),
+        isLocked:
+          isTrial &&
+          (trialExpired || (trialAllowedLessonId != null && l.id !== trialAllowedLessonId)),
       })),
       completedCount: mod.lessons.filter((l) => completedSet.has(l.id)).length,
       totalCount: mod.lessons.length,
     }));
+
+    return {
+      modules: result,
+      isTrial,
+      trialExpiresAt: enrollment?.trialExpiresAt?.toISOString() ?? null,
+      trialAllowedLessonId,
+    };
   },
 };
 
@@ -151,6 +208,15 @@ export const progressService = {
     });
     if (!enrollment)
       throw new Error("El usuario no está matriculado en este curso");
+
+    if (enrollment.isTrial) {
+      if (enrollment.trialExpiresAt && new Date() > enrollment.trialExpiresAt) {
+        throw new Error("Tu acceso de prueba ha expirado");
+      }
+      if (enrollment.trialAllowedLessonId && lesson.id !== enrollment.trialAllowedLessonId) {
+        throw new Error("Esta lección no está incluida en tu acceso de prueba");
+      }
+    }
 
     const progress = await prisma.academyStudentProgress.upsert({
       where: { userId_lessonId: { userId, lessonId } },
@@ -742,9 +808,12 @@ export const kaledAIService = {
   async buildSystemPrompt(
     userId: string,
     tenantId: string,
-    lessonId?: string
+    lessonId?: string,
+    lastUserMessage?: string
   ): Promise<string> {
-    const [snapshot, lesson] = await Promise.all([
+    const { getStudentErrorSummary } = await import("@/lib/academia/kaled-error-memory");
+
+    const [snapshot, lesson, errorSummary] = await Promise.all([
       prisma.academyStudentSnapshot.findFirst({
         where: { userId, tenantId },
       }),
@@ -754,6 +823,7 @@ export const kaledAIService = {
             include: { meta: true, module: { include: { course: true } } },
           })
         : null,
+      getStudentErrorSummary(userId, tenantId),
     ]);
 
     const progressCtx = snapshot
@@ -765,6 +835,28 @@ export const kaledAIService = {
       ? `Lección actual: "${lesson.title}" (Semana ${lesson.meta?.weekNumber ?? "?"}, ` +
         `Módulo: ${lesson.module.title}).`
       : "";
+
+    const errorCtx =
+      errorSummary && errorSummary.length > 0
+        ? `\n\nERRORES RECURRENTES DEL ESTUDIANTE (no resueltos):\n${errorSummary}\nUsa el método socrático cuando detectes estos patrones.`
+        : "";
+
+    let socraticGuardrail = "";
+    if (lastUserMessage) {
+      const { detectsWorkRequest, detectsError, getSocraticResponse } = await import(
+        "@/lib/academia/kaled-socratic"
+      );
+      const response = getSocraticResponse({
+        isAskingForSolution: detectsWorkRequest(lastUserMessage),
+        hasError: detectsError(lastUserMessage),
+        wantsValidation: /revisa|valida|está bien|correcto/i.test(lastUserMessage),
+        isRecurringError: false,
+        cralPhase: (lesson?.meta?.phaseTarget as string) ?? "CONSTRUIR",
+      });
+      if (response) {
+        socraticGuardrail = `\n\nGUARDRAIL SOCRÁTICO: El último mensaje del estudiante sugiere que necesita guía. Antes de dar la respuesta, considera iniciar con: "${response}"\n`;
+      }
+    }
 
     return `Eres Kaled, el arquitecto de sistemas que tutoriza el AI SaaS Engineering Bootcamp de KaledSoft Technologies en Colombia.
 
@@ -778,7 +870,7 @@ PERSONALIDAD:
 
 CONTEXTO DEL ESTUDIANTE:
 ${progressCtx}
-${lessonCtx}
+${lessonCtx}${errorCtx}${socraticGuardrail}
 
 METODOLOGÍA CRAL:
 - CONSTRUIR: el estudiante debe intentar antes de recibir la solución completa.

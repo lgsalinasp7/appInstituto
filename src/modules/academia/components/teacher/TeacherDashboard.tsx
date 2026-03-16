@@ -11,6 +11,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { DeliverablesReview } from "./DeliverablesReview";
+import { KaledAlertPanel } from "./KaledAlertPanel";
+import { EvaluationQueue } from "./EvaluationQueue";
 
 interface CohortSummary {
   id: string;
@@ -138,6 +140,10 @@ export function TeacherDashboard() {
             <h2 className="text-lg font-bold text-white font-display">Entregables pendientes</h2>
           </div>
           <DeliverablesReview cohortId={cohort.id} />
+
+          <KaledAlertPanel />
+
+          <EvaluationQueue />
         </>
       ) : (
         <div className="academy-card-dark p-8">

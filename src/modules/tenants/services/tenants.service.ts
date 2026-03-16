@@ -101,6 +101,11 @@ export const TenantsService = {
                 name: true,
               },
             },
+            academyEnrollments: {
+              where: { isTrial: true },
+              take: 1,
+              select: { id: true },
+            },
           },
           orderBy: { createdAt: 'asc' },
         },

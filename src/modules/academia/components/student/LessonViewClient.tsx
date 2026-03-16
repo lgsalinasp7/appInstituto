@@ -123,9 +123,12 @@ export function LessonViewClient({ courseId, lessonId, userId }: LessonViewClien
         }
 
         const lesson = lessonRes.lesson as ApiLesson;
-        const modules = Array.isArray(sidebarRes)
-          ? (sidebarRes as ApiSidebarModule[])
-          : ((sidebarRes as { modules?: ApiSidebarModule[] }).modules ?? []);
+        const sidebarData = sidebarRes as
+          | ApiSidebarModule[]
+          | { modules?: ApiSidebarModule[]; isTrial?: boolean; trialExpiresAt?: string | null; trialAllowedLessonId?: string | null };
+        const modules = Array.isArray(sidebarData)
+          ? sidebarData
+          : (sidebarData.modules ?? []);
 
         const cralDoneMap = new Set(
           (lessonRes.cralCompletions ?? []).map((c: { challengeId: string }) => c.challengeId)
@@ -154,6 +157,7 @@ export function LessonViewClient({ courseId, lessonId, userId }: LessonViewClien
           dayOfWeek: string;
           isCompleted: boolean;
           isCurrent: boolean;
+          isLocked?: boolean;
         }> = [];
         let prevId: string | undefined;
         let nextId: string | undefined;
@@ -169,6 +173,7 @@ export function LessonViewClient({ courseId, lessonId, userId }: LessonViewClien
             } else {
               prevId = l.id;
             }
+            const lessonWithLock = l as typeof l & { isLocked?: boolean };
             allLessons.push({
               id: l.id,
               title: l.title,
@@ -176,6 +181,7 @@ export function LessonViewClient({ courseId, lessonId, userId }: LessonViewClien
               dayOfWeek: l.meta?.dayOfWeek ?? "LUNES",
               isCompleted: l.isCompleted,
               isCurrent,
+              isLocked: lessonWithLock.isLocked ?? false,
             });
           }
           if (nextId) break;
@@ -277,16 +283,39 @@ export function LessonViewClient({ courseId, lessonId, userId }: LessonViewClien
   }
 
   if (error || !data) {
+    const isTrialExpired = error?.includes("prueba ha expirado");
+    const isTrialRestricted =
+      error?.includes("acceso de prueba") || isTrialExpired;
+    const friendlyMessage = isTrialRestricted
+      ? isTrialExpired
+        ? "Tu acceso de prueba ha expirado. Contáctanos para renovar el acceso al curso."
+        : "Tu acceso de prueba incluye solo la primera lección. Contáctanos para comprar el acceso completo y desbloquear el resto del curso."
+      : error ?? "Error desconocido";
+
     return (
       <div className="academy-card-dark p-8">
-        <p className="text-red-400">{error ?? "Error desconocido"}</p>
-        <button
-          type="button"
-          onClick={() => router.push(`/academia/student/courses/${courseId}`)}
-          className="mt-4 text-cyan-400 hover:underline"
-        >
-          Volver al curso
-        </button>
+        <p className={isTrialRestricted ? "text-amber-400" : "text-red-400"}>
+          {friendlyMessage}
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => router.push(`/academia/student/courses/${courseId}`)}
+            className="text-cyan-400 hover:underline"
+          >
+            Volver al curso
+          </button>
+          {isTrialRestricted && (
+            <a
+              href="https://wa.me/573337226157?text=Hola%2C%20quiero%20consultar%20sobre%20el%20acceso%20completo%20a%20Kaled%20Academy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
+            >
+              Contáctanos para comprar
+            </a>
+          )}
+        </div>
       </div>
     );
   }

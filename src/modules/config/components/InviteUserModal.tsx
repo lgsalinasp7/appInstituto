@@ -175,7 +175,7 @@ export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAd
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+            <DialogContent className="sm:max-w-md p-0 overflow-hidden bg-slate-900 border-slate-700/50 text-white">
                 <div className="h-2 w-full bg-gradient-to-r from-cyan-500 to-blue-600" />
                 <DialogHeader className="p-6 pb-2">
                     <DialogTitle className="flex items-center gap-3">
@@ -249,10 +249,10 @@ export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAd
                     <div className="flex gap-3 pt-4">
                         <Button
                             type="button"
-                            variant="outline"
+                            variant="outline-dark"
                             onClick={() => onOpenChange(false)}
                             disabled={isLoading}
-                            className="flex-1 rounded-xl border-white/15 bg-transparent text-slate-300 hover:bg-slate-800 hover:text-white"
+                            className="flex-1 rounded-xl"
                         >
                             Cancelar
                         </Button>

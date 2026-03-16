@@ -27,12 +27,23 @@ function badRequest(message: string) {
   return NextResponse.json({ error: message }, { status: 400 });
 }
 
+const TRIAL_ERROR_MESSAGES = [
+  "Esta lección no está incluida en tu acceso de prueba",
+  "Tu acceso de prueba ha expirado",
+] as const;
+
 function serverError(err: unknown) {
   console.error("[KaledAcademy API Error]", err);
   const message = err instanceof Error ? err.message : "Error interno";
+  if (message === "UNAUTHORIZED") {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+  if (TRIAL_ERROR_MESSAGES.some((m) => message.includes(m) || m.includes(message))) {
+    return NextResponse.json({ error: message }, { status: 403 });
+  }
   return NextResponse.json(
-    { error: message === "UNAUTHORIZED" ? "No autorizado" : "Error interno del servidor" },
-    { status: message === "UNAUTHORIZED" ? 401 : 500 }
+    { error: "Error interno del servidor" },
+    { status: 500 }
   );
 }
 
@@ -96,6 +107,19 @@ export async function GET_lesson(
       tenantId,
       user.id
     );
+    // Log trial activity (fire-and-forget)
+    prisma.academyEnrollment
+      .findFirst({
+        where: { userId: user.id, courseId: data.lesson.module.courseId, isTrial: true },
+      })
+      .then((e) => {
+        if (e) {
+          import("@/lib/trial-activity").then(({ logTrialActivity, TRIAL_ACTIONS }) =>
+            logTrialActivity(user.id, tenantId, TRIAL_ACTIONS.LESSON_VIEW, "lesson", lessonId)
+          );
+        }
+      })
+      .catch(() => {});
     return NextResponse.json(data);
   } catch (err) {
     return serverError(err);
@@ -447,10 +471,12 @@ export async function POST_kaledChat(
 
     const { messages, lessonId } = body.data;
 
+    const lastUserMsg = messages.filter((m) => m.role === "user").pop()?.content;
     const systemPrompt = await kaledAIService.buildSystemPrompt(
       user.id,
       tenantId,
-      lessonId
+      lessonId,
+      lastUserMsg
     );
 
     const result = await streamText({
@@ -467,6 +493,20 @@ export async function POST_kaledChat(
         data: { kaledInteractions: { increment: 1 } },
       })
       .catch(console.error);
+
+    // Detectar patrones de error en el último mensaje del usuario (fire-and-forget)
+    if (lastUserMsg) {
+      const { detectsError } = await import("@/lib/academia/kaled-socratic");
+      const { updateErrorPatterns } = await import("@/lib/academia/kaled-error-memory");
+      if (detectsError(lastUserMsg)) {
+        updateErrorPatterns({
+          userId: user.id,
+          tenantId,
+          patterns: ["error_detectado"],
+          lessonId,
+        }).catch(() => {});
+      }
+    }
 
     return result.toTextStreamResponse();
   } catch (err) {

@@ -1,6 +1,8 @@
 /**
- * API Route: POST /api/admin/tenants/[id]/invitations
- * Permite a SUPER_ADMIN crear invitaciones para un tenant (ej. Kaled Academy) sin estar en el contexto del tenant.
+ * API Route: /api/admin/tenants/[id]/invitations
+ * GET: Lista invitaciones del tenant
+ * POST: Crea invitación (solo kaledacademy)
+ * Permite a SUPER_ADMIN gestionar invitaciones sin estar en el contexto del tenant.
  * El [id] puede ser un id (cuid) o slug (ej. kaledacademy).
  */
 
@@ -8,15 +10,66 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { randomUUID } from "crypto";
 import { addDays } from "date-fns";
-import { sendInvitationEmail } from "@/lib/email";
+import { sendInvitationEmail, sendTrialInvitationEmail, TENANT_EMAIL_DEFAULTS } from "@/lib/email";
+import { getAcademyRoleLabel } from "@/lib/academy-role-labels";
 import { z } from "zod";
 import { withCSRF, withPlatformAdmin } from "@/lib/api-auth";
 import { handleApiError } from "@/lib/errors";
 
+export const GET = withPlatformAdmin(
+  ["SUPER_ADMIN"],
+  async (request: NextRequest, user, context) => {
+    try {
+      const params = context?.params ? await context.params : {};
+      const idOrSlug = params.id;
+      if (!idOrSlug) {
+        return NextResponse.json({ success: false, error: "Tenant requerido" }, { status: 400 });
+      }
+
+      const tenant = await prisma.tenant.findFirst({
+        where: {
+          OR: [
+            { id: idOrSlug },
+            { slug: { equals: idOrSlug, mode: "insensitive" } },
+          ],
+        },
+        select: { id: true },
+      });
+      if (!tenant) {
+        return NextResponse.json({ success: false, error: "Tenant no encontrado" }, { status: 404 });
+      }
+
+      const invitations = await prisma.invitation.findMany({
+        where: { tenantId: tenant.id },
+        include: {
+          inviter: { select: { id: true, name: true, email: true } },
+          role: { select: { name: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      return NextResponse.json({ success: true, data: invitations });
+    } catch (error) {
+      return handleApiError(error);
+    }
+  }
+);
+
 const bodySchema = z.object({
   email: z.string().email("Email inválido"),
-  academyRole: z.enum(["ACADEMY_STUDENT", "ACADEMY_TEACHER", "ACADEMY_ADMIN"]),
-});
+  academyRole: z.enum(["ACADEMY_STUDENT", "ACADEMY_TEACHER", "ACADEMY_ADMIN"]).optional(),
+  isTrialInvitation: z.boolean().optional(),
+  trialCohortName: z.string().min(1).optional(),
+  trialNextCohortDate: z.string().optional(),
+}).refine(
+  (data) => {
+    if (data.isTrialInvitation) {
+      return !!data.trialCohortName && !!data.trialNextCohortDate;
+    }
+    return !!data.academyRole;
+  },
+  { message: "Para invitación trial: trialCohortName y trialNextCohortDate. Para invitación normal: academyRole." }
+);
 
 export const POST = withCSRF(
   withPlatformAdmin(["SUPER_ADMIN"], async (request: NextRequest, user, context) => {
@@ -38,7 +91,7 @@ export const POST = withCSRF(
           { status: 400 }
         );
       }
-      const { email, academyRole } = validation.data;
+      const { email, academyRole, isTrialInvitation, trialCohortName, trialNextCohortDate } = validation.data;
 
       const tenant = await prisma.tenant.findFirst({
         where: {
@@ -85,9 +138,11 @@ export const POST = withCSRF(
       const adminRole = roles.find((r) => r.name.toUpperCase() === "ADMINISTRADOR");
       const userRole = roles.find((r) => r.name.toUpperCase() === "USUARIO");
       const roleId =
-        academyRole === "ACADEMY_ADMIN" && adminRole
-          ? adminRole.id
-          : (userRole || adminRole || roles[0])?.id;
+        isTrialInvitation
+          ? (userRole || adminRole || roles[0])?.id
+          : academyRole === "ACADEMY_ADMIN" && adminRole
+            ? adminRole.id
+            : (userRole || adminRole || roles[0])?.id;
       if (!roleId) {
         return NextResponse.json(
           { success: false, error: "No se encontró un rol válido en el tenant" },
@@ -96,6 +151,8 @@ export const POST = withCSRF(
       }
 
       const token = randomUUID();
+      const expiresAt = isTrialInvitation ? addDays(new Date(), 2) : addDays(new Date(), 7);
+
       const invitation = await prisma.invitation.create({
         data: {
           email,
@@ -103,26 +160,56 @@ export const POST = withCSRF(
           inviterId: user.id,
           tenantId: tenant.id,
           token,
-          expiresAt: addDays(new Date(), 7),
+          expiresAt,
           status: "PENDING",
-          academyRole,
+          ...(isTrialInvitation
+            ? {
+                isTrialInvitation: true,
+                trialExpiresAt: expiresAt,
+                trialCohortName: trialCohortName!,
+                trialNextCohortDate: trialNextCohortDate ? new Date(trialNextCohortDate) : null,
+                academyRole: "ACADEMY_STUDENT",
+              }
+            : { academyRole }),
         },
         include: {
           role: { select: { name: true } },
         },
       });
 
-      await sendInvitationEmail({
-        to: email,
-        token,
-        roleName: invitation.role.name,
-        inviterName: user.name || user.email,
-        tenantSlug: tenant.slug,
-      });
+      const tenantBranding = tenant.slug
+        ? (TENANT_EMAIL_DEFAULTS[tenant.slug] ?? undefined)
+        : undefined;
+
+      if (isTrialInvitation && trialCohortName && trialNextCohortDate) {
+        await sendTrialInvitationEmail({
+          to: email,
+          token,
+          trialCohortName,
+          trialNextCohortDate: new Date(trialNextCohortDate),
+          tenantSlug: tenant.slug,
+          branding: tenantBranding,
+        });
+      } else {
+        await sendInvitationEmail({
+          to: email,
+          token,
+          roleName: invitation.role.name,
+          roleDisplayLabel: getAcademyRoleLabel(invitation.academyRole),
+          inviterName: user.name || user.email,
+          tenantSlug: tenant.slug,
+          branding: tenantBranding,
+        });
+      }
 
       return NextResponse.json({
         success: true,
-        data: { id: invitation.id, email: invitation.email, academyRole: invitation.academyRole },
+        data: {
+          id: invitation.id,
+          email: invitation.email,
+          academyRole: invitation.academyRole,
+          isTrialInvitation: invitation.isTrialInvitation ?? false,
+        },
         message: "Invitación enviada exitosamente",
       });
     } catch (error) {
