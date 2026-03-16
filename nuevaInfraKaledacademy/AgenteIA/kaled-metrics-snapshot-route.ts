@@ -34,7 +34,7 @@ export async function GET(req: Request) {
         FROM kaled_semantic_cache
         WHERE tenant_id = ${tenant.id}
       `,
-      prisma.kaledIntentLog.count({
+      prisma.academyKaledSession.count({
         where: { tenantId: tenant.id },
       }),
     ]);
