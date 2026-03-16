@@ -55,6 +55,8 @@ interface CohortData {
   assessments: Array<{ id: string; title: string; type: string; scheduledAt: string }>;
   members: Array<{ id: string; name: string | null; email: string; image: string | null }>;
   completedLessonIds: string[];
+  isTrial?: boolean;
+  trialAllowedLessonId?: string | null;
 }
 
 type SectionId = "contenido" | "video" | "miembros" | "datos";
@@ -78,7 +80,7 @@ export function CohortView({ data }: CohortViewProps) {
   const [activeSection, setActiveSection] = useState<SectionId>("contenido");
   const [sessionsModuleIdx, setSessionsModuleIdx] = useState(() => getInitialSessionsModuleIdx(data));
 
-  const { cohort, course, events, assessments, members, completedLessonIds } = data;
+  const { cohort, course, events, assessments, members, completedLessonIds, isTrial } = data;
   const completedSet = new Set(completedLessonIds);
   const totalLessons = course.modules.reduce((acc, m) => acc + m.lessons.length, 0);
   const progressPercent = totalLessons > 0 ? Math.round((completedSet.size / totalLessons) * 100) : 0;
@@ -164,9 +166,15 @@ export function CohortView({ data }: CohortViewProps) {
       </motion.div>
 
       {activeSection === "contenido" && (
-        <>
+        <motion.div
+          key="contenido"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          className="space-y-6 sm:space-y-8"
+        >
           {/* Progress bar */}
-          <motion.div variants={fadeUp} className="academy-card-dark rounded-xl sm:rounded-2xl p-5 sm:p-6">
+          <div className="academy-card-dark rounded-xl sm:rounded-2xl p-5 sm:p-6">
             <div className="flex items-center justify-between gap-4 mb-2">
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Progreso</span>
               <span className="text-sm font-bold text-white">{progressPercent}%</span>
@@ -179,13 +187,12 @@ export function CohortView({ data }: CohortViewProps) {
                 transition={{ duration: 0.8, ease: "easeOut" }}
               />
             </div>
-          </motion.div>
+          </div>
 
           {/* Sessions of active module */}
           {displayModule && (
-            <motion.div
+            <div
               id={`sesiones-modulo-${displayModule.order}`}
-              variants={fadeUp}
               className="space-y-4 scroll-mt-8"
             >
               <h2 className="text-lg sm:text-xl font-bold text-white font-display">
@@ -252,13 +259,13 @@ export function CohortView({ data }: CohortViewProps) {
                   );
                 })}
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* Modules grid */}
-          <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             {course.modules.map((module, idx) => {
-              const meta = MODULE_META[idx + 1] ?? MODULE_META[1];
+              const meta = MODULE_META[module.order] ?? MODULE_META[1];
               const completedInModule = module.lessons.filter((l) => completedSet.has(l.id)).length;
               const moduleProgress = module.lessons.length > 0
                 ? Math.round((completedInModule / module.lessons.length) * 100)
@@ -336,18 +343,18 @@ export function CohortView({ data }: CohortViewProps) {
                 </div>
               );
             })}
-          </motion.div>
-        </>
+          </div>
+        </motion.div>
       )}
 
       {activeSection === "video" && (
         <motion.div variants={fadeUp} className="academy-card-dark rounded-xl sm:rounded-2xl p-6">
           <h2 className="text-lg font-bold text-white font-display mb-4">Video Feed</h2>
           <div className="space-y-3">
-            {course.modules.flatMap((m) =>
-              m.lessons
-                .filter((l) => l.videoUrl)
-                .map((l) => (
+            {(isTrial
+              ? course.modules.flatMap((m) => m.lessons.filter((l) => l.videoUrl)).slice(0, 1)
+              : course.modules.flatMap((m) => m.lessons.filter((l) => l.videoUrl))
+            ).map((l) => (
                   <div
                     key={l.id}
                     className="flex items-center gap-4 p-4 rounded-xl border border-white/[0.06] bg-white/[0.02]"
@@ -366,8 +373,7 @@ export function CohortView({ data }: CohortViewProps) {
                       Ver
                     </Link>
                   </div>
-                ))
-            )}
+                ))}
           </div>
           {course.modules.every((m) => m.lessons.every((l) => !l.videoUrl)) && (
             <p className="text-slate-500 py-8 text-center">No hay videos en las lecciones.</p>

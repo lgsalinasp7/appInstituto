@@ -39,9 +39,11 @@ export class AcademyCohortService {
         course: {
           include: {
             modules: {
+              where: { isActive: true },
               orderBy: { order: "asc" },
               include: {
                 lessons: {
+                  where: { isActive: true },
                   orderBy: { order: "asc" },
                   include: { meta: { select: { weekNumber: true, dayOfWeek: true } } },
                 },
@@ -68,9 +70,11 @@ export class AcademyCohortService {
         course: {
           include: {
             modules: {
+              where: { isActive: true },
               orderBy: { order: "asc" },
               include: {
                 lessons: {
+                  where: { isActive: true },
                   orderBy: { order: "asc" },
                   include: { meta: { select: { weekNumber: true, dayOfWeek: true } } },
                 },
@@ -96,6 +100,7 @@ export class AcademyCohortService {
         courseId: cohort.courseId,
         status: "ACTIVE",
       },
+      select: { isTrial: true, trialAllowedLessonId: true },
     });
 
     const hasAccess =
@@ -163,6 +168,8 @@ export class AcademyCohortService {
         image: e.user.image,
       })),
       completedLessonIds,
+      isTrial: enrollment?.isTrial ?? false,
+      trialAllowedLessonId: enrollment?.trialAllowedLessonId ?? null,
     };
   }
 
