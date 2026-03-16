@@ -105,7 +105,26 @@ export class AcademyCohortService {
 
     if (!hasAccess) return null;
 
-    const lessonIds = cohort.course.modules.flatMap((m) => m.lessons.map((l) => l.id));
+    // Deduplicar módulos por id y order (evita duplicados en la vista)
+    const rawModules = cohort.course.modules;
+    const seenIds = new Set<string>();
+    const seenOrders = new Set<number>();
+    const uniqueModules = rawModules
+      .filter((mod) => {
+        if (seenIds.has(mod.id)) return false;
+        if (seenOrders.has(mod.order)) return false;
+        seenIds.add(mod.id);
+        seenOrders.add(mod.order);
+        return true;
+      })
+      .sort((a, b) => a.order - b.order);
+
+    const courseWithUniqueModules = {
+      ...cohort.course,
+      modules: uniqueModules,
+    };
+
+    const lessonIds = uniqueModules.flatMap((m) => m.lessons.map((l) => l.id));
     const progressRecords = await prisma.academyStudentProgress.findMany({
       where: { userId, lessonId: { in: lessonIds }, completed: true },
       select: { lessonId: true },
@@ -121,7 +140,7 @@ export class AcademyCohortService {
         status: cohort.status,
         courseId: cohort.courseId,
       },
-      course: cohort.course,
+      course: courseWithUniqueModules,
       events: cohort.events.map((e) => ({
         id: e.id,
         title: e.title,

@@ -71,7 +71,17 @@ export default async function StudentProfilePage() {
   });
 
   const overallProgress = Number(snapshot?.overallProgress ?? 0);
-  const modules = enrollment?.course?.modules ?? [];
+  const rawModules = enrollment?.course?.modules ?? [];
+  // Deduplicar por id y por order (evita módulos repetidos en la vista)
+  const seenIds = new Set<string>();
+  const seenOrders = new Set<number>();
+  const modules = rawModules.filter((mod) => {
+    if (seenIds.has(mod.id)) return false;
+    if (seenOrders.has(mod.order)) return false;
+    seenIds.add(mod.id);
+    seenOrders.add(mod.order);
+    return true;
+  }).sort((a, b) => a.order - b.order);
   const cohortStart = enrollment?.cohort?.startDate;
 
   const profileModules: ProfileModule[] = modules.map((mod) => {

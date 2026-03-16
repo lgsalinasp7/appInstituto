@@ -293,7 +293,7 @@ export function CohortView({ data }: CohortViewProps) {
                 >
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <h3 className="text-base sm:text-lg font-bold text-white font-display">
-                      Módulo {module.order}: {module.title}
+                      Módulo {module.order}: {module.title.replace(/^Módulo \d+\s*[—:]\s*/i, "").trim() || module.title}
                     </h3>
                     <span
                       className={cn(
