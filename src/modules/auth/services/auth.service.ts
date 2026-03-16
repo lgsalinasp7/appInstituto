@@ -34,9 +34,13 @@ export class AuthService {
   static async findUserByEmailInTenant(email: string) {
     const tenantId = await getCurrentTenantId();
     if (!tenantId) return null;
+    const normalizedEmail = email.trim().toLowerCase();
 
     return prisma.user.findFirst({
-      where: { email, tenantId },
+      where: {
+        tenantId,
+        email: { equals: normalizedEmail, mode: "insensitive" },
+      },
       include: {
         role: true,
         tenant: true,

@@ -5,6 +5,7 @@ import { AuthUser } from "./types";
 import { LoginFormData } from "./schemas";
 import { createSession } from "@/lib/auth";
 import { checkRateLimitByEmail, resetRateLimitByEmail, RATE_LIMIT_CONFIGS } from "@/lib/rate-limit";
+import { getCurrentTenantId } from "@/lib/tenant";
 
 export async function loginAction(data: LoginFormData): Promise<{ success: boolean; message?: string; user?: AuthUser }> {
     try {
@@ -21,7 +22,9 @@ export async function loginAction(data: LoginFormData): Promise<{ success: boole
             };
         }
 
-        const user = await AuthService.findUserByEmail(email);
+        const tenantId = await getCurrentTenantId();
+        const tenantUser = tenantId ? await AuthService.findUserByEmailInTenant(email) : null;
+        const user = tenantUser ?? (!tenantId ? await AuthService.findUserByEmail(email) : null);
 
         if (!user) {
             return { success: false, message: "Usuario no encontrado" };

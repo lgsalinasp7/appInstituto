@@ -3,6 +3,7 @@ import { AuthService } from "@/modules/auth/services/auth.service";
 import { loginSchema } from "@/modules/auth/schemas";
 import { createSession } from "@/lib/auth";
 import { checkRateLimitByEmail, resetRateLimitByEmail, RATE_LIMIT_CONFIGS } from "@/lib/rate-limit";
+import { getCurrentTenantId } from "@/lib/tenant";
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,7 +43,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = await AuthService.findUserByEmail(email);
+    const tenantId = await getCurrentTenantId();
+    const tenantUser = tenantId ? await AuthService.findUserByEmailInTenant(email) : null;
+    const user = tenantUser ?? (!tenantId ? await AuthService.findUserByEmail(email) : null);
 
     if (!user) {
       return NextResponse.json(
