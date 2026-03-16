@@ -10,6 +10,7 @@ const updatePaymentSchema = z.object({
   reference: z.string().optional(),
   comments: z.string().optional(),
   city: z.string().trim().min(2).optional(),
+  supportDocumentUrl: z.union([z.string().url(), z.literal(""), z.null()]).optional(),
 });
 
 export const PUT = withTenantAuthAndCSRF(async (

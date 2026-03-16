@@ -6,11 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Mail, Shield, User } from "lucide-react";
+import { getAcademyRoleLabel } from "@/lib/academy-role-labels";
 
 function getRoleLabel(user: ReturnType<typeof useAuthStore.getState>["user"]) {
   if (user?.platformRole === "SUPER_ADMIN") return "Super Admin";
   if (user?.platformRole === "ASESOR_COMERCIAL") return "Asesor Comercial";
   if (user?.platformRole === "MARKETING") return "Marketing";
+  if (user?.platformRole?.startsWith("ACADEMY_")) return getAcademyRoleLabel(user.platformRole, "Plataforma");
   return user?.role?.name || "Plataforma";
 }
 

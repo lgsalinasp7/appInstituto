@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { KALED_ACADEMY_CONFIG } from "../../config/academy-tenant.config";
 import {
   LayoutDashboard,
   Users,
@@ -11,6 +13,7 @@ import {
   Calendar,
   Trophy,
   LogOut,
+  UserCircle,
 } from "lucide-react";
 
 interface Props {
@@ -27,6 +30,7 @@ const NAV = [
   { href: "/academia/teacher/messages", label: "Mensajes", icon: MessageSquare },
   { href: "/academia/teacher/calendar", label: "Calendario", icon: Calendar },
   { href: "/academia/teacher/leaderboard", label: "Leaderboard", icon: Trophy },
+  { href: "/academia/teacher/profile", label: "Mi Perfil", icon: UserCircle },
 ];
 
 export function TeacherSidebar({ userName, userImage, cohortName }: Props) {
@@ -36,13 +40,16 @@ export function TeacherSidebar({ userName, userImage, cohortName }: Props) {
     exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
 
   return (
-    <aside className="hidden lg:flex flex-col w-[220px] shrink-0 academy-sidebar-rail-dark sticky top-0 h-screen">
+    <aside className="hidden lg:flex flex-col w-[220px] shrink-0 academy-sidebar-rail-dark fixed left-0 top-0 z-30 h-screen">
       <div className="h-16 flex items-center px-5 border-b border-white/[0.06] gap-3">
-        <div
-          className="w-8 h-8 rounded-[10px] flex items-center justify-center shrink-0 text-white font-black text-sm"
-          style={{ background: "linear-gradient(135deg, #0891b2 0%, #2563eb 100%)" }}
-        >
-          K
+        <div className="relative w-8 h-8 rounded-[10px] shrink-0 overflow-hidden flex items-center justify-center bg-slate-800/80">
+          <Image
+            src={KALED_ACADEMY_CONFIG.branding.logoUrl}
+            alt="KaledAcademy"
+            width={32}
+            height={32}
+            className="object-contain"
+          />
         </div>
         <div>
           <div className="text-white font-bold text-[13px] leading-none tracking-tight">
@@ -83,21 +90,26 @@ export function TeacherSidebar({ userName, userImage, cohortName }: Props) {
       </nav>
 
       <div className="px-3 pb-4 border-t border-white/[0.05] pt-3 flex items-center gap-2.5">
-        {userImage ? (
-          <img
-            src={userImage}
-            alt={userName}
-            className="w-8 h-8 rounded-full border border-white/10 shrink-0"
-          />
-        ) : (
-          <div className="w-8 h-8 rounded-full border border-cyan-500/30 bg-cyan-500/10 flex items-center justify-center text-cyan-400 text-xs font-bold shrink-0">
-            {userName[0]?.toUpperCase() ?? "I"}
+        <Link
+          href="/academia/teacher/profile"
+          className="flex items-center gap-2.5 flex-1 min-w-0"
+        >
+          {userImage ? (
+            <img
+              src={userImage}
+              alt={userName}
+              className="w-8 h-8 rounded-full border border-white/10 shrink-0"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full border border-cyan-500/30 bg-cyan-500/10 flex items-center justify-center text-cyan-400 text-xs font-bold shrink-0">
+              {userName[0]?.toUpperCase() ?? "I"}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="text-[12px] font-semibold text-white truncate">{userName}</div>
+            <div className="text-[10px] text-slate-500 truncate">{cohortName ?? "Instructor"}</div>
           </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <div className="text-[12px] font-semibold text-white truncate">{userName}</div>
-          <div className="text-[10px] text-slate-500 truncate">{cohortName ?? "Instructor"}</div>
-        </div>
+        </Link>
         <a
           href="/auth/logout"
           className="p-1.5 rounded-lg text-slate-600 hover:text-slate-300 hover:bg-white/[0.05] transition-colors"

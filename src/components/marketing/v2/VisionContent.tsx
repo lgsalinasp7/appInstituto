@@ -11,7 +11,7 @@ const pillars = [
     },
     {
         title: "Impacto Regional",
-        description: "Desde Montería para el mundo. Descentralizamos el talento de élite.",
+        description: "Desde Colombia para el mundo. Descentralizamos el talento de élite.",
         icon: Globe2
     },
     {
@@ -50,7 +50,7 @@ export function VisionContent() {
                             No estamos aquí para enseñar a programar. Estamos aquí para enseñar a construir el futuro.
                         </p>
                         <p>
-                            KaledSoft nace con la convicción de que el talento en Montería y Latinoamérica tiene la capacidad de liderar la revolución de agentes inteligentes a nivel global.
+                            KaledSoft nace con la convicción de que el talento en Latinoamérica tiene la capacidad de liderar la revolución de agentes inteligentes a nivel global.
                         </p>
                     </div>
                 </section>

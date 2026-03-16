@@ -31,7 +31,7 @@ export default function PrivacidadPage() {
                         <section className="space-y-4">
                             <h2 className="text-2xl font-bold text-white">2. Responsable del Tratamiento</h2>
                             <p>
-                                El responsable del tratamiento de sus datos personales es **KaledSoft Technologies**, con domicilio en la ciudad de Montería, Córdoba, Colombia. Para cualquier consulta o requerimiento relacionado con sus datos, puede contactarnos a: <span className="text-cyan-400">legal@kaledsoft.tech</span>.
+                                El responsable del tratamiento de sus datos personales es **KaledSoft Technologies**, con domicilio en Córdoba, Colombia. Para cualquier consulta o requerimiento relacionado con sus datos, puede contactarnos a: <span className="text-cyan-400">legal@kaledsoft.tech</span>.
                             </p>
                         </section>
 

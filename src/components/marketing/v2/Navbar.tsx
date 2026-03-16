@@ -42,7 +42,7 @@ export function NavbarV2() {
                     <div className="relative w-10 h-10 overflow-hidden">
                         <Image
                             src="/kaledsoft-logo-transparent.webp"
-                            alt="KaledSoft - Academia de Inteligencia Artificial en Montería, Colombia"
+                            alt="KaledSoft - Academia de Inteligencia Artificial en Colombia"
                             width={40}
                             height={40}
                             priority

@@ -74,15 +74,22 @@ interface ApiSidebarModule {
   }>;
 }
 
+/** Parsea conceptos: soporta V3 (titulo, cuerpo, historia) y V2 (title, body) */
 function parseConcepts(concepts: unknown): Array<{ key: string; title: string; body: string }> {
   if (!concepts || !Array.isArray(concepts)) return [];
   return concepts
     .filter((c): c is Record<string, unknown> => c && typeof c === "object")
-    .map((c, i) => ({
-      key: (c.key as string) ?? `c${i}`,
-      title: (c.title as string) ?? "",
-      body: (c.body as string) ?? "",
-    }));
+    .map((c, i) => {
+      const titulo = (c.titulo as string) ?? (c.title as string) ?? "";
+      const cuerpo = (c.cuerpo as string) ?? (c.body as string) ?? "";
+      const historia = c.historia as string | undefined;
+      const body = historia ? `${historia}\n\n${cuerpo}` : cuerpo;
+      return {
+        key: (c.key as string) ?? `c${i}`,
+        title: titulo,
+        body,
+      };
+    });
 }
 
 export function LessonViewClient({ courseId, lessonId, userId }: LessonViewClientProps) {
@@ -201,6 +208,7 @@ export function LessonViewClient({ courseId, lessonId, userId }: LessonViewClien
             id: lesson.id,
             title: lesson.title,
             description: lesson.description ?? "",
+            content: lesson.content ?? undefined,
             videoUrl: videoUrl ?? undefined,
             duration: lesson.duration,
             moduleTitle: lesson.module.title,

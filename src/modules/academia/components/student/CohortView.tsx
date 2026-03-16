@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import {
   ChevronRight,
@@ -109,6 +109,14 @@ export function CohortView({ data }: CohortViewProps) {
 
   const months = Math.ceil(totalLessons / 12) || 4;
 
+  const handleTabClick = useCallback((id: SectionId) => {
+    setActiveSection(id);
+    // Scroll a las pestañas para que el usuario vea el cambio al volver a Contenido
+    requestAnimationFrame(() => {
+      document.getElementById("cohort-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, []);
+
   return (
     <motion.div
       variants={stagger}
@@ -136,12 +144,12 @@ export function CohortView({ data }: CohortViewProps) {
       </motion.div>
 
       {/* Section tabs */}
-      <motion.div variants={fadeUp} className="flex flex-wrap gap-2">
+      <motion.div id="cohort-tabs" variants={fadeUp} className="flex flex-wrap gap-2">
         {navItems.map((item) => (
           <button
             key={item.id}
             type="button"
-            onClick={() => setActiveSection(item.id)}
+            onClick={() => handleTabClick(item.id)}
             className={cn(
               "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
               activeSection === item.id

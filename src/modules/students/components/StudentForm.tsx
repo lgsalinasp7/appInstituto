@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, User, Phone, Mail, MapPin, GraduationCap, Calendar, DollarSign, UserCheck, CreditCard } from "lucide-react";
+import { X, User, Phone, Mail, MapPin, GraduationCap, Calendar, DollarSign, UserCheck, CreditCard, Paperclip, Loader2, FileCheck } from "lucide-react";
 import { createStudentSchema, PAYMENT_METHODS, type CreateStudentInput } from "../schemas";
 import type { StudentWithRelations, CreateStudentResult } from "../types";
 import { formatCurrency, parseCurrency } from "@/lib/utils";
@@ -41,6 +41,9 @@ export function StudentForm({ isOpen, onClose, onSuccess, onSuccessWithData, cur
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [supportUploading, setSupportUploading] = useState(false);
+  const [supportUploadError, setSupportUploadError] = useState<string | null>(null);
+  const [supportDocumentUrl, setSupportDocumentUrl] = useState<string | null>(null);
 
   const isEditing = !!student;
 
@@ -68,6 +71,7 @@ export function StudentForm({ isOpen, onClose, onSuccess, onSuccessWithData, cur
       firstCommitmentDate: formatDateForInput(defaultFirstCommitment) as unknown as Date,
       paymentMethod: "EFECTIVO" as any,
       paymentReference: "",
+      paymentSupportUrl: "",
     },
   });
 
@@ -111,7 +115,10 @@ export function StudentForm({ isOpen, onClose, onSuccess, onSuccessWithData, cur
           // En edición no se muestra esta sección, pero el schema de formulario la exige.
           paymentMethod: "EFECTIVO" as any,
           paymentReference: "",
+          paymentSupportUrl: "",
         });
+        setSupportDocumentUrl(null);
+        setSupportUploadError(null);
       } else {
         // Modo Creación: Limpiar TODOS los campos explícitamente
         const todayDate = new Date();
@@ -145,7 +152,10 @@ export function StudentForm({ isOpen, onClose, onSuccess, onSuccessWithData, cur
           // Pago de matrícula - defaults
           paymentMethod: "EFECTIVO" as any,
           paymentReference: "",
+          paymentSupportUrl: "",
         });
+        setSupportDocumentUrl(null);
+        setSupportUploadError(null);
       }
     }
   }, [isOpen, student, reset, currentUserId]);
@@ -182,6 +192,42 @@ export function StudentForm({ isOpen, onClose, onSuccess, onSuccessWithData, cur
     }
   }, [isOpen, currentUserId]);
 
+  const handleSupportUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setSupportUploadError(null);
+    setSupportUploading(true);
+
+    try {
+      const fd = new FormData();
+      fd.append("soporte", file);
+      const res = await fetch("/api/students/matricula-soporte", {
+        method: "POST",
+        body: fd,
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        throw new Error(json.error || "Error al subir el archivo");
+      }
+
+      setSupportDocumentUrl(json.url);
+      setValue("paymentSupportUrl", json.url);
+    } catch (err) {
+      setSupportUploadError(err instanceof Error ? err.message : "Error al subir");
+    } finally {
+      setSupportUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const removeSupportDocument = () => {
+    setSupportDocumentUrl(null);
+    setValue("paymentSupportUrl", "");
+    setSupportUploadError(null);
+  };
+
   const onSubmit = async (data: CreateStudentInput) => {
     setIsLoading(true);
     setError(null);
@@ -190,10 +236,15 @@ export function StudentForm({ isOpen, onClose, onSuccess, onSuccessWithData, cur
       const url = isEditing ? `/api/students/${student.id}` : "/api/students";
       const method = isEditing ? "PATCH" : "POST";
 
+      const payload = {
+        ...data,
+        paymentSupportUrl: supportDocumentUrl || data.paymentSupportUrl || undefined,
+      };
+
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       const result = await response.json();
@@ -644,6 +695,65 @@ export function StudentForm({ isOpen, onClose, onSuccess, onSuccessWithData, cur
                       className="w-full mt-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-white border-2 border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium transition-all text-sm"
                       placeholder="Ej: Número de transacción Nequi"
                     />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                      <Paperclip size={12} className="sm:w-3.5 sm:h-3.5" />
+                      Soporte de pago (opcional)
+                    </label>
+                    <p className="text-[9px] sm:text-[10px] text-emerald-600 mt-0.5 mb-2">
+                      Adjunta una foto o PDF del comprobante de pago (máx. 5 MB)
+                    </p>
+                    {supportDocumentUrl ? (
+                      <div className="flex items-center gap-3 p-3 bg-emerald-100 rounded-lg border border-emerald-300">
+                        <FileCheck className="w-5 h-5 text-emerald-600 shrink-0" />
+                        <span className="text-xs sm:text-sm text-emerald-800 truncate flex-1">
+                          Documento adjunto correctamente
+                        </span>
+                        <a
+                          href={supportDocumentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-medium text-emerald-700 hover:underline"
+                        >
+                          Ver
+                        </a>
+                        <button
+                          type="button"
+                          onClick={removeSupportDocument}
+                          className="text-xs font-medium text-red-600 hover:text-red-700"
+                        >
+                          Quitar
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center w-full h-24 sm:h-28 border-2 border-dashed border-emerald-300 rounded-lg cursor-pointer bg-white hover:bg-emerald-50/50 transition-colors">
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,application/pdf"
+                          onChange={handleSupportUpload}
+                          disabled={supportUploading}
+                          className="hidden"
+                        />
+                        {supportUploading ? (
+                          <>
+                            <Loader2 className="w-6 h-6 text-emerald-600 animate-spin mb-1" />
+                            <span className="text-xs text-emerald-700">Subiendo...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Paperclip className="w-6 h-6 text-emerald-500 mb-1" />
+                            <span className="text-xs text-emerald-700 text-center px-2">
+                              Haz clic para seleccionar imagen o PDF
+                            </span>
+                          </>
+                        )}
+                      </label>
+                    )}
+                    {supportUploadError && (
+                      <p className="text-red-500 text-[10px] sm:text-xs mt-1">{supportUploadError}</p>
+                    )}
                   </div>
                 </div>
               </div>

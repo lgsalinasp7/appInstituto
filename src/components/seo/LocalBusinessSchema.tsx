@@ -12,7 +12,7 @@ export function LocalBusinessSchema() {
         "address": {
             "@type": "PostalAddress",
             "streetAddress": "Calle 30 # 10-09",
-            "addressLocality": "Montería",
+            "addressLocality": "Córdoba",
             "addressRegion": "Córdoba",
             "postalCode": "230001",
             "addressCountry": "CO"

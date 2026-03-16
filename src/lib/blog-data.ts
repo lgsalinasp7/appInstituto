@@ -55,7 +55,7 @@ ClaudeBot no es solo un asistente; es una infraestructura de orquestación de ag
 En el mundo tech de 2026, la velocidad de ejecución es el único foso. Los rumores y tendencias sobre la integración de este tipo de sistemas reflejan una verdad innegable: las empresas ya no quieren 'chatbots', quieren 'trabajadores digitales'.
 
 ## Impacto en Colombia y Latam
-Para el mercado en Montería y la región, esto abre una ventana de oportunidad. Ser los primeros en implementar arquitecturas tipo ClaudeBot nos permite ofrecer soluciones de automatización empresarial que antes solo estaban al alcance de presupuestos multimillonarios.
+Para el mercado en Colombia y la región, esto abre una ventana de oportunidad. Ser los primeros en implementar arquitecturas tipo ClaudeBot nos permite ofrecer soluciones de automatización empresarial que antes solo estaban al alcance de presupuestos multimillonarios.
         `
     },
     {

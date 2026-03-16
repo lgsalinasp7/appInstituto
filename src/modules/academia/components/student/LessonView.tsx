@@ -72,6 +72,7 @@ export interface LessonViewProps {
     id: string;
     title: string;
     description: string;
+    content?: string;
     videoUrl?: string;
     duration: number;
     moduleTitle: string;
@@ -126,6 +127,15 @@ const DAY_SHORT: Record<string, string> = {
   MIERCOLES: "Mié",
   VIERNES: "Vie",
 };
+
+/** Extrae etiqueta corta para badges (máx 14 chars, sin cortar palabras) */
+function shortLabel(text: string, maxLen = 14): string {
+  const clean = text.split("—")[0].split(" — ")[0].trim();
+  if (clean.length <= maxLen) return clean;
+  const cut = clean.slice(0, maxLen);
+  const lastSpace = cut.lastIndexOf(" ");
+  return lastSpace > 0 ? cut.slice(0, lastSpace) : cut;
+}
 
 const BASE = "/api/academy";
 
@@ -239,18 +249,29 @@ export function LessonView({
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] w-full">
-      {/* SIDEBAR CURSO — visible en lg junto al sidebar principal */}
+      {/* SIDEBAR CURSO — fijo en pantalla, no se mueve al hacer scroll */}
       <AnimatePresence>
         {sidebarOpen && (
-          <motion.aside
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 280, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="hidden lg:flex flex-col border-r border-white/[0.06] shrink-0 academy-sidebar-rail-dark overflow-hidden"
-            style={{ background: "rgba(2,6,23,0.8)" }}
-          >
-            <div className="p-5 border-b border-white/[0.06]">
+          <>
+            {/* Espaciador para que el contenido no quede debajo del sidebar */}
+            <motion.div
+              key="sidebar-spacer"
+              initial={{ width: 0 }}
+              animate={{ width: 280 }}
+              exit={{ width: 0 }}
+              transition={{ duration: 0.2 }}
+              className="hidden lg:block shrink-0"
+            />
+            <motion.aside
+              key="sidebar-aside"
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 280, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="hidden lg:flex flex-col border-r border-white/[0.06] academy-sidebar-rail-dark overflow-hidden fixed left-[260px] top-16 z-20 w-[280px] h-[calc(100vh-4rem)]"
+              style={{ background: "rgba(2,6,23,0.98)" }}
+            >
+            <div className="p-5 border-b border-white/[0.06] shrink-0">
               <div
                 className="inline-block text-[10px] font-bold uppercase tracking-[0.12em] px-2.5 py-1 rounded-lg mb-2"
                 style={{ color: mc, background: `${mc}20`, border: `1px solid ${mc}40` }}
@@ -339,7 +360,8 @@ export function LessonView({
                 );
               })}
             </div>
-          </motion.aside>
+            </motion.aside>
+          </>
         )}
       </AnimatePresence>
 
@@ -362,14 +384,15 @@ export function LessonView({
                   {lesson.concepts.slice(0, 3).map((c) => (
                     <span
                       key={c.key}
-                      className="text-[10px] font-semibold px-2.5 py-1 rounded-lg border"
+                      className="text-[10px] font-semibold px-2.5 py-1 rounded-lg border truncate max-w-[120px]"
                       style={{
                         color: mc,
                         borderColor: `${mc}40`,
                         background: `${mc}15`,
                       }}
+                      title={c.title}
                     >
-                      {c.title.split("—")[0].split(" — ")[0].trim().slice(0, 12)}
+                      {shortLabel(c.title)}
                     </span>
                   ))}
                   <span
@@ -413,7 +436,36 @@ export function LessonView({
 
             <p className="text-slate-500 text-sm leading-relaxed">{lesson.description}</p>
 
-          {/* KALED INTRO */}
+          {/* HISTORIA — Narrativa principal (V3) */}
+          {lesson.content && (
+            <div
+              className="academy-card-dark rounded-xl sm:rounded-2xl p-5 sm:p-6 border border-white/[0.08]"
+              style={{
+                background: "linear-gradient(135deg, rgba(30,58,138,0.06) 0%, rgba(2,6,23,0.6) 100%)",
+                borderColor: "rgba(59,130,246,0.15)",
+              }}
+            >
+              <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 mb-3">
+                📖 Historia
+              </div>
+              <p
+                className="text-[13px] text-slate-400 leading-relaxed whitespace-pre-line"
+                dangerouslySetInnerHTML={{
+                  __html: lesson.content
+                    .replace(
+                      /\*\*(.+?)\*\*/g,
+                      "<strong class='text-white font-semibold'>$1</strong>"
+                    )
+                    .replace(
+                      /`(.+?)`/g,
+                      "<code class='bg-slate-900 text-cyan-400 px-1.5 py-0.5 rounded text-[11px] font-mono'>$1</code>"
+                    ),
+                }}
+              />
+            </div>
+          )}
+
+          {/* SECCIÓN TEORÍA — Kaled Intro, Analogía, Conceptos */}
           {lesson.kaledIntro && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -508,8 +560,9 @@ export function LessonView({
                     className={`academy-pill px-3 py-1.5 text-[11px] font-medium transition-all ${
                       activeConcept === c.key ? "academy-pill-active-dark" : ""
                     }`}
+                    title={c.title}
                   >
-                    {c.title.split("—")[0].split(" — ")[0].trim()}
+                    {shortLabel(c.title, 28)}
                   </button>
                 ))}
               </div>
@@ -548,42 +601,74 @@ export function LessonView({
           )}
 
           {/* VIDEO */}
-          {lesson.videoUrl && (
-            <div>
-              <h2 className="text-[13px] font-bold text-white mb-3">📺 Video recomendado por Kaled</h2>
-              <a
-                href={lesson.videoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block academy-card-dark rounded-xl sm:rounded-2xl overflow-hidden border border-white/[0.08] hover:border-cyan-500/30 transition-all group"
-                style={{ background: "linear-gradient(135deg, #0d1b33, #1a2a50)" }}
-              >
-                <div className="p-5 flex items-center gap-4">
-                  <div
-                    className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
-                    style={{ background: "#2563eb" }}
-                  >
-                    <Play className="w-5 h-5 text-white fill-white ml-0.5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[13px] font-semibold text-white truncate mb-0.5">
-                      {lesson.videoTitle ?? "Ver video de la sesión"}
+          {lesson.videoUrl && (() => {
+            const getYoutubeId = (url: string) => {
+              const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+              return m?.[1] ?? null;
+            };
+            const videoId = getYoutubeId(lesson.videoUrl);
+            return (
+              <div>
+                <h2 className="text-[13px] font-bold text-white mb-3">📺 Video recomendado por Kaled</h2>
+                {videoId ? (
+                  <div className="academy-card-dark rounded-xl sm:rounded-2xl overflow-hidden border border-white/[0.08]">
+                    <div className="relative w-full aspect-video max-w-4xl mx-auto">
+                      <iframe
+                        src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+                        title={lesson.videoTitle ?? "Video de la sesión"}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="absolute inset-0 w-full h-full"
+                      />
                     </div>
-                    <div className="text-[11px] text-slate-500">YouTube · Recomendado por Kaled</div>
+                    <div className="px-5 py-3 border-t border-white/[0.05] flex items-center justify-between text-[11px]">
+                      <span className="text-slate-500">{lesson.videoTitle ?? "Video de la sesión"}</span>
+                      <a
+                        href={lesson.videoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-cyan-400 flex items-center gap-1 hover:underline"
+                      >
+                        Abrir en YouTube <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
                   </div>
-                  <span className="shrink-0 text-[8px] bg-red-600/80 text-white font-bold px-2 py-1 rounded">
-                    YouTube
-                  </span>
-                </div>
-                <div className="px-5 py-2.5 border-t border-white/[0.05] flex items-center justify-between text-[10px]">
-                  <span className="text-slate-600">🎯 Ver antes de la práctica</span>
-                  <span className="text-cyan-400 flex items-center gap-1">
-                    Abrir en YouTube <ExternalLink className="w-3 h-3" />
-                  </span>
-                </div>
-              </a>
-            </div>
-          )}
+                ) : (
+                  <a
+                    href={lesson.videoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block academy-card-dark rounded-xl sm:rounded-2xl overflow-hidden border border-white/[0.08] hover:border-cyan-500/30 transition-all group"
+                    style={{ background: "linear-gradient(135deg, #0d1b33, #1a2a50)" }}
+                  >
+                    <div className="p-5 flex items-center gap-4">
+                      <div
+                        className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
+                        style={{ background: "#2563eb" }}
+                      >
+                        <Play className="w-5 h-5 text-white fill-white ml-0.5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[13px] font-semibold text-white truncate mb-0.5">
+                          {lesson.videoTitle ?? "Ver video de la sesión"}
+                        </div>
+                        <div className="text-[11px] text-slate-500">YouTube · Recomendado por Kaled</div>
+                      </div>
+                      <span className="shrink-0 text-[8px] bg-red-600/80 text-white font-bold px-2 py-1 rounded">
+                        YouTube
+                      </span>
+                    </div>
+                    <div className="px-5 py-2.5 border-t border-white/[0.05] flex items-center justify-between text-[10px]">
+                      <span className="text-slate-600">🎯 Ver antes de la práctica</span>
+                      <span className="text-cyan-400 flex items-center gap-1">
+                        Abrir en YouTube <ExternalLink className="w-3 h-3" />
+                      </span>
+                    </div>
+                  </a>
+                )}
+              </div>
+            );
+          })()}
 
           {/* CRAL */}
           {lesson.cralChallenges.length > 0 && (

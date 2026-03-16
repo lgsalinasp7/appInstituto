@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bell, Menu, X, LayoutDashboard, Users, BookOpen, MessageSquare, Calendar, Trophy } from "lucide-react";
+import Image from "next/image";
+import { Bell, Menu, X, LayoutDashboard, Users, BookOpen, MessageSquare, Calendar, Trophy, UserCircle } from "lucide-react";
+import { KALED_ACADEMY_CONFIG } from "../../config/academy-tenant.config";
 
 interface Props {
   userName: string;
@@ -41,7 +43,7 @@ export function TeacherTopbar({ userName, userImage, cohortName }: Props) {
 
           <div className="h-6 w-px bg-white/[0.08]" />
 
-          <div className="flex items-center gap-2">
+          <Link href="/academia/teacher/profile" className="flex items-center gap-2">
             <div className="text-right hidden sm:block">
               <div className="text-[12px] font-semibold text-white leading-none">{userName}</div>
               <div className="text-[10px] text-slate-500 mt-0.5 leading-none">{cohortName ?? "Instructor"}</div>
@@ -57,7 +59,7 @@ export function TeacherTopbar({ userName, userImage, cohortName }: Props) {
                 {userName[0]?.toUpperCase() ?? "I"}
               </div>
             )}
-          </div>
+          </Link>
         </div>
       </header>
 
@@ -70,11 +72,14 @@ export function TeacherTopbar({ userName, userImage, cohortName }: Props) {
           <div className="lg:hidden fixed left-0 top-0 bottom-0 z-50 w-72 academy-sidebar-rail-dark border-r border-white/[0.06] animate-slide-in-left flex flex-col">
             <div className="h-14 flex items-center justify-between px-4 border-b border-white/[0.06]">
               <div className="flex items-center gap-2">
-                <div
-                  className="w-7 h-7 rounded-[8px] flex items-center justify-center text-white font-black text-xs"
-                  style={{ background: "linear-gradient(135deg, #0891b2, #2563eb)" }}
-                >
-                  K
+                <div className="relative w-7 h-7 rounded-[8px] shrink-0 overflow-hidden flex items-center justify-center bg-slate-800/80">
+                  <Image
+                    src={KALED_ACADEMY_CONFIG.branding.logoUrl}
+                    alt="KaledAcademy"
+                    width={28}
+                    height={28}
+                    className="object-contain"
+                  />
                 </div>
                 <span className="text-white font-bold text-[13px]">KaledAcademy</span>
               </div>

@@ -766,7 +766,7 @@ export const kaledAIService = {
         `Módulo: ${lesson.module.title}).`
       : "";
 
-    return `Eres Kaled, el arquitecto de sistemas que tutoriza el AI SaaS Engineering Bootcamp de KaledSoft Technologies en Montería, Colombia.
+    return `Eres Kaled, el arquitecto de sistemas que tutoriza el AI SaaS Engineering Bootcamp de KaledSoft Technologies en Colombia.
 
 PERSONALIDAD:
 - Eres motivador, directo y hablas con el estudiante de tú.

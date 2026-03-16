@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { User, Mail, Shield, Calendar } from "lucide-react";
+import { getAcademyRoleLabel } from "@/lib/academy-role-labels";
 
 export default function ProfilePage() {
   const { user } = useAuthStore();
@@ -27,6 +28,13 @@ export default function ProfilePage() {
       .join("")
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  const getRoleDisplay = () => {
+    if (user?.role?.name === "SUPERADMIN") return "Superadministrador";
+    if (user?.role?.name) return user.role.name;
+    if (user?.platformRole?.startsWith("ACADEMY_")) return getAcademyRoleLabel(user.platformRole, "Plataforma");
+    return user?.platformRole || "Plataforma";
   };
 
   return (
@@ -49,7 +57,7 @@ export default function ProfilePage() {
             <div className="text-center">
               <p className="font-bold text-lg text-primary">{user.name || "Usuario"}</p>
               <Badge variant="outline" className="mt-2">
-                {user.role?.name === "SUPERADMIN" ? "Superadministrador" : (user.role?.name || user.platformRole || "Plataforma")}
+                {getRoleDisplay()}
               </Badge>
             </div>
           </CardContent>
@@ -85,7 +93,7 @@ export default function ProfilePage() {
                 </Label>
                 <Input
                   id="role"
-                  value={user.role?.name === "SUPERADMIN" ? "Superadministrador" : (user.role?.name || user.platformRole || "Plataforma")}
+                  value={getRoleDisplay()}
                   disabled
                 />
               </div>

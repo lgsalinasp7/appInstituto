@@ -67,7 +67,7 @@ export default async function StudentProfilePage() {
 
   const dbUser = await prisma.user.findUnique({
     where: { id: user.id },
-    select: { name: true, image: true },
+    select: { name: true, email: true, image: true },
   });
 
   const overallProgress = Number(snapshot?.overallProgress ?? 0);
@@ -139,6 +139,7 @@ export default async function StudentProfilePage() {
 
   const profileData: ProfileData = {
     userName: dbUser?.name ?? "Estudiante",
+    userEmail: dbUser?.email ?? undefined,
     userImage: dbUser?.image ?? undefined,
     level: getLevel(overallProgress),
     cohortName: enrollment?.cohort?.name ?? "Sin cohorte",

@@ -37,8 +37,8 @@ export const metadata: Metadata = {
     default: "KaledSoft | Academia de IA y Lab de Software en Colombia",
     template: "%s | KaledSoft"
   },
-  description: "Expertos en Desarrollo de Software e Inteligencia Artificial en Montería, la Costa Caribe y Colombia. Formación de élite y soluciones tecnológicas B2B.",
-  keywords: ["Desarrollo de software Montería", "Inteligencia Artificial Colombia", "Software factory Costa Caribe", "Academia de programación Colombia", "Agentes de IA", "KaledSoft"],
+  description: "Expertos en Desarrollo de Software e Inteligencia Artificial en la Costa Caribe y Colombia. Formación de élite y soluciones tecnológicas B2B.",
+  keywords: ["Desarrollo de software Colombia", "Inteligencia Artificial Colombia", "Software factory Costa Caribe", "Academia de programación Colombia", "Agentes de IA", "KaledSoft"],
   authors: [{ name: "KaledSoft Team" }],
   creator: "KaledSoft Technologies",
   publisher: "KaledSoft Technologies",

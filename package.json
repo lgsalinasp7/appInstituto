@@ -16,6 +16,10 @@
     "db:seed-migration": "tsx prisma/seed-migration.ts",
     "db:seed-academy-stack": "npx tsx prisma/seed-academy-stack.ts",
     "db:seed-kaledacademy": "npx tsx prisma/seed-kaledacademy.ts",
+    "db:seed-kaledacademy-v2": "npx tsx prisma/seed-kaledacademy-v2.ts",
+    "db:seed-kaledacademy-v3": "npx tsx prisma/seed-kaledacademy-v3.ts",
+    "db:create-kaledsoft-tenant": "npx tsx prisma/create-kaledsoft-tenant.ts",
+    "db:create-edutec-users": "npx tsx prisma/create-edutec-users.ts",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage"
@@ -46,6 +50,7 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/ws": "^8.18.1",
     "@vercel/analytics": "^1.6.1",
+    "@vercel/blob": "^2.3.1",
     "@vercel/speed-insights": "^1.3.1",
     "ai": "^6.0.94",
     "bcryptjs": "^3.0.3",

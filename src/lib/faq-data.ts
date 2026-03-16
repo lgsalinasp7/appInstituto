@@ -42,6 +42,6 @@ export const desarrolloFAQs: FAQItem[] = [
   },
   {
     question: "¿Trabajan con empresas fuera de Colombia?",
-    answer: "Sí, aunque estamos basados en Montería, Colombia, trabajamos con clientes en toda Latinoamérica y otros países. Manejamos proyectos remotos con metodologías ágiles y comunicación fluida en español e inglés."
+    answer: "Sí, aunque estamos basados en Colombia, trabajamos con clientes en toda Latinoamérica y otros países. Manejamos proyectos remotos con metodologías ágiles y comunicación fluida en español e inglés."
   }
 ];

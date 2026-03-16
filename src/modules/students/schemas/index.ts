@@ -38,6 +38,7 @@ export const createStudentSchema = z.object({
     error: "Debe seleccionar un método de pago",
   }),
   paymentReference: z.string().optional(),
+  paymentSupportUrl: z.union([z.string().url("URL de soporte inválida"), z.literal("")]).optional(),
 });
 
 export const updateStudentSchema = z.object({

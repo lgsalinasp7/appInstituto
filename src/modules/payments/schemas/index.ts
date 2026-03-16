@@ -9,6 +9,7 @@ export const createPaymentSchema = z.object({
   city: z.string().trim().min(2, "La ciudad debe tener al menos 2 caracteres").optional(),
   studentId: z.string().min(1, "Debe seleccionar un estudiante"),
   registeredById: z.string().min(1, "Usuario no identificado"),
+  supportDocumentUrl: z.union([z.string().url("URL de soporte inválida"), z.literal("")]).optional(),
 });
 
 export type CreatePaymentInput = z.infer<typeof createPaymentSchema>;

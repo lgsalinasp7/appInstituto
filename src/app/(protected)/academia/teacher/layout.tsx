@@ -36,7 +36,7 @@ export default async function TeacherLayout({
     : null;
 
   return (
-    <div className="academy-shell-dark min-h-screen flex">
+    <div className="academy-shell-dark w-full h-screen flex font-sans relative overflow-hidden">
       <TeacherSidebar
         userName={dbUser?.name ?? "Instructor"}
         userEmail={dbUser?.email ?? ""}
@@ -44,13 +44,13 @@ export default async function TeacherLayout({
         cohortName={cohort?.name}
       />
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="w-full flex flex-col min-w-0 min-h-0 lg:pl-[220px]">
         <TeacherTopbar
           userName={dbUser?.name ?? "Instructor"}
           userImage={dbUser?.image ?? undefined}
           cohortName={cohort?.name}
         />
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8 pb-24 lg:pb-8">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 px-4 py-5 sm:px-5 sm:py-6 lg:px-6 lg:py-8 pb-28 lg:pb-8">
           {children}
         </main>
       </div>

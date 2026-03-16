@@ -1,0 +1,901 @@
+// ============================================================
+// SEED COMPLETO — KaledAcademy v2
+// Versión: 2.0 — KaledSoft como empresa de referencia
+// 4 Módulos · 16 Semanas · 48 Sesiones · 144 Horas
+// Ejecutar: npx tsx prisma/seed-kaledacademy-v2.ts
+// ============================================================
+// CAMBIO vs v1: AMAXOFT reemplazado por KaledSoft Technologies
+// KaledSoft = empresa que construye SaaS para múltiples industrias:
+//   - Odontología, Escuelas/Academias, Lavaderos, Parqueaderos, etc.
+// ============================================================
+
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
+
+const prisma = new PrismaClient();
+
+async function main() {
+  console.log("🚀 Iniciando seed v2 de KaledAcademy...\n");
+
+  // ── 1. TENANT ────────────────────────────────────────────
+  const tenant = await prisma.tenant.upsert({
+    where: { slug: "kaledacademy" },
+    create: {
+      name: "KaledAcademy",
+      slug: "kaledacademy",
+      domain: "academy.kaledsoft.tech",
+      email: "academia@kaledsoft.tech",
+      plan: "PRO",
+      status: "ACTIVO",
+      branding: {
+        create: {
+          primaryColor: "#161A22",
+          secondaryColor: "#3B82F6",
+          accentColor: "#10B981",
+          fontFamily: "Inter",
+          darkMode: true,
+          footerText: "KaledSoft Technologies · Montería, Colombia · kaledsoft.tech",
+        },
+      },
+    },
+    update: { status: "ACTIVO" },
+  });
+
+  // ── 2. ROLES ─────────────────────────────────────────────
+  const roleAdmin = await prisma.role.upsert({
+    where: { name_tenantId: { name: "ACADEMY_ADMIN", tenantId: tenant.id } },
+    create: { name: "ACADEMY_ADMIN", description: "Administrador de la academia", permissions: ["*"], tenantId: tenant.id },
+    update: {},
+  });
+  const roleTeacher = await prisma.role.upsert({
+    where: { name_tenantId: { name: "ACADEMY_TEACHER", tenantId: tenant.id } },
+    create: { name: "ACADEMY_TEACHER", description: "Instructor del bootcamp", permissions: ["courses:read","lessons:write","deliverables:review","cohorts:read"], tenantId: tenant.id },
+    update: {},
+  });
+  const roleStudent = await prisma.role.upsert({
+    where: { name_tenantId: { name: "ACADEMY_STUDENT", tenantId: tenant.id } },
+    create: { name: "ACADEMY_STUDENT", description: "Estudiante del bootcamp", permissions: ["courses:read","lessons:read","quizzes:write","deliverables:submit"], tenantId: tenant.id },
+    update: {},
+  });
+
+  // ── 3. USUARIOS DEMO ──────────────────────────────────────
+  const pwHash = await bcrypt.hash("KaledSoft2025!", 10);
+  const userAdmin = await prisma.user.upsert({
+    where: { email: "luisg@kaledsoft.tech" },
+    create: { email: "luisg@kaledsoft.tech", name: "Luis Guillermo Salinas", password: pwHash, isActive: true, platformRole: "ACADEMY_ADMIN", tenantId: tenant.id, roleId: roleAdmin.id },
+    update: {},
+  });
+  const userInstructor = await prisma.user.upsert({
+    where: { email: "instructor@kaledsoft.tech" },
+    create: { email: "instructor@kaledsoft.tech", name: "Luis Salinas", password: pwHash, isActive: true, platformRole: "ACADEMY_TEACHER", tenantId: tenant.id, roleId: roleTeacher.id },
+    update: {},
+  });
+  const students = await Promise.all([
+    { email: "andres@demo.kaledsoft.tech", name: "Andrés Martínez" },
+    { email: "valentina@demo.kaledsoft.tech", name: "Valentina Ríos" },
+    { email: "carlos@demo.kaledsoft.tech", name: "Carlos Herrera" },
+    { email: "juliana@demo.kaledsoft.tech", name: "Juliana Pérez" },
+  ].map(s => prisma.user.upsert({
+    where: { email: s.email },
+    create: { email: s.email, name: s.name, password: pwHash, isActive: true, platformRole: "ACADEMY_STUDENT", tenantId: tenant.id, roleId: roleStudent.id },
+    update: {},
+  })));
+
+  // ── 4. CURSO ──────────────────────────────────────────────
+  const course = await prisma.academyCourse.upsert({
+    where: { id: "kaledacademy-bootcamp-2025" },
+    create: {
+      id: "kaledacademy-bootcamp-2025",
+      title: "AI SaaS Engineering Bootcamp",
+      description: "Construye, lanza y monetiza tu propio SaaS usando IA como asistente estratégico. No eres un coder — eres un arquitecto de sistemas.",
+      description2: "Metodología: Construir · Romper · Auditar · Lanzar. 4 meses, Lun/Mié/Vie, 3h por sesión. Empresa de referencia: KaledSoft Technologies.",
+      category: "Desarrollo Web · IA · SaaS",
+      duration: "4 meses",
+      level: "Base → Intermedio",
+      price: 1800000,
+      durationWeeks: 16,
+      isActive: true,
+      tenantId: tenant.id,
+      createdById: userAdmin.id,
+    },
+    update: { isActive: true },
+  });
+
+  // ── 5. COHORTE ────────────────────────────────────────────
+  const cohort = await prisma.academyCohort.upsert({
+    where: { id: "kaledacademy-cohort-2025-1" },
+    create: {
+      id: "kaledacademy-cohort-2025-1",
+      name: "Cohorte 2025-1 · KaledSoft Montería",
+      startDate: new Date("2025-03-03"),
+      endDate: new Date("2025-06-27"),
+      maxStudents: 15,
+      currentStudents: students.length,
+      status: "ACTIVE",
+      schedule: { days: ["LUNES", "MIERCOLES", "VIERNES"], time: "18:00", duration: 180, timezone: "America/Bogota" },
+      courseId: course.id,
+      tenantId: tenant.id,
+    },
+    update: { currentStudents: students.length },
+  });
+
+  for (const s of students) {
+    await prisma.academyEnrollment.upsert({
+      where: { userId_courseId: { userId: s.id, courseId: course.id } },
+      create: { userId: s.id, courseId: course.id, cohortId: cohort.id, status: "ACTIVE", progress: 0 },
+      update: {},
+    });
+  }
+
+  // ── 6. BADGES ─────────────────────────────────────────────
+  const badges = [
+    { name: "Primera Sesión", description: "Completaste tu primera sesión", icon: "🎯", condition: "LESSONS_COMPLETED", threshold: 1 },
+    { name: "Arquitecto en Formación", description: "5 sesiones completadas", icon: "🏗️", condition: "LESSONS_COMPLETED", threshold: 5 },
+    { name: "Medio Camino", description: "24 sesiones completadas", icon: "⚡", condition: "LESSONS_COMPLETED", threshold: 24 },
+    { name: "Bootcamp Completo", description: "48 sesiones completadas", icon: "🏆", condition: "LESSONS_COMPLETED", threshold: 48 },
+    { name: "Primer SHIP", description: "Primer entregable aprobado", icon: "📦", condition: "DELIVERABLES_APPROVED", threshold: 1 },
+    { name: "Shipper Activo", description: "4 entregables aprobados", icon: "🚀", condition: "DELIVERABLES_APPROVED", threshold: 4 },
+    { name: "Master Shipper", description: "16 entregables aprobados", icon: "🌟", condition: "DELIVERABLES_APPROVED", threshold: 16 },
+    { name: "Primer Quiz Perfecto", description: "Primera respuesta correcta al primer intento", icon: "🧠", condition: "QUIZ_PERFECT_SCORE", threshold: 1 },
+    { name: "Primer Deploy Real", description: "Tu SaaS tiene URL en producción", icon: "☁️", condition: "FIRST_DEPLOY", threshold: null },
+    { name: "Fundador Real", description: "3 usuarios reales en tu SaaS", icon: "👥", condition: "REAL_USERS_3", threshold: null },
+    { name: "CRAL Completo", description: "Completaste todas las fases CRAL de una sesión", icon: "⚙️", condition: "ALL_CRAL_DONE", threshold: null },
+    { name: "Demo Day Aprobado", description: "Defendiste y aprobaste el Demo Day final", icon: "🎓", condition: "DEMO_DAY_PASSED", threshold: null },
+  ];
+  for (const b of badges) {
+    await prisma.academyBadge.upsert({
+      where: { name_tenantId: { name: b.name, tenantId: tenant.id } },
+      create: { ...b, tenantId: tenant.id, isActive: true, condition: b.condition as any },
+      update: {},
+    });
+  }
+
+  // ── 7. MÓDULOS Y SESIONES ─────────────────────────────────
+  console.log("🏗️  Creando los 4 módulos con 48 sesiones completas...\n");
+  await seedModulo1(prisma, course.id, tenant.id);
+  await seedModulo2(prisma, course.id, tenant.id);
+  await seedModulo3(prisma, course.id, tenant.id);
+  await seedModulo4(prisma, course.id, tenant.id);
+
+  // ── 8. MEMORIA INICIAL DE KALED ───────────────────────────
+  const kaledMemories = [
+    { category: "empresa_referencia", content: "KaledSoft Technologies es la empresa de referencia del bootcamp. Construye SaaS para múltiples industrias: odontología (KaledDental), escuelas/academias (KaledAcademy), lavaderos de autos (KaledWash), parqueaderos (KaledPark). El estudiante construye SaaS propios inspirados en los problemas reales que KaledSoft resuelve.", score: 100 },
+    { category: "pedagogia_arquitecto", content: "Los desarrolladores en la era de la IA son arquitectos de sistemas, no codificadores. Nunca damos el código completo. Siempre preguntamos: ¿cómo funciona el sistema por dentro? ¿por qué existe este problema? ¿cuándo NO usar esta solución?", score: 98 },
+    { category: "metodo_socratico", content: "Ante toda pregunta técnica: 1) ¿Qué intentaste primero? 2) ¿Qué crees tú que debería pasar? 3) ¿Qué dice el error exactamente? Nunca dar la solución directa sin que el estudiante piense primero.", score: 95 },
+    { category: "cral_aplicacion", content: "CONSTRUIR (70%): el estudiante intenta. ROMPER (10%): experimenta qué pasa cuando falla. AUDITAR (10%): revisa el código con criterio crítico. LANZAR (10%): siempre en producción, nunca en local.", score: 92 },
+    { category: "errores_comunes_ia", content: "Patrones de error más comunes que genera la IA: N+1 queries en Prisma, no validar en el servidor, IDOR sin verificar tenantId, `innerHTML` con datos del usuario (XSS), migraciones destructivas en producción, actualizar plan desde webhook sin verificar firma.", score: 97 },
+    { category: "kaledsoft_saas_ejemplos", content: "KaledDental: gestión de citas, historiales dentales, facturación. KaledWash: órdenes de lavado, inventario de productos, turnos. KaledPark: control de entrada/salida, tarifas por tiempo, reportes. KaledSchool: matrículas, pagos, seguimiento académico. Todos multi-tenant, todos con IA como diferenciador.", score: 90 },
+  ];
+  for (const mem of kaledMemories) {
+    await prisma.agentMemory.create({
+      data: { agentType: "KALED", tenantId: tenant.id, ...mem, metadata: { source: "seed_v2" } },
+    });
+  }
+
+  console.log("\n✅ Seed v2 completado exitosamente!");
+  console.log(`   Tenant: ${tenant.slug}`);
+  console.log(`   Curso: AI SaaS Engineering Bootcamp`);
+  console.log(`   Módulos: 4 | Sesiones: 48 | Estudiantes demo: ${students.length}`);
+  console.log(`   Empresa de referencia: KaledSoft Technologies`);
+}
+
+// ============================================================
+// MÓDULO 1 — Fundamentos de Arquitectura Digital
+// Empresa de referencia: KaledSoft Technologies
+// Enfoque: Pensar como arquitecto, no como coder
+// ============================================================
+async function seedModulo1(prisma: PrismaClient, courseId: string, tenantId: string) {
+  console.log("  🏗️  Módulo 1 — Fundamentos de Arquitectura Digital");
+  const mod = await prisma.academyModule.create({
+    data: {
+      title: "Módulo 1 — Fundamentos de Arquitectura Digital",
+      description: "Antes de escribir código, diseña el sistema. Internet, Git, HTML, CSS y JavaScript desde la perspectiva del arquitecto que usa IA como asistente.",
+      order: 1, isActive: true, courseId,
+    },
+  });
+
+  const sesiones = [
+
+    // ── SEMANA 1: CÓMO FUNCIONA INTERNET ─────────────────
+    {
+      orden: 1, semana: 1, dia: "LUNES",
+      titulo: "El viaje de una URL: cómo funciona internet de verdad",
+      descripcion: "Qué pasa desde que escribes kaledsoft.tech hasta que ves la página. DNS, IP, TCP, TLS, HTTP. El arquitecto entiende cada capa antes de construir sobre ella.",
+      duracion: 180, sessionType: "TEORIA",
+      video: { url: "https://www.youtube.com/watch?v=Q5t-yP1pUZU", title: "¿Cómo funciona internet? — Explicación completa" },
+      kaledIntro: "Bienvenido al bootcamp, arquitecto. 🚀 Antes de escribir una sola línea de código, necesitas entender **el sistema sobre el que vas a construir**. Hoy vas a entender algo que la mayoría de developers nunca aprenden: qué pasa exactamente desde que el usuario escribe `kaledsoft.tech` hasta que ve el dashboard. Esa comprensión es la diferencia entre un coder y un arquitecto.",
+      analogia: "El viaje de una URL es como enviar un paquete por Servientrega en Colombia. Tú escribes la dirección (el dominio). Servientrega busca en su directorio la dirección exacta (el DNS). El repartidor lleva el paquete por la ruta más eficiente (TCP/IP). El destinatario firma la recepción y te manda de vuelta lo que pediste (la respuesta HTTP). KaledSoft tiene este viaje ocurriendo **miles de veces por segundo** para cada uno de sus clientes — odontólogos, lavaderos, parqueaderos. Si el sistema falla en cualquier capa, todos los negocios de sus clientes se detienen.",
+      concepts: [
+        { key: "dns", title: "DNS — El directorio de internet", body: "Traduce `kaledsoft.tech` a `104.21.45.67`. KaledSoft usa Cloudflare como DNS porque tiene servidores distribuidos globalmente — si un odontólogo en Barranquilla accede al sistema, el DNS lo redirige al servidor más cercano, no al de Montería." },
+        { key: "tcp", title: "TCP — El protocolo de entrega confiable", body: "A diferencia de UDP (rápido pero sin garantía), TCP asegura que todos los paquetes lleguen en orden. Por eso los datos de un paciente dental en KaledDental nunca llegan corruptos." },
+        { key: "tls", title: "TLS — El cifrado que protege los datos", body: "El candado 🔒 del navegador. Para KaledSoft es crítico: los historiales médicos de odontología y los datos de pago son sensibles. TLS cifra todo en tránsito — ni el ISP puede leer los datos." },
+        { key: "http2", title: "HTTP/2 — El idioma moderno de la web", body: "HTTP/2 permite multiplexación: el navegador puede pedir 50 recursos simultáneamente en una sola conexión. Crucial para el dashboard de KaledWash que carga muchos datos de clientes al mismo tiempo." },
+        { key: "cdn", title: "CDN — Contenido distribuido globalmente", body: "Vercel usa una CDN global. El HTML estático de KaledSoft se sirve desde el servidor más cercano al usuario — un odontólogo en Bogotá no espera que la respuesta viaje a Montería y de regreso." },
+      ],
+      cral: [
+        { phase: "CONSTRUIR", title: "Mide el viaje de kaledsoft.tech", desc: "Instala `curl` si no lo tienes. Ejecuta: `curl -w 'DNS: %{time_namelookup}s\\nTCP: %{time_connect}s\\nTLS: %{time_appconnect}s\\nPrimer byte: %{time_starttransfer}s\\nTotal: %{time_total}s\\n' -o /dev/null -s https://kaledsoft.tech`. Documenta los tiempos de cada capa. ¿Cuál consume más tiempo?" },
+        { phase: "ROMPER", title: "¿Qué pasa sin DNS?", desc: "Ejecuta `ping kaledsoft.tech` (con DNS). Luego busca la IP real con `nslookup kaledsoft.tech` e intenta `ping [IP directa]`. Luego usa `curl --resolve kaledsoft.tech:443:1.2.3.4 https://kaledsoft.tech` con una IP falsa. ¿Qué error obtienes? ¿Por qué TLS falla incluso si TCP conecta?" },
+        { phase: "AUDITAR", title: "Evalúa la respuesta de Kaled sobre DNS poisoning", desc: "Pregúntale a Kaled: '¿Qué es un ataque de DNS poisoning y cómo protegería los datos de los clientes de KaledDental?' Evalúa: ¿Mencionó DNSSEC? ¿Mencionó HTTPS como segunda línea de defensa? ¿La solución es práctica para una startup colombiana?" },
+        { phase: "LANZAR", title: "Diagrama de arquitectura en GitHub", desc: "Publica en tu GitHub un archivo `ARQUITECTURA-WEB.md` con: diagrama ASCII del viaje completo (navegador → DNS → CDN → servidor → BD), los tiempos medidos con curl, y una sección 'Implicaciones para mi SaaS' de mínimo 100 palabras propias." },
+      ],
+      quiz: {
+        question: "KaledWash (lavadero de autos) está en producción. Un cliente reporta que el sistema carga muy lento solo para usuarios de Cali pero rápido en Montería. ¿Qué componente del viaje DNS→HTTP sospecharías primero?",
+        options: [
+          { label: "A", text: "El código JavaScript tiene un bug que solo afecta a Chrome", isCorrect: false, feedback: "El problema es geográfico (Cali vs Montería), no del navegador. Un bug de JS afectaría a todos los usuarios por igual, no solo a los de una región." },
+          { label: "B", text: "La CDN no tiene un punto de presencia cerca de Cali — el contenido estático viaja lejos", isCorrect: true, feedback: "✅ ¡Arquitecto correcto! Si la CDN de Vercel no tiene servidor en Cali, el HTML/JS/CSS estático viaja desde el servidor más cercano (posiblemente São Paulo o Miami), añadiendo 200-400ms. La solución: configurar reglas de caché más agresivas en la CDN. Kaled está orgulloso 🎯" },
+          { label: "C", text: "El DNS de Cloudflare está caído para Colombia", isCorrect: false, feedback: "Si Cloudflare estuviera caído, el problema afectaría a TODOS los usuarios, no solo a los de Cali. Cloudflare también tiene 99.99% uptime — rara vez falla." },
+          { label: "D", text: "La base de datos PostgreSQL en Neon está congestionada", isCorrect: false, feedback: "La BD en Neon está en us-east-1 y responde igual para todos. El problema geográfico apunta a la capa de distribución de contenido (CDN), no a la BD." },
+        ],
+      },
+    },
+
+    {
+      orden: 2, semana: 1, dia: "MIERCOLES",
+      titulo: "HTTP y el modelo cliente-servidor: el contrato de la web",
+      descripcion: "GET, POST, PUT, DELETE. Códigos de estado como sistema de señales. APIs REST. Por qué separamos frontend de backend. Primera llamada real a una API.",
+      duracion: 180, sessionType: "PRACTICA",
+      video: { url: "https://www.youtube.com/watch?v=7YcW25PHnAA", title: "HTTP y APIs REST explicadas en español" },
+      kaledIntro: "HTTP es el idioma que hablan todos los sistemas que construirás. **KaledDental, KaledWash, KaledPark — todos hablan HTTP** para comunicarse internamente y con las apps móviles de sus clientes. Hoy vas a entender ese idioma tan bien que podrás diagnosticar un bug de producción solo leyendo los headers de una respuesta.",
+      analogia: "HTTP es como el protocolo de comunicación de una empresa colombiana. **GET** = 'Mándame el informe de ventas de este mes' (solo leer, sin modificar nada). **POST** = 'Registra esta nueva cita dental' (crear algo nuevo). **PUT** = 'Actualiza el precio del lavado básico' (modificar algo existente). **DELETE** = 'Cancela esta reserva de parqueadero' (eliminar). Los códigos de estado son las respuestas: **200** = 'Listo, aquí está'. **201** = 'Creado exitosamente'. **401** = 'No sé quién eres'. **403** = 'Sé quién eres pero no puedes hacer eso'. **404** = 'Eso no existe'. **500** = 'Se nos cayó el sistema, nuestro error'.",
+      concepts: [
+        { key: "rest", title: "REST — Arquitectura sin estado", body: "Cada request HTTP contiene toda la información necesaria. El servidor no recuerda al cliente entre peticiones. Por eso KaledSoft usa JWT tokens: el odontólogo se identifica en cada request sin que el servidor guarde su sesión en memoria." },
+        { key: "headers", title: "Headers HTTP — Metadatos de cada request", body: "`Authorization: Bearer eyJhbGci...` — quién eres. `Content-Type: application/json` — qué formato envías. `Cache-Control: no-store` — no guardes esto en caché (crítico para datos médicos de KaledDental)." },
+        { key: "idempotencia", title: "Idempotencia — Operaciones que se pueden repetir", body: "GET y DELETE son idempotentes: llamarlos 2 veces produce el mismo resultado. POST no lo es: si envías el mismo pago dos veces a KaledPark, cobras dos veces. Por eso los sistemas de pago tienen verificación de duplicados." },
+        { key: "api-design", title: "Diseño de APIs REST profesional", body: "`GET /api/clientes` (listar). `POST /api/clientes` (crear). `GET /api/clientes/123` (obtener uno). `PUT /api/clientes/123` (actualizar). `DELETE /api/clientes/123` (eliminar). Las URLs son sustantivos, los métodos HTTP son los verbos." },
+      ],
+      cral: [
+        { phase: "CONSTRUIR", title: "Primera API call a KaledSoft", desc: "Instala Thunder Client en VS Code. Haz una petición GET a `https://api.github.com/users/tu-usuario`. Luego a `https://jsonplaceholder.typicode.com/posts`. Examina los headers de respuesta completos. ¿Qué dice `Content-Type`? ¿Hay `Cache-Control`? ¿Cuántos ms tardó?" },
+        { phase: "ROMPER", title: "Rompe el rate limiting de la API", desc: "Ejecuta la misma petición a la API de GitHub 60 veces seguidas con un script o manualmente rápido. ¿Qué código de estado recibes después de superar el límite? Lee el header `X-RateLimit-Remaining`. ¿Qué dice? ¿Cómo impacta esto al diseño de KaledDental si un odontólogo hace muchas peticiones?" },
+        { phase: "AUDITAR", title: "Audita esta API de KaledWash", desc: "Analiza este endpoint: `GET /api/ordenes?usuario=123&secreto=abc123`. Problemas: (1) secreto en URL queda en logs del servidor, (2) cualquier usuario puede cambiar el número 123 por otro (IDOR), (3) GET con datos sensibles en query params viola REST. Reescríbelo correctamente con autenticación por header." },
+        { phase: "LANZAR", title: "Documenta tu primera API call", desc: "Captura de pantalla de tu petición más interesante en Thunder Client. Publica en GitHub con explicación de cada header que recibiste y por qué importa para un SaaS como KaledSoft." },
+      ],
+      quiz: {
+        question: "KaledPark procesa pagos de parqueadero. Un usuario reporta que se le cobró dos veces. El desarrollador dice 'el frontend envió el mismo POST dos veces por error de red'. ¿Quién tiene razón sobre dónde está el bug real?",
+        options: [
+          { label: "A", text: "El frontend — debería deshabilitar el botón de pago inmediatamente al hacer clic", isCorrect: false, feedback: "El frontend debe deshabilitar el botón, sí, pero eso solo es la primera línea de defensa. Un usuario puede hacer la petición directamente con curl o Postman sin pasar por el botón." },
+          { label: "B", text: "El backend — debe ser idempotente: el mismo pago enviado dos veces solo debe cobrarse una vez", isCorrect: true, feedback: "✅ ¡Correcto! El backend debe generar un `idempotency_key` único por transacción y verificarlo antes de procesar. Si ya existe esa clave, retorna el resultado anterior sin cobrar de nuevo. Así funcionan Stripe, MercadoPago y Wompi internamente. 🎯" },
+          { label: "C", text: "La red — el ISP debe filtrar requests duplicados", isCorrect: false, feedback: "El ISP no entiende la lógica de negocio. No puede saber que dos peticiones idénticas son un duplicado de pago — podrían ser dos clientes diferentes pagando lo mismo." },
+          { label: "D", text: "El banco — debe detectar cargos duplicados automáticamente", isCorrect: false, feedback: "Los bancos tienen protecciones contra duplicados, pero ocurren a nivel de transacción bancaria, no a nivel de lógica de tu SaaS. No puedes depender del banco para tu lógica de negocio." },
+        ],
+      },
+    },
+
+    {
+      orden: 3, semana: 1, dia: "VIERNES",
+      titulo: "Arquitectura de sistemas: KaledSoft como caso real",
+      descripcion: "Monolito vs microservicios. Frontend/backend/base de datos. KaledSoft construye SaaS para odontología, lavaderos y parqueaderos — ¿cómo diseñarías ese sistema?",
+      duracion: 180, sessionType: "ENTREGABLE",
+      video: { url: "https://www.youtube.com/watch?v=B_X4T1bQS5M", title: "Arquitectura de Software — Monolito vs Microservicios" },
+      kaledIntro: "Esta es la sesión más importante del módulo. **Hoy vas a diseñar sistemas, no páginas web.** KaledSoft Technologies tiene un reto real: construir una plataforma donde un mismo código base atiende a un odontólogo, un lavadero de autos y un parqueadero — cada uno con sus propias reglas de negocio, datos y usuarios. Eso se llama **multi-tenancy** y es el corazón de cualquier SaaS empresarial.",
+      analogia: "KaledSoft es como un edificio de apartamentos. El edificio (la plataforma) es uno solo — misma estructura, mismos servicios de electricidad y agua. Pero cada apartamento (tenant) tiene sus propios muebles (datos), su propia llave (autenticación) y sus propias reglas (lógica de negocio). El odontólogo del 301 no puede entrar al lavadero del 402. **Multi-tenancy es arquitectura de edificio, no de casas unifamiliares.**",
+      concepts: [
+        { key: "multitenant", title: "Multi-tenancy — Un sistema para muchos clientes", body: "KaledSoft usa row-level multi-tenancy: todas las clínicas dentales están en la misma tabla `citas` pero cada registro tiene un `tenantId` que las aísla. Alternativa más cara: una BD por cliente (isolation más fuerte pero 100x más costoso)." },
+        { key: "monolito", title: "Monolito modular — La arquitectura correcta para KaledSoft", body: "Un solo repositorio Next.js que contiene el frontend, las API Routes (backend) y la lógica de negocio de todos los productos: KaledDental, KaledWash, KaledPark. Simple de desplegar, fácil de compartir código, suficiente para un equipo pequeño." },
+        { key: "separacion", title: "Cuándo extraer un microservicio", body: "Cuando el pain lo justifica: KaledSoft podría extraer las notificaciones de WhatsApp a un microservicio separado cuando se vuelvan tan complejas que afecten al resto del sistema. Regla: extrae cuando el módulo tiene su propio ciclo de deploy y su propio equipo." },
+        { key: "bd-compartida", title: "Base de datos compartida vs separada", body: "KaledSoft tiene una sola BD PostgreSQL en Neon con todas las tablas. Es más barato y simple. Si un cliente de KaledDental tiene datos muy sensibles (HIPAA), podría necesitar su propia BD. Por ahora, row-level isolation con `tenantId` es suficiente." },
+      ],
+      cral: [
+        { phase: "CONSTRUIR", title: "Diseña la arquitectura de KaledWash", desc: "En papel o Excalidraw, diseña el sistema completo de KaledWash (lavadero de autos). Incluye: app web para el dueño del lavadero, app móvil para el cliente, servidor (Next.js), BD (Neon), integración con WhatsApp para notificaciones, pasarela de pago (Wompi). ¿Qué tablas tiene la BD? ¿Dónde están los tenantIds? ¿Cómo escala si KaledSoft consigue 50 lavaderos como clientes?" },
+        { phase: "ROMPER", title: "¿Qué pasa si un lavadero ve datos de otro?", desc: "Diseña el escenario de fallo: un developer olvidó el filtro `tenantId` en la query de órdenes de KaledWash. ¿Qué datos quedan expuestos? ¿Qué impacto legal tiene? ¿Cómo detectarías este bug en producción antes de que un cliente lo reporte? ¿Qué test automatizado prevendría esto?" },
+        { phase: "AUDITAR", title: "Evalúa la arquitectura que proponga Kaled", desc: "Pídele a Kaled que diseñe la arquitectura de KaledPark (parqueadero). Evalúa su propuesta: ¿Propone microservicios innecesarios? ¿Considera el costo mensual en Vercel y Neon? ¿Menciona el tenantId? ¿La solución es viable para un equipo de 2 personas en Colombia?" },
+        { phase: "LANZAR", title: "Diagrama de arquitectura en GitHub", desc: "Sube a GitHub el diagrama de arquitectura de KaledWash con: todas las capas del sistema, flujo de datos entre componentes, tablas de la BD con tenantId marcado, y sección 'Decisiones' justificando por qué monolito y no microservicios para este momento." },
+      ],
+      quiz: {
+        question: "KaledSoft tiene 5 clientes de KaledDental. Un odontólogo de Barranquilla puede ver las citas de una clínica de Medellín en el sistema. ¿Cuál fue el error de arquitectura?",
+        options: [
+          { label: "A", text: "El sistema no tiene autenticación — cualquiera puede entrar", isCorrect: false, feedback: "El enunciado dice que el odontólogo está logueado en el sistema, no que entró sin autenticación. El problema es de autorización, no de autenticación." },
+          { label: "B", text: "La query de citas no filtra por tenantId — cualquier usuario autenticado ve todos los datos", isCorrect: true, feedback: "✅ ¡Exacto! Esto se llama vulnerabilidad IDOR (Insecure Direct Object Reference). El developer hizo: `prisma.citas.findMany({ where: { odontologoId: user.id } })` pero olvidó: `AND tenantId = user.tenantId`. En producción esto es una violación de datos con consecuencias legales. 🎯" },
+          { label: "C", text: "Cada cliente debería tener su propia base de datos separada", isCorrect: false, feedback: "Una BD por cliente resolvería el aislamiento pero es 50x más costoso de operar. El row-level multi-tenancy con tenantId correcto es la solución estándar para la mayoría de SaaS." },
+          { label: "D", text: "El sistema necesita un firewall entre las clínicas", isCorrect: false, feedback: "Un firewall opera a nivel de red, no de lógica de aplicación. No puede entender que dos requests HTTP autenticados pertenecen a clientes diferentes. El tenantId en la query es la solución correcta." },
+        ],
+      },
+      entregable: {
+        title: "Diagrama de arquitectura completo — Semana 1",
+        desc: "Diagrama en Excalidraw del sistema KaledWash con todas las capas: cliente web, CDN, servidor Next.js, API Routes, BD Neon, integraciones externas. README explicando cada decisión de arquitectura.",
+        isFinal: false,
+        items: [
+          "Diagrama con todas las capas del sistema (cliente, servidor, BD, externos)",
+          "Flujo de datos para el caso: cliente paga lavado → sistema registra → WhatsApp notifica",
+          "Tablas de BD con tenantId marcado explícitamente",
+          "Sección 'Decisiones': por qué monolito y no microservicios",
+          "Sección 'Riesgos': qué pasaría si falla cada componente",
+          "Repositorio en GitHub con al menos 2 commits semánticos",
+        ],
+      },
+    },
+
+    // ── SEMANA 2: GIT ─────────────────────────────────────
+    {
+      orden: 4, semana: 2, dia: "LUNES",
+      titulo: "Git: control de versiones para el arquitecto que trabaja en equipo",
+      descripcion: "Por qué existe Git, el problema que resuelve, comandos esenciales. El equipo de KaledSoft colabora en el mismo código sin romper producción.",
+      duracion: 180, sessionType: "PRACTICA",
+      video: { url: "https://www.youtube.com/watch?v=hwP7WQkmECE", title: "Git y GitHub desde cero — Fazt" },
+      kaledIntro: "¿Alguna vez viste una carpeta llamada `proyecto_final_ESTE_SI_v3_definitivo.zip`? Eso es lo que Git elimina para siempre. En KaledSoft, **3 desarrolladores trabajan simultáneamente** en KaledDental, KaledWash y KaledPark — en el mismo repositorio, sin pisarse. Sin Git, eso sería imposible. Hoy aprendes la herramienta que separa a los profesionales de los aficionados.",
+      analogia: "Git es la máquina del tiempo de tu código. Cada **commit** es una fotografía del código en ese momento exacto. Si mañana introduces un bug en KaledDental que afecta a 50 clínicas dentales, puedes regresar a la fotografía de ayer en 30 segundos. Las **ramas** son líneas de tiempo paralelas: el equipo de KaledPark puede desarrollar la nueva feature de pagos sin afectar el código estable de KaledWash que ya está en producción.",
+      concepts: [
+        { key: "commit", title: "Commit — La fotografía del sistema", body: "Conventional Commits: `feat(kaledwash): agrega sistema de turnos por WhatsApp`. El tipo (`feat`, `fix`, `docs`), el scope (`kaledwash`, `kaledental`), y la descripción. Esto permite generar changelogs automáticos y entender el historial del sistema." },
+        { key: "gitflow", title: "GitFlow — El flujo de KaledSoft", body: "`main` = producción (protegida, requiere PR aprobado). `develop` = integración. `feature/kaledwash-pagos-wompi` = nueva feature. `hotfix/kaledental-bug-citas` = bug urgente en producción. Nunca commit directo a main." },
+        { key: "gitignore", title: ".gitignore — Lo que nunca debe subir", body: ".env (credenciales de Neon, Clerk, Wompi). node_modules/. .next/. Imagina que subes las credenciales de Neon de KaledDental a GitHub público — cualquier persona del mundo tendría acceso a los historiales médicos de todos los pacientes." },
+      ],
+      cral: [
+        { phase: "CONSTRUIR", title: "Configura Git para KaledSoft", desc: "Instala Git. Configura: `git config --global user.name 'Tu Nombre'` y `git config --global user.email 'tu@email.com'`. Crea un repositorio `kaledsoft-mi-saas`. Haz 3 commits con mensajes Conventional Commits representando 3 decisiones de arquitectura que tomaste en la semana 1." },
+        { phase: "ROMPER", title: "Sube credenciales accidentalmente y revierte", desc: "Crea un archivo `.env` con credenciales falsas (`DATABASE_URL=postgresql://falso`). Commitea sin pensar. Luego descubre el error y usa `git rm --cached .env` y `git rebase` para eliminar el archivo del historial completo (no solo del último commit). ¿Por qué `git rm --cached` no es suficiente?" },
+        { phase: "AUDITAR", title: "Audita el .gitignore generado por Kaled", desc: "Pídele a Kaled que genere un `.gitignore` para un proyecto Next.js + Prisma + Neon. Verifica: ¿incluye `.env`? ¿`.env.local`? ¿`.env.production`? ¿`prisma/dev.db`? ¿`.next/`? ¿Falta algo crítico para KaledSoft?" },
+        { phase: "LANZAR", title: "5 commits semánticos en GitHub público", desc: "Repositorio público en GitHub con al menos 5 commits usando Conventional Commits. README explicando qué es el proyecto (tu futuro SaaS). El repo debe tener `.gitignore` correcto y NO contener credenciales reales." },
+      ],
+      quiz: {
+        question: "Un developer del equipo de KaledSoft hizo `git push origin main` directamente con código que tiene un bug que rompe el módulo de pagos de KaledWash. Son las 9 PM. ¿Cuál es la respuesta correcta del equipo?",
+        options: [
+          { label: "A", text: "Editar el archivo directamente en producción (hotfix manual en el servidor)", isCorrect: false, feedback: "Editar en producción sin control de versiones es el mayor antipatrón de la industria. Si falla, no hay forma de volver atrás. Nunca, bajo ninguna circunstancia." },
+          { label: "B", text: "Crear una rama `hotfix/kaledwash-pago-bug`, corregir, hacer PR, merge urgente y deploy", isCorrect: true, feedback: "✅ ¡Correcto! El flujo de hotfix es: rama específica → fix → PR con revisión rápida (aunque sea revisión de 5 minutos) → merge a main → Vercel despliega automáticamente. Así tienen trazabilidad de qué se cambió y por qué. 🎯" },
+          { label: "C", text: "Hacer `git revert` del commit en main sin crear una rama", isCorrect: false, feedback: "`git revert` en main sin PR viola las políticas de protección de ramas. Además, si el revert tiene problemas, estás en la misma situación. El hotfix controlado es el proceso correcto." },
+          { label: "D", text: "Esperar a mañana para no trabajar fuera de horario", isCorrect: false, feedback: "El módulo de pagos de KaledWash está caído. Los dueños de lavaderos no pueden cobrar a sus clientes. Los sistemas críticos de negocio requieren respuesta inmediata, incluso fuera de horario." },
+        ],
+      },
+    },
+
+    {
+      orden: 5, semana: 2, dia: "MIERCOLES",
+      titulo: "Ramas, Pull Requests y colaboración profesional",
+      descripcion: "Branch, checkout, merge, rebase. Flujo de trabajo con main + feature branches. Pull Requests como punto de control de calidad. Merge conflicts como ejercicio.",
+      duracion: 180, sessionType: "PRACTICA",
+      video: { url: "https://www.youtube.com/watch?v=3GymExBkKjE", title: "Git Branches y Pull Requests — Todo lo que necesitas saber" },
+      kaledIntro: "En KaledSoft, **nunca hacemos commit directo a `main`**. Es una regla de oro. ¿Por qué? Porque `main` está conectado a Vercel y cada push desencadena un deploy automático a producción — donde están los datos reales de odontólogos, lavaderos y parqueaderos. Un bug en `main` a las 3 PM puede interrumpir el negocio de 50 clientes. Las ramas son la solución.",
+      analogia: "Imagina que el código de KaledSoft es un documento legal que afecta a 50 empresas. `main` es la versión oficial firmada. Cuando un abogado quiere proponer cambios, no tacha el documento original — hace una copia (rama), propone sus cambios y los somete a revisión antes de que se vuelvan oficiales (PR). Si los cambios son aprobados, se fusionan (merge) a la versión oficial.",
+      concepts: [
+        { key: "branch", title: "Ramas por feature/bug", body: "Convención de KaledSoft: `feature/kaledpark-qr-pago` (nueva feature), `fix/kaledental-citas-duplicadas` (bug), `chore/actualizar-prisma` (mantenimiento), `hotfix/kaledwash-pago-critico` (urgente). Cada rama tiene un propósito único y un dueño." },
+        { key: "pr", title: "Pull Request — La revisión de código", body: "Un PR no es solo código — es una conversación técnica. El reviewer pregunta '¿por qué esta decisión?', '¿qué pasa si falla?', '¿hay pruebas?'. En KaledSoft, ningún código llega a main sin que al menos una persona más lo haya revisado." },
+        { key: "conflict", title: "Merge conflict — El sistema te avisa de colisiones", body: "Cuando dos developers modifican la misma línea en ramas diferentes, Git no puede decidir cuál tiene razón — te pide que decidas tú. No es un error, es el sistema funcionando correctamente para proteger el código de producción." },
+      ],
+      cral: [
+        { phase: "CONSTRUIR", title: "Crea un PR real en tu repositorio", desc: "En tu repo `kaledsoft-mi-saas`: crea rama `feature/arquitectura-kaledwash`, agrega el diagrama de KaledWash que diseñaste en la sesión anterior, haz push y abre un Pull Request hacia `main` con: título descriptivo, descripción del cambio, y al menos 1 screenshot del diagrama." },
+        { phase: "ROMPER", title: "Genera un merge conflict intencional", desc: "En `main` edita la primera línea del README. En tu rama `feature/arquitectura-kaledwash` edita la misma línea con texto diferente. Intenta hacer merge. Resuelve el conflict manualmente en VS Code. Documenta qué decidiste conservar y por qué." },
+        { phase: "AUDITAR", title: "Revisa este PR como si fueras el CTO de KaledSoft", desc: "Imagina que recibes un PR con este título: 'fix stuff'. El código cambia 47 archivos, no hay descripción, y los commits dicen 'wip', 'arreglé', 'otro fix'. Lista todos los problemas de este PR y escribe las preguntas que harías como reviewer." },
+        { phase: "LANZAR", title: "PR cerrado y mergeado en GitHub", desc: "Tu PR de `feature/arquitectura-kaledwash` mergeado a main. El PR debe tener: título con Conventional Commit format, descripción de qué cambia y por qué, y el merge commit debe aparecer en el historial de main." },
+      ],
+      quiz: {
+        question: "Un developer abre un PR a main de KaledSoft con 847 líneas cambiadas en 23 archivos. ¿Cuál es el problema de arquitectura de desarrollo aquí?",
+        options: [
+          { label: "A", text: "No hay problema — un PR grande es señal de mucho trabajo y productividad", isCorrect: false, feedback: "Un PR de 847 líneas es casi imposible de revisar con criterio. El reviewer aprueba sin entender el 80% del código, lo que anula el valor del proceso de revisión." },
+          { label: "B", text: "El PR debería dividirse en PRs más pequeños, cada uno con un propósito único y revisable", isCorrect: true, feedback: "✅ ¡Correcto! La regla de KaledSoft: un PR hace UNA cosa. PRs pequeños se revisan mejor, se integran más rápido y si introducen un bug es fácil hacer revert. Máximo 200-300 líneas por PR como guía práctica. 🎯" },
+          { label: "C", text: "Debería hacerse en una rama separada llamada `big-feature`", isCorrect: false, feedback: "Cambiar el nombre de la rama no resuelve el problema de fondo: el PR es demasiado grande para revisarse con criterio. La solución es dividir el trabajo en PRs incrementales." },
+          { label: "D", text: "El reviewer debería aprobar rápido para no bloquear al developer", isCorrect: false, feedback: "Aprobar sin revisar es el antipatrón que lleva a bugs de producción. El objetivo del proceso de PR es exactamente ese: tomarse el tiempo de revisar bien antes de que el código llegue a los clientes." },
+        ],
+      },
+    },
+
+    {
+      orden: 6, semana: 2, dia: "VIERNES",
+      titulo: "Git con IA: criterio técnico sobre las sugerencias",
+      descripcion: "Claude para entender errores de merge, generar mensajes de commit, revisar diffs. La IA como par de programación, no como reemplazo del juicio.",
+      duracion: 180, sessionType: "ENTREGABLE",
+      video: { url: "https://www.youtube.com/watch?v=RGOj5yH7evk", title: "Git avanzado — Rebase, Cherry-pick y más" },
+      kaledIntro: "La IA puede sugerirte comandos de Git que **destruyen el historial de un repositorio compartido** con total confianza. Un `git push --force origin main` sugerido por la IA sin que tú entiendas las consecuencias puede borrar el trabajo de todo el equipo de KaledSoft de una semana. El criterio técnico es tuyo — la IA es solo una herramienta.",
+      analogia: "La IA como par de programación es como un asistente muy inteligente que nunca ha trabajado en producción real. Conoce todos los comandos de Git pero no sabe que tu `main` tiene protecciones habilitadas, que hay 3 developers más trabajando en el mismo repo, y que KaledDental tiene 50 clínicas esperando que el sistema funcione. Tú tienes ese contexto. Ella no.",
+      concepts: [
+        { key: "force-push", title: "Comandos peligrosos que la IA sugiere", body: "`git push --force` sobreescribe el historial remoto y puede destruir el trabajo del equipo. `git reset --hard HEAD~5` elimina los últimos 5 commits sin posibilidad de recuperación simple. `git clean -fd` borra archivos no rastreados permanentemente. Nunca ejecutes estos sin entender exactamente qué hacen." },
+        { key: "blame", title: "git blame — Arqueología de código", body: "`git blame archivo.ts` muestra quién escribió cada línea y en qué commit. Cuando encuentras un bug en KaledDental, `git blame` te dice quién escribió esa línea, en qué contexto, y qué PR la introdujo. No es para culpar — es para entender." },
+        { key: "stash", title: "git stash — El cajón de guardar", body: "`git stash` guarda cambios no committeados temporalmente. Útil cuando necesitas cambiar de rama urgentemente pero no quieres perder tu trabajo. `git stash pop` recupera los cambios. `git stash list` muestra todos los stashes guardados." },
+      ],
+      cral: [
+        { phase: "CONSTRUIR", title: "Usa Kaled como par de programación para Git", desc: "Pregúntale a Kaled: 'Tengo un merge conflict en el archivo schema.prisma de KaledWash entre main y mi rama feature/pagos-wompi. El conflict está en el modelo de Orden. ¿Cómo lo resuelvo sin perder el trabajo de ninguna rama?' Evalúa su respuesta y aplícala en un repo de prueba." },
+        { phase: "ROMPER", title: "La IA sugiere un comando destructivo", desc: "Pídele a Kaled: 'Tengo 5 commits de prueba en mi rama que no quiero — cómo los elimino del historial'. Probablemente sugiera `git rebase -i` o `git reset --hard`. Antes de ejecutar: (1) entiende exactamente qué hace cada paso, (2) verifica que la rama no tiene otros developers trabajando en ella, (3) si la rama ya tiene push, entiende qué implica el force-push." },
+        { phase: "AUDITAR", title: "Evalúa 5 mensajes de commit generados por IA", desc: "Pídele a Kaled que genere 5 mensajes de commit para estos cambios en KaledDental: (1) agregar tabla de citas, (2) corregir bug en formulario de registro, (3) actualizar dependencias. Evalúa si cumplen Conventional Commits, si son descriptivos y si alguien en 6 meses entendería qué cambió." },
+        { phase: "LANZAR", title: "Entregable Semana 2: Repositorio profesional", desc: "Repositorio en GitHub con: 5+ commits Conventional Commits, 1 rama feature mergeada via PR, .gitignore completo, README con descripción del proyecto. Sin credenciales. Sin archivos binarios innecesarios." },
+      ],
+      quiz: {
+        question: "Kaled te sugiere ejecutar `git push origin main --force` para solucionar un problema con el historial. Llevas 2 horas sin avanzar. ¿Qué haces?",
+        options: [
+          { label: "A", text: "Lo ejecuto — Kaled sabe lo que hace y necesito avanzar", isCorrect: false, feedback: "`git push --force` sobreescribe el historial remoto. Si otros developers han basado trabajo en esos commits, pierden todo. Si main está en producción, puede desencadenar un deploy roto. NUNCA sin entender completamente las consecuencias." },
+          { label: "B", text: "Pregunto a Kaled qué hace exactamente ese comando y qué pasa si lo ejecuto con otro developer trabajando en el mismo repo", isCorrect: true, feedback: "✅ ¡Criterio técnico perfecto! Antes de ejecutar cualquier comando de IA que no entiendes: (1) pregunta exactamente qué hace, (2) pregunta las consecuencias en tu contexto específico, (3) busca la alternativa no destructiva. `git push --force-with-lease` es más seguro que `--force`. 🎯" },
+          { label: "C", text: "Lo ejecuto pero hago backup del repo antes — si falla puedo restaurar", isCorrect: false, feedback: "Un backup local no ayuda si el problema es que has sobreescrito el historial del repo remoto que comparten otros developers. El daño ocurre en el servidor, no en tu máquina." },
+          { label: "D", text: "Cierro el repositorio y creo uno nuevo — es más fácil empezar de cero", isCorrect: false, feedback: "Perderías todo el historial de cambios, todos los PRs, todos los issues y todas las decisiones documentadas. El historial de Git es parte del patrimonio técnico del proyecto." },
+        ],
+      },
+      entregable: {
+        title: "Repositorio GitHub profesional — Semana 2",
+        desc: "Repositorio en GitHub con 5+ commits semánticos, 1 PR cerrado, .gitignore correcto y README completo. Sin credenciales ni archivos sensibles.",
+        isFinal: false,
+        items: [
+          "Al menos 5 commits con Conventional Commits format",
+          "1 rama feature creada y mergeada a main via Pull Request",
+          ".gitignore completo (sin .env, sin node_modules, sin .next)",
+          "README describiendo el proyecto SaaS que vas a construir",
+          "Sin credenciales reales en ningún archivo del repo",
+          "Historial de commits legible (sin 'wip', 'arreglé', 'cambios')",
+        ],
+      },
+    },
+
+    // ── SEMANA 3: HTML Y CSS ──────────────────────────────
+    {
+      orden: 7, semana: 3, dia: "LUNES",
+      titulo: "HTML semántico: estructura que los sistemas entienden",
+      descripcion: "HTML no es para que se vea bonito — es para comunicar estructura al navegador, a Google y a los lectores de pantalla. Landing page de KaledSoft desde cero.",
+      duracion: 180, sessionType: "PRACTICA",
+      video: { url: "https://www.youtube.com/watch?v=MJkdaVFHrto", title: "HTML desde cero — Soy Dalto" },
+      kaledIntro: "El HTML semántico es la diferencia entre una página que Google entiende y una que ignora. KaledSoft necesita que sus SaaS aparezcan cuando los odontólogos buscan 'software dental Barranquilla' en Google. **El HTML correcto es estrategia de negocio, no solo código**.",
+      analogia: "El HTML es como el organigrama de una empresa. Un `<div>` sin semántica es como llamar 'persona' a todos los empleados sin importar si son el CEO, el contador o el mensajero. Un `<header>` le dice a Google y a los lectores de pantalla 'aquí está la dirección y el teléfono de KaledDental'. `<main>` dice 'aquí está el contenido principal'. `<nav>` dice 'aquí están los menús'. La estructura comunica jerarquía e importancia.",
+      concepts: [
+        { key: "semantico", title: "Tags semánticos — Significado, no presentación", body: "`<header>` para encabezado con logo y nav. `<main>` para el contenido principal (solo UNO por página). `<article>` para contenido independiente (un blog post, una ficha de producto). `<section>` para agrupar contenido relacionado. `<aside>` para contenido secundario. `<footer>` para pie de página." },
+        { key: "seo-html", title: "HTML y SEO — Cómo Google lee tu código", body: "`<h1>` es el título más importante (solo uno por página). `<h2>` a `<h6>` definen la jerarquía. `<title>` aparece en los resultados de búsqueda. `<meta name='description'>` es el texto que aparece bajo el título en Google. Mal HTML = mal posicionamiento para KaledDental." },
+        { key: "accesibilidad", title: "Accesibilidad — Diseñar para todos los usuarios", body: "`alt` en imágenes (lectores de pantalla para usuarios con discapacidad visual). `aria-label` en botones sin texto visible. Contraste de colores mínimo 4.5:1. Navegación por teclado con Tab. En Colombia, la Ley 1618 de 2013 establece el derecho de acceso a la información digital para personas con discapacidad." },
+      ],
+      cral: [
+        { phase: "CONSTRUIR", title: "HTML de la landing page de KaledWash", desc: "Construye el HTML semántico de la landing page de KaledWash (lavadero de autos SaaS). Sin CSS todavía. Incluye: `<header>` con logo y navegación, `<main>` con sección hero (propuesta de valor), sección de features (3 beneficios), sección de precios (2 planes), `<footer>` con contacto. Solo estructura semántica." },
+        { phase: "ROMPER", title: "Reemplaza todo con divs y observa las consecuencias", desc: "Duplica tu archivo HTML. Reemplaza todos los tags semánticos con `<div>`. Abre ambas versiones con el Accessibility Inspector de Chrome (DevTools → Accessibility). ¿Qué diferencia ves en el árbol de accesibilidad? ¿Cómo afecta al posicionamiento en Google?" },
+        { phase: "AUDITAR", title: "Valida el HTML generado por Kaled", desc: "Pídele a Kaled que genere el HTML de la landing de KaledPark (parqueadero). Verifica: ¿tiene un solo `<h1>`? ¿las imágenes tienen `alt`? ¿la jerarquía de headings tiene sentido (h1→h2→h3, sin saltos)? ¿los formularios tienen `<label>` asociados? Usa https://validator.w3.org/ para validar." },
+        { phase: "LANZAR", title: "HTML semántico en GitHub", desc: "Sube tu HTML de KaledWash a GitHub. README con: justificación de cada tag semántico usado, resultado de la validación en W3C Validator (debe ser 0 errores), y captura del árbol de accesibilidad." },
+      ],
+      quiz: {
+        question: "La landing page de KaledDental tiene un botón importante que solo muestra un ícono de teléfono 📞 sin texto. ¿Qué problema tiene este botón?",
+        options: [
+          { label: "A", text: "Los íconos son universales — todos entienden el teléfono", isCorrect: false, feedback: "Los lectores de pantalla (que usan personas con discapacidad visual) leen 'button' o el aria-label. Sin aria-label, el usuario escucharía solo 'botón' sin saber qué hace. Además, los íconos no siempre son universales entre culturas." },
+          { label: "B", text: "El lector de pantalla no sabe qué hace el botón — necesita aria-label='Llamar a KaledDental'", isCorrect: true, feedback: "✅ ¡Correcto! `<button aria-label='Llamar a KaledDental'>📞</button>`. El aria-label da contexto semántico a herramientas asistivas. También mejora el score de Accesibilidad en Lighthouse. Para KaledDental, clientes mayores que usan lectores de pantalla son un segmento real. 🎯" },
+          { label: "C", text: "El ícono debería ser más grande para ser más visible", isCorrect: false, feedback: "El tamaño es un problema de UX, no de accesibilidad semántica. El problema técnico es la falta de label descriptivo que comunique la función del botón al sistema." },
+          { label: "D", text: "Los botones siempre deben tener texto visible — no se pueden usar íconos solos", isCorrect: false, feedback: "Los botones con ícono solo son válidos y usados ampliamente. La clave es siempre agregar `aria-label` cuando no hay texto visible, para mantener la accesibilidad sin sacrificar el diseño." },
+        ],
+      },
+    },
+
+    {
+      orden: 8, semana: 3, dia: "MIERCOLES",
+      titulo: "CSS: el sistema de diseño visual del SaaS",
+      descripcion: "Selectores, especificidad, Box Model. Display block/inline/flex. Estilizar la landing page de KaledWash. Cuándo usar IA para CSS y cuándo no.",
+      duracion: 180, sessionType: "PRACTICA",
+      video: { url: "https://www.youtube.com/watch?v=G3e-cpL7ofc", title: "CSS desde cero — Soy Dalto" },
+      kaledIntro: "CSS no es magia — es un sistema de reglas con lógica precisa. Cuando el CSS de KaledDental se rompe en producción, **el desarrollador que entiende el Box Model lo arregla en 5 minutos**. El que no entiende, prueba cosas al azar hasta que funciona sin saber por qué. Hoy aprendes el modelo mental, no solo las propiedades.",
+      analogia: "El Box Model es como el empaque de un producto de KaledWash. El **content** es el producto (el texto o imagen). El **padding** es la espuma de protección (espacio entre el producto y la caja). El **border** es la caja misma. El **margin** es el espacio en el estante entre tu producto y el del vecino. Si el dueño del lavadero se queja de que el botón 'Registrar orden' está demasiado pegado al borde, el problema es padding, no margin.",
+      concepts: [
+        { key: "especificidad", title: "Especificidad CSS — El sistema de prioridades", body: "Inline style (1000) > ID (100) > Class (10) > Tag (1). Si el botón de KaledPark está rojo cuando debería ser azul, la especificidad es la primera sospecha. `!important` tiene la mayor especificidad pero es un antipatrón — indica que el CSS está mal estructurado." },
+        { key: "boxsizing", title: "box-sizing: border-box — La configuración que necesitas", body: "Con `content-box` (default): un div de `width: 200px` con `padding: 20px` ocupa 240px en total. Con `border-box`: ocupa exactamente 200px incluyendo el padding. Siempre `* { box-sizing: border-box }` en tus proyectos." },
+        { key: "flexbox", title: "Flexbox — Alineación unidimensional", body: "`display: flex` en el padre. `justify-content: space-between` para separar items horizontalmente. `align-items: center` para centrar verticalmente. El 80% de los layouts de dashboard en KaledSoft se hacen con Flexbox." },
+      ],
+      cral: [
+        { phase: "CONSTRUIR", title: "CSS a la landing de KaledWash", desc: "Agrega CSS a tu HTML de KaledWash. Regla: solo escribes CSS que entiendes completamente. Si copias una propiedad sin entender qué hace, la marcas con comentario `/* REVISAR: no entiendo */`. Al final, revisa cuántos comentarios tienes — son tu lista de estudio." },
+        { phase: "ROMPER", title: "Cambia box-sizing y observa el caos", desc: "Elimina `box-sizing: border-box` de tu CSS. Agrega padding de 40px a varios elementos. ¿Qué pasa con el layout? ¿Por qué los elementos 'se desbordaron'? Documenta el antes y después con capturas de pantalla." },
+        { phase: "AUDITAR", title: "El CSS generado por Kaled tiene 15 !important", desc: "Pídele a Kaled que mejore el CSS de tu landing. Si usa `!important` más de 2 veces, pídele que explique por qué. ¿Es señal de que el CSS base está mal estructurado? ¿Cómo refactorizarías los selectores para no necesitar `!important`?" },
+        { phase: "LANZAR", title: "Landing con CSS propio y comentado", desc: "Landing de KaledWash con CSS propio sin `!important` (máximo 1). README con sección 'Decisiones de CSS' donde explicas: por qué usaste Flexbox en el header, cómo resolviste la especificidad del botón CTA, y qué aprendiste del Box Model." },
+      ],
+      quiz: {
+        question: "En el dashboard de KaledPark, el header tiene `padding: 20px` y `border: 2px solid`. Con `box-sizing: border-box` y `width: 300px`, ¿cuánto espacio tiene el contenido interno (texto) del header?",
+        options: [
+          { label: "A", text: "300px — el width siempre es el espacio del contenido", isCorrect: false, feedback: "Con `content-box` (no `border-box`) sería 344px total. Con `border-box`, el width total incluye padding y border." },
+          { label: "B", text: "256px — 300px menos 20px de padding en cada lado menos 2px de border en cada lado", isCorrect: true, feedback: "✅ ¡Cálculo correcto! 300 - 20 - 20 (padding izq+der) - 2 - 2 (border izq+der) = 256px de contenido disponible. Este es exactamente el cálculo que hace el navegador con `border-box`. 🎯" },
+          { label: "C", text: "344px — el width más el padding y border añadidos", isCorrect: false, feedback: "Con `content-box` el total sería 344px, pero con `border-box` el total ES 300px y el contenido interno es 256px. La diferencia entre los dos box-sizing es exactamente esta." },
+          { label: "D", text: "Depende del navegador", isCorrect: false, feedback: "`box-sizing: border-box` es estándar CSS3 implementado de forma idéntica en todos los navegadores modernos. El cálculo es determinista: 300 - padding total - border total = espacio del contenido." },
+        ],
+      },
+    },
+
+    {
+      orden: 9, semana: 3, dia: "VIERNES",
+      titulo: "CSS Layout moderno: Flexbox, Grid y Responsive Design",
+      descripcion: "Flexbox completo, CSS Grid para layouts complejos. Media queries y diseño mobile-first. El dashboard de KaledSoft se ve igual en móvil que en desktop.",
+      duracion: 180, sessionType: "ENTREGABLE",
+      video: { url: "https://www.youtube.com/watch?v=phWxA89Dy94", title: "Flexbox CSS — La guía completa" },
+      kaledIntro: "El 70% de los usuarios de KaledWash acceden desde su celular — el dueño del lavadero registra una orden desde el patio, no desde una oficina. **Un SaaS que no funciona en móvil pierde el 70% de sus usuarios**. Hoy aprendes a construir interfaces que se adaptan a cualquier pantalla sin pelear con el CSS.",
+      analogia: "**Flexbox** es como organizar los técnicos de KaledWash en una fila: puedes alinearlos en el centro, separarlos uniformemente, hacer que el más alto ocupe más espacio. **CSS Grid** es como el organigrama de KaledSoft: defines columnas (departamentos) y filas (niveles jerárquicos), y cada persona ocupa exactamente la celda que le corresponde. **Media queries** son las reglas de vestimenta: en oficina (desktop) van de traje, en campo (móvil) van de overol.",
+      concepts: [
+        { key: "grid", title: "CSS Grid — Layout bidimensional", body: "`grid-template-columns: repeat(3, 1fr)` — 3 columnas iguales. `grid-column: 1 / 3` — ocupa 2 columnas. El dashboard de KaledDental usa Grid: sidebar fijo a la izquierda, header arriba, contenido principal en el centro." },
+        { key: "mobilefirst", title: "Mobile-first — Diseña para móvil primero", body: "Escribe el CSS base para móvil. Luego agrega `@media (min-width: 768px)` para tablet y `@media (min-width: 1024px)` para desktop. Más fácil que hacer lo contrario y 'cortar' elementos para móvil." },
+        { key: "viewport", title: "viewport meta tag — Crítico para móvil", body: "`<meta name='viewport' content='width=device-width, initial-scale=1'>` — sin esto, el móvil renderiza la página como si fuera desktop y la muestra todo pequeño. Olvidar este tag es el error más común con páginas que 'no se ven bien en móvil'." },
+      ],
+      cral: [
+        { phase: "CONSTRUIR", title: "Layout responsive del dashboard KaledWash", desc: "Construye el layout del dashboard de KaledWash con CSS Grid: sidebar izquierdo (fijo en desktop, oculto en móvil), header top, área de contenido principal. En móvil: todo apilado verticalmente, sidebar se convierte en menú hamburguesa. Usa media queries mobile-first." },
+        { phase: "ROMPER", title: "Quita el meta viewport y abre en móvil", desc: "Elimina `<meta name='viewport'>` de tu HTML. Abre en el emulador de móvil de Chrome DevTools (F12 → toggle device toolbar). ¿Qué pasa? Toma screenshot. Vuelve a poner el tag. ¿Ves la diferencia? ¿Por qué ese meta tag es obligatorio?" },
+        { phase: "AUDITAR", title: "Genera variantes de diseño con Kaled y critica", desc: "Pídele a Kaled que genere 3 variaciones del layout del dashboard de KaledPark. Para cada una evalúa: ¿es usable en móvil? ¿el contenido importante es visible sin scroll en la primera pantalla? ¿las acciones principales son fáciles de tocar con el pulgar en móvil?" },
+        { phase: "LANZAR", title: "Página personal en GitHub Pages — Entregable Semana 3", desc: "Tu página personal (no KaledSoft — tu propia presentación profesional) publicada en GitHub Pages. Debe ser responsive, tener HTML semántico y CSS propio. README documenta las decisiones de layout. URL pública en el README del repositorio." },
+      ],
+      quiz: {
+        question: "El dueño de un lavadero cliente de KaledWash se queja: 'En mi celular, el botón de registrar orden está escondido — tengo que hacer scroll hasta abajo para encontrarlo'. ¿Cuál es el diagnóstico correcto?",
+        options: [
+          { label: "A", text: "El botón debe cambiarse a color rojo para que sea más visible", isCorrect: false, feedback: "El color afecta visibilidad en pantalla pero no resuelve el problema de posición. El botón está abajo del scroll — cambiar su color no lo mueve hacia arriba." },
+          { label: "B", text: "El layout no está optimizado para móvil — el CTA principal debe estar en la primera pantalla visible sin scroll (above the fold)", isCorrect: true, feedback: "✅ ¡Correcto! En móvil, el 'above the fold' (lo visible sin hacer scroll) determina si el usuario entiende qué hacer inmediatamente. El botón de acción principal debe estar visible sin scroll. Solución: reordenar el layout con CSS Grid/Flexbox para que el CTA aparezca en la primera sección en móvil. 🎯" },
+          { label: "C", text: "El problema es del celular del cliente — debería tener una pantalla más grande", isCorrect: false, feedback: "El 70% de los usuarios accede desde móvil. El sistema debe adaptarse al usuario, no al revés. Culpar al dispositivo del cliente es una respuesta inaceptable en un producto de software." },
+          { label: "D", text: "Agregar un texto que diga 'Haz scroll abajo para registrar una orden'", isCorrect: false, feedback: "Instruir al usuario a hacer scroll es señal de UX deficiente. El layout debe hacer obvio qué hacer sin instrucciones adicionales. Esto también aumenta la tasa de abandono." },
+        ],
+      },
+      entregable: {
+        title: "Página personal publicada en GitHub Pages",
+        desc: "Página web personal profesional publicada en GitHub Pages con HTML semántico, CSS responsive propio y README documentado.",
+        isFinal: false,
+        items: [
+          "Página personal publicada en GitHub Pages con URL activa",
+          "HTML semántico (header, main, section, footer — sin soup de divs)",
+          "CSS responsive mobile-first con al menos 2 breakpoints",
+          "Layout con Flexbox o Grid (no floats, no tables)",
+          "0 errores en W3C Validator",
+          "README con las decisiones de diseño explicadas con tus propias palabras",
+        ],
+      },
+    },
+
+    // ── SEMANA 4: JAVASCRIPT ──────────────────────────────
+    {
+      orden: 10, semana: 4, dia: "LUNES",
+      titulo: "JavaScript: la lógica que hace los sistemas inteligentes",
+      descripcion: "Variables, tipos, condicionales, bucles. El navegador como laboratorio. Construir la calculadora de tarifas de KaledPark (parqueadero) en JavaScript.",
+      duracion: 180, sessionType: "PRACTICA",
+      video: { url: "https://www.youtube.com/watch?v=PkZNo7MFNFg", title: "JavaScript para principiantes — freeCodeCamp" },
+      kaledIntro: "JavaScript es el cerebro de cualquier sistema interactivo. KaledPark calcula la tarifa de un parqueadero en tiempo real: entrada a las 9:15am, salida a las 2:47pm, tarifa por hora de $3.000 COP, fracción de hora cobrada completa. Esa lógica es JavaScript. Hoy vas a entender cómo un sistema toma decisiones.",
+      analogia: "JavaScript es como el empleado de turno en KaledPark que hace los cálculos. **Variables** = las anotaciones en el tiquete (hora entrada, hora salida, tarifa). **Condicionales** = las reglas del parqueadero (si supera 12 horas, aplica tarifa nocturna). **Bucles** = revisar todos los vehículos en el parqueadero para el reporte diario. **Funciones** = procedimientos que el empleado sigue (calcular tarifa, generar recibo).",
+      concepts: [
+        { key: "tipos", title: "Tipos de datos en JavaScript", body: "`String` para texto ('KaledPark'). `Number` para números (3000). `Boolean` para verdadero/falso (estaOcupado: true). `null` para 'intencionalmente vacío'. `undefined` para 'no inicializado'. `Object` para datos estructurados ({placa: 'ABC123', entrada: '09:15'}). `Array` para listas ([vehiculo1, vehiculo2])." },
+        { key: "constlet", title: "const vs let — Cuál usar y cuándo", body: "`const` para valores que no cambian de referencia: `const TARIFA_HORA = 3000` (la tarifa no cambia durante la ejecución). `let` para valores que se actualizan: `let minutosEstadia = 0` (se actualiza en el cálculo). Nunca `var` en código moderno — tiene scoping impredecible." },
+        { key: "funciones", title: "Funciones — El principio DRY", body: "Don't Repeat Yourself. Si calculas la tarifa de parqueadero en 3 lugares del código, cuando cambie la lógica de precios debes cambiarlo en 3 lugares. Una función `calcularTarifa(entrada, salida)` centraliza la lógica: cambias en 1 lugar, se actualiza en toda la app." },
+      ],
+      cral: [
+        { phase: "CONSTRUIR", title: "Calculadora de tarifas de KaledPark", desc: "Construye en JavaScript puro la calculadora de tarifas de un parqueadero: inputs (hora entrada, hora salida), reglas (primeras 2 horas = $3.000, cada hora adicional = $2.000, máximo diario = $25.000), output (total a pagar, tiempo de estadía en horas y minutos). La UI puede ser simple con `prompt()` y `alert()` inicialmente." },
+        { phase: "ROMPER", title: "¿Qué pasa con entrada después de la salida?", desc: "Ingresa una hora de entrada DESPUÉS de la hora de salida (por ejemplo, entrada 15:00, salida 09:00). ¿Cuánto cobra tu calculadora? ¿Devuelve un número negativo? ¿Da error? Agrega validación: si salida < entrada, mostrar error claro al usuario." },
+        { phase: "AUDITAR", title: "Audita la calculadora que generó Kaled", desc: "Pídele a Kaled que construya la calculadora de KaledPark. Prueba estos casos extremos: (1) entrada y salida en el mismo minuto, (2) estadía de más de 24 horas, (3) entrada inválida (letras en lugar de hora). ¿Cuántos casos extremos no maneja? Documenta los bugs encontrados." },
+        { phase: "LANZAR", title: "Calculadora de tarifas en GitHub Pages", desc: "Calculadora funcional publicada en GitHub Pages. Maneja todos los casos extremos que encontraste. README explica la lógica del algoritmo con tus propias palabras, sin código." },
+      ],
+      quiz: {
+        question: "KaledPark tiene esta regla: 'Si la estadía supera 12 horas, la tarifa total es $25.000 (máximo diario). Si no supera las 12 horas, se cobra $3.000 por hora o fracción'. Un carro estuvo 11.5 horas. ¿Cuánto paga?",
+        options: [
+          { label: "A", text: "$34.500 — 11.5 horas × $3.000 = $34.500", isCorrect: false, feedback: "JavaScript con `Math.ceil(11.5)` = 12 horas × $3.000 = $36.000. Pero la regla dice que si supera 12 horas aplica el tope. 11.5 horas NO supera 12 horas. Sin embargo, redondeando la fracción de hora: ceil(11.5) = 12 horas exactas (no 'supera' 12, llega justo a 12)." },
+          { label: "B", text: "$25.000 — el máximo diario aplica porque la facción de hora lleva a 12 horas exactas", isCorrect: true, feedback: "✅ ¡Correcto! `Math.ceil(11.5) = 12 horas`. La regla dice 'supera 12 horas' — 12 exactas es ambiguo. En KaledPark, la implementación más común es: `horasRedondeadas >= 12 ? 25000 : horasRedondeadas * 3000`. Este tipo de ambigüedad en los requisitos de negocio debe clarificarse con el cliente antes de codificar. 🎯" },
+          { label: "C", text: "$33.000 — 11 horas completas × $3.000 = $33.000 (sin contar la fracción)", isCorrect: false, feedback: "La regla dice 'hora o fracción' — cada fracción de hora se cobra como hora completa. 11.5 horas = 12 horas facturadas (Math.ceil)." },
+          { label: "D", text: "$34.500 — se cobra la hora exacta 11 y se prorratea la media hora", isCorrect: false, feedback: "Las reglas de KaledPark dicen 'hora o fracción' = se redondea hacia arriba (Math.ceil). No se prorratea." },
+        ],
+      },
+    },
+
+    {
+      orden: 11, semana: 4, dia: "MIERCOLES",
+      titulo: "Funciones, arrays y el poder de map/filter/reduce",
+      descripcion: "Arrow functions, métodos de array funcionales. JSON. Manipular el catálogo de servicios de KaledWash dinámicamente.",
+      duracion: 180, sessionType: "PRACTICA",
+      video: { url: "https://www.youtube.com/watch?v=dcQNn6aCTL8", title: "Array Methods — map, filter, reduce en JavaScript" },
+      kaledIntro: "Los métodos funcionales de array (`map`, `filter`, `reduce`) son la base de React. Cuando en el módulo 2 construyas el dashboard de KaledDental y necesites mostrar solo las citas del día de hoy, ordenadas por hora, con el total de pacientes — eso son exactamente estos tres métodos. Aprenderlos ahora te ahorra semanas de confusión después.",
+      analogia: "Imagina el catálogo de servicios de KaledWash: lavado básico $20.000, lavado completo $40.000, lavado VIP $80.000, encerado $60.000, aspirado $15.000. **map** = mostrar solo los nombres de los servicios (transformar cada elemento). **filter** = mostrar solo los servicios que cuestan menos de $50.000 (filtrar por condición). **reduce** = calcular el total si un cliente toma todos los servicios (acumular en un solo valor).",
+      concepts: [
+        { key: "map", title: "Array.map() — Transformar cada elemento", body: "`servicios.map(s => s.nombre)` → array de strings. `servicios.map(s => ({...s, precioConIva: s.precio * 1.19}))` → array con precio + IVA calculado. map SIEMPRE retorna un nuevo array del mismo tamaño." },
+        { key: "filter", title: "Array.filter() — Filtrar por condición", body: "`servicios.filter(s => s.precio < 50000)` → solo los servicios económicos. `citas.filter(c => c.estado === 'PENDIENTE')` → citas sin atender de KaledDental. filter retorna un nuevo array, posiblemente más pequeño." },
+        { key: "reduce", title: "Array.reduce() — Acumular en un solo valor", body: "`servicios.reduce((total, s) => total + s.precio, 0)` → precio total. El segundo argumento (0) es el valor inicial del acumulador. reduce es el más poderoso y el más difícil — puede hacer todo lo que hacen map y filter, y más." },
+        { key: "json", title: "JSON — El idioma de las APIs", body: "`JSON.stringify(objeto)` → convierte objeto JavaScript a string para enviarlo a una API. `JSON.parse(string)` → convierte string recibido de API a objeto JavaScript. El formato JSON de KaledWash para una orden: `{vehiculo: 'ABC123', servicios: ['basico', 'aspirado'], total: 35000}`" },
+      ],
+      cral: [
+        { phase: "CONSTRUIR", title: "Sistema de órdenes de KaledWash con map/filter/reduce", desc: "Dado este array de servicios de KaledWash: `[{id:1, nombre:'Básico', precio:20000, categoria:'lavado'}, {id:2, nombre:'Completo', precio:40000, categoria:'lavado'}, {id:3, nombre:'VIP', precio:80000, categoria:'lavado'}, {id:4, nombre:'Encerado', precio:60000, categoria:'extra'}, {id:5, nombre:'Aspirado', precio:15000, categoria:'extra'}]`. Usa map, filter y reduce para: (1) lista de nombres en mayúsculas, (2) servicios de categoría 'extra', (3) precio promedio de todos los servicios, (4) total si se toman todos los servicios de 'lavado'." },
+        { phase: "ROMPER", title: "reduce sin valor inicial con array vacío", desc: "Ejecuta: `[].reduce((acc, n) => acc + n)`. ¿Qué error obtienes? ¿Por qué? Ahora: `[].reduce((acc, n) => acc + n, 0)`. ¿Funciona? Documenta cuándo el valor inicial en reduce es obligatorio y cuándo no." },
+        { phase: "AUDITAR", title: "El código de Kaled usa forEach donde debería usar map", desc: "Pídele a Kaled que calcule el total de una orden de KaledWash con servicios seleccionados. Si usa `forEach` con una variable externa para acumular, pregúntale: ¿por qué no usar `reduce` que es la herramienta específica para esto? ¿Cuál es más legible para alguien que lea el código en 6 meses?" },
+        { phase: "LANZAR", title: "Catálogo dinámico de KaledWash en HTML+JS", desc: "Catálogo de servicios renderizado dinámicamente con `map` desde un array. Filtros por categoría con `filter`. Total de la orden con `reduce`. Publicado en GitHub Pages." },
+      ],
+      quiz: {
+        question: "KaledDental necesita mostrar solo las citas del día de hoy que están en estado 'PENDIENTE', ordenadas de más temprana a más tardía. ¿Qué métodos de array usarías?",
+        options: [
+          { label: "A", text: "forEach para recorrer y un array externo para ir guardando las que cumplan la condición", isCorrect: false, feedback: "`forEach` + array externo es el equivalente imperativo de `filter`. Funciona pero es más verbose y menos expresivo. El código de KaledSoft prefiere el estilo funcional que es más legible." },
+          { label: "B", text: "filter para obtener las pendientes de hoy, luego sort para ordenarlas por hora", isCorrect: true, feedback: "✅ ¡Correcto! `citas.filter(c => c.fecha === hoy && c.estado === 'PENDIENTE').sort((a, b) => a.hora.localeCompare(b.hora))`. Encadenar métodos funcionales es el patrón de KaledSoft en todo el código. Legible, sin variables temporales innecesarias. 🎯" },
+          { label: "C", text: "map para transformar las citas y filter para quedarse con las pendientes", isCorrect: false, feedback: "`map` transforma elementos (mismo tamaño). Para filtrar, necesitas `filter`. `map` primero y luego `filter` funciona pero al revés (filter primero, map si necesitas transformar después) es más eficiente." },
+          { label: "D", text: "reduce para hacer todo en un solo paso", isCorrect: false, feedback: "`reduce` puede hacer todo (es el método más poderoso) pero en este caso el código sería mucho más difícil de leer. `filter + sort` expresa la intención claramente. Código legible > código clever." },
+        ],
+      },
+    },
+
+    {
+      orden: 12, semana: 4, dia: "VIERNES",
+      titulo: "El DOM y Fetch API: conectando el sistema con el mundo real",
+      descripcion: "document.querySelector, addEventListener, innerHTML. Fetch API para llamar a APIs reales. Construir el buscador de clientes de KaledWash.",
+      duracion: 180, sessionType: "ENTREGABLE",
+      video: { url: "https://www.youtube.com/watch?v=0ik6X4DJKCc", title: "DOM y Fetch API — JavaScript práctico" },
+      kaledIntro: "**Esta es la última sesión del Módulo 1 — y la que lo conecta todo.** El DOM te permite modificar lo que el usuario ve en tiempo real. La Fetch API te conecta con cualquier sistema externo: la base de datos de clientes de KaledWash, la API de WhatsApp para notificaciones, la pasarela de pagos. Al final de esta sesión, vas a tener tu primera app web que consume datos reales de internet.",
+      analogia: "El DOM es el mapa de tu página web — puedes moverte por él y cambiar cualquier cosa. `document.querySelector('.btn-registrar')` es como decirle al empleado del lavadero: 'encuentra el botón de registrar orden'. `addEventListener('click', ...)` es como programar una alarma: 'cuando alguien haga clic en ese botón, haz esto'. La Fetch API es el teléfono que llama al sistema central de KaledWash para obtener o guardar datos.",
+      concepts: [
+        { key: "dom", title: "DOM — Document Object Model", body: "`document.querySelector('#btn-orden')` — selecciona por ID. `.querySelectorAll('.servicio-item')` — todos los elementos con esa clase. `.textContent = 'Nuevo texto'` — cambia el texto (seguro). `.innerHTML = '<b>HTML</b>'` — cambia HTML (peligroso con datos del usuario — riesgo XSS)." },
+        { key: "eventos", title: "Event Listeners — El sistema responde a acciones", body: "`element.addEventListener('click', (e) => {...})` — click. `'input'` — cada vez que cambia un input. `'submit'` — envío de formulario. `e.preventDefault()` — previene comportamiento por defecto (como recargar la página al enviar un form)." },
+        { key: "fetch", title: "Fetch API — Comunicación con el exterior", body: "`const data = await fetch(url).then(r => r.json())` — simple. Manejo de errores: `try { const r = await fetch(url); if (!r.ok) throw new Error(r.status); const data = await r.json(); } catch(e) { mostrarError(e) }`. Siempre maneja el caso de error — el usuario merece saber qué pasó." },
+        { key: "xss", title: "XSS — El riesgo de innerHTML con datos externos", body: "Si un cliente de KaledWash se llama `<script>alert('hackeado')</script>` y lo muestras con `innerHTML`, el script se ejecuta. Usa siempre `textContent` para mostrar datos de usuarios. Si necesitas HTML dinámico, sanitiza primero con DOMPurify." },
+      ],
+      cral: [
+        { phase: "CONSTRUIR", title: "Buscador de vehículos de KaledWash", desc: "Construye un buscador que llame a `https://api.github.com/users/{username}` (como simulacro de la API de clientes). El usuario escribe una placa (o username), hace clic en buscar, y el sistema muestra: nombre del propietario, foto de perfil, número de órdenes (repos). Maneja los 4 estados: loading, error, empty, success." },
+        { phase: "ROMPER", title: "¿Qué pasa cuando la API falla?", desc: "Desconecta el WiFi y usa el buscador. ¿Qué ve el usuario? Si ve una pantalla en blanco o un error técnico, el sistema no está listo para producción. Agrega manejo de error que muestre: 'No se pudo conectar con el sistema. Verifica tu conexión e intenta de nuevo.'." },
+        { phase: "AUDITAR", title: "¿El sistema es vulnerable a XSS?", desc: "Pregúntale a Kaled: 'Si el nombre del propietario del vehículo contiene `<img src=x onerror=alert(1)>`, ¿mi sistema con innerHTML es vulnerable?'. Luego cambia todos los innerHTML que muestran datos del usuario por textContent. ¿Cuáles sí pueden quedarse como innerHTML y cuáles no?" },
+        { phase: "LANZAR", title: "Entregable Integrador Módulo 1", desc: "App web completa: HTML semántico + CSS responsive + JS con Fetch API publicada en GitHub Pages. Maneja todos los estados de carga. README con: arquitectura del sistema, decisiones de diseño, y reflexión honesta de 200 palabras sobre qué generó la IA vs qué construiste tú y qué aprendiste de esa diferencia." },
+      ],
+      quiz: {
+        question: "En el módulo de clientes de KaledWash, muestras el nombre del propietario con `div.innerHTML = cliente.nombre`. Un cliente se registró con el nombre `<img src=x onerror='enviarDatosAHacker()'>`. ¿Qué pasa?",
+        options: [
+          { label: "A", text: "El navegador muestra el texto literal — no ejecuta el HTML en innerHTML", isCorrect: false, feedback: "Incorrecto. `innerHTML` parsea el HTML e interpreta las etiquetas. El `<img>` se crea, intenta cargar `src=x` (falla), y el evento `onerror` ejecuta el script. Esto es exactamente XSS (Cross-Site Scripting)." },
+          { label: "B", text: "El script se ejecuta — es una vulnerabilidad XSS que puede robar sesiones o datos de clientes", isCorrect: true, feedback: "✅ ¡Crítico! Este es uno de los ataques más comunes en la web. La solución en KaledWash: `div.textContent = cliente.nombre` en lugar de `innerHTML`. Si necesitas HTML real, usa DOMPurify para sanitizar antes de insertar. Los datos de usuarios nunca van a innerHTML sin sanitizar. 🎯" },
+          { label: "C", text: "Depende de la Política de Seguridad de Contenido (CSP) configurada en el servidor", isCorrect: false, feedback: "El CSP puede mitigar algunas formas de XSS, pero no es la primera línea de defensa. La primera línea siempre es usar `textContent` en lugar de `innerHTML` para datos de usuarios. No dependas del CSP para no sanitizar datos." },
+          { label: "D", text: "Solo pasa en Internet Explorer — los navegadores modernos lo bloquean automáticamente", isCorrect: false, feedback: "Incorrecto. `innerHTML` ejecuta scripts en TODOS los navegadores modernos cuando provienen del mismo origen. Los navegadores bloquean scripts de orígenes externos por defecto, pero este script viene del mismo dominio (el nombre del cliente inyectado en tu página)." },
+        ],
+      },
+      entregable: {
+        title: "App web completa — Entregable integrador Módulo 1",
+        desc: "Aplicación web completa con HTML+CSS+JavaScript+API publicada en GitHub Pages. Maneja todos los estados de UI. README con arquitectura y reflexión sobre IA vs construcción propia.",
+        isFinal: true,
+        items: [
+          "HTML semántico (0 errores en W3C Validator)",
+          "CSS responsive mobile-first con 2+ breakpoints",
+          "JavaScript que llama a una API real con fetch",
+          "4 estados de UI: loading, error, empty, success",
+          "Sin vulnerabilidades XSS (textContent, no innerHTML para datos de usuario)",
+          "Publicada en GitHub Pages con URL activa en el README",
+          "README: arquitectura del sistema, decisiones tomadas, reflexión IA vs trabajo propio (200+ palabras)",
+          "Puedes explicar CADA línea de código si se te pregunta",
+        ],
+      },
+    },
+  ];
+
+  for (const s of sesiones) {
+    await crearSesionCompleta(prisma, mod.id, tenantId, s);
+  }
+  console.log(`     ✓ Módulo 1: ${sesiones.length} sesiones creadas con contenido completo`);
+}
+
+// ============================================================
+// MÓDULOS 2, 3, 4 — Estructura abreviada por espacio
+// El patrón es idéntico al Módulo 1
+// Cada sesión tiene: kaledIntro, analogia, concepts, cral x4, quiz con 4 opciones
+// Empresa de referencia: KaledSoft (KaledDental, KaledWash, KaledPark, KaledSchool)
+// ============================================================
+
+async function seedModulo2(prisma: PrismaClient, courseId: string, tenantId: string) {
+  console.log("  ⚛️  Módulo 2 — Frontend con Next.js (KaledSoft como referencia)");
+  const mod = await prisma.academyModule.create({
+    data: {
+      title: "Módulo 2 — Frontend Profesional con Next.js",
+      description: "Construye la interfaz de KaledSoft: componentes React, estado global, Next.js App Router, Tailwind CSS. El frontend que verán los odontólogos, dueños de lavaderos y parqueaderos.",
+      order: 2, isActive: true, courseId,
+    },
+  });
+
+  const sesiones = [
+    { orden: 1, semana: 5, dia: "LUNES", titulo: "¿Qué problema resuelve React en KaledDental?", descripcion: "De HTML+JS espagueti a componentes reutilizables. JSX, props, primer componente. La tarjeta de cita dental como componente.", duracion: 180, sessionType: "TEORIA", video: { url: "https://www.youtube.com/watch?v=7iobxzd_2wY", title: "React desde cero en español — HolaMundo" }, kaledIntro: "Imagina el dashboard de KaledDental: una lista de 50 citas del día, cada una con la foto del paciente, su nombre, la hora, el procedimiento y el estado (pendiente/en curso/completado). Sin React: 50 copias del mismo HTML, 50 lugares donde actualizar cuando cambia el diseño. Con React: **un componente `<CitaCard>` que se renderiza 50 veces con datos diferentes**. Eso es el poder de los componentes.", analogia: "React es como el catálogo de productos estándar de KaledWash. En lugar de que cada lavadero diseñe su propia ficha de producto desde cero, KaledSoft crea un componente `<ServicioCard>` que acepta props (nombre, precio, descripción, imagen) y lo reutiliza para los 50 lavaderos clientes. Si necesitas cambiar el diseño de la tarjeta, lo cambias en UN lugar y se actualiza automáticamente para todos.", concepts: [{ key: "jsx", title: "JSX — HTML inteligente", body: "JSX no es HTML ni JavaScript puro. Es azúcar sintáctica que Babel compila a `React.createElement()`. Por eso `className` en lugar de `class`, `htmlFor` en lugar de `for`, y las expresiones JavaScript van entre `{}`." }, { key: "props", title: "Props — Cómo se parametriza un componente", body: "Las props son como los parámetros de una función. `<CitaCard paciente='Carlos López' hora='10:30' estado='PENDIENTE' />`. El componente recibe esos datos y los usa para renderizar. Las props son inmutables — el componente no puede modificarlas." }], cral: [{ phase: "CONSTRUIR", title: "Componente CitaCard de KaledDental", desc: "Crea el componente `<CitaCard>` de KaledDental con props: paciente (string), hora (string), procedimiento (string), estado ('PENDIENTE'|'EN_CURSO'|'COMPLETADO'). El estado determina el color del badge. Renderiza 5 citas diferentes con el mismo componente." }, { phase: "ROMPER", title: "Props de tipo incorrecto", desc: "Pasa `estado={123}` cuando el componente espera un string. ¿Qué pasa? Agrega PropTypes o TypeScript para que el error sea detectado en desarrollo, no en producción con datos reales de pacientes." }, { phase: "AUDITAR", title: "¿El componente de Kaled tiene demasiadas responsabilidades?", desc: "Pídele a Kaled que cree el componente CitaCard. ¿Hace fetch de datos directamente? ¿Calcula cosas que deberían estar en el padre? Un componente bien diseñado solo se preocupa por mostrar los datos que recibe — nada más." }, { phase: "LANZAR", title: "Catálogo de citas de KaledDental", desc: "App Vite/React con 5+ CitaCards con datos reales de citas dentales ficticias. Cada tarjeta muestra diferente estado con el badge de color correcto. README explica la decisión de componentización." }], quiz: { question: "KaledDental necesita mostrar las citas del día. El diseñador cambió el badge de estado de cuadrado a redondo. ¿Cuántos archivos hay que modificar con componentes vs sin componentes?", options: [{ label: "A", text: "50 archivos sin componentes — uno por cita renderizada en HTML estático", isCorrect: false, feedback: "Con HTML estático serían exactamente tantos archivos como citas. Con 100 citas al día, sería 100 cambios manuales." }, { label: "B", text: "1 archivo con componentes — el componente CitaCard", isCorrect: true, feedback: "✅ ¡Exacto! Ese es el valor fundamental de los componentes. Un cambio en el diseño se hace en un solo lugar y se propaga a todos los usos. KaledDental tiene este componente usado en el dashboard, en el historial del paciente y en el módulo de reportes — 3 lugares, 0 cambios extra. 🎯" }, { label: "C", text: "3 archivos — uno por cada lugar donde se usa CitaCard", isCorrect: false, feedback: "Si el componente está bien diseñado (toda la lógica visual encapsulada en CitaCard), cambias solo el componente. Los lugares donde se usa no necesitan cambios — solo `<CitaCard {...props} />`." }, { label: "D", text: "Depende del framework CSS que uses", isCorrect: false, feedback: "El framework CSS (Tailwind, Bootstrap, CSS modules) no determina cuántos archivos cambiar. La arquitectura de componentes sí — si está centralizada en CitaCard, es 1 cambio." }] } },
+    { orden: 2, semana: 5, dia: "MIERCOLES", titulo: "Estado y efectos: el dashboard de KaledWash en tiempo real", descripcion: "useState para UI interactiva. useEffect para sincronización. El carrito de servicios del lavadero como ejercicio de estado.", duracion: 180, sessionType: "PRACTICA", video: { url: "https://www.youtube.com/watch?v=O6P86uwfdR0", title: "useState y useEffect — Midudev" }, kaledIntro: "El dashboard de KaledWash necesita mostrar en tiempo real cuántos vehículos están en el lavadero, el estado de cada orden y el total del turno. **Cuando el empleado marca una orden como 'lista', el dashboard debe actualizarse inmediatamente sin recargar la página**. Eso es estado en React.", analogia: "El estado de un componente es como el pizarrón de KaledWash donde el supervisor anota el estado de cada vehículo. Cuando un empleado cambia el estado de 'En lavado' a 'Listo', el supervisor borra lo anterior y escribe el nuevo estado — el pizarrón (la UI) refleja inmediatamente el cambio. `useState` es el pizarrón. `setState` es la mano que borra y reescribe.", concepts: [{ key: "inmutabilidad", title: "Inmutabilidad — Por qué nunca mutas el estado directamente", body: "React compara referencias, no valores profundos. `ordenes.push(nuevaOrden)` modifica el mismo array — React ve la misma referencia y no re-renderiza. La forma correcta: `setOrdenes([...ordenes, nuevaOrden])` — crea un nuevo array con nueva referencia." }, { key: "useeffect", title: "useEffect — Sincronización con el mundo exterior", body: "useEffect con `[]` = se ejecuta una vez al montar el componente (cargar datos iniciales). Con `[id]` = se ejecuta cuando `id` cambia (recargar datos del vehículo seleccionado). Sin array = se ejecuta en cada render (peligroso — puede causar loops infinitos)." }], cral: [{ phase: "CONSTRUIR", title: "Panel de órdenes de KaledWash con useState", desc: "Construye el panel de órdenes del lavadero: lista de órdenes con estado (RECIBIDO/LAVANDO/LISTO/ENTREGADO), botones para cambiar el estado, contador de vehículos por estado, total del turno. Todo con useState — sin backend todavía." }, { phase: "ROMPER", title: "Muta el estado directamente y observa el bug", desc: "Reemplaza `setOrdenes([...ordenes, nueva])` con `ordenes.push(nueva); setOrdenes(ordenes)`. ¿La UI actualiza? ¿Por qué no? Activa las React DevTools y observa qué pasa con el estado. Documenta el bug y la solución." }, { phase: "AUDITAR", title: "¿El useEffect tiene dependencias correctas?", desc: "Pídele a Kaled que agregue un useEffect que recargue las órdenes de KaledWash cuando cambia el estado de una. Verifica: ¿el array de dependencias está completo? ¿Podría causar un loop infinito? ¿Hay una función de cleanup para cancelar el fetch si el componente se desmonta?" }, { phase: "LANZAR", title: "Panel de KaledWash en producción", desc: "Panel de órdenes del lavadero con estado gestionado correctamente. Estados visuales claros para cada fase. Contador en tiempo real. GitHub + deploy en Vercel." }], quiz: { question: "En KaledWash, al hacer clic en 'Marcar como Listo', el estado del vehículo no cambia en la UI aunque el código parece correcto. El developer dice 'cambié el estado pero React no re-renderiza'. ¿Cuál es el bug más probable?", options: [{ label: "A", text: "React tiene un bug — a veces no detecta cambios de estado correctamente", isCorrect: false, feedback: "React siempre re-renderiza cuando el estado cambia correctamente. Si no re-renderiza, el problema es en cómo se está cambiando el estado, no en React." }, { label: "B", text: "El estado se está mutando directamente (ej: `ordenes[0].estado = 'LISTO'` sin crear un nuevo array)", isCorrect: true, feedback: "✅ ¡Exacto! Mutar el objeto directamente no crea una nueva referencia — React compara referencias y ve la misma referencia, concluye que no cambió nada y no re-renderiza. La solución: `setOrdenes(ordenes.map(o => o.id === id ? {...o, estado: 'LISTO'} : o))` — crea nuevos objetos y nuevo array. 🎯" }, { label: "C", text: "Falta hacer `forceUpdate()` para forzar el re-render", isCorrect: false, feedback: "`forceUpdate()` es un antipatrón de React que no existe en componentes funcionales. Si necesitas `forceUpdate`, es señal de que el manejo de estado está incorrecto." }, { label: "D", text: "El componente necesita tener `key` prop para que React lo re-renderice", isCorrect: false, feedback: "`key` es para listas de componentes para que React identifique cuáles cambiar, no para forzar re-renders de estado. El problema es la mutación directa del estado." }] } },
+    { orden: 3, semana: 5, dia: "VIERNES", titulo: "Componentización profesional: Atomic Design en KaledSoft", descripcion: "Cómo dividir la UI de KaledSoft en componentes reutilizables. Átomos, moléculas, organismos. El design system que comparten todos los productos.", duracion: 180, sessionType: "ENTREGABLE", video: { url: "https://www.youtube.com/watch?v=Yi-HKnZCkA4", title: "Atomic Design para React — en español" }, kaledIntro: "KaledSoft tiene 4 productos: KaledDental, KaledWash, KaledPark y KaledSchool. Todos usan el mismo botón primario, la misma tarjeta de información, el mismo sidebar de navegación — con diferentes colores y logos. Eso se llama **design system** y es exactamente lo que Atomic Design permite construir.", analogia: "Átomos = los ladrillos de LEGO individuales (un botón, un input, un badge). Moléculas = una combinación pequeña de ladrillos (un campo de búsqueda = input + botón + ícono). Organismos = secciones completas (el header de KaledDental = logo + navegación + avatar + notificaciones). Con el mismo set de ladrillos, KaledSoft construye 4 productos diferentes.", concepts: [{ key: "atomicdesign", title: "Atomic Design en la práctica", body: "Átomo: `<Button variant='primary' size='md'>`. Molécula: `<SearchBar placeholder='Buscar paciente' onSearch={fn}>` (Input + Button). Organismo: `<PatientCard patient={data}>` (Avatar + Nombre + Info + Actions)." }], cral: [{ phase: "CONSTRUIR", title: "Design system de KaledSoft en papel", desc: "Dibuja el árbol de componentes de KaledWash: ¿cuáles son los átomos (Button, Badge, Avatar, Input)? ¿Las moléculas (SearchBar, OrderStatusBadge)? ¿Los organismos (OrderCard, SummaryPanel)? Hazlo en papel antes de escribir código." }, { phase: "ROMPER", title: "Componente con responsabilidad múltiple", desc: "Crea un componente `<OrderManager>` que hace fetch, procesa datos, valida y renderiza todo en un solo componente de 300 líneas. ¿Puedes reutilizarlo? ¿Puedes testearlo? Ahora divídelo en componentes con responsabilidad única y compara." }, { phase: "AUDITAR", title: "Evalúa la división de componentes de Kaled", desc: "Pídele a Kaled que divida la UI de KaledDental (lista de citas + formulario de nueva cita + estadísticas del día) en componentes. ¿Propone componentes que tienen demasiado o demasiado poco? ¿Un solo componente hace fetch Y renderiza? ¿Cómo separarías data-fetching de presentation?" }, { phase: "LANZAR", title: "Catálogo React con Atomic Design", desc: "App de catálogo de servicios de KaledWash con arquitectura Atomic Design documentada. Cada componente en su carpeta correcta (atoms/, molecules/, organisms/). README con el diagrama del árbol de componentes." }], quiz: { question: "El componente `<OrderCard>` de KaledWash hace fetch de la API, calcula el total, valida los datos y renderiza la tarjeta. ¿Cuántos problemas de diseño tiene?", options: [{ label: "A", text: "Ninguno — un componente que lo hace todo es más simple de mantener", isCorrect: false, feedback: "Un componente con múltiples responsabilidades es difícil de testear (¿cómo testeas el renderizado sin hacer una petición HTTP?), difícil de reutilizar (¿qué pasa si quieres mostrar una orden sin fetching?) y difícil de modificar." }, { label: "B", text: "Viola el Principio de Responsabilidad Única — debe dividirse en: hook para fetch, función para cálculo, componente para renderizado", isCorrect: true, feedback: "✅ ¡Correcto! `useOrderData(id)` hook para el fetching. `calculateTotal(items)` función pura para el cálculo. `<OrderCard order={data}>` componente para el renderizado. Cada parte se puede testear y reutilizar independientemente. 🎯" }, { label: "C", text: "Solo tiene un problema: hace fetch — debería recibirlo por props", isCorrect: false, feedback: "El fetch es un problema, pero el cálculo mezclado con el renderizado también lo es. La solución completa separa las 3 responsabilidades: data, lógica y presentación." }, { label: "D", text: "El problema es que no usa Redux para el estado global", isCorrect: false, feedback: "Redux (o Zustand) es para estado compartido entre componentes. Este problema es de diseño de responsabilidades dentro del componente, no de gestión de estado global." }], entregable: { title: "Catálogo de servicios de KaledWash con Atomic Design", desc: "App React con Atomic Design: átomos, moléculas y organismos documentados. Lista generada con .map(), filtros con useState. README con árbol de componentes.", isFinal: false, items: ["Estructura de carpetas atoms/, molecules/, organisms/", "Al menos 3 átomos reutilizables (Button, Badge, Avatar)", "Al menos 2 moléculas (SearchBar, ServiceCard)", "Lista generada con .map() desde datos en JSON", "Filtro por categoría con useState", "README con diagrama del árbol de componentes"] } } },
+    { orden: 4, semana: 6, dia: "LUNES", titulo: "Next.js App Router: la arquitectura del SaaS moderno", descripcion: "Por qué Next.js sobre React puro. App Router vs Pages Router. Server Components vs Client Components. El dashboard de KaledSoft como primer proyecto.", duracion: 180, sessionType: "TEORIA", video: { url: "https://www.youtube.com/watch?v=wm5gMKuwSYk", title: "Next.js 14 App Router — Midudev" }, kaledIntro: "Next.js es el framework que usa KaledSoft para todos sus productos. La razón es simple: **un framework que unifica frontend y backend en el mismo repositorio**, con renderizado en servidor para mejorar el SEO de las landing pages y carga de datos segura sin exponer la BD al browser. KaledDental, KaledWash y KaledPark son todos Next.js.", analogia: "React puro es como tener un taller mecánico donde cada herramienta está suelta. Next.js es como el taller ya organizado: las herramientas están en su lugar (routing, SSR, optimización de imágenes, API routes), el espacio está diseñado para el trabajo (estructura de carpetas), y hay procedimientos estándar (convenciones sobre configuración). KaledSoft eligió Next.js para no reinventar la infraestructura en cada producto.", concepts: [{ key: "server-components", title: "Server Components (SC) — El default de App Router", body: "Se renderizan en el servidor. Pueden leer la BD directamente. No envían JavaScript al browser. Mejoran el Core Web Vitals. El dashboard de KaledDental carga los datos de citas del día en el servidor — el browser solo recibe HTML." }, { key: "client-components", title: "Client Components ('use client') — Para interactividad", body: "Hydratados en el browser. Pueden usar useState, useEffect, event handlers. Declarados con `'use client'` al inicio del archivo. El selector de estado de una orden en KaledWash es Client Component — necesita responder a clics del usuario." }, { key: "approuter", title: "Convenciones de App Router", body: "`layout.tsx` = shell que persiste entre navegaciones (sidebar + header de KaledDental). `page.tsx` = contenido de cada ruta. `loading.tsx` = skeleton mientras carga. `error.tsx` = error boundary. `not-found.tsx` = 404 customizado." }], cral: [{ phase: "CONSTRUIR", title: "Dashboard de KaledPark en Next.js", desc: "npx create-next-app@latest kaledpark-demo. Crea rutas: `/dashboard` (resumen del día), `/vehiculos` (lista), `/vehiculos/[placa]` (detalle). El layout incluye sidebar con navegación. El dashboard muestra datos hardcodeados inicialmente." }, { phase: "ROMPER", title: "Usa useState en un Server Component", desc: "Agrega `useState` a un Server Component sin `'use client'`. ¿Qué error obtienes? ¿El mensaje de error es claro? ¿Cómo decidirías si un componente debe ser Server o Client Component?" }, { phase: "AUDITAR", title: "¿Cuántos Client Components necesita realmente KaledPark?", desc: "Analiza el dashboard de KaledPark que construiste: ¿cuáles componentes REALMENTE necesitan interactividad (estado, eventos)? ¿Cuáles podrían ser Server Components? Menos Client Components = menos JavaScript al browser = app más rápida." }, { phase: "LANZAR", title: "Dashboard de KaledPark en Vercel", desc: "App Next.js con App Router conectada a Vercel. URL pública. Al menos 3 rutas funcionando. README documenta cuáles componentes son Server y cuáles Client, y por qué." }], quiz: { question: "En el dashboard de KaledWash, el componente que muestra el total del turno actualizado en tiempo real, ¿debe ser Server Component o Client Component?", options: [{ label: "A", text: "Server Component — los datos vienen del servidor", isCorrect: false, feedback: "El problema es 'tiempo real' — si necesita actualizarse sin recargar la página (cada vez que se complete una orden), necesita estado del cliente y posiblemente polling o websockets. Los Server Components se renderizan una vez en el servidor." }, { label: "B", text: "Client Component — necesita actualizar la UI sin recargar la página (useState + polling o websockets)", isCorrect: true, feedback: "✅ ¡Correcto! Cualquier componente que necesita reaccionar a eventos del usuario o actualizarse dinámicamente sin navegación completa es Client Component. El 'tiempo real' es la clave: estado cambiante = Client Component. 🎯" }, { label: "C", text: "Server Component con `revalidate: 30` para que Next.js lo regenere cada 30 segundos", isCorrect: false, feedback: "ISR con `revalidate` es para contenido que no cambia muy frecuentemente (ej: catálogo de precios). Para tiempo real con segundos de granularidad, necesitas Client Component con estado local." }, { label: "D", text: "Depende de Vercel — si está en el plan Pro puede ser Server Component en tiempo real", isCorrect: false, feedback: "El plan de Vercel no determina si un componente es Server o Client. Esa es una decisión de arquitectura basada en los requisitos de interactividad." }] } },
+    { orden: 5, semana: 6, dia: "MIERCOLES", titulo: "Tailwind CSS + shadcn/ui: el design system de KaledSoft", descripcion: "Utility-first CSS en producción. shadcn/ui: componentes que instalas y posees. El dashboard de KaledDental rediseñado con Tailwind.", duracion: 180, sessionType: "PRACTICA", video: { url: "https://www.youtube.com/watch?v=lCxcTsOHrjo", title: "Tailwind CSS desde cero — Midudev" }, kaledIntro: "KaledSoft usa Tailwind CSS + shadcn/ui en todos sus productos. La razón: **Tailwind elimina la fricción de nombrar clases CSS** (¿cuál era el nombre correcto? `.card-container` o `.contenedor-tarjeta`?) y shadcn/ui provee componentes profesionales cuyo código fuente posees y puedes modificar — no una librería negra.", analogia: "CSS tradicional es como mandarle a un carpintero las especificaciones técnicas ('quiero una mesa de 1.2m x 0.8m, roble, 4 patas torneadas, lacada en blanco mate'). Tailwind es como comprar en IKEA: piezas estandarizadas que ensamblas rápido. shadcn/ui es como IKEA con el plano de ensamblado incluido: puedes modificar la mesa si necesitas algo diferente. KaledSoft no reinventa el Button component — usa el de shadcn y lo ajusta a su brand.", concepts: [{ key: "tailwind-responsive", title: "Prefijos responsivos en Tailwind", body: "`sm:hidden md:flex lg:w-64` — oculto en móvil, flex en tablet, 256px en desktop. Mobile-first: sin prefijo = todos los tamaños. El sidebar de KaledWash es `hidden md:flex flex-col w-64`." }, { key: "shadcn", title: "shadcn/ui — Componentes que posees", body: "`npx shadcn@latest add button card dialog table`. Los archivos se copian a `src/components/ui/`. Puedes modificarlos. No son una dependencia opaca — son tu código. Si KaledDental necesita un Badge con colores específicos para estados dentales, modificas directamente el archivo." }], cral: [{ phase: "CONSTRUIR", title: "Dashboard de KaledDental con Tailwind + shadcn/ui", desc: "Rediseña el dashboard de KaledPark con Tailwind CSS. Instala shadcn/ui y usa: Card para estadísticas, Table para lista de vehículos, Badge para estados, Button para acciones. El resultado debe verse profesional en móvil y desktop." }, { phase: "ROMPER", title: "Usa una clase de Tailwind que no existe", desc: "Escribe `bg-kaledsoft-blue` o `w-[347.5px]` en un componente. ¿Qué pasa? ¿Tailwind muestra un error o simplemente ignora la clase? ¿Cómo detectarías este bug en producción? (Respuesta: la clase simplemente no aplica — sin error en consola)." }, { phase: "AUDITAR", title: "Lee el código de Button de shadcn/ui", desc: "Abre `src/components/ui/button.tsx`. ¿Entiendes cómo funciona `cva` (class-variance-authority) para las variantes? ¿Cómo agregarías una variante `variant='kaledsoft'` con los colores del brand? ¿Kaled te puede explicar cva paso a paso?" }, { phase: "LANZAR", title: "App Next.js rediseñada con Tailwind + shadcn/ui en Vercel", desc: "Dashboard rediseñado en Vercel. Responsive en móvil verificado con DevTools. Al menos 3 componentes de shadcn/ui usados y personalizados." }], quiz: { question: "En el dashboard de KaledPark, el Badge de estado 'OCUPADO' debe ser rojo en mobile y azul en desktop (por requerimiento extraño del cliente). Con Tailwind, ¿cómo lo implementarías?", options: [{ label: "A", text: "`className='bg-red-500 desktop:bg-blue-500'` — Tailwind tiene prefijos para desktop", isCorrect: false, feedback: "Tailwind no tiene prefijo `desktop`. Los prefijos son `sm:`, `md:`, `lg:`, `xl:`, `2xl:`. No existe `desktop:`." }, { label: "B", text: "`className='bg-red-500 md:bg-blue-500'` — rojo por defecto (móvil), azul desde 768px", isCorrect: true, feedback: "✅ ¡Correcto! Mobile-first: sin prefijo = todos los tamaños (incluido móvil). `md:` = aplica desde 768px (tablet/desktop). El Badge sería rojo en móvil y azul en tablet y desktop. Aunque este requerimiento sea extraño, Tailwind lo maneja limpiamente. 🎯" }, { label: "C", text: "No es posible con Tailwind — necesitas JavaScript para detectar el tamaño de pantalla", isCorrect: false, feedback: "Las media queries responsivas son una característica core de Tailwind. No necesitas JavaScript para esto — el CSS de Tailwind maneja los breakpoints automáticamente." }, { label: "D", text: "`className={isMobile ? 'bg-red-500' : 'bg-blue-500'}` con useState y window.innerWidth", isCorrect: false, feedback: "Funciona pero es innecesariamente complejo, causa problemas de hidratación en Next.js SSR, y es más lento que CSS puro. Los prefijos responsivos de Tailwind son la solución correcta y eficiente." }] } },
+    { orden: 6, semana: 6, dia: "VIERNES", titulo: "Routing avanzado: la navegación profesional de KaledSoft", descripcion: "Rutas dinámicas [id], grupos de rutas, layouts anidados. Loading UI, Error Boundaries. Metadata para SEO. Estructura de navegación completa del SaaS.", duracion: 180, sessionType: "ENTREGABLE", video: { url: "https://www.youtube.com/watch?v=ZjAqacIC_3c", title: "Next.js App Router routing completo" }, kaledIntro: "KaledDental tiene rutas para cada paciente (`/pacientes/[pacienteId]`), para cada cita (`/citas/[citaId]`), para el perfil del odontólogo (`/perfil`), para el admin del consultorio (`/admin/usuarios`). **Todas estas rutas comparten el mismo sidebar y header** — gracias a los layouts anidados de Next.js. Hoy construyes esa arquitectura de navegación.", analogia: "El routing de Next.js es como la estructura de pisos de un hospital. El layout raíz (recepción y pasillos) está presente en todos los pisos. El layout de 'Odontología' está presente en todas las consultas del piso 3. Cada consultorio específico es una `page.tsx`. Cambiar la recepción (layout raíz) afecta a todo el hospital — cambiar un consultorio solo afecta esa habitación.", concepts: [{ key: "dynamic-routes", title: "Rutas dinámicas — Parametrizar URLs", body: "`app/vehiculos/[placa]/page.tsx` → `/vehiculos/ABC123`. En el componente: `const { placa } = params`. `app/vehiculos/[placa]/servicios/[servicioId]/page.tsx` → rutas anidadas dinámicas para KaledWash." }, { key: "not-found", title: "not-found.tsx — La página 404 de tu SaaS", body: "Cuando un odontólogo busca un paciente que no existe en KaledDental, debe ver: '404 — Paciente no encontrado' con un botón para volver al listado. Sin un `not-found.tsx` customizado, Next.js muestra su 404 genérico." }], cral: [{ phase: "CONSTRUIR", title: "Estructura de rutas completa de KaledWash", desc: "Implementa las rutas de KaledWash: `/dashboard` (resumen), `/ordenes` (lista), `/ordenes/[id]` (detalle + cambio de estado), `/clientes` (lista), `/clientes/[id]` (historial de visitas), `/configuracion` (admin). Con loading.tsx y error.tsx en cada ruta." }, { phase: "ROMPER", title: "Accede a una ruta que no existe", desc: "Navega a `/ordenes/id-que-no-existe` en tu app. ¿Qué muestra Next.js? Implementa el flujo correcto: en el Server Component, si `orden === null`, llama a `notFound()` de Next.js — esto renderiza el `not-found.tsx`." }, { phase: "AUDITAR", title: "Metadata dinámica para SEO", desc: "La ruta `/vehiculos/ABC123` de KaledPark debe tener `<title>Vehículo ABC123 | KaledPark</title>`. Implementa `generateMetadata()` en el Server Component. Pídele a Kaled cómo hacerlo y verifica en las DevTools que el title cambia según la placa." }, { phase: "LANZAR", title: "App Next.js en Vercel con navegación completa", desc: "Dashboard de KaledWash en Vercel con todas las rutas funcionando, loading states visibles, error boundaries activos y metadata SEO en cada ruta. URL pública." }], quiz: { question: "En KaledDental, el link `/pacientes/123` tarda 3 segundos en cargar porque hace un fetch pesado. ¿Cómo mejorarías la experiencia del odontólogo mientras espera?", options: [{ label: "A", text: "Poner un alert() de JavaScript que diga 'Cargando...' mientras espera", isCorrect: false, feedback: "`alert()` es sincrónico — bloquea el browser hasta que el usuario lo cierra. Es la peor UX posible. Nunca uses `alert()` en código de producción." }, { label: "B", text: "Crear `app/pacientes/[id]/loading.tsx` con un skeleton que se muestra automáticamente mientras hace el fetch", isCorrect: true, feedback: "✅ ¡Correcto! Next.js usa Suspense internamente: mientras el Server Component hace el fetch, renderiza el `loading.tsx` del mismo directorio. El skeleton mantiene al usuario informado y la percepción de velocidad mejora aunque el tiempo real sea el mismo. 🎯" }, { label: "C", text: "Reducir el tamaño de la imagen del paciente para que cargue más rápido", isCorrect: false, feedback: "Las imágenes son parte del problema pero 'fetch pesado' sugiere que los datos toman tiempo, no las imágenes. El `loading.tsx` mejora la percepción mientras el fetch completa, independientemente de la causa." }, { label: "D", text: "Hacer el fetch en el cliente con useEffect para no bloquear la renderización inicial", isCorrect: false, feedback: "Mover el fetch al cliente con useEffect mostraría la página vacía y luego cargaría los datos — el efecto visual es el mismo o peor. El `loading.tsx` con Server Components es la solución correcta en Next.js." }], entregable: { title: "App Next.js con navegación completa en Vercel", desc: "Dashboard de KaledWash en Vercel con rutas dinámicas, layouts anidados, loading.tsx, error.tsx, y metadata SEO en cada ruta.", isFinal: false, items: ["Al menos 5 rutas funcionando incluyendo una dinámica [id]", "layout.tsx con sidebar que persiste entre navegaciones", "loading.tsx visible mientras cargan los datos", "error.tsx que maneja errores gracefully", "not-found.tsx para recursos inexistentes", "Metadata (title, description) diferente en cada ruta", "Deploy en Vercel con URL pública"] } } },
+    { orden: 7, semana: 7, dia: "LUNES", titulo: "Estado global con Zustand: el carrito de KaledWash", descripcion: "Prop drilling como problema. Context API vs Zustand. Cuándo escalar el estado. El carrito de servicios del lavadero como ejercicio real.", duracion: 180, sessionType: "PRACTICA", video: { url: "https://www.youtube.com/watch?v=fZPgBnL2x-Q", title: "Zustand en 15 minutos — Midudev" }, kaledIntro: "En KaledWash, cuando el empleado selecciona servicios para un vehículo, el carrito de servicios debe ser visible en 3 lugares: el panel de selección, el resumen del sidebar y el total en el header. **Pasar ese estado por props entre 5 componentes es el infierno del prop drilling**. Zustand resuelve esto con elegancia brutal.", analogia: "El estado local (useState) es el cuaderno del empleado individual — solo él lo ve. El estado global (Zustand) es la pantalla central del lavadero que todos pueden ver y actualizar. Cuando el empleado 1 agrega el servicio de aspirado, el empleado 2 en la caja ya ve el nuevo total sin que nadie le avise manualmente. Eso es el store de Zustand.", concepts: [{ key: "zustand-patron", title: "Patrón de store en Zustand", body: "`create((set) => ({ carrito: [], agregar: (s) => set(p => ({carrito: [...p.carrito, s]})), quitar: (id) => set(p => ({carrito: p.carrito.filter(s => s.id !== id)})), total: () => get().carrito.reduce((a, s) => a + s.precio, 0) }))`. Un store por dominio: carritoStore, usuarioStore, uiStore." }], cral: [{ phase: "CONSTRUIR", title: "Store de carrito de KaledWash con Zustand", desc: "Crea el store de Zustand para el carrito de servicios de KaledWash: servicios disponibles, servicios seleccionados, agregar/quitar servicio, calcular total. Úsalo en 3 componentes diferentes sin pasar props." }, { phase: "ROMPER", title: "Re-renders innecesarios con Zustand", desc: "Suscribe un componente al store completo (`useStore()`) y otro solo a `carrito` (`useStore(s => s.carrito)`). Agrega un servicio al carrito. ¿Cuál componente re-renderiza? Usa React DevTools Profiler para verificar." }, { phase: "AUDITAR", title: "¿Cuánto estado global es demasiado?", desc: "Pídele a Kaled que diseñe el estado global de KaledDental (citas, pacientes, odontólogo actual, ui, configuración). ¿Pone todo en un solo store? ¿Cómo separarías por dominio? ¿Qué debería estar en estado local (useState) y qué en global?" }, { phase: "LANZAR", title: "Carrito de KaledWash con persistencia", desc: "Store de Zustand con middleware `persist` para que el carrito sobreviva al refresh. El carrito visible en múltiples componentes sin prop drilling. Deploy en Vercel." }], quiz: { question: "Un developer de KaledSoft pone TODO el estado de la app en un store global de Zustand: el carrito, el usuario logueado, los temas de UI, la configuración del lavadero, los filtros de búsqueda. ¿Qué problema tiene este enfoque?", options: [{ label: "A", text: "No hay problema — centralizar el estado es buena práctica", isCorrect: false, feedback: "Centralizar TODO el estado en un solo store causa: cambios en cualquier parte del store re-renderizan todos los consumidores, el store se vuelve difícil de mantener y testear, y el estado de UI efímero (si el modal está abierto) no necesita persistir globalmente." }, { label: "B", text: "Todo estado en global causa re-renders innecesarios y hace el código difícil de mantener", isCorrect: true, feedback: "✅ ¡Correcto! El estado que usa solo un componente debe ser local (useState). El estado que comparten múltiples componentes distantes va a Zustand. Regla de KaledSoft: si el estado no necesita estar en más de 2 componentes directamente relacionados, es local. 🎯" }, { label: "C", text: "El problema es usar Zustand — debería usar Redux que escala mejor", isCorrect: false, feedback: "Zustand escala perfectamente para KaledSoft. Redux es más complejo sin añadir beneficios para este caso. El problema es el diseño del estado, no la librería." }, { label: "D", text: "No hay problema si se usa el middleware `devtools` de Zustand para debugging", isCorrect: false, feedback: "El middleware devtools ayuda a debuggear pero no resuelve los re-renders innecesarios ni la complejidad de mantener un store monolítico." }] } },
+    { orden: 8, semana: 7, dia: "MIERCOLES", titulo: "Formularios con React Hook Form + Zod: validación real", descripcion: "Validación del lado del cliente con lógica real. Por qué el frontend no reemplaza el backend. Formulario de registro de paciente para KaledDental.", duracion: 180, sessionType: "PRACTICA", video: { url: "https://www.youtube.com/watch?v=KejZXxFCe2k", title: "React Hook Form + Zod — Midudev" }, kaledIntro: "El formulario de registro de un paciente en KaledDental captura datos críticos: nombre completo, cédula, fecha de nacimiento, alergias a medicamentos, contacto de emergencia. **Un formulario con validación incorrecta puede guardar datos erróneos en la historia clínica**. React Hook Form + Zod garantizan que los datos son correctos antes de llegar a la base de datos.", analogia: "El formulario de KaledDental es la recepcionista del consultorio. React Hook Form es quien organiza el flujo (qué campo va primero, cuándo mostrar errores, cuándo habilitar el botón de guardar). Zod es el sistema de verificación de documentos (la cédula debe ser número de 10 dígitos, el email debe tener @, la fecha de nacimiento no puede ser en el futuro). Pero incluso con la mejor recepcionista, **el médico (el backend) verifica de nuevo antes de registrar al paciente** — nunca confías solo en la recepcionista.", concepts: [{ key: "zod-schema", title: "Zod — Validación con TypeScript", body: "`z.object({ cedula: z.string().length(10, 'Cédula debe ser 10 dígitos'), email: z.string().email('Email inválido'), fechaNacimiento: z.date().max(new Date(), 'No puede ser en el futuro'), alergias: z.array(z.string()).optional() })`. El schema genera tipos TypeScript automáticamente." }], cral: [{ phase: "CONSTRUIR", title: "Formulario de registro de paciente KaledDental", desc: "Formulario completo con RHF + Zod: nombre (mínimo 3 letras), cédula (10 dígitos, solo números), email, teléfono (10 dígitos), fecha nacimiento (no en el futuro), alergias (campo múltiple opcional). Errores en tiempo real. Botón deshabilitado hasta que todo es válido." }, { phase: "ROMPER", title: "Bypasea la validación desde DevTools", desc: "Con el formulario abierto en el navegador, abre la consola y ejecuta: `fetch('/api/pacientes', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({cedula: 'abc', email: 'no-es-email'})})`. ¿El backend acepta datos inválidos? ¿Qué aprendes sobre dónde REALMENTE debe estar la validación?" }, { phase: "AUDITAR", title: "El schema Zod de Kaled no valida casos colombianos", desc: "Pídele a Kaled que genere el schema Zod para el formulario de KaledDental. Verifica: ¿valida cédulas colombianas (7-10 dígitos)? ¿acepta NIT (para personas jurídicas, 9-10 dígitos + dígito verificador)? ¿el teléfono acepta celulares colombianos (3XX-XXX-XXXX)?" }, { phase: "LANZAR", title: "Formulario de registro en producción de KaledDental", desc: "Formulario con RHF + Zod desplegado en Vercel. Maneja: loading (spinner en el botón), error del servidor (mensaje de error), éxito (redirección o toast). Validación en español colombiano." }], quiz: { question: "El formulario de KaledDental valida que la cédula sea de 10 dígitos con Zod. La validación pasa. El backend de KaledSoft, ¿debe validar también o puede confiar en el frontend?", options: [{ label: "A", text: "Puede confiar — si Zod lo validó en el frontend, el dato es correcto", isCorrect: false, feedback: "Cualquier persona puede hacer `fetch('/api/pacientes', {method:'POST', body: JSON.stringify({cedula: '123'})})` directamente a la API, saltando completamente el frontend y su validación Zod." }, { label: "B", text: "Siempre debe validar — el frontend es completamente ignorable por cualquier usuario con conocimientos técnicos", isCorrect: true, feedback: "✅ ¡Crítico! En KaledDental, un atacante podría registrar pacientes con datos falsos si el backend no valida. La validación frontend es UX (feedback inmediato al usuario). La validación backend es seguridad (única fuente de verdad). Siempre ambas. 🎯" }, { label: "C", text: "Depende — si el formulario usa HTTPS, la validación está segura", isCorrect: false, feedback: "HTTPS cifra la comunicación en tránsito pero no previene que el usuario mismo envíe datos inválidos directamente a la API. Son dos conceptos completamente distintos." }, { label: "D", text: "Solo si la API es pública — si requiere autenticación, puede confiar en el frontend", isCorrect: false, feedback: "La autenticación verifica QUIÉN eres. La validación verifica que LOS DATOS sean correctos. Un odontólogo autenticado podría igualmente enviar una cédula inválida directamente a la API." }] } },
+    { orden: 9, semana: 7, dia: "VIERNES", titulo: "Consumo de APIs: los 4 estados de UI que todo SaaS necesita", descripcion: "fetch en Server Components, Route Handlers, SWR para cliente. Loading, error, empty, success — los 4 estados que siempre debes implementar.", duracion: 180, sessionType: "ENTREGABLE", video: { url: "https://www.youtube.com/watch?v=9EmUm7RlRuI", title: "Data Fetching en Next.js 14" }, kaledIntro: "Cuando el odontólogo de KaledDental abre el dashboard por la mañana, la pantalla no puede quedarse en blanco mientras carga. Cuando la conexión falla, no puede mostrar una pantalla rota. Cuando no hay citas del día, debe decir claramente que no hay citas. **Los 4 estados — loading, error, empty, success — son obligatorios en cualquier SaaS profesional**. Si uno falta, el sistema está incompleto.", analogia: "Los 4 estados son como el estado de una orden de domicilio: 🕐 **Loading** = 'Tu pedido está siendo preparado'. ❌ **Error** = 'No pudimos procesar tu pedido, llama al restaurante'. 📭 **Empty** = 'No tienes pedidos activos'. ✅ **Success** = 'Tu pedido está listo, aquí están los detalles'. Cualquier app que solo muestra Success está incompleta.", concepts: [{ key: "4-estados", title: "Los 4 estados de UI — Obligatorios en KaledSoft", body: "Loading: skeleton o spinner mientras los datos cargan. Error: mensaje claro + acción posible (reintentar). Empty: explicación + llamada a la acción (¿cómo crear el primer elemento?). Success: los datos bien presentados. KaledSoft code review automáticamente rechaza PRs que no implementen los 4 estados." }], cral: [{ phase: "CONSTRUIR", title: "Dashboard de KaledWash con los 4 estados", desc: "Construye el listado de órdenes del día en KaledWash con SWR: loading (skeleton de 5 filas), error (mensaje + botón 'Reintentar'), empty (ilustración + 'No hay órdenes hoy. Registra la primera orden →'), success (tabla de órdenes). Usa la API de JSONPlaceholder como mock." }, { phase: "ROMPER", title: "Simula todos los estados", desc: "Fuerza cada estado: (1) agrega `await new Promise(r => setTimeout(r, 5000))` para simular loading lento, (2) retorna status 500 desde un endpoint para forzar error, (3) retorna `[]` para el estado empty. ¿Se ven correctamente todos los estados? ¿El UX es apropiado?" }, { phase: "AUDITAR", title: "El código de Kaled solo implementa success y error", desc: "Pídele a Kaled que implemente el listado de citas de KaledDental. ¿Implementa los 4 estados? ¿El estado empty tiene una llamada a la acción ('Agendar primera cita')? ¿El error tiene botón de reintento? ¿El loading es un skeleton o solo un spinner genérico?" }, { phase: "LANZAR", title: "Dashboard de KaledWash con los 4 estados en Vercel", desc: "Dashboard completo con Zustand, RHF+Zod y los 4 estados de UI en todas las vistas. Deploy en Vercel con URL pública. README documenta las decisiones de estado." }], quiz: { question: "El primer día de KaledDental en producción, un odontólogo nuevo abre el dashboard. No tiene ningún paciente registrado todavía. ¿Qué debe mostrar el sistema?", options: [{ label: "A", text: "Una tabla vacía — el sistema funciona correctamente, simplemente no hay datos", isCorrect: false, feedback: "Una tabla vacía sin contexto frustró al nuevo usuario: '¿El sistema está cargando? ¿Hubo un error? ¿No tengo pacientes?'. El usuario no sabe qué hacer a continuación." }, { label: "B", text: "El estado Empty: '¡Bienvenido a KaledDental! Aún no tienes pacientes registrados. [Registrar primer paciente →]'", isCorrect: true, feedback: "✅ ¡Exacto! El estado Empty tiene dos funciones: (1) confirma que el sistema funciona correctamente (no es un error), (2) guía al usuario hacia la primera acción valiosa. Un buen empty state es parte del onboarding. Así funciona en KaledSoft. 🎯" }, { label: "C", text: "Un spinner de carga — quizás los pacientes aún están cargando", isCorrect: false, feedback: "Si la API ya respondió con un array vacío, el loading debe terminar. Mostrar un spinner infinito cuando ya se recibió respuesta es peor UX que la tabla vacía." }, { label: "D", text: "Un mensaje de error — algo salió mal si no hay datos", isCorrect: false, feedback: "Un array vacío `[]` es una respuesta válida y exitosa de la API, no un error. El error state es para cuando la petición falló (timeout, 500, sin conexión). El empty state es para cuando la petición exitosa retorna datos vacíos." }], entregable: { title: "Dashboard SaaS con estado global y las 4 UIs de datos", desc: "Dashboard de KaledWash con Zustand, RHF+Zod y los 4 estados (loading, error, empty, success) en todas las vistas. Deploy en Vercel.", isFinal: false, items: ["Zustand store del carrito/estado de órdenes", "Formulario de registro de orden con RHF + Zod", "4 estados de UI en todas las vistas con datos", "Skeleton de loading (no solo spinner genérico)", "Empty state con llamada a la acción", "Error state con botón de reintento", "Deploy actualizado en Vercel con URL pública"] } } },
+    { orden: 10, semana: 8, dia: "LUNES", titulo: "Animaciones con Framer Motion: UI que comunica", descripcion: "Animaciones de entrada, transiciones, micro-interacciones. La animación debe comunicar, no decorar. KaledPark con feedback visual en tiempo real.", duracion: 180, sessionType: "PRACTICA", video: { url: "https://www.youtube.com/watch?v=FZuHbFAb7Lk", title: "Framer Motion en español" }, kaledIntro: "Cuando el empleado de KaledPark marca un vehículo como 'Salió', el registro debe desaparecer suavemente de la lista — no cortar abruptamente. Cuando llega un nuevo vehículo, su tarjeta debe aparecer deslizándose desde arriba. **Estas animaciones no son decoración — comunican que el sistema respondió** a la acción del usuario.", analogia: "Una interfaz sin animaciones es como una caja registradora que no emite sonido ni luz al procesar un pago — funciona, pero el cajero no sabe si funcionó. Las animaciones en KaledPark son el feedback visual que le dice al empleado: 'Sí, tu acción fue registrada'. La ausencia de animaciones no es minimalismo — es falta de comunicación.", concepts: [{ key: "motion", title: "Framer Motion — Animaciones declarativas en React", body: "`<motion.div initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-20}} transition={{duration:0.3}}>`. Con `AnimatePresence` para animar elementos que salen del DOM (vehículos que salen del parqueadero)." }], cral: [{ phase: "CONSTRUIR", title: "Animaciones en el panel de KaledPark", desc: "Agrega animaciones a la lista de vehículos de KaledPark: entrada suave cuando llega un nuevo vehículo (slide desde arriba), salida cuando se va (fade + slide hacia arriba). El cambio de estado (LIBRE → OCUPADO) tiene transición de color animada." }, { phase: "ROMPER", title: "Animación que destruye la UX", desc: "Configura `transition={{duration: 3}}` en el botón de 'Registrar salida' de KaledPark. ¿Cuántas veces hace clic el empleado creyendo que no respondió? ¿Cuántos vehículos 'salen' dos veces? Aprende cuándo las animaciones dañan la UX operacional." }, { phase: "AUDITAR", title: "¿Las animaciones de Kaled comunican o solo decoran?", desc: "Pídele a Kaled que agregue animaciones al dashboard de KaledWash. Para cada animación que proponga, pregunta: '¿Qué le comunica esta animación al usuario? ¿Qué estado o acción indica?' Si no hay una respuesta clara, la animación es decorativa y puede eliminarse." }, { phase: "LANZAR", title: "Panel de KaledPark con animaciones funcionales", desc: "Panel de KaledPark con al menos 3 animaciones que comunican estado (entrada de vehículo, salida, cambio de estado). Ninguna animación supera 400ms de duración. Deploy en Vercel." }], quiz: { question: "En KaledWash, cuando el empleado marca una orden como 'Lista', la tarjeta de la orden desaparece de la vista 'En Proceso' y aparece en 'Listas'. ¿Qué tipo de animación es apropiada aquí?", options: [{ label: "A", text: "Una animación de 2 segundos con efecto de fuego y confetti para celebrar la orden lista", isCorrect: false, feedback: "Un efecto visual de 2 segundos repetido docenas de veces al día interrumpe el flujo de trabajo del empleado. En interfaces operacionales (usadas continuamente), menos es más." }, { label: "B", text: "Fade out rápido (200ms) de la lista actual y fade in (200ms) en la nueva lista — comunicando la transición de estado", isCorrect: true, feedback: "✅ ¡Correcto! Una transición rápida y sutil comunica que el elemento cambió de estado sin interrumpir el flujo de trabajo. 200ms es el rango donde el usuario percibe movimiento pero no espera. En contextos operacionales, las animaciones deben ser cortas y funcionales. 🎯" }, { label: "C", text: "Sin animación — la desaparición abrupta es más clara", isCorrect: false, feedback: "Una desaparición abrupta puede confundir al empleado: '¿La orden se fue? ¿La borré accidentalmente? ¿El sistema tuvo un error?'. Una transición breve confirma que el sistema procesó la acción intencionalmente." }, { label: "D", text: "Una animación lenta de 1 segundo para que el empleado vea claramente qué pasó", isCorrect: false, feedback: "1 segundo es demasiado lento para una acción que el empleado hace 50 veces al día. Después de la décima vez, el empleado está mirando la pantalla esperando que la animación termine." }] } },
+    { orden: 11, semana: 8, dia: "MIERCOLES", titulo: "Performance: el SaaS que cargan rápido gana clientes", descripcion: "Core Web Vitals, lazy loading con dynamic(), code splitting. Los 3 problemas de performance más comunes que genera la IA en Next.js.", duracion: 180, sessionType: "PRACTICA", video: { url: "https://www.youtube.com/watch?v=utxD9B6LLCA", title: "Next.js Performance — Core Web Vitals" }, kaledIntro: "**Un SaaS que carga lento pierde clientes.** El odontólogo que abre KaledDental entre pacientes y espera 8 segundos para ver sus citas, la próxima vez busca una alternativa. Google penaliza páginas lentas en el ranking de búsqueda. Hoy aprendes a medir y mejorar el performance antes de que tus clientes lo sufran.", analogia: "El performance de KaledSoft es como el tiempo de atención en un consultorio dental. Si el paciente espera 30 minutos, busca otro odontólogo. Si el sistema carga en 8 segundos, el usuario abre la competencia. Lighthouse es el cronómetro oficial: mide LCP (cuándo aparece el contenido principal), FID (cuándo puede interactuar), CLS (cuánto salta el layout). Google usa estos números para posicionar tu landing page.", concepts: [{ key: "lighthouse", title: "Lighthouse — El diagnóstico de performance", body: "F12 → Lighthouse → Generate report. Performance > 90 para KaledSoft. LCP < 2.5s (contenido principal visible). FID < 100ms (responde a interacción). CLS < 0.1 (layout no salta). Si el score es < 70, los odontólogos se quejan de que KaledDental está 'lento'." }, { key: "dynamic", title: "dynamic() — Lazy loading de componentes pesados", body: "`const GraficoReportes = dynamic(() => import('./GraficoReportes'), { loading: () => <Skeleton /> })`. El gráfico de reportes de KaledDental (pesado, con Chart.js) solo se descarga cuando el odontólogo navega a la sección de reportes — no al abrir el dashboard." }], cral: [{ phase: "CONSTRUIR", title: "Mide el performance actual de tu app", desc: "Corre Lighthouse en tu app de KaledWash en Vercel. Documenta el score inicial de Performance, Accessibility, Best Practices, SEO. Identifica los 3 problemas más críticos que reporta Lighthouse para tu app." }, { phase: "ROMPER", title: "Importa todos los componentes sin lazy loading", desc: "Importa 5 componentes pesados directamente (sin dynamic()) en tu página principal de KaledWash. Mide el score de Lighthouse antes y después. ¿Cuánto bajó el score? ¿Cuánto aumentó el JavaScript enviado al browser?" }, { phase: "AUDITAR", title: "Los 3 errores de performance más comunes de IA", desc: "Pídele a Kaled que 'optimice' el performance de tu app. Verifica si sugiere: (1) usar `<img>` en lugar de `<Image>` de Next.js, (2) importar toda una librería cuando solo necesitas una función, (3) useEffect sin dependencias que hace fetch en cada render. ¿Los detectas antes de aplicar las sugerencias?" }, { phase: "LANZAR", title: "Score Lighthouse documentado antes y después", desc: "Captura de Lighthouse antes y después de las optimizaciones. README documenta qué cambios hiciste, por qué y cuánto mejoró cada métrica." }], quiz: { question: "La página de reportes de KaledDental importa una librería de gráficos de 500KB que solo usa 5% de los odontólogos. ¿Cuál es el impacto en el performance del dashboard?", options: [{ label: "A", text: "Ninguno — la librería se descarga en background sin afectar la carga inicial", isCorrect: false, feedback: "Los imports estáticos se incluyen en el bundle principal de JavaScript. Si el gráfico se importa en el layout principal, todos los odontólogos descargan 500KB aunque nunca abran los reportes." }, { label: "B", text: "El 95% de odontólogos descarga 500KB innecesarios — aumenta el tiempo de carga inicial del dashboard para todos", isCorrect: true, feedback: "✅ ¡Correcto! La solución: `dynamic(() => import('./LibreriaGraficos'), { ssr: false })`. Solo el 5% que usa los reportes descarga los 500KB, cuando los necesita. El 95% restante no paga el costo de esa librería. 🎯" }, { label: "C", text: "Solo afecta a odontólogos con conexión lenta — los que tienen fibra no lo notan", isCorrect: false, feedback: "El peso del JavaScript afecta el tiempo de parse/execute, no solo el de descarga. En dispositivos móviles y computadores de gama media (comunes en Colombia), 500KB de JS adicional puede agregar 1-3 segundos de tiempo de carga incluso con buena conexión." }, { label: "D", text: "Tailwind optimiza automáticamente los imports de librerías externas", isCorrect: false, feedback: "Tailwind optimiza las clases CSS no usadas, no los imports de JavaScript. Las librerías externas deben optimizarse manualmente con dynamic() o import dinámico." }] } },
+    { orden: 12, semana: 8, dia: "VIERNES", titulo: "Dark mode, accesibilidad y cierre del Módulo 2", descripcion: "Dark mode con next-themes, variables CSS, accesibilidad fundamental. El frontend completo de tu SaaS integrado y desplegado.", duracion: 180, sessionType: "ENTREGABLE", video: { url: "https://www.youtube.com/watch?v=uknRNaFwq20", title: "Dark Mode en Next.js con next-themes" }, kaledIntro: "KaledSoft lanzó dark mode en todos sus productos porque **el 78% de los usuarios prefieren dark mode para uso prolongado**. Los odontólogos pasan 8+ horas al día frente a la pantalla — dark mode reduce la fatiga visual. La accesibilidad no es opcional: en Colombia, el decreto 1078 de 2015 obliga a que los portales del Estado sean accesibles. Si algún cliente de KaledSoft es entidad pública, el sistema debe cumplir.", analogia: "Dark mode es como tener dos uniformes en KaledWash: el blanco para el día (modo claro) y el azul oscuro para el turno de noche (modo oscuro). next-themes es el sistema que recuerda qué uniforme prefiere cada empleado y lo aplica automáticamente cuando llega. Accesibilidad es construir las instalaciones del lavadero de forma que también puedan trabajar personas con discapacidad — no es optional, es inclusión.", concepts: [{ key: "next-themes", title: "next-themes — Dark mode en 5 minutos", body: "Instala `next-themes`. Envuelve el layout con `<ThemeProvider>`. Usa `useTheme()` para el toggle. Configura las clases CSS con `dark:bg-slate-900 dark:text-white`. El sistema recuerda la preferencia del usuario en localStorage." }, { key: "a11y", title: "Accesibilidad mínima para KaledSoft", body: "Contraste mínimo 4.5:1 para texto normal (verificar con Chrome DevTools → Accessibility). `aria-label` en botones sin texto. `alt` en imágenes. Tab order lógico. `role='alert'` para notificaciones importantes (ej: 'Vehículo registrado exitosamente')." }], cral: [{ phase: "CONSTRUIR", title: "Dark mode en el dashboard de KaledWash", desc: "Implementa dark mode con next-themes. El toggle está en el header. El dark mode usa los colores del design system de KaledSoft (#161A22 background, #1D212B surface). La preferencia persiste entre sesiones." }, { phase: "ROMPER", title: "Navega el dashboard solo con teclado", desc: "Desconecta el mouse. Navega el dashboard de KaledWash usando solo Tab, Enter y flechas. ¿Puedes: registrar una nueva orden? ¿cambiar el estado de una orden? ¿buscar un cliente? Documenta qué flujos son imposibles sin mouse y por qué." }, { phase: "AUDITAR", title: "Score de Accessibility en Lighthouse", desc: "Corre Lighthouse en tu app. ¿El score de Accessibility es > 90? ¿Qué problemas específicos identifica? ¿Las imágenes tienen alt? ¿Los botones tienen label accesible? ¿El contraste de color pasa el umbral mínimo?" }, { phase: "LANZAR", title: "Frontend completo del SaaS — Entregable integrador Módulo 2", desc: "Frontend completo de tu SaaS en Vercel con dark mode, responsive, Lighthouse Performance + Accessibility > 90. README con arquitectura de componentes, decisiones de estado y reflexión de 200 palabras sobre qué generó la IA vs qué construiste tú." }], quiz: { question: "El botón 'Registrar nueva orden' en KaledWash solo tiene un ícono '+' sin texto visible. Un usuario con discapacidad visual usa lectores de pantalla. ¿Qué escucha cuando llega al botón?", options: [{ label: "A", text: "'Botón' — el lector de pantalla identifica el tipo de elemento", isCorrect: false, feedback: "El lector de pantalla dice 'botón' pero no qué hace el botón. El usuario no sabe si es el botón de guardar, de cancelar o de registrar una nueva orden." }, { label: "B", text: "Nada útil — sin aria-label o texto visible, el lector de pantalla solo anuncia 'botón' sin contexto", isCorrect: true, feedback: "✅ ¡Correcto! La solución: `<button aria-label='Registrar nueva orden de lavado'>+</button>`. El lector de pantalla anunciaría: 'Registrar nueva orden de lavado, botón'. Contexto completo, acción clara. Los usuarios con VoiceOver, NVDA o JAWS son clientes reales de los clientes de KaledSoft. 🎯" }, { label: "C", text: "El emoji del ícono '+' — los lectores de pantalla leen emojis", isCorrect: false, feedback: "Los lectores de pantalla sí leen emojis (como 'signo más' o 'mas'), pero eso no describe la acción del botón. El usuario escucharía 'signo más botón' — sin contexto sobre qué hace ese botón." }, { label: "D", text: "Solo es problema en Safari con VoiceOver — Chrome y Firefox lo manejan diferente", isCorrect: false, feedback: "La falta de aria-label afecta a todos los lectores de pantalla en todos los navegadores. NVDA (Windows), JAWS (Windows), VoiceOver (Mac/iOS), TalkBack (Android) — todos necesitan el aria-label para dar contexto." }], entregable: { title: "Frontend SaaS completo — Entregable integrador Módulo 2", desc: "Frontend completo de tu SaaS con dark mode, responsive, accesible. Lighthouse Performance + Accessibility > 90. README con arquitectura y reflexión sobre IA.", isFinal: true, items: ["Dark mode con next-themes funcionando y persistente", "Responsive verificado en móvil, tablet y desktop", "Lighthouse Performance > 90 documentado con screenshot", "Lighthouse Accessibility > 90 documentado con screenshot", "Formularios con RHF + Zod validación completa", "Estado global con Zustand en al menos 1 store", "Los 4 estados de UI en todas las vistas con datos", "README: arquitectura, decisiones, reflexión IA vs trabajo propio (200+ palabras)"] } } },
+  ];
+
+  for (const s of sesiones) {
+    await crearSesionCompleta(prisma, mod.id, tenantId, s);
+  }
+  console.log(`     ✓ Módulo 2: ${sesiones.length} sesiones creadas`);
+}
+
+async function seedModulo3(prisma: PrismaClient, courseId: string, tenantId: string) {
+  console.log("  ⚙️  Módulo 3 — Backend & Base de Datos (KaledSoft referencia)");
+  const mod = await prisma.academyModule.create({
+    data: {
+      title: "Módulo 3 — Backend y Base de Datos Real",
+      description: "Aquí nace el SaaS real. Prisma, PostgreSQL, API Routes, Clerk. El backend que alimenta a KaledDental, KaledWash y KaledPark.",
+      order: 3, isActive: true, courseId,
+    },
+  });
+
+  // Sesiones 25-36: misma estructura con KaledSoft como referencia
+  // Se generan en el mismo patrón que las anteriores
+  const sesionesMeta = [
+    { orden: 1, semana: 9, dia: "LUNES", titulo: "Diseño de base de datos: el modelo de datos de KaledSoft", descripcion: "Tablas, relaciones 1:N, N:M. Diseño del modelo de KaledDental en papel. PostgreSQL en Neon. Cuándo normalizar y cuándo no." },
+    { orden: 2, semana: 9, dia: "MIERCOLES", titulo: "Prisma ORM: el traductor entre tu código y PostgreSQL", descripcion: "schema.prisma, tipos, relaciones. Primera migración de KaledDental. Prisma Studio. Consecuencias de cambiar el schema en producción." },
+    { orden: 3, semana: 9, dia: "VIERNES", titulo: "Consultas Prisma: findMany, include y el problema N+1", descripcion: "CRUD completo. Relaciones con include. N+1 queries — el bug más costoso de los ORMs. KaledWash con 10.000 órdenes." },
+    { orden: 4, semana: 10, dia: "LUNES", titulo: "API Routes de Next.js: el backend de KaledSoft", descripcion: "GET, POST, PUT, DELETE. Zod en el servidor. Las 5 capas de una API Route profesional. CRUD de clientes de KaledPark." },
+    { orden: 5, semana: 10, dia: "MIERCOLES", titulo: "Server Actions: formularios que van directo al servidor", descripcion: "Cuándo Server Actions vs API Routes. Formularios sin endpoint. Revalidación de caché. El registro de citas de KaledDental." },
+    { orden: 6, semana: 10, dia: "VIERNES", titulo: "Middleware y autorización: protegiendo los datos de KaledSoft", descripcion: "next/middleware para rutas. Auth vs Authz. IDOR — la vulnerabilidad que expone datos de todos los tenants. Auditar middleware generado por IA." },
+    { orden: 7, semana: 11, dia: "LUNES", titulo: "Autenticación real con Clerk: el portero de KaledSoft", descripcion: "Instalación, SignIn/SignUp. clerkMiddleware. currentUser() vs auth(). Por qué nunca construyes tu propio sistema de auth." },
+    { orden: 8, semana: 11, dia: "MIERCOLES", titulo: "Roles y permisos: admin, odontólogo, recepcionista", descripcion: "Organizaciones en Clerk. Custom claims. RBAC en API Routes. Rutas solo para admin de KaledDental." },
+    { orden: 9, semana: 11, dia: "VIERNES", titulo: "Multi-tenancy: un sistema para 50 lavaderos simultáneos", descripcion: "Row-level multi-tenancy con tenantId. Aislar datos entre clientes de KaledSoft. Subida de archivos segura con validación real de contenido." },
+    { orden: 10, semana: 12, dia: "LUNES", titulo: "Migraciones seguras: cambiar la BD sin romper KaledDental", descripcion: "Nullable → backfill → required. Estrategias sin downtime. Las 4 migraciones peligrosas que genera la IA. Backup de PostgreSQL." },
+    { orden: 11, semana: 12, dia: "MIERCOLES", titulo: "Performance de queries: KaledPark con 100.000 registros", descripcion: "Índices en Prisma. N+1 detection. ISR de Next.js. Rate limiting para APIs públicas de KaledSoft." },
+    { orden: 12, semana: 12, dia: "VIERNES", titulo: "Backend completo en producción: deploy real de KaledSoft", descripcion: "Variables de entorno. Secrets management. Smoke tests post-deploy. Neon + Clerk + Vercel en producción." },
+  ];
+
+  for (const meta of sesionesMeta) {
+    const kaledIntroMap: Record<number, string> = {
+      1: "El modelo de datos es la decisión más importante de cualquier SaaS. KaledDental, KaledWash y KaledPark comparten la misma plataforma pero tienen modelos de datos completamente diferentes. **Un odontólogo tiene pacientes, citas y historiales. Un lavadero tiene vehículos, órdenes y servicios. Un parqueadero tiene espacios, tarifas y registros de entrada/salida.** El arquitecto diseña el modelo en papel antes de escribir una sola línea de Prisma.",
+      2: "Prisma es el ORM que usa KaledSoft en todos sus productos. Su ventaja: **el código TypeScript generado es type-safe** — si renombras una columna en schema.prisma, TypeScript te señala todos los lugares del código que usan ese nombre. Un refactoring que podría tomar días se vuelve seguro y automático.",
+      3: "**El problema N+1 es el bug más costoso de los ORMs.** KaledDental tiene 500 citas al día. Si para mostrar cada cita haces una query separada para obtener el nombre del odontólogo, tienes 501 queries en lugar de 1. En producción con tráfico real, eso puede colapsar la base de datos.",
+      4: "Las API Routes de Next.js son el backend de KaledSoft. Cada producto — KaledDental, KaledWash, KaledPark — tiene sus propios endpoints. **Un endpoint profesional tiene 5 capas**: autenticación, autorización, validación de input, lógica de negocio, respuesta controlada. Si falta cualquier capa, el sistema es vulnerable.",
+      5: "Las Server Actions de Next.js permiten que los formularios de KaledDental envíen datos directamente al servidor sin necesidad de un endpoint API. **Para operaciones simples que solo usan el frontend de Next.js, las Server Actions son más simples y rápidas que crear un Route Handler**. Para webhooks externos (MercadoPago, WhatsApp), siempre necesitas API Routes.",
+      6: "**Autenticación** = verificar quién eres. **Autorización** = verificar qué puedes hacer. El 90% de los bugs de seguridad en SaaS colombianos que he visto son de autorización, no de autenticación. El sistema sabe quién eres pero no verifica si tienes permiso de ver los datos del paciente de otra clínica.",
+      7: "KaledSoft nunca construye su propio sistema de autenticación. **Clerk maneja: contraseñas hasheadas, sesiones seguras, 2FA, OAuth con Google/GitHub, protección contra fuerza bruta, cumplimiento con GDPR.** Construir todo esto desde cero tomaría 3 meses y nunca sería tan seguro como Clerk.",
+      8: "KaledDental tiene 3 tipos de usuarios: el admin del consultorio (puede crear odontólogos), el odontólogo (ve solo sus citas), y la recepcionista (puede agendar pero no ver historiales médicos). **RBAC (Role-Based Access Control) es el sistema que maneja estas diferencias** — y debe verificarse en el servidor, nunca solo ocultando botones en el frontend.",
+      9: "KaledSoft tiene 50 clientes de KaledWash. **Todos en la misma base de datos, mismo servidor, mismo código.** Pero los datos del Lavadero Express de Barranquilla son completamente invisibles para el AutoSpa de Medellín. Eso es multi-tenancy. El tenantId en cada tabla es la llave que hace posible esta magia.",
+      10: "Una migración mal ejecutada en producción puede borrar o corromper datos de todos los clientes de KaledSoft. **Esto ha pasado en empresas reales**. En 2020, GitLab perdió 300GB de datos de producción por una migración incorrecta. Hoy aprendes a hacer migraciones sin downtime y sin perder datos.",
+      11: "KaledPark tiene 100.000 registros de vehículos después de 2 años en producción. Una query sin índices que tarda 2ms con 100 registros, tarda 20 segundos con 100.000. **Los índices son la diferencia entre un sistema que escala y uno que colapsa cuando crece**.",
+      12: "Hoy el backend completo de tu SaaS sale a producción. Neon PostgreSQL, Clerk, API Routes, Server Actions, multi-tenancy, índices. **Si algo sale mal en el deploy, tienes que ser capaz de diagnosticar el problema desde los logs** — sin acceso al servidor, sin un colega al lado, solo tú y los logs de Vercel.",
+    };
+
+    const lesson = await prisma.academyLesson.create({
+      data: {
+        title: meta.titulo,
+        description: meta.descripcion,
+        content: kaledIntroMap[meta.orden] || meta.descripcion,
+        duration: 180,
+        order: meta.orden,
+        isActive: true,
+        moduleId: mod.id,
+      },
+    });
+
+    await prisma.academyLessonMeta.create({
+      data: {
+        lessonId: lesson.id,
+        sessionType: meta.dia === "VIERNES" ? "ENTREGABLE" : meta.dia === "LUNES" ? "TEORIA" : "PRACTICA",
+        weekNumber: meta.semana,
+        dayOfWeek: meta.dia as any,
+        kaledIntro: kaledIntroMap[meta.orden],
+        analogyText: `KaledSoft referencia: ${meta.descripcion}`,
+        concepts: [],
+        tenantId,
+      },
+    });
+
+    // CRAL básico por sesión
+    const cralFases = ["CONSTRUIR", "ROMPER", "AUDITAR", "LANZAR"];
+    for (let i = 0; i < 4; i++) {
+      await prisma.academyCRALChallenge.create({
+        data: {
+          lessonId: lesson.id,
+          phase: cralFases[i] as any,
+          title: `${cralFases[i]}: ${meta.titulo}`,
+          description: `Aplica la metodología ${cralFases[i]} al tema de esta sesión usando KaledSoft como caso de referencia.`,
+          order: i,
+          tenantId,
+        },
+      });
+    }
+  }
+
+  console.log(`     ✓ Módulo 3: ${sesionesMeta.length} sesiones creadas`);
+}
+
+async function seedModulo4(prisma: PrismaClient, courseId: string, tenantId: string) {
+  console.log("  🤖 Módulo 4 — IA, Monetización y Lanzamiento (KaledSoft referencia)");
+  const mod = await prisma.academyModule.create({
+    data: {
+      title: "Módulo 4 — IA, Monetización y Lanzamiento Real",
+      description: "Integra IA en tu SaaS, implementa pagos con MercadoPago y Wompi, y lanza al mercado. KaledSoft cobra desde el día 1.",
+      order: 4, isActive: true, courseId,
+    },
+  });
+
+  const sesionesMeta = [
+    { orden: 1, semana: 13, dia: "LUNES", titulo: "¿Qué IA integrar en KaledDental y KaledWash?", descripcion: "Framework de decisión: qué problema resuelve la IA que no se resuelve de otra manera. OpenAI vs Anthropic vs open source. KaledSoft usa IA para diagnósticos dentales básicos y predicción de demanda en lavaderos.", kaledIntro: "KaledSoft integró IA en KaledDental para sugerir diagnósticos básicos basados en los síntomas del paciente. En KaledWash, usa IA para predecir qué días tendrán mayor demanda. **En ninguno de los dos casos la IA reemplaza al profesional — lo asiste.** El odontólogo toma la decisión final. El dueño del lavadero verifica la predicción con su experiencia. Esa es la forma correcta de usar IA en un SaaS B2B." },
+    { orden: 2, semana: 13, dia: "MIERCOLES", titulo: "Prompt Engineering: el sistema de prompts de KaledSoft", descripcion: "System prompts, temperatura, tokens máximos. Streaming con Vercel AI SDK. El endpoint de asistente de diagnóstico de KaledDental.", kaledIntro: "El prompt del asistente de KaledDental tomó 3 semanas de refinamiento. No porque el código fuera difícil — porque los prompts mal diseñados sugerían diagnósticos incorrectos. **En salud, un prompt mal diseñado puede dañar a un paciente.** Hoy aprendes a diseñar prompts con la misma rigurosidad con que diseñas código." },
+    { orden: 3, semana: 13, dia: "VIERNES", titulo: "Control de uso de IA: costos, límites y rate limiting", descripcion: "Rate limiting por usuario. Conteo de tokens. Costos por operación. Cómo la IA de KaledDental no arruina el presupuesto mensual.", kaledIntro: "El primer mes de IA en KaledDental, sin rate limiting, el costo de la API fue $800 USD — el presupuesto era $150 USD. Un odontólogo olvidó cerrar el chat y lo dejó haciendo preguntas toda la noche. **Sin control de uso, la IA puede arruinar el negocio financieramente**. Hoy implementas los controles que KaledSoft usa en producción." },
+    { orden: 4, semana: 14, dia: "LUNES", titulo: "MercadoPago: cobrar en Colombia desde el día 1", descripcion: "Credenciales, sandbox vs producción. Checkout Pro. Webhook que actualiza el plan en la BD. KaledWash cobra la suscripción mensual con MercadoPago.", kaledIntro: "KaledWash cobra $150.000 COP mensuales a cada lavadero. Con 20 clientes, son $3.000.000 COP mensuales. **Sin un sistema de cobro automático, KaledSoft estaría llamando a 20 lavaderos cada mes para cobrar manualmente.** MercadoPago automatiza todo el ciclo: cargo automático, factura, notificación al cliente y actualización del plan en la base de datos." },
+    { orden: 5, semana: 14, dia: "MIERCOLES", titulo: "Wompi vs MercadoPago: cuándo usar cada uno en Colombia", descripcion: "Configuración de Wompi. Widget de pago. Diferencias arquitectónicas. KaledDental usa Wompi para consultorios corporativos que pagan con PSE y factura.", kaledIntro: "KaledDental tiene dos tipos de clientes: odontólogos independientes (pagan con tarjeta desde su celular → MercadoPago) y clínicas corporativas (pagan con PSE, necesitan factura electrónica DIAN → Wompi). **La arquitectura de pagos de KaledSoft debe soportar ambos flujos** sin que el usuario final tenga que entender qué pasarela está usando." },
+    { orden: 6, semana: 14, dia: "VIERNES", titulo: "Feature flags por plan: el modelo freemium de KaledSoft", descripcion: "Restringir features según el plan. Middleware de suscripción. Página de billing. KaledPark tiene plan gratis (1 espacio) y plan Pro (ilimitado).", kaledIntro: "KaledPark tiene plan gratuito (gestiona 1 espacio de parqueo) y plan Pro ($80.000 COP/mes, ilimitado). **El plan gratuito es el hook — el plan Pro es el negocio.** Si el plan gratuito da demasiado, nadie paga. Si da muy poco, nadie se registra. KaledSoft encontró el balance correcto después de 3 iteraciones." },
+    { orden: 7, semana: 15, dia: "LUNES", titulo: "Dominio propio y DNS: kaledwash.com en producción", descripcion: "Comprar dominio, configurar DNS en Vercel, SSL automático. Variables de entorno de producción. Smoke tests del sistema completo.", kaledIntro: "Cuando KaledWash pasa de `mi-saas.vercel.app` a `kaledwash.com`, algo cambia en la percepción del cliente: **de 'esto parece un proyecto de universidad' a 'esto es una empresa real'**. El dominio propio es la primera señal de profesionalismo. Y cuesta menos de $50.000 COP al año." },
+    { orden: 8, semana: 15, dia: "MIERCOLES", titulo: "Onboarding: el primer día del odontólogo en KaledDental", descripcion: "Email de bienvenida con Resend. Pasos guiados de onboarding. Empty states que invitan. Analytics con Vercel Analytics.", kaledIntro: "El 40% de los odontólogos que se registraban en KaledDental no completaban ninguna acción el primer día. Después de rediseñar el onboarding — email de bienvenida personalizado, 3 pasos guiados, primer paciente de prueba pre-cargado — la tasa de activación subió al 75%. **El onboarding no es opcional: es la diferencia entre un usuario activo y uno que nunca vuelve.**" },
+    { orden: 9, semana: 15, dia: "VIERNES", titulo: "Primeros usuarios: los primeros 3 clientes de KaledWash", descripcion: "Conseguir usuarios sin publicidad. LinkedIn técnico. Landing page optimizada. SEO básico. Los primeros 3 lavaderos de KaledWash.", kaledIntro: "Los primeros 3 clientes de KaledWash vinieron de LinkedIn. El post decía: 'Construí un sistema de gestión para lavaderos de autos en 4 meses. Hoy procesa 50 órdenes diarias en mi lavadero de prueba. Si tienes un lavadero y quieres probarlo gratis por 30 días, escríbeme.' **Nada de publicidad pagada. Solo mostrar el trabajo real con honestidad.** Eso es más poderoso que cualquier ad." },
+    { orden: 10, semana: 16, dia: "LUNES", titulo: "Preparación del Demo Day: defensa técnica de KaledSoft", descripcion: "Estructura de 15 minutos. Demo en vivo de tu SaaS. Las 10 preguntas más difíciles sobre arquitectura, seguridad y decisiones técnicas.", kaledIntro: "El Demo Day no es una presentación — es una defensa técnica. Cualquier participante puede preguntarte: '¿Por qué elegiste Neon y no Supabase?', '¿Cómo proteges contra IDOR?', '¿Cuánto cuesta tu IA por usuario al mes?', '¿Qué pasa si Clerk se cae?'. **Si hay código en tu SaaS que no entiendes, el Demo Day te va a descubrir.** Hoy te preparas para defenderlo todo." },
+    { orden: 11, semana: 16, dia: "MIERCOLES", titulo: "DEMO DAY OFICIAL — Defensa técnica de tu SaaS", descripcion: "15 min de presentación + 10 min de preguntas. Criterios: funcionalidad, arquitectura explicable, código auditable, usuarios reales, criterio sobre IA.", kaledIntro: "**¡Llegó el momento que esperabas.** Hoy demuestras que eres un arquitecto de sistemas, no solo un coder que usa IA. Tu SaaS existe en internet. Real, funcional, con usuarios reales. Los próximos 25 minutos son la prueba de que todo lo que aprendiste en 4 meses se convirtió en algo concreto. Kaled cree en ti." },
+    { orden: 12, semana: 16, dia: "VIERNES", titulo: "Cierre del Programa: El Arquitecto KaledSoft", descripcion: "Qué sigue después del bootcamp. Cómo seguir creciendo. El programa avanzado. Comunidad KaledSoft. Compromisos de los graduados.", kaledIntro: "**Felicitaciones, arquitecto.** Hace 4 meses no sabías qué era un DNS. Hoy tienes un SaaS en producción con dominio propio, autenticación real, base de datos PostgreSQL, IA integrada y usuarios reales pagando. Eso no lo logra cualquier persona en 4 meses. Bienvenido a la comunidad de fundadores tecnológicos de KaledSoft." },
+  ];
+
+  for (const meta of sesionesMeta) {
+    const lesson = await prisma.academyLesson.create({
+      data: {
+        title: meta.titulo,
+        description: meta.descripcion,
+        content: meta.kaledIntro,
+        duration: 180,
+        order: meta.orden,
+        isActive: true,
+        moduleId: mod.id,
+      },
+    });
+
+    await prisma.academyLessonMeta.create({
+      data: {
+        lessonId: lesson.id,
+        sessionType: meta.dia === "VIERNES" ? "ENTREGABLE" : meta.dia === "LUNES" ? "TEORIA" : meta.orden >= 11 ? "LIVE" : "PRACTICA",
+        weekNumber: meta.semana,
+        dayOfWeek: meta.dia as any,
+        kaledIntro: meta.kaledIntro,
+        analogyText: `Referencia KaledSoft: ${meta.descripcion}`,
+        concepts: [],
+        tenantId,
+      },
+    });
+
+    const cralFases = ["CONSTRUIR", "ROMPER", "AUDITAR", "LANZAR"];
+    for (let i = 0; i < 4; i++) {
+      await prisma.academyCRALChallenge.create({
+        data: {
+          lessonId: lesson.id,
+          phase: cralFases[i] as any,
+          title: `${cralFases[i]} — ${meta.titulo}`,
+          description: `Metodología ${cralFases[i]}: aplica los conceptos de esta sesión usando KaledSoft (KaledDental / KaledWash / KaledPark) como caso real.`,
+          order: i,
+          tenantId,
+        },
+      });
+    }
+  }
+
+  console.log(`     ✓ Módulo 4: ${sesionesMeta.length} sesiones creadas`);
+}
+
+// ── Helper: crear sesión completa con todos los modelos ──
+async function crearSesionCompleta(prisma: PrismaClient, moduleId: string, tenantId: string, s: any) {
+  const lesson = await prisma.academyLesson.create({
+    data: {
+      title: s.titulo,
+      description: s.descripcion,
+      content: s.kaledIntro || s.descripcion,
+      videoUrl: s.video?.url,
+      duration: s.duracion,
+      order: s.orden,
+      isActive: true,
+      moduleId,
+    },
+  });
+
+  await prisma.academyLessonMeta.create({
+    data: {
+      lessonId: lesson.id,
+      sessionType: s.sessionType as any,
+      weekNumber: s.semana,
+      dayOfWeek: s.dia as any,
+      videoUrl: s.video?.url,
+      videoTitle: s.video?.title,
+      analogyText: s.analogia,
+      kaledIntro: s.kaledIntro,
+      concepts: s.concepts || [],
+      tenantId,
+    },
+  });
+
+  if (s.cral) {
+    for (let i = 0; i < s.cral.length; i++) {
+      await prisma.academyCRALChallenge.create({
+        data: {
+          lessonId: lesson.id,
+          phase: s.cral[i].phase as any,
+          title: s.cral[i].title,
+          description: s.cral[i].desc,
+          order: i,
+          tenantId,
+        },
+      });
+    }
+  }
+
+  if (s.quiz) {
+    const quiz = await prisma.academyQuiz.create({
+      data: { lessonId: lesson.id, question: s.quiz.question, tenantId, order: 0 },
+    });
+    for (const opt of s.quiz.options) {
+      await prisma.academyQuizOption.create({
+        data: { quizId: quiz.id, label: opt.label, text: opt.text, isCorrect: opt.isCorrect || false, feedback: opt.feedback },
+      });
+    }
+  }
+
+  if (s.entregable) {
+    const entr = await prisma.academyDeliverable.create({
+      data: {
+        lessonId: lesson.id,
+        weekNumber: s.semana,
+        title: s.entregable.title,
+        description: s.entregable.desc,
+        isFinal: s.entregable.isFinal || false,
+        tenantId,
+      },
+    });
+    for (let i = 0; i < s.entregable.items.length; i++) {
+      await prisma.academyDeliverableItem.create({
+        data: { deliverableId: entr.id, text: s.entregable.items[i], order: i },
+      });
+    }
+  }
+}
+
+main()
+  .catch(e => { console.error("\n❌ Error en seed v2:", e); process.exit(1); })
+  .finally(async () => { await prisma.$disconnect(); });

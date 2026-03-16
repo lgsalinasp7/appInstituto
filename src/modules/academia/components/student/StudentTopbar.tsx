@@ -1,8 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Bell, Search, Menu, X, LayoutDashboard, BookOpen, UserCircle, Calendar, Trophy } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { Bell, Search, Menu, X, LayoutDashboard, BookOpen, UserCircle, Calendar, Trophy, LogOut } from "lucide-react";
+import { performLogout } from "@/lib/logout";
+import { KALED_ACADEMY_CONFIG } from "../../config/academy-tenant.config";
 
 interface Props {
   userName: string;
@@ -18,8 +22,28 @@ const NAV = [
   { href: "/academia/student/leaderboard", label: "Ranking", icon: Trophy },
 ];
 
+function formatCohortDisplay(name: string) {
+  return name.replace(/\s*·\s*Montería\s*/gi, "").trim() || name;
+}
+
 export function StudentTopbar({ userName, userImage, cohortName }: Props) {
+  const displayCohort = formatCohortDisplay(cohortName);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const avatarMenuRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (avatarMenuRef.current && !avatarMenuRef.current.contains(e.target as Node)) {
+        setAvatarMenuOpen(false);
+      }
+    }
+    if (avatarMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [avatarMenuOpen]);
 
   return (
     <>
@@ -50,23 +74,65 @@ export function StudentTopbar({ userName, userImage, cohortName }: Props) {
 
           <div className="h-7 w-px bg-white/[0.08]" />
 
-          <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block">
-              <div className="text-[13px] font-semibold text-white leading-none">{userName}</div>
-              <div className="text-[11px] text-slate-500 mt-1 leading-none">{cohortName}</div>
-            </div>
-            {userImage ? (
-              <img
-                src={userImage}
-                alt={userName}
-                className="w-8 h-8 rounded-full border border-white/10"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full border border-cyan-500/30 bg-cyan-500/10 flex items-center justify-center text-cyan-400 text-sm font-bold">
-                {userName[0]?.toUpperCase() ?? "A"}
+          <div className="relative" ref={avatarMenuRef}>
+            <button
+              onClick={() => setAvatarMenuOpen((o) => !o)}
+              className="flex items-center gap-3 cursor-pointer rounded-xl px-2 py-1.5 hover:bg-white/[0.04] transition-colors"
+            >
+              <div className="text-right hidden sm:block">
+                <div className="text-[13px] font-semibold text-white leading-none">{userName}</div>
+                <div className="text-[11px] text-slate-500 mt-1 leading-none">{displayCohort}</div>
+              </div>
+              {userImage ? (
+                <img
+                  src={userImage}
+                  alt={userName}
+                  className="w-8 h-8 rounded-full border border-white/10 object-cover"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full border border-cyan-500/30 bg-cyan-500/10 flex items-center justify-center text-cyan-400 text-sm font-bold">
+                  {userName[0]?.toUpperCase() ?? "A"}
+                </div>
+              )}
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0" />
+            </button>
+
+            {avatarMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-white/[0.08] shadow-2xl overflow-hidden z-50"
+                style={{ background: "#141820" }}>
+                <div className="px-4 py-3 border-b border-white/[0.06]">
+                  <div className="flex items-center gap-3">
+                    {userImage ? (
+                      <img src={userImage} alt={userName} className="w-9 h-9 rounded-full border border-white/10 object-cover" />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full border border-cyan-500/30 bg-cyan-500/10 flex items-center justify-center text-cyan-400 text-sm font-bold shrink-0">
+                        {userName[0]?.toUpperCase() ?? "A"}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-white truncate">{userName}</div>
+                      <div className="text-[11px] text-slate-500 truncate">{displayCohort}</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="py-1.5">
+                  <button
+                    onClick={() => { setAvatarMenuOpen(false); router.push("/academia/student/profile"); }}
+                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-slate-300 hover:bg-white/[0.05] hover:text-white transition-colors"
+                  >
+                    <UserCircle className="w-4 h-4 text-slate-400" />
+                    Mi Perfil
+                  </button>
+                  <button
+                    onClick={() => { setAvatarMenuOpen(false); performLogout(); }}
+                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Cerrar Sesión
+                  </button>
+                </div>
               </div>
             )}
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0" />
           </div>
         </div>
       </header>
@@ -80,11 +146,14 @@ export function StudentTopbar({ userName, userImage, cohortName }: Props) {
           <div className="lg:hidden fixed left-0 top-0 bottom-0 z-50 w-80 academy-sidebar-rail-dark border-r border-white/[0.06] animate-slide-in-left flex flex-col">
             <div className="h-16 flex items-center justify-between px-5 border-b border-white/[0.06]">
               <div className="flex items-center gap-3">
-                <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-sm"
-                  style={{ background: "linear-gradient(135deg, #0891b2, #2563eb)" }}
-                >
-                  K
+                <div className="relative w-9 h-9 rounded-xl shrink-0 overflow-hidden flex items-center justify-center bg-slate-800/80">
+                  <Image
+                    src={KALED_ACADEMY_CONFIG.branding.logoUrl}
+                    alt="KaledAcademy"
+                    width={36}
+                    height={36}
+                    className="object-contain"
+                  />
                 </div>
                 <span className="text-white font-bold text-[15px]">KaledAcademy</span>
               </div>

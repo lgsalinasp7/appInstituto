@@ -8,8 +8,10 @@ import { checkRateLimitByEmail, resetRateLimitByEmail, RATE_LIMIT_CONFIGS } from
 
 export async function loginAction(data: LoginFormData): Promise<{ success: boolean; message?: string; user?: AuthUser }> {
     try {
+        const email = data.email.trim().toLowerCase();
+
         // Aplicar rate limiting por email
-        const rateLimit = checkRateLimitByEmail(data.email, RATE_LIMIT_CONFIGS.LOGIN, "login");
+        const rateLimit = checkRateLimitByEmail(email, RATE_LIMIT_CONFIGS.LOGIN, "login");
         
         if (!rateLimit.allowed) {
             const resetIn = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
@@ -19,7 +21,7 @@ export async function loginAction(data: LoginFormData): Promise<{ success: boole
             };
         }
 
-        const user = await AuthService.findUserByEmail(data.email);
+        const user = await AuthService.findUserByEmail(email);
 
         if (!user) {
             return { success: false, message: "Usuario no encontrado" };
@@ -50,7 +52,7 @@ export async function loginAction(data: LoginFormData): Promise<{ success: boole
         await createSession(user.id);
 
         // Reiniciar el rate limit después de un login exitoso
-        resetRateLimitByEmail(data.email, "login");
+        resetRateLimitByEmail(email, "login");
 
         return { success: true, user: authUser };
 

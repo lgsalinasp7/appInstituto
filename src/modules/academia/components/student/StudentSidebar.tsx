@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { KALED_ACADEMY_CONFIG } from "../../config/academy-tenant.config";
 import {
   LayoutDashboard,
   BookOpen,
-  UserCircle,
   Calendar,
   Trophy,
   LogOut,
@@ -25,10 +26,13 @@ interface Props {
 const NAV = [
   { href: "/academia/student", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/academia/student/courses", label: "Mis Cursos", icon: BookOpen, also: ["/academia/student/cohort"] },
-  { href: "/academia/student/profile", label: "Mi Perfil", icon: UserCircle },
   { href: "/academia/student/calendar", label: "Calendario", icon: Calendar },
   { href: "/academia/student/leaderboard", label: "Leaderboard", icon: Trophy },
 ];
+
+function formatCohortDisplay(name: string) {
+  return name.replace(/\s*·\s*Montería\s*/gi, "").trim() || name;
+}
 
 function getLevel(progress: number) {
   if (progress >= 90) return "Elite Builder";
@@ -48,6 +52,7 @@ export function StudentSidebar({
   cohortName,
 }: Props) {
   const pathname = usePathname();
+  const displayCohort = formatCohortDisplay(cohortName);
 
   const isActive = (href: string, exact?: boolean, also?: string[]) =>
     exact
@@ -57,11 +62,14 @@ export function StudentSidebar({
   return (
     <aside className="hidden lg:flex flex-col w-[260px] shrink-0 academy-sidebar-rail-dark fixed left-0 top-0 z-30 h-screen">
       <div className="h-20 flex items-center px-5 border-b border-white/[0.06] gap-3">
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-white font-black text-base"
-          style={{ background: "linear-gradient(135deg, #0891b2 0%, #2563eb 100%)" }}
-        >
-          K
+        <div className="relative w-10 h-10 rounded-xl shrink-0 overflow-hidden flex items-center justify-center bg-slate-800/80">
+          <Image
+            src={KALED_ACADEMY_CONFIG.branding.logoUrl}
+            alt="KaledAcademy"
+            width={40}
+            height={40}
+            className="object-contain"
+          />
         </div>
         <div>
           <div className="text-white font-bold text-[15px] leading-none tracking-tight">
@@ -139,7 +147,7 @@ export function StudentSidebar({
         )}
         <div className="flex-1 min-w-0">
           <div className="text-[13px] font-semibold text-white truncate">{userName}</div>
-          <div className="text-[11px] text-slate-500 truncate">{cohortName}</div>
+          <div className="text-[11px] text-slate-500 truncate">{displayCohort}</div>
         </div>
         <a
           href="/auth/logout"

@@ -1,0 +1,27 @@
+---
+description: Protección contra borrado accidental de BD por seeds. Nunca sugerir prisma db seed o migrate reset sin advertir.
+alwaysApply: true
+---
+
+# Seeds — Protección de datos
+
+## Regla crítica
+
+`prisma/seed.ts` **borra TODOS los datos** (tenants, usuarios, pagos). Se ejecuta con `prisma db seed` y `prisma migrate reset`.
+
+- **Nunca sugerir** `prisma db seed` ni `prisma migrate reset` sin advertir que borra todo.
+- Requiere `SEED_ALLOW_WIPE=1` en .env para ejecutarse (protección implementada).
+
+## Seeds seguros (usar estos para KaledAcademy)
+
+```bash
+npm run db:seed-kaledacademy-v3   # Crea/actualiza kaledacademy, usa upsert
+npm run db:seed-kaledacademy-v2
+npm run db:seed-kaledacademy
+```
+
+Estos **no borran** kaledsoft ni usuarios existentes.
+
+## Referencia completa
+
+Ver [docs/SEEDS-GUIA.md](docs/SEEDS-GUIA.md).

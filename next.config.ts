@@ -29,6 +29,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'kaledsoft.tech',
       },
+      {
+        protocol: 'https',
+        hostname: 'p7h74q4azjsxudyn.public.blob.vercel-storage.com',
+      },
     ],
   },
 };

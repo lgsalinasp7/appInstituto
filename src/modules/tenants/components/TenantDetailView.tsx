@@ -36,6 +36,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { getTenantLogo } from "@/lib/tenant-logo";
 import type { TenantWithDetails, TenantStatus, TenantUser } from "../types";
+import { getAcademyRoleLabel } from "@/lib/academy-role-labels";
 import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 import { TenantEditModal } from "./TenantEditModal";
 import { TenantUserEditModal } from "./TenantUserEditModal";
@@ -122,15 +123,21 @@ export function TenantDetailView({ tenant, canInviteAcademy = false }: TenantDet
         try {
           const res = await fetch(`/api/admin/tenants/${tenant.id}/reset-password`, {
             method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
           });
           const data = await res.json();
 
           if (data.success) {
             setTempPassword(data.data.tempPassword);
             setShowPassword(true);
+            toast.success("Contraseña restablecida. Cópiala antes de cerrar.");
+          } else {
+            toast.error(data.error || "Error al restablecer contraseña");
           }
         } catch (error) {
           console.error("Error resetting password:", error);
+          toast.error("Error al restablecer contraseña");
         } finally {
           setResettingPassword(false);
         }
@@ -771,7 +778,9 @@ function UsersTab({
                 <td className="py-4 px-4 text-sm font-medium text-slate-400">{user.email}</td>
                 <td className="py-4 px-4 text-sm">
                   <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-500 text-[10px] font-black uppercase tracking-widest">
-                    {user.role?.name || "Sin rol"}
+                    {user.platformRole?.startsWith("ACADEMY_")
+                      ? getAcademyRoleLabel(user.platformRole, "Sin rol")
+                      : (user.role?.name || "Sin rol")}
                   </span>
                 </td>
                 <td className="py-4 px-4">

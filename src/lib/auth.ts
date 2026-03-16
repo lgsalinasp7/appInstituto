@@ -16,6 +16,7 @@ export interface AuthenticatedUser {
   id: string;
   email: string;
   name: string | null;
+  image: string | null;
   tenantId: string | null;
   roleId: string | null;
   platformRole: string | null;
@@ -116,25 +117,21 @@ export const getCurrentUser = cache(async (): Promise<AuthenticatedUser | null> 
     },
   });
 
-  const deleteInvalidCookie = () =>
-    cookieStore.delete({ name: SESSION_COOKIE_NAME, ...getCookieDeleteOptions() });
-
   // Validar que la sesión existe y no ha expirado
+  // Nota: no podemos modificar cookies aquí (solo en Server Actions/Route Handlers).
+  // Eliminamos la sesión de la BD; la cookie quedará huérfana hasta que expire.
   if (!session || session.expires < new Date()) {
-    // Limpiar sesión expirada
     if (session) {
       await prisma.session.delete({
         where: { id: session.id },
       });
     }
-    deleteInvalidCookie();
     return null;
   }
 
-  // Validar que el usuario está activo (borrar cookie si está inactivo para evitar ciclos proxy/API)
+  // Validar que el usuario está activo
   if (!session.user.isActive) {
     await prisma.session.delete({ where: { id: session.id } });
-    deleteInvalidCookie();
     return null;
   }
 
@@ -142,6 +139,7 @@ export const getCurrentUser = cache(async (): Promise<AuthenticatedUser | null> 
     id: session.user.id,
     email: session.user.email,
     name: session.user.name,
+    image: session.user.image,
     tenantId: session.user.tenantId,
     roleId: session.user.roleId,
     platformRole: session.user.platformRole,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { CreditCard, Search, Download, Calendar, Send, Eye, Edit2, X, Printer, AlertCircle, CheckCircle2, FileText } from "lucide-react";
+import { CreditCard, Search, Download, Calendar, Send, Eye, Edit2, X, Printer, AlertCircle, CheckCircle2, FileText, ExternalLink, Paperclip, Loader2, FileCheck } from "lucide-react";
 import { Pagination } from "./Pagination";
 import { sendReceiptViaWhatsApp } from "../utils/whatsapp";
 import type { PaymentWithRelations, PaymentStats } from "@/modules/payments/types";
@@ -473,6 +473,20 @@ function PaymentDetailsModal({ payment, onClose, onEdit }: { payment: Payment, o
               <label className="text-xs text-gray-500 uppercase font-bold">Ciudad</label>
               <p className="font-medium text-primary">{payment.student.city || "Sin ciudad registrada"}</p>
             </div>
+            {payment.supportDocumentUrl && (
+              <div className="col-span-2">
+                <label className="text-xs text-gray-500 uppercase font-bold">Soporte de pago</label>
+                <a
+                  href={payment.supportDocumentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 mt-1 text-primary font-medium hover:underline"
+                >
+                  <ExternalLink size={14} />
+                  Ver documento
+                </a>
+              </div>
+            )}
           </div>
         </div>
         <div className="p-4 bg-gray-50 flex flex-wrap justify-end gap-2">
@@ -490,10 +504,11 @@ function PaymentDetailsModal({ payment, onClose, onEdit }: { payment: Payment, o
   );
 }
 
-import { Loader2 } from "lucide-react";
-
 function EditPaymentModal({ payment, onClose, onSave }: { payment: Payment, onClose: () => void, onSave: () => void }) {
   const [loading, setLoading] = useState(false);
+  const [supportDocumentUrl, setSupportDocumentUrl] = useState<string | null>(payment.supportDocumentUrl || null);
+  const [supportUploading, setSupportUploading] = useState(false);
+  const [supportUploadError, setSupportUploadError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     amount: payment.amount,
     paymentDate: new Date(payment.paymentDate).toISOString().split('T')[0],
@@ -503,14 +518,52 @@ function EditPaymentModal({ payment, onClose, onSave }: { payment: Payment, onCl
     comments: payment.comments || "",
   });
 
+  const handleSupportUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setSupportUploadError(null);
+    setSupportUploading(true);
+
+    try {
+      const fd = new FormData();
+      fd.append("soporte", file);
+      const res = await fetch("/api/payments/recaudo-soporte", {
+        method: "POST",
+        body: fd,
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        throw new Error(json.error || "Error al subir el archivo");
+      }
+
+      setSupportDocumentUrl(json.url);
+    } catch (err) {
+      setSupportUploadError(err instanceof Error ? err.message : "Error al subir");
+    } finally {
+      setSupportUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const removeSupportDocument = () => {
+    setSupportDocumentUrl(null);
+    setSupportUploadError(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
+      const payload = {
+        ...formData,
+        supportDocumentUrl: supportDocumentUrl,
+      };
       const response = await fetch(`/api/payments/${payment.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const result = await response.json();
@@ -614,6 +667,65 @@ function EditPaymentModal({ payment, onClose, onSave }: { payment: Payment, onCl
               rows={2}
               className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-sm resize-none"
             />
+          </div>
+
+          <div>
+            <label className="text-xs font-black text-[#1e3a5f] uppercase mb-1.5 block flex items-center gap-1.5">
+              <Paperclip size={12} />
+              Soporte de pago (opcional)
+            </label>
+            <p className="text-[9px] text-gray-400 mb-2">
+              Adjunta o reemplaza una foto o PDF del comprobante (máx. 5 MB)
+            </p>
+            {supportDocumentUrl ? (
+              <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+                <FileCheck className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span className="text-xs text-emerald-800 truncate flex-1">
+                  Documento adjunto
+                </span>
+                <a
+                  href={supportDocumentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-medium text-emerald-700 hover:underline"
+                >
+                  Ver
+                </a>
+                <button
+                  type="button"
+                  onClick={removeSupportDocument}
+                  className="text-xs font-medium text-red-600 hover:text-red-700"
+                >
+                  Quitar
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center w-full h-20 sm:h-24 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100/50 transition-colors">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  onChange={handleSupportUpload}
+                  disabled={supportUploading}
+                  className="hidden"
+                />
+                {supportUploading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 text-orange-500 animate-spin mb-1" />
+                    <span className="text-xs text-gray-600">Subiendo...</span>
+                  </>
+                ) : (
+                  <>
+                    <Paperclip className="w-5 h-5 text-gray-400 mb-1" />
+                    <span className="text-xs text-gray-600 text-center px-2">
+                      Haz clic para seleccionar imagen o PDF
+                    </span>
+                  </>
+                )}
+              </label>
+            )}
+            {supportUploadError && (
+              <p className="text-red-500 text-[10px] mt-1">{supportUploadError}</p>
+            )}
           </div>
 
           <div className="flex gap-3 pt-2">

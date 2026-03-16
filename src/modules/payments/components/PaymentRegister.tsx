@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, CheckCircle, AlertCircle, DollarSign, Calendar, MessageSquare, ArrowRight, FileText } from "lucide-react";
+import { Search, CheckCircle, AlertCircle, DollarSign, Calendar, MessageSquare, ArrowRight, FileText, Paperclip, Loader2, FileCheck } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import type { StudentWithRelations } from "@/modules/students/types";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
@@ -37,6 +37,9 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
         city: "",
         comments: "",
     });
+    const [supportDocumentUrl, setSupportDocumentUrl] = useState<string | null>(null);
+    const [supportUploading, setSupportUploading] = useState(false);
+    const [supportUploadError, setSupportUploadError] = useState<string | null>(null);
 
     const [pendingCommitments, setPendingCommitments] = useState<Commitment[]>([]);
     const [filterRange, setFilterRange] = useState<"all" | "today" | "week" | "month">("week");
@@ -157,6 +160,40 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
+    const handleSupportUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setSupportUploadError(null);
+        setSupportUploading(true);
+
+        try {
+            const fd = new FormData();
+            fd.append("soporte", file);
+            const res = await fetch("/api/payments/recaudo-soporte", {
+                method: "POST",
+                body: fd,
+            });
+            const json = await res.json();
+
+            if (!res.ok) {
+                throw new Error(json.error || "Error al subir el archivo");
+            }
+
+            setSupportDocumentUrl(json.url);
+        } catch (err) {
+            setSupportUploadError(err instanceof Error ? err.message : "Error al subir");
+        } finally {
+            setSupportUploading(false);
+            e.target.value = "";
+        }
+    };
+
+    const removeSupportDocument = () => {
+        setSupportDocumentUrl(null);
+        setSupportUploadError(null);
+    };
+
     const handleRegisterPayment = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!student) return;
@@ -175,6 +212,7 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
                     city: paymentData.city.trim(),
                     comments: paymentData.comments,
                     paymentDate: new Date(),
+                    supportDocumentUrl: supportDocumentUrl || undefined,
                     // El backend decide si es matricula o modulo
                 })
             });
@@ -192,8 +230,10 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
             fetchPendingCommitments();
 
             // No reseteamos el estudiante inmediatamente para que vea el botón de WhatsApp
-            // Pero sí limpiamos el monto
+            // Pero sí limpiamos el monto y el soporte
             setPaymentData(prev => ({ ...prev, amount: 0, comments: "" }));
+            setSupportDocumentUrl(null);
+            setSupportUploadError(null);
 
         } catch (err) {
             setMsg({ type: "error", text: err instanceof Error ? err.message : "Error al registrar" });
@@ -387,6 +427,65 @@ export function PaymentRegister({ preSelectedStudent }: PaymentRegisterProps) {
                                     value={paymentData.comments}
                                     onChange={e => setPaymentData({ ...paymentData, comments: e.target.value })}
                                 ></textarea>
+                            </div>
+
+                            <div>
+                                <label className="block text-[10px] sm:text-xs font-bold text-gray-400 uppercase mb-1.5 sm:mb-2 flex items-center gap-1.5">
+                                    <Paperclip size={12} />
+                                    Soporte de pago (opcional)
+                                </label>
+                                <p className="text-[9px] sm:text-[10px] text-gray-400 mb-2">
+                                    Adjunta una foto o PDF del comprobante (máx. 5 MB)
+                                </p>
+                                {supportDocumentUrl ? (
+                                    <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+                                        <FileCheck className="w-5 h-5 text-emerald-600 shrink-0" />
+                                        <span className="text-xs sm:text-sm text-emerald-800 truncate flex-1">
+                                            Documento adjunto
+                                        </span>
+                                        <a
+                                            href={supportDocumentUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-xs font-medium text-emerald-700 hover:underline"
+                                        >
+                                            Ver
+                                        </a>
+                                        <button
+                                            type="button"
+                                            onClick={removeSupportDocument}
+                                            className="text-xs font-medium text-red-600 hover:text-red-700"
+                                        >
+                                            Quitar
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <label className="flex flex-col items-center justify-center w-full h-24 sm:h-28 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100/50 transition-colors">
+                                        <input
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp,application/pdf"
+                                            onChange={handleSupportUpload}
+                                            disabled={supportUploading}
+                                            className="hidden"
+                                        />
+                                        {supportUploading ? (
+                                            <>
+                                                <Loader2 className="w-6 h-6 text-primary animate-spin mb-1" />
+                                                <span className="text-xs text-gray-600">Subiendo...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Paperclip className="w-6 h-6 text-gray-400 mb-1" />
+                                                <span className="text-xs text-gray-600 text-center px-2">
+                                                    Haz clic para seleccionar imagen o PDF
+                                                </span>
+                                            </>
+                                        )}
+                                    </label>
+                                )}
+                                {supportUploadError && (
+                                    <p className="text-red-500 text-[10px] sm:text-xs mt-1">{supportUploadError}</p>
+                                )}
                             </div>
 
                             <button

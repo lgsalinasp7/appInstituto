@@ -61,14 +61,16 @@ export function TeacherDashboard() {
 
   if (loading) {
     return (
-      <div className="academy-card-dark p-8">
-        <p className="text-slate-400">Cargando panel...</p>
+      <div className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8">
+        <div className="academy-card-dark p-8">
+          <p className="text-slate-400">Cargando panel...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8">
       <header>
         <h1 className="text-3xl font-black tracking-tight text-white font-display">Panel del Instructor</h1>
         <p className="text-slate-400 mt-1">Gestiona tu cohorte activa, estudiantes y entregables.</p>

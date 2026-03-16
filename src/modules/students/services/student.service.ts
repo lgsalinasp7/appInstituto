@@ -237,6 +237,7 @@ export class StudentService {
           paymentDate: new Date(),
           method: data.paymentMethod || "EFECTIVO",
           reference: data.paymentReference || null,
+          supportDocumentUrl: data.paymentSupportUrl || null,
           paymentType: "MATRICULA",
           moduleNumber: null, // No aplica para matrícula
           receiptNumber: receiptNumber,
@@ -278,6 +279,7 @@ export class StudentService {
         paymentDate: result.payment.paymentDate,
         method: result.payment.method,
         reference: result.payment.reference,
+        supportDocumentUrl: result.payment.supportDocumentUrl,
         paymentType: result.payment.paymentType,
         receiptNumber: result.payment.receiptNumber,
       },
@@ -479,6 +481,7 @@ export class StudentService {
         paymentDate: matriculaPayment.paymentDate,
         method: matriculaPayment.method,
         reference: matriculaPayment.reference,
+        supportDocumentUrl: matriculaPayment.supportDocumentUrl,
         paymentType: matriculaPayment.paymentType,
         receiptNumber: matriculaPayment.receiptNumber,
       },

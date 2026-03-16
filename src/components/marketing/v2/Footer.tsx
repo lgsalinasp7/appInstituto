@@ -46,7 +46,7 @@ export function FooterV2() {
                                 <Mail className="w-4 h-4" />
                                 <span>contacto@kaledsoft.tech</span>
                             </li>
-                            <li>Montería, Córdoba</li>
+                            <li>Córdoba, Colombia</li>
                             <li>Colombia, Latam</li>
                         </ul>
                     </div>

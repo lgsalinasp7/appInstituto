@@ -273,13 +273,14 @@ model Student {
 }
 
 model Payment {
-  id             String        @id @default(cuid())
-  amount         Decimal       @db.Decimal(10, 2)
-  paymentDate    DateTime
-  method         PaymentMethod
-  reference      String?
-  receiptNumber  String
-  comments       String?
+  id                  String        @id @default(cuid())
+  amount              Decimal       @db.Decimal(10, 2)
+  paymentDate         DateTime
+  method              PaymentMethod
+  reference           String?
+  supportDocumentUrl  String?       // URL del soporte de pago (imagen/PDF) en Vercel Blob
+  receiptNumber       String
+  comments            String?
   paymentType    PaymentType   @default(MODULO)
   moduleNumber   Int?
   studentId      String

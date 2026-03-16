@@ -15,6 +15,7 @@ import { Loader2, Clipboard } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { TenantUser } from "../types";
+import { getAcademyRoleLabel } from "@/lib/academy-role-labels";
 
 interface TenantUserEditModalProps {
   user: TenantUser;
@@ -206,7 +207,9 @@ export function TenantUserEditModal({
             <div className="space-y-2">
               <Label>Rol</Label>
               <div className="px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 text-sm">
-                {user.role?.name || "Sin rol"}
+                {user.platformRole?.startsWith("ACADEMY_")
+                  ? getAcademyRoleLabel(user.platformRole, "Sin rol")
+                  : (user.role?.name || "Sin rol")}
               </div>
             </div>
             <div className="space-y-3 pt-2 border-t border-white/5">

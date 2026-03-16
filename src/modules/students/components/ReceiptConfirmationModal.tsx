@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, CheckCircle, Download, Send, Calendar, CreditCard } from "lucide-react";
+import { X, CheckCircle, Download, Send, Calendar, CreditCard, ExternalLink } from "lucide-react";
 import type { ReceiptPDFData } from "@/modules/receipts/components/ReceiptPDF";
 import { toast } from "sonner";
 import { useBranding } from "@/components/providers/BrandingContext";
@@ -26,6 +26,7 @@ interface ReceiptConfirmationModalProps {
       paymentDate: Date;
       method: string;
       reference: string | null;
+      supportDocumentUrl?: string | null;
       paymentType: string;
       receiptNumber: string;
     };
@@ -258,6 +259,28 @@ export function ReceiptConfirmationModal({ isOpen, onClose, data }: ReceiptConfi
               <span className="text-base font-bold text-emerald-600">
                 {formatCurrency(data.payment.amount)}
               </span>
+            </div>
+            <div className={cn(
+              "flex justify-between items-center mt-2 pt-2 border-t",
+              isDark ? "border-emerald-500/20" : "border-emerald-200"
+            )}>
+              <span className={cn("text-[10px]", isDark ? "text-slate-400" : "text-gray-600")}>Soporte:</span>
+              {data.payment.supportDocumentUrl ? (
+                <a
+                  href={data.payment.supportDocumentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    "flex items-center gap-1.5 text-xs font-medium transition-colors",
+                    isDark ? "text-emerald-400 hover:text-emerald-300" : "text-emerald-700 hover:text-emerald-800"
+                  )}
+                >
+                  <ExternalLink size={12} />
+                  Ver documento
+                </a>
+              ) : (
+                <span className={cn("text-[10px]", isDark ? "text-slate-500" : "text-gray-400")}>No adjunto</span>
+              )}
             </div>
           </div>
 

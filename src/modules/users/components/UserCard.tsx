@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { getAcademyRoleLabel } from "@/lib/academy-role-labels";
 import type { User } from "../types";
 
 interface UserCardProps {
@@ -48,7 +49,9 @@ export function UserCard({ user, onClick }: UserCardProps) {
           <Badge variant={user.isActive ? "default" : "secondary"}>
             {user.isActive ? "Activo" : "Inactivo"}
           </Badge>
-          <Badge variant="outline">{user.role?.name || user.platformRole || "Sin rol"}</Badge>
+          <Badge variant="outline">
+            {user.role?.name || (user.platformRole?.startsWith("ACADEMY_") ? getAcademyRoleLabel(user.platformRole, "Sin rol") : user.platformRole || "Sin rol")}
+          </Badge>
         </div>
       </CardHeader>
       {user.profile?.bio && (

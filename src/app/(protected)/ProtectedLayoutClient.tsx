@@ -13,7 +13,8 @@ import { useAuthStore } from "@/lib/store/auth-store";
 import { useBranding } from "@/components/providers/BrandingContext";
 import { cn } from "@/lib/utils";
 import { Bell, HelpCircle, Settings } from "lucide-react";
-import { FloatingChatButton } from "@/components/chat/FloatingChatButton";
+// Chat deshabilitado - no mostrar en ningún perfil
+// import { FloatingChatButton } from "@/components/chat/FloatingChatButton";
 
 export default function ProtectedLayoutClient({
   children,
@@ -169,8 +170,8 @@ export default function ProtectedLayoutClient({
           </main>
         </div>
 
-        {/* Agente de IA flotante */}
-        <FloatingChatButton />
+        {/* Agente de IA flotante - deshabilitado para no mostrar en ningún perfil */}
+        {/* <FloatingChatButton /> */}
       </div>
     </AuthGuard>
   );

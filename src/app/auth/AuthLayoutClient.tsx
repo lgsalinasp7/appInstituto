@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { GuestGuard } from "@/components/auth";
 import { EdutecLoginHero } from "@/components/auth/EdutecLoginHero";
 import { BrandingProvider } from "@/components/providers/BrandingContext";
+import { getTenantLogo } from "@/lib/tenant-logo";
 import { HeroRobot } from "@/components/marketing/v2/HeroRobot";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +54,8 @@ export default function AuthLayoutClient({
     };
 
   const logoSrc = branding.logoUrl || "/logo-instituto.png";
+  const tenantLogo = getTenantLogo({ slug: tenantSlug ?? undefined, name: tenantName, branding });
+  const headerLogoSrc = branding.logoUrl || tenantLogo?.src;
   const footerText = branding.footerText || `© ${new Date().getFullYear()} ${tenantName}. Todos los derechos reservados.`;
 
   // Layout tipo split para login (izquierda decorativa, derecha formulario)
@@ -173,11 +176,11 @@ export default function AuthLayoutClient({
                   )}
                 >
                   {!isEdutecLogin && (
-                    branding.logoUrl ? (
+                    headerLogoSrc ? (
                       <div className="relative h-10 w-32">
                         <Image
-                          src={branding.logoUrl}
-                          alt={tenantName}
+                          src={headerLogoSrc}
+                          alt={tenantLogo?.alt ?? tenantName}
                           fill
                           className="object-contain object-left"
                         />

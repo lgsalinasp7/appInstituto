@@ -7,6 +7,7 @@ import { useAuthStore } from "@/lib/store/auth-store";
 import { useBranding } from "@/components/providers/BrandingContext";
 import { cn } from "@/lib/utils";
 import { performLogout } from "@/lib/logout";
+import { getAcademyRoleLabel } from "@/lib/academy-role-labels";
 
 interface UserProfileDropdownProps {
     /** Ruta de configuración (tenant: /configuracion, admin: /admin/configuracion) */
@@ -83,7 +84,7 @@ export function UserProfileDropdown({
                         "text-[10px] uppercase font-bold tracking-wider font-display",
                         isDark ? "text-slate-500" : "text-slate-400"
                     )}>
-                        {user?.role?.name === "SUPERADMIN" ? "Super Admin" : user?.role?.name || (user?.platformRole === "SUPER_ADMIN" ? "Super Admin" : user?.platformRole || "Usuario")}
+                        {user?.role?.name === "SUPERADMIN" ? "Super Admin" : user?.role?.name || (user?.platformRole === "SUPER_ADMIN" ? "Super Admin" : (user?.platformRole?.startsWith("ACADEMY_") ? getAcademyRoleLabel(user.platformRole, "Usuario") : user?.platformRole || "Usuario"))}
                     </span>
                 </div>
 

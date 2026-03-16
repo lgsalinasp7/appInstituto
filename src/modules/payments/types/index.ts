@@ -24,6 +24,7 @@ export interface CreatePaymentData {
   studentId: string;
   registeredById: string;
   tenantId: string;
+  supportDocumentUrl?: string;
 }
 
 export interface UpdatePaymentData {
@@ -33,6 +34,7 @@ export interface UpdatePaymentData {
   reference?: string;
   comments?: string;
   city?: string;
+  supportDocumentUrl?: string | null;
 }
 
 export interface PaymentWithRelations {
@@ -41,6 +43,7 @@ export interface PaymentWithRelations {
   paymentDate: Date;
   method: PaymentMethod;
   reference: string | null;
+  supportDocumentUrl?: string | null;
   receiptNumber: string;
   comments: string | null;
   studentId: string;

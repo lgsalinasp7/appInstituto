@@ -15,7 +15,13 @@ interface Params {
 // POST /api/admin/tenants/[id]/reset-password
 export const POST = withCSRF(withPlatformAdmin(['SUPER_ADMIN'], async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
   const { id } = await context!.params;
-  const body = await request.json();
+  let body: { password?: string } = {};
+  try {
+    const text = await request.text();
+    body = text ? JSON.parse(text) : {};
+  } catch {
+    // Body vacío o JSON inválido: usar contraseña generada
+  }
 
   // Generate temporary password if not provided
   const tempPassword = body.password || generateTempPassword();

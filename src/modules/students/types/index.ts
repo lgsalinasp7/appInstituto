@@ -35,6 +35,7 @@ export interface CreateStudentData {
   // Datos del pago de matrícula
   paymentMethod?: PaymentMethod;
   paymentReference?: string;
+  paymentSupportUrl?: string;
 }
 
 // Resultado de crear matrícula con pago
@@ -46,6 +47,7 @@ export interface CreateStudentResult {
     paymentDate: Date;
     method: string;
     reference: string | null;
+    supportDocumentUrl?: string | null;
     paymentType: string;
     receiptNumber: string;
   };
@@ -142,6 +144,7 @@ export interface MatriculaReceiptData {
     paymentDate: Date;
     method: string;
     reference: string | null;
+    supportDocumentUrl?: string | null;
     paymentType: string;
     receiptNumber: string;
   };

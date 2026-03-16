@@ -387,10 +387,16 @@ export const TenantsService = {
 
   /**
    * Reset admin password for tenant
+   * Acepta id (cuid) o slug del tenant
    */
-  async resetAdminPassword(tenantId: string, newPassword: string): Promise<{ email: string; tempPassword: string }> {
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
+  async resetAdminPassword(tenantIdOrSlug: string, newPassword: string): Promise<{ email: string; tempPassword: string }> {
+    const tenant = await prisma.tenant.findFirst({
+      where: {
+        OR: [
+          { id: tenantIdOrSlug },
+          { slug: { equals: tenantIdOrSlug, mode: 'insensitive' } },
+        ],
+      },
       include: {
         users: {
           include: { role: true },

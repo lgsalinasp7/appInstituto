@@ -1,3 +1,7 @@
+/**
+ * Seed principal — BORRA TODOS LOS DATOS antes de insertar.
+ * Requiere SEED_ALLOW_WIPE=1 en .env. Ver docs/SEEDS-GUIA.md
+ */
 import { PrismaClient, PlatformRole } from "@prisma/client";
 import * as fs from "fs";
 import * as path from "path";
@@ -27,9 +31,37 @@ process.env.DATABASE_URL = connectionString;
 
 const prisma = new PrismaClient();
 
+/** Protección: este seed BORRA TODOS los datos (tenants, usuarios, etc.).
+ *  Requiere SEED_ALLOW_WIPE=1 en .env para ejecutarse.
+ *  Seeds incrementales (seed-kaledacademy-v3, etc.) NO requieren esto.
+ */
+const ALLOW_WIPE = process.env.SEED_ALLOW_WIPE === "1" || process.env.SEED_ALLOW_WIPE === "true";
+
 async function main() {
-    console.log("=== SEED MULTI-TENANT ===");
-    console.log("Reiniciando base de datos...");
+    if (!ALLOW_WIPE) {
+        console.error(`
+╔══════════════════════════════════════════════════════════════════╗
+║  ⛔ SEED BLOQUEADO — Protección contra borrado accidental          ║
+╠══════════════════════════════════════════════════════════════════╣
+║  Este seed (prisma/seed.ts) BORRA TODOS los datos de la BD:     ║
+║  tenants (kaledsoft, kaledacademy, etc.), usuarios, pagos, etc.  ║
+║                                                                  ║
+║  Para ejecutarlo, agrega en .env:                                 ║
+║    SEED_ALLOW_WIPE=1                                              ║
+║                                                                  ║
+║  Seeds SEGUROS (no borran datos existentes):                      ║
+║    npm run db:seed-kaledacademy-v3                                ║
+║    npm run db:seed-kaledacademy-v2                                ║
+║    npm run db:seed-kaledacademy                                   ║
+║    npx tsx prisma/seed-email-templates.ts                         ║
+║    etc.                                                           ║
+╚══════════════════════════════════════════════════════════════════╝
+`);
+        process.exit(1);
+    }
+
+    console.log("=== SEED MULTI-TENANT (modo WIPE) ===");
+    console.log("⚠️  Borrando TODOS los datos...");
 
     // Limpiar tablas en orden inverso de dependencias
     await prisma.aiMessage.deleteMany();

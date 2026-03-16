@@ -70,7 +70,7 @@ export default function TerminosPage() {
                         <section className="space-y-4">
                             <h2 className="text-2xl font-bold text-white">7. Ley Aplicable y Jurisdicción</h2>
                             <p>
-                                Estos términos se rigen por las leyes de la República de Colombia. Cualquier controversia será resuelta ante los tribunales competentes de la ciudad de Montería, Córdoba.
+                                Estos términos se rigen por las leyes de la República de Colombia. Cualquier controversia será resuelta ante los tribunales competentes de Córdoba, Colombia.
                             </p>
                         </section>
 

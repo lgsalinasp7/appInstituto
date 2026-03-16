@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { UserPlus } from "lucide-react";
 import { InviteUserModal } from "@/modules/config/components/InviteUserModal";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { getAcademyRoleLabel } from "@/lib/academy-role-labels";
 
 interface User {
   id: string;
@@ -40,15 +41,17 @@ export function StudentsManagement() {
 
   if (loading) {
     return (
-      <div className="academy-card-dark p-8">
-        <h1 className="text-2xl font-bold text-white mb-6 font-display tracking-tight">Estudiantes</h1>
-        <p className="text-slate-400">Cargando...</p>
+      <div className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8">
+        <div className="academy-card-dark p-8">
+          <h1 className="text-2xl font-bold text-white mb-6 font-display tracking-tight">Estudiantes</h1>
+          <p className="text-slate-400">Cargando...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-3xl font-black tracking-tight text-white font-display">Estudiantes</h1>
         {canInvite && (
@@ -77,7 +80,7 @@ export function StudentsManagement() {
                 <p className="text-sm text-slate-400">{u.email}</p>
               </div>
               <span className="text-xs font-medium text-slate-400 px-2 py-1 rounded-lg border border-white/[0.08] bg-white/[0.04]">
-                {u.platformRole || "—"}
+                {getAcademyRoleLabel(u.platformRole)}
               </span>
             </div>
           ))}

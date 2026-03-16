@@ -105,6 +105,7 @@ export class PaymentService {
       paymentDate: payment.paymentDate,
       method: payment.method,
       reference: payment.reference,
+      supportDocumentUrl: payment.supportDocumentUrl,
       receiptNumber: payment.receiptNumber,
       comments: payment.comments,
       studentId: payment.studentId,
@@ -154,6 +155,7 @@ export class PaymentService {
       paymentDate: payment.paymentDate,
       method: payment.method,
       reference: payment.reference,
+      supportDocumentUrl: payment.supportDocumentUrl,
       receiptNumber: payment.receiptNumber,
       comments: payment.comments,
       studentId: payment.studentId,
@@ -382,6 +384,7 @@ export class PaymentService {
           paymentDate: data.paymentDate,
           method: data.method,
           reference: data.reference || null,
+          supportDocumentUrl: data.supportDocumentUrl || null,
           receiptNumber,
           comments: data.comments || null,
           studentId: data.studentId,
@@ -669,15 +672,20 @@ export class PaymentService {
         });
       }
 
+      const updateData: Record<string, unknown> = {
+        amount: data.amount,
+        paymentDate: data.paymentDate,
+        method: data.method,
+        reference: data.reference,
+        comments: data.comments,
+      };
+      if (data.supportDocumentUrl !== undefined) {
+        updateData.supportDocumentUrl = data.supportDocumentUrl || null;
+      }
+
       return await tx.payment.update({
         where: { id },
-        data: {
-          amount: data.amount,
-          paymentDate: data.paymentDate,
-          method: data.method,
-          reference: data.reference,
-          comments: data.comments,
-        },
+        data: updateData as Parameters<typeof tx.payment.update>[0]["data"],
         include: {
           student: {
             select: { id: true, fullName: true, documentNumber: true, phone: true, city: true, program: { select: { name: true } } },

@@ -5,9 +5,9 @@ import { FAQSchema } from "@/components/seo/FAQSchema";
 import { academiaFAQs } from "@/lib/faq-data";
 
 export const metadata: Metadata = {
-    title: "Academia de Inteligencia Artificial en Montería",
+    title: "Academia de Inteligencia Artificial en Colombia",
     description: "Únete a la mejor academia de IA y SaaS en Colombia. Formación de élite en agentes de IA, Next.js y arquitectura moderna para desarrolladores y fundadores.",
-    keywords: ["Academia IA Montería", "Curso inteligencia artificial Colombia", "Aprender SaaS", "Desarrollo de software Montería", "Kaledacademy"],
+    keywords: ["Academia IA Colombia", "Curso inteligencia artificial Colombia", "Aprender SaaS", "Desarrollo de software Colombia", "Kaledacademy"],
     alternates: {
         canonical: 'https://kaledsoft.tech/formacion'
     }
