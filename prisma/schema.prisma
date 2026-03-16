@@ -42,6 +42,10 @@ model Tenant {
   agentTasks       AgentTask[]
   agentMemories    AgentMemory[]
   campaignCosts    CampaignCost[]
+  softwareSales    SoftwareSale[]
+  softwareSalesAsCustomer SoftwareSale[] @relation("SoftwareSaleCustomerTenant")
+  softwareRevenueSchedules SoftwareRevenueSchedule[]
+  academyCohortCostAllocations AcademyCohortCostAllocation[]
 
   // KaledSoft CRM (plataforma)
   kaledLeads            KaledLead[]
@@ -743,6 +747,14 @@ enum PaymentMethod {
   OTRO
 }
 
+enum FinancePaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+  REFUNDED
+  WRITTEN_OFF
+}
+
 enum CommitmentStatus {
   PAGADO
   PENDIENTE
@@ -991,11 +1003,111 @@ model CampaignCost {
   updatedAt   DateTime @updatedAt
 
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cohortCostAllocations AcademyCohortCostAllocation[]
 
   @@unique([tenantId, date, campaign, adset, ad])
   @@index([tenantId])
   @@index([date])
   @@index([campaign])
+}
+
+enum SoftwareSaleStatus {
+  PENDING
+  CLOSED_WON
+  CANCELLED
+}
+
+enum RevenueRecognitionMode {
+  CASH_IN
+  PRORATED
+}
+
+enum CohortCostCategory {
+  ADS
+  INSTRUCTOR
+  PLATFORM
+  TOOLS
+  OTHER
+}
+
+enum CohortCostSourceType {
+  MANUAL
+  CAMPAIGN
+}
+
+model SoftwareSale {
+  id                 String             @id @default(cuid())
+  tenantId           String
+  customerTenantId   String?
+  customerName       String
+  productName        String
+  planName           String?
+  saleDate           DateTime
+  contractStartDate  DateTime
+  contractEndDate    DateTime
+  amountCop          Decimal            @db.Decimal(12, 2)
+  collectedAmountCop Decimal            @default(0) @db.Decimal(12, 2)
+  status             SoftwareSaleStatus @default(PENDING)
+  paymentStatus      FinancePaymentStatus @default(PENDING)
+  notes              String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  tenant          Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customerTenant  Tenant?                  @relation("SoftwareSaleCustomerTenant", fields: [customerTenantId], references: [id], onDelete: SetNull)
+  revenueSchedules SoftwareRevenueSchedule[]
+
+  @@index([tenantId])
+  @@index([customerTenantId])
+  @@index([saleDate])
+  @@index([status])
+  @@index([paymentStatus])
+}
+
+model SoftwareRevenueSchedule {
+  id                  String                @id @default(cuid())
+  softwareSaleId      String
+  tenantId            String
+  mode                RevenueRecognitionMode @default(PRORATED)
+  periodStart         DateTime
+  periodEnd           DateTime
+  recognizedAmountCop Decimal               @db.Decimal(12, 2)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  sale   SoftwareSale @relation(fields: [softwareSaleId], references: [id], onDelete: Cascade)
+  tenant Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([softwareSaleId])
+  @@index([tenantId])
+  @@index([mode])
+  @@index([periodStart, periodEnd])
+}
+
+model AcademyCohortCostAllocation {
+  id             String               @id @default(cuid())
+  tenantId       String
+  cohortId       String
+  campaignCostId String?
+  category       CohortCostCategory
+  sourceType     CohortCostSourceType @default(MANUAL)
+  label          String
+  amountCop      Decimal              @db.Decimal(12, 2)
+  allocationDate DateTime
+  monthIndex     Int?
+  notes          String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cohort       AcademyCohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  campaignCost CampaignCost? @relation(fields: [campaignCostId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([cohortId])
+  @@index([campaignCostId])
+  @@index([category])
+  @@index([allocationDate])
 }
 
 // ============================================
@@ -1337,6 +1449,12 @@ model AcademyEnrollment {
   cohortId   String?
   status     String   @default("ACTIVE")
   progress   Decimal  @default(0) @db.Decimal(5, 2)
+  listPriceCop      Decimal  @default(0) @db.Decimal(12, 2)
+  discountAmountCop Decimal  @default(0) @db.Decimal(12, 2)
+  netRevenueCop     Decimal  @default(0) @db.Decimal(12, 2)
+  paidAmountCop     Decimal  @default(0) @db.Decimal(12, 2)
+  refundedAmountCop Decimal  @default(0) @db.Decimal(12, 2)
+  paymentStatus     FinancePaymentStatus @default(PENDING)
   enrolledAt DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -1350,6 +1468,7 @@ model AcademyEnrollment {
   @@index([courseId])
   @@index([cohortId])
   @@index([status])
+  @@index([paymentStatus])
 }
 
 model AcademyCohort {
@@ -1376,6 +1495,7 @@ model AcademyCohort {
   saasProjects     AcademySaasProject[]
   demoDayResults   AcademyDemoDayResult[]
   announcements    AcademyAnnouncement[]
+  costAllocations  AcademyCohortCostAllocation[]
 
   @@index([courseId])
   @@index([tenantId])

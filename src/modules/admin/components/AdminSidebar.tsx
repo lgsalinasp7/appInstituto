@@ -12,13 +12,13 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useAuthStore } from "@/lib/store/auth-store";
-import { performLogout } from "@/lib/logout";
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
   Building2,
   Users,
   CreditCard,
+  Landmark,
   Target,
   Megaphone,
   Mail,
@@ -57,6 +57,7 @@ const sections: NavSection[] = [
       { title: "Dashboard", href: "/admin", icon: LayoutDashboard, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.ASESOR_COMERCIAL, PLATFORM_ROLES.MARKETING] },
       { title: "Empresas", href: "/admin/empresas", icon: Building2, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.ASESOR_COMERCIAL] },
       { title: "Suscripciones", href: "/admin/suscripciones", icon: CreditCard, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.ASESOR_COMERCIAL] },
+      { title: "Finanzas", href: "/admin/finanzas", icon: Landmark, roles: [PLATFORM_ROLES.SUPER_ADMIN] },
       { title: "Leads", href: "/admin/leads", icon: Target, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.ASESOR_COMERCIAL] },
       { title: "Campañas", href: "/admin/campaigns", icon: Megaphone, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.ASESOR_COMERCIAL, PLATFORM_ROLES.MARKETING] },
       { title: "Correos", href: "/admin/comercial/correos", icon: Mail, roles: [PLATFORM_ROLES.SUPER_ADMIN, PLATFORM_ROLES.ASESOR_COMERCIAL, PLATFORM_ROLES.MARKETING] },
@@ -85,10 +86,6 @@ const sections: NavSection[] = [
 export function AdminSidebar() {
   const pathname = usePathname();
   const platformRole = useAuthStore((s) => s.user?.platformRole);
-
-  const handleLogout = () => {
-    performLogout("/login");
-  };
 
   const isItemVisible = (item: NavItem): boolean => {
     if (!platformRole) return false;

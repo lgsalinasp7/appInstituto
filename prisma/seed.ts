@@ -30,6 +30,7 @@ console.log("DATABASE_URL found, connecting...");
 process.env.DATABASE_URL = connectionString;
 
 const prisma = new PrismaClient();
+const prismaAny = prisma as any;
 
 /** Protección: este seed BORRA TODOS los datos (tenants, usuarios, etc.).
  *  Requiere SEED_ALLOW_WIPE=1 en .env para ejecutarse.
@@ -126,6 +127,65 @@ async function main() {
             fontFamily: "Inter",
             footerText: "Instituto EDUTEC - Educamos con Valores",
         },
+    });
+
+    // ============================================
+    // PASO 1.1: Seed financiero SaaS (KaledSoft -> tenants cliente)
+    // ============================================
+    console.log("Creando ventas SaaS demo (cash-in + prorrateado)...");
+    const softwareSaleEdutec = await prismaAny.softwareSale.create({
+        data: {
+            tenantId: kaledTenant.id,
+            customerTenantId: tenant.id,
+            customerName: "Instituto EDUTEC",
+            productName: "KaledSchool Tenant",
+            planName: "PROFESIONAL",
+            saleDate: new Date("2025-02-10"),
+            contractStartDate: new Date("2025-02-10"),
+            contractEndDate: new Date("2025-06-09"),
+            amountCop: 7200000,
+            collectedAmountCop: 7200000,
+            status: "CLOSED_WON",
+            paymentStatus: "PAID",
+            notes: "Venta cerrada sin costo de adquisición directo.",
+        },
+    });
+
+    await prismaAny.softwareRevenueSchedule.createMany({
+        data: [
+            {
+                softwareSaleId: softwareSaleEdutec.id,
+                tenantId: kaledTenant.id,
+                mode: "PRORATED",
+                periodStart: new Date("2025-02-10"),
+                periodEnd: new Date("2025-03-09"),
+                recognizedAmountCop: 1800000,
+            },
+            {
+                softwareSaleId: softwareSaleEdutec.id,
+                tenantId: kaledTenant.id,
+                mode: "PRORATED",
+                periodStart: new Date("2025-03-10"),
+                periodEnd: new Date("2025-04-09"),
+                recognizedAmountCop: 1800000,
+            },
+            {
+                softwareSaleId: softwareSaleEdutec.id,
+                tenantId: kaledTenant.id,
+                mode: "PRORATED",
+                periodStart: new Date("2025-04-10"),
+                periodEnd: new Date("2025-05-09"),
+                recognizedAmountCop: 1800000,
+            },
+            {
+                softwareSaleId: softwareSaleEdutec.id,
+                tenantId: kaledTenant.id,
+                mode: "PRORATED",
+                periodStart: new Date("2025-05-10"),
+                periodEnd: new Date("2025-06-09"),
+                recognizedAmountCop: 1800000,
+            },
+        ],
     });
 
     // ============================================

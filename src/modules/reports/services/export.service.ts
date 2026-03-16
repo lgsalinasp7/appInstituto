@@ -1,11 +1,13 @@
 import ExcelJS from "exceljs";
 import prisma from "@/lib/prisma";
+import { PaymentMethod, Prisma } from "@prisma/client";
 
 export class ExportService {
     static async exportPaymentsToExcel(filters: {
+        tenantId: string;
         startDate?: Date;
         endDate?: Date;
-        method?: string;
+        method?: PaymentMethod;
     }): Promise<Buffer> {
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Pagos");
@@ -33,7 +35,9 @@ export class ExportService {
         };
         worksheet.getRow(1).font = { color: { argb: "FFFFFFFF" }, bold: true };
 
-        const where: any = {};
+        const where: Prisma.PaymentWhereInput = {
+            tenantId: filters.tenantId,
+        };
         if (filters.startDate || filters.endDate) {
             where.paymentDate = {};
             if (filters.startDate) where.paymentDate.gte = filters.startDate;

@@ -379,12 +379,80 @@ async function main() {
     update: { currentStudents: estudiantes.length },
   });
   for (const est of estudiantes) {
+    const listPriceCop = 1800000;
+    const discountAmountCop = 200000;
+    const netRevenueCop = listPriceCop - discountAmountCop;
+    const paidAmountCop = 650000;
     await prisma.academyEnrollment.upsert({
       where: { userId_courseId: { userId: est.id, courseId: course.id } },
-      create: { userId: est.id, courseId: course.id, cohortId: cohort.id, status: "ACTIVE", progress: 0 },
-      update: {},
+      create: {
+        userId: est.id,
+        courseId: course.id,
+        cohortId: cohort.id,
+        status: "ACTIVE",
+        progress: 0,
+        listPriceCop,
+        discountAmountCop,
+        netRevenueCop,
+        paidAmountCop,
+        refundedAmountCop: 0,
+        paymentStatus: paidAmountCop >= netRevenueCop ? "PAID" : "PARTIAL",
+      },
+      update: {
+        cohortId: cohort.id,
+        listPriceCop,
+        discountAmountCop,
+        netRevenueCop,
+        paidAmountCop,
+        paymentStatus: paidAmountCop >= netRevenueCop ? "PAID" : "PARTIAL",
+      },
     });
   }
+
+  // ── Costos manuales por cohorte (rentabilidad 4 meses) ──────
+  await prisma.academyCohortCostAllocation.upsert({
+    where: { id: "cohort-cost-ads-2025-1" },
+    create: {
+      id: "cohort-cost-ads-2025-1",
+      tenantId: tenant.id,
+      cohortId: cohort.id,
+      category: "ADS",
+      sourceType: "MANUAL",
+      label: "Facebook Ads Cohorte 2025-1",
+      amountCop: 2800000,
+      allocationDate: new Date("2025-03-05"),
+      monthIndex: 1,
+      notes: "Inversión inicial de adquisición.",
+    },
+    update: {
+      amountCop: 2800000,
+      allocationDate: new Date("2025-03-05"),
+      monthIndex: 1,
+      notes: "Inversión inicial de adquisición.",
+    },
+  });
+
+  await prisma.academyCohortCostAllocation.upsert({
+    where: { id: "cohort-cost-instructor-2025-1" },
+    create: {
+      id: "cohort-cost-instructor-2025-1",
+      tenantId: tenant.id,
+      cohortId: cohort.id,
+      category: "INSTRUCTOR",
+      sourceType: "MANUAL",
+      label: "Honorarios instructor cohorte",
+      amountCop: 3600000,
+      allocationDate: new Date("2025-04-01"),
+      monthIndex: 2,
+      notes: "Costo directo de operación académica.",
+    },
+    update: {
+      amountCop: 3600000,
+      allocationDate: new Date("2025-04-01"),
+      monthIndex: 2,
+      notes: "Costo directo de operación académica.",
+    },
+  });
 
   // ── Badges ───────────────────────────────────────────────
   const badges = [
