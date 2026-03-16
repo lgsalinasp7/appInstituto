@@ -53,7 +53,7 @@ export default function AuthLayoutClient({
         : `linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)`,
     };
 
-  const logoSrc = branding.logoUrl || "/logo-instituto.png";
+  const logoSrc = branding.logoUrl || "/kaledsoft-logo-transparent.png";
   const tenantLogo = getTenantLogo({ slug: tenantSlug ?? undefined, name: tenantName, branding });
   const headerLogoSrc = branding.logoUrl || tenantLogo?.src;
   const footerText = branding.footerText || `© ${new Date().getFullYear()} ${tenantName}. Todos los derechos reservados.`;

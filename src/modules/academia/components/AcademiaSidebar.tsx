@@ -61,7 +61,7 @@ export function AcademiaSidebar() {
         <div className="flex items-center gap-2 min-w-0">
           <div className="relative w-9 h-9 shrink-0 rounded-lg overflow-hidden bg-slate-800/80 border border-slate-700/80 flex items-center justify-center">
             <Image
-              src={branding.logoUrl || "/logo-instituto.png"}
+              src={branding.logoUrl || "/kaledsoft-logo-transparent.png"}
               alt={branding.tenantName}
               width={28}
               height={28}
