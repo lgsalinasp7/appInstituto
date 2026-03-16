@@ -16,6 +16,11 @@ interface GuestGuardProps {
  * Excepción: /auth/change-password cuando mustChangePassword - permite acceso.
  * Verifica la sesión real en el servidor (/api/auth/me) en lugar de confiar
  * solo en el estado persistido de Zustand, evitando bucles de redirección.
+ *
+ * isChecking arranca en `true` para que tanto servidor como cliente rendericen
+ * el spinner en el HTML inicial. Esto garantiza que el árbol React sea idéntico
+ * en SSR y en hidratación (evitando mismatch de useId() en los formularios).
+ * El formulario se muestra solo después de verificar la sesión en useEffect.
  */
 export function GuestGuard({ children }: GuestGuardProps) {
   const router = useRouter();

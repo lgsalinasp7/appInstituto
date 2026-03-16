@@ -33,42 +33,19 @@ interface TenantBranding {
   darkMode: boolean;
 }
 
-/**
- * Cache de branding con revalidación cada 5 minutos
- * Tag: tenant-branding-{tenantId} para invalidación selectiva
- */
-const getBrandingCached = unstable_cache(
-  async (tenantId: string): Promise<TenantBranding | null> => {
-    try {
-      const branding = await prisma.tenantBranding.findUnique({
-        where: { tenantId },
-        select: {
-          logoUrl: true,
-          faviconUrl: true,
-          primaryColor: true,
-          secondaryColor: true,
-          accentColor: true,
-          fontFamily: true,
-          loginBgImage: true,
-          loginBgGradient: true,
-          footerText: true,
-          customCss: true,
-          darkMode: true,
-        },
-      });
-
-      return branding;
-    } catch (error) {
-      console.error("Error al obtener branding del tenant:", error);
-      return null;
-    }
-  },
-  ["tenant-branding"],
-  {
-    revalidate: 300, // 5 minutos
-    tags: ["tenant-branding"],
-  }
-);
+const BRANDING_SELECT = {
+  logoUrl: true,
+  faviconUrl: true,
+  primaryColor: true,
+  secondaryColor: true,
+  accentColor: true,
+  fontFamily: true,
+  loginBgImage: true,
+  loginBgGradient: true,
+  footerText: true,
+  customCss: true,
+  darkMode: true,
+} as const;
 
 // Valores por defecto si no hay branding configurado
 const DEFAULT_BRANDING: TenantBranding = {
@@ -86,8 +63,7 @@ const DEFAULT_BRANDING: TenantBranding = {
 };
 
 export async function TenantThemeProvider({ tenantId, children }: TenantThemeProviderProps) {
-  const branding = await getBrandingCached(tenantId);
-  const theme = branding || DEFAULT_BRANDING;
+  const theme = await getTenantBrandingCached(tenantId);
 
   // Construir CSS como string para inyectar via dangerouslySetInnerHTML
   // (styled-jsx no funciona en Server Components)
@@ -153,19 +129,7 @@ export function useTenantBranding() {
 export async function getTenantBranding(tenantId: string): Promise<TenantBranding> {
   const branding = await prisma.tenantBranding.findUnique({
     where: { tenantId },
-    select: {
-      logoUrl: true,
-      faviconUrl: true,
-      primaryColor: true,
-      secondaryColor: true,
-      accentColor: true,
-      fontFamily: true,
-      loginBgImage: true,
-      loginBgGradient: true,
-      footerText: true,
-      customCss: true,
-      darkMode: true,
-    },
+    select: BRANDING_SELECT,
   });
 
   return branding || DEFAULT_BRANDING;
@@ -173,10 +137,33 @@ export async function getTenantBranding(tenantId: string): Promise<TenantBrandin
 
 /**
  * Helper para obtener el branding con cache y revalidación (5 min)
- * Usado en Server Components y layouts
+ * Cada tenant tiene su propia entrada de cache y su propio tag.
+ * Esto evita que el branding de un tenant sea retornado para otro
+ * cuando el keyParts genérico causa colisiones.
  */
 export async function getTenantBrandingCached(tenantId: string): Promise<TenantBranding> {
-  return (await getBrandingCached(tenantId)) || DEFAULT_BRANDING;
+  const perTenantTag = `tenant-branding-${tenantId}`;
+
+  const getCached = unstable_cache(
+    async () => {
+      try {
+        return await prisma.tenantBranding.findUnique({
+          where: { tenantId },
+          select: BRANDING_SELECT,
+        });
+      } catch (error) {
+        console.error("Error al obtener branding del tenant:", error);
+        return null;
+      }
+    },
+    [perTenantTag],
+    {
+      revalidate: 300,
+      tags: [perTenantTag, "tenant-branding"],
+    }
+  );
+
+  return (await getCached()) || DEFAULT_BRANDING;
 }
 
 export type { TenantBranding };
