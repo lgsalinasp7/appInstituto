@@ -24,4 +24,6 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
 
       - name: Trigger deploy en Vercel dev
-        run: curl -fsS -X POST ${{ secrets.VERCEL_DEPLOY_HOOK_DEV }}
+        run: |
+          resp=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.VERCEL_DEPLOY_HOOK_DEV }}")
+          [ "$resp" = "200" ] || [ "$resp" = "201" ] || (echo "Deploy hook failed: HTTP $resp" && exit 1)
