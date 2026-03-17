@@ -4,7 +4,23 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+/**
+ * Asegura que DATABASE_URL tenga timeouts para Neon cold starts.
+ * Neon tarda ~1-3s en despertar; sin connect_timeout Prisma falla con P1001.
+ */
+function ensureNeonTimeoutParams(): void {
+  const url = process.env.DATABASE_URL;
+  if (!url || !url.includes("neon.tech")) return;
+  if (url.includes("connect_timeout")) return;
+
+  const separator = url.includes("?") ? "&" : "?";
+  const params = "connect_timeout=15&pool_timeout=15";
+  process.env.DATABASE_URL = `${url}${separator}${params}`;
+}
+
 function createPrismaClient(): PrismaClient {
+  ensureNeonTimeoutParams();
+
   const client = new PrismaClient({
     // Solo mostrar errores críticos, no warnings de conexión que Prisma maneja automáticamente
     log: process.env.NODE_ENV === "development" 
