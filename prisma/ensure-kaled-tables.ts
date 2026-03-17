@@ -84,4 +84,8 @@ async function main() {
   }
 }
 
-main();
+main()
+  .catch((e) => {
+    console.error("[ensure-kaled-tables]", e);
+    process.exit(1);
+  });

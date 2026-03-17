@@ -9,25 +9,25 @@ import bcrypt from "bcryptjs";
 
 const SALT_ROUNDS = 12;
 
-// Leer .env manualmente para asegurar que se cargue
-const envPath = path.resolve(__dirname, "../.env");
-const envContent = fs.readFileSync(envPath, "utf8");
-const envLines = envContent.split("\n");
-
-let connectionString = "";
-for (const line of envLines) {
-    if (line.startsWith("DATABASE_URL=")) {
-        connectionString = line.replace("DATABASE_URL=", "").replace(/"/g, "").trim();
-        break;
+// Cargar .env solo en local (en CI ya viene inyectada)
+if (process.env.NODE_ENV !== "production" && !process.env.DATABASE_URL) {
+    const envPath = path.resolve(__dirname, "../.env");
+    if (fs.existsSync(envPath)) {
+        const envContent = fs.readFileSync(envPath, "utf8");
+        for (const line of envContent.split("\n")) {
+            if (line.startsWith("DATABASE_URL=")) {
+                process.env.DATABASE_URL = line.replace("DATABASE_URL=", "").replace(/"/g, "").trim();
+                break;
+            }
+        }
     }
 }
 
-if (!connectionString) {
-    throw new Error("DATABASE_URL not found in .env file");
+if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL not found");
 }
 
 console.log("DATABASE_URL found, connecting...");
-process.env.DATABASE_URL = connectionString;
 
 const prisma = new PrismaClient();
 const prismaAny = prisma as any;
