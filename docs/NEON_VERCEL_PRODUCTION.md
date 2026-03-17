@@ -16,10 +16,10 @@ Los errores `PrismaClientKnownRequestError` (P1001) en producción se debían a:
 - **Configuración**: `vercel.json` → `0 8 * * *` (8:00 UTC diario).
 - **Nota**: Vercel Hobby solo permite crons diarios. Para keep-alive cada 4 min necesitas plan Pro o un servicio externo (cron-job.org) que llame a tu API.
 
-### 2. Timeouts automáticos en Prisma
+### 2. Prisma Neon Adapter (producción)
 
 - **Archivo**: `src/lib/prisma.ts`
-- **Función**: `ensureNeonTimeoutParams()` añade `connect_timeout=15&pool_timeout=15` a `DATABASE_URL` si falta (solo para URLs de neon.tech).
+- **Función**: En producción con Neon, usa `@prisma/adapter-neon` + `@neondatabase/serverless` en lugar del driver TCP. El driver serverless usa HTTP/WebSockets y maneja cold starts mucho mejor.
 
 ### 3. Connection string recomendado
 

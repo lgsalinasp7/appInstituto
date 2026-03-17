@@ -5,39 +5,53 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 /**
- * Asegura que DATABASE_URL tenga timeouts para Neon cold starts.
- * Neon tarda ~1-3s en despertar; sin connect_timeout Prisma falla con P1001.
+ * En producción con Neon: usa el adapter serverless que maneja cold starts
+ * mejor que el driver TCP estándar (HTTP/WebSockets vs conexiones TCP).
  */
-function ensureNeonTimeoutParams(): void {
-  const url = process.env.DATABASE_URL;
-  if (!url || !url.includes("neon.tech")) return;
-  if (url.includes("connect_timeout")) return;
-
-  const separator = url.includes("?") ? "&" : "?";
-  const params = "connect_timeout=15&pool_timeout=15";
-  process.env.DATABASE_URL = `${url}${separator}${params}`;
-}
-
 function createPrismaClient(): PrismaClient {
-  ensureNeonTimeoutParams();
+  const url = process.env.DATABASE_URL;
+  const useNeonAdapter =
+    process.env.NODE_ENV === "production" &&
+    url?.includes("neon.tech");
+
+  if (useNeonAdapter) {
+    const { Pool, neonConfig } = require("@neondatabase/serverless");
+    const { PrismaNeon } = require("@prisma/adapter-neon");
+    const ws = require("ws");
+
+    neonConfig.webSocketConstructor = ws;
+
+    const pool = new Pool({ connectionString: url });
+    const adapter = new PrismaNeon(pool);
+
+    return new PrismaClient({
+      adapter,
+      log:
+        process.env.NODE_ENV === "development"
+          ? [{ level: "error", emit: "event" }]
+          : [{ level: "error", emit: "event" }],
+      errorFormat: "pretty",
+    });
+  }
+
+  // Desarrollo o BD no-Neon: cliente estándar
+  let dbUrl = url;
+  if (url?.includes("neon.tech") && !url.includes("connect_timeout")) {
+    const sep = url.includes("?") ? "&" : "?";
+    dbUrl = `${url}${sep}connect_timeout=15&pool_timeout=15`;
+  }
 
   const client = new PrismaClient({
-    // Solo mostrar errores críticos, no warnings de conexión que Prisma maneja automáticamente
-    log: process.env.NODE_ENV === "development" 
-      ? [{ level: "error", emit: "event" }] 
-      : [{ level: "error", emit: "event" }],
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL,
-      },
-    },
+    log:
+      process.env.NODE_ENV === "development"
+        ? [{ level: "error", emit: "event" }]
+        : [{ level: "error", emit: "event" }],
+    datasources: dbUrl ? { db: { url: dbUrl } } : undefined,
     errorFormat: "pretty",
   });
 
-  // Filtrar errores de conexión cerrada que Prisma maneja automáticamente
   if (process.env.NODE_ENV === "development") {
-    client.$on("error" as never, (e: any) => {
-      // Solo mostrar errores que no sean de conexión cerrada (que Prisma maneja automáticamente)
+    client.$on("error" as never, (e: { message?: string; code?: string; kind?: string }) => {
       if (
         !e.message?.includes("Closed") &&
         e.code !== "P1001" &&
@@ -45,59 +59,53 @@ function createPrismaClient(): PrismaClient {
       ) {
         console.error("Prisma error:", e);
       }
-      // Los errores de conexión cerrada se ignoran porque Prisma los maneja automáticamente
     });
   }
 
   return client;
 }
 
-// Singleton de Prisma
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
 
-// Helper para ejecutar queries con manejo de reconexión
 export async function executeWithRetry<T>(
   query: () => Promise<T>,
   maxRetries = 3,
   delay = 1000
 ): Promise<T> {
   let lastError: Error | null = null;
-  
+
   for (let i = 0; i < maxRetries; i++) {
     try {
       return await query();
-    } catch (error: any) {
-      lastError = error;
-      
-      // Si es un error de conexión cerrada, intentar reconectar
+    } catch (error: unknown) {
+      lastError = error as Error;
+      const err = error as { message?: string; code?: string; kind?: string };
+
       if (
-        error?.message?.includes("Closed") ||
-        error?.code === "P1001" ||
-        error?.kind === "Closed"
+        err?.message?.includes("Closed") ||
+        err?.code === "P1001" ||
+        err?.kind === "Closed"
       ) {
         if (i < maxRetries - 1) {
-          // Esperar antes de reintentar
-          await new Promise((resolve) => setTimeout(resolve, delay * (i + 1)));
-          // Intentar reconectar
+          await new Promise((r) => setTimeout(r, delay * (i + 1)));
           try {
             await prisma.$connect();
-          } catch (connectError) {
-            console.error("Error al reconectar Prisma:", connectError);
+          } catch {
+            /* ignore */
           }
           continue;
         }
       }
-      
-      // Si no es un error de conexión, lanzar inmediatamente
+
       throw error;
     }
   }
-  
-  throw lastError || new Error("Error desconocido en executeWithRetry");
+
+  throw lastError ?? new Error("Error desconocido en executeWithRetry");
 }
 
 export default prisma;
