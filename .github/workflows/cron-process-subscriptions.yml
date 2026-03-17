@@ -13,5 +13,5 @@ jobs:
         run: |
           resp=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "${{ vars.VERCEL_CRON_URL }}/api/cron/process-subscriptions")
+            "https://www.kaledsoft.tech/api/cron/process-subscriptions")
           [ "$resp" = "200" ] || (echo "Failed: $resp" && exit 1)

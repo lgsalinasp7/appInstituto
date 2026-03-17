@@ -16,6 +16,6 @@ jobs:
         run: |
           resp=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "${{ vars.VERCEL_CRON_URL }}/api/cron/keep-alive")
+            "https://www.kaledsoft.tech/api/cron/keep-alive")
           echo "Keep-alive response: $resp"
           [ "$resp" = "200" ] || (echo "Keep-alive failed: $resp" && exit 1)

@@ -24,7 +24,7 @@ jobs:
         run: |
           resp=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "${{ vars.VERCEL_CRON_URL }}/api/cron/kaled-daily")
+            "https://www.kaledsoft.tech/api/cron/kaled-daily")
           [ "$resp" = "200" ] || (echo "kaled-daily failed: $resp" && exit 1)
 
       - name: Trigger notifications
@@ -32,7 +32,7 @@ jobs:
         run: |
           resp=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "${{ vars.VERCEL_CRON_URL }}/api/cron/notifications")
+            "https://www.kaledsoft.tech/api/cron/notifications")
           [ "$resp" = "200" ] || (echo "notifications failed: $resp" && exit 1)
 
       - name: Trigger process-kaled-emails
@@ -40,7 +40,7 @@ jobs:
         run: |
           resp=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "${{ vars.VERCEL_CRON_URL }}/api/cron/process-kaled-emails")
+            "https://www.kaledsoft.tech/api/cron/process-kaled-emails")
           [ "$resp" = "200" ] || (echo "process-kaled-emails failed: $resp" && exit 1)
 
       - name: Trigger process-subscriptions
@@ -48,5 +48,5 @@ jobs:
         run: |
           resp=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "${{ vars.VERCEL_CRON_URL }}/api/cron/process-subscriptions")
+            "https://www.kaledsoft.tech/api/cron/process-subscriptions")
           [ "$resp" = "200" ] || (echo "process-subscriptions failed: $resp" && exit 1)
