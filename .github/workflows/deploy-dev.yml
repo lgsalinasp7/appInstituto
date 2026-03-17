@@ -24,4 +24,4 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
 
       - name: Trigger deploy en Vercel dev
-        run: curl -X POST ${{ secrets.VERCEL_DEPLOY_HOOK_DEV }}
+        run: curl -fsS -X POST ${{ secrets.VERCEL_DEPLOY_HOOK_DEV }}

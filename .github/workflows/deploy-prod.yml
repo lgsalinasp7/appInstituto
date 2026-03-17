@@ -22,3 +22,6 @@ jobs:
         run: npx prisma migrate deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+
+      - name: Trigger deploy en Vercel prod
+        run: curl -fsS -X POST ${{ secrets.VERCEL_DEPLOY_HOOK_PROD }}
