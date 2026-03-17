@@ -9,12 +9,13 @@ Las tablas `kaled_cohort_metrics`, `kaled_instructor_tasks`, `kaled_student_erro
 
 ## Cambios aplicados
 
-### 1. `prisma db push` en el build de Vercel
+### 1. Script `ensure-kaled-tables.ts` en el build de Vercel
 
-- **package.json:** `build:vercel` ahora ejecuta `prisma db push` antes de `next build`
-- **vercel.json:** `buildCommand: "npm run build:vercel"` para que Vercel use ese script
+- **prisma/ensure-kaled-tables.ts:** Crea las tablas Kaled con `CREATE TABLE IF NOT EXISTS` (solo añade, nunca elimina)
+- **package.json:** `build:vercel` ejecuta el script antes de `next build`
+- **vercel.json:** `buildCommand: "npm run build:vercel"`
 
-Así, en cada deploy se sincroniza el esquema Prisma con la base de datos que use Vercel, creando las tablas que falten.
+Así, en cada deploy se crean las tablas que falten sin tocar las existentes.
 
 ### 2. Verificación de `DATABASE_URL`
 
