@@ -111,7 +111,7 @@ export const POST = withCSRF(
 
       const [existingInvitation, existingUser, roles] = await Promise.all([
         prisma.invitation.findFirst({
-          where: { email, status: "PENDING" },
+          where: { email, tenantId: tenant.id, status: "PENDING" },
         }),
         prisma.user.findUnique({
           where: { email },
@@ -213,6 +213,11 @@ export const POST = withCSRF(
         message: "Invitación enviada exitosamente",
       });
     } catch (error) {
+      // Log detallado para debugging de errores Prisma
+      const prismaErr = error as { code?: string; message?: string; meta?: unknown };
+      if (prismaErr?.code) {
+        console.error("[invitations POST] Prisma error:", prismaErr.code, prismaErr.message, prismaErr.meta);
+      }
       return handleApiError(error);
     }
   })

@@ -221,6 +221,17 @@ export function handleApiError(error: unknown): NextResponse<ErrorResponse> {
         { status: 404 }
       );
     }
+
+    // P2022: columna inexistente (desajuste schema/DB)
+    if (prismaError.code === "P2022") {
+      return NextResponse.json(
+        {
+          error: "Error de configuración de base de datos",
+          message: "El esquema no coincide con la base de datos. Contacte al administrador.",
+        },
+        { status: 500 }
+      );
+    }
   }
 
   // Error genérico (500)
