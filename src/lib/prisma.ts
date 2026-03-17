@@ -4,37 +4,10 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-/**
- * En producción con Neon: usa el adapter serverless que maneja cold starts
- * mejor que el driver TCP estándar (HTTP/WebSockets vs conexiones TCP).
- */
 function createPrismaClient(): PrismaClient {
   const url = process.env.DATABASE_URL;
-  const useNeonAdapter =
-    process.env.NODE_ENV === "production" &&
-    url?.includes("neon.tech");
 
-  if (useNeonAdapter) {
-    const { Pool, neonConfig } = require("@neondatabase/serverless");
-    const { PrismaNeon } = require("@prisma/adapter-neon");
-    const ws = require("ws");
-
-    neonConfig.webSocketConstructor = ws;
-
-    const pool = new Pool({ connectionString: url });
-    const adapter = new PrismaNeon(pool);
-
-    return new PrismaClient({
-      adapter,
-      log:
-        process.env.NODE_ENV === "development"
-          ? [{ level: "error", emit: "event" }]
-          : [{ level: "error", emit: "event" }],
-      errorFormat: "pretty",
-    });
-  }
-
-  // Desarrollo o BD no-Neon: cliente estándar
+  // Añadir parámetros de timeout para Neon (evita colgarse en cold starts)
   let dbUrl = url;
   if (url?.includes("neon.tech") && !url.includes("connect_timeout")) {
     const sep = url.includes("?") ? "&" : "?";
@@ -42,10 +15,7 @@ function createPrismaClient(): PrismaClient {
   }
 
   const client = new PrismaClient({
-    log:
-      process.env.NODE_ENV === "development"
-        ? [{ level: "error", emit: "event" }]
-        : [{ level: "error", emit: "event" }],
+    log: [{ level: "error", emit: "event" }],
     datasources: dbUrl ? { db: { url: dbUrl } } : undefined,
     errorFormat: "pretty",
   });
