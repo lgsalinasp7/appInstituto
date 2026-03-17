@@ -21,7 +21,9 @@ jobs:
       - name: Run migrations en develop
         run: npx prisma migrate deploy
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
+          # Usar conexión directa (no pooler) para evitar P1002 advisory lock timeout
+          DIRECT_URL: ${{ secrets.DIRECT_DATABASE_URL_DEV }}
+          MIGRATE_ADVISORY_LOCK_TIMEOUT: "30000"
 
       - name: Trigger deploy en Vercel dev
         run: |

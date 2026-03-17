@@ -63,8 +63,10 @@ export async function deleteOrphanUserIfExists(
 }
 
 /**
- * Elimina una invitación y su usuario huérfano (si existe) de forma atómica.
- * Si cualquiera de las operaciones falla, se hace rollback de ambas.
+ * Elimina una invitación y, si existe, intenta eliminar el usuario huérfano asociado.
+ * La eliminación de la invitación es atómica y prioritaria. La limpieza del usuario
+ * huérfano es best-effort: si falla (ej. por restricciones FK como sentInvitations),
+ * se registra el error pero la transacción se confirma igual (la invitación ya se eliminó).
  */
 export async function deleteInvitationWithOrphanCleanup(invitation: {
   id: string;
