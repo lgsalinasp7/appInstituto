@@ -11,6 +11,7 @@ export async function GET(req: Request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  try {
   const { prisma } = await import("@/lib/prisma");
 
   const tenant = await prisma.tenant.findFirst({
@@ -117,4 +118,16 @@ export async function GET(req: Request) {
     dayOfWeek,
     timestamp: new Date().toISOString(),
   });
+  } catch (error: unknown) {
+    const prismaError = error as { code?: string; meta?: unknown; message?: string };
+    console.error("[kaled-daily]", prismaError);
+    return Response.json(
+      {
+        error: "kaled-daily failed",
+        code: prismaError.code,
+        message: prismaError.message?.slice(0, 200),
+      },
+      { status: 500 }
+    );
+  }
 }

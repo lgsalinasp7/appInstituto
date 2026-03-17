@@ -22,10 +22,13 @@ jobs:
       - name: Trigger kaled-daily
         if: github.event_name == 'workflow_dispatch' && (github.event.inputs.cron == 'kaled-daily' || github.event.inputs.cron == 'all') || (github.event_name == 'schedule' && github.event.schedule == '0 5 * * *')
         run: |
-          resp=$(curl -s -o /dev/null -w "%{http_code}" \
+          resp=$(curl -s -w "\n%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             "https://www.kaledsoft.tech/api/cron/kaled-daily")
-          [ "$resp" = "200" ] || (echo "kaled-daily failed: $resp" && exit 1)
+          code=$(echo "$resp" | tail -n1)
+          body=$(echo "$resp" | sed '$d')
+          echo "kaled-daily HTTP $code"
+          [ "$code" = "200" ] || (echo "Response body: $body" && exit 1)
 
       - name: Trigger notifications
         if: github.event_name == 'workflow_dispatch' && (github.event.inputs.cron == 'notifications' || github.event.inputs.cron == 'all') || (github.event_name == 'schedule' && github.event.schedule == '0 9 * * *')
