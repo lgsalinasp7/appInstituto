@@ -119,13 +119,15 @@ export async function GET(req: Request) {
     timestamp: new Date().toISOString(),
   });
   } catch (error: unknown) {
-    const prismaError = error as { code?: string; meta?: unknown; message?: string };
-    console.error("[kaled-daily]", prismaError);
+    const err = error as { code?: string; meta?: unknown; message?: string; stack?: string };
+    const msg = err.message ?? String(error);
+    console.error("[kaled-daily]", err.code, msg);
     return Response.json(
       {
         error: "kaled-daily failed",
-        code: prismaError.code,
-        message: prismaError.message?.slice(0, 200),
+        code: err.code,
+        message: msg.slice(0, 500),
+        meta: err.meta,
       },
       { status: 500 }
     );

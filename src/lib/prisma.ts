@@ -7,11 +7,15 @@ const globalForPrisma = globalThis as unknown as {
 function createPrismaClient(): PrismaClient {
   const url = process.env.DATABASE_URL;
 
-  // Añadir parámetros de timeout para Neon (evita colgarse en cold starts)
+  // Añadir parámetros para Neon: timeout + pgbouncer (evita errores con pooler)
   let dbUrl = url;
-  if (url?.includes("neon.tech") && !url.includes("connect_timeout")) {
+  if (url?.includes("neon.tech")) {
     const sep = url.includes("?") ? "&" : "?";
-    dbUrl = `${url}${sep}connect_timeout=15&pool_timeout=15`;
+    const extra: string[] = [];
+    if (!url.includes("connect_timeout")) extra.push("connect_timeout=15");
+    if (!url.includes("pool_timeout")) extra.push("pool_timeout=15");
+    if (!url.includes("pgbouncer")) extra.push("pgbouncer=true");
+    if (extra.length) dbUrl = `${url}${sep}${extra.join("&")}`;
   }
 
   const client = new PrismaClient({
