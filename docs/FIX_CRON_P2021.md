@@ -5,7 +5,9 @@
 **Error:** `PrismaClientKnownRequestError` código **P2021**  
 **Significado:** "The table `{table}` does not exist in the current database"
 
-Las tablas `kaled_cohort_metrics`, `kaled_instructor_tasks`, `kaled_student_error_patterns` existen en el proyecto Neon que gestionamos con MCP, pero **Vercel puede estar usando otra base de datos** (por ejemplo, una creada por la integración Vercel-Neon).
+**Si falla con `Tenant`:** Vercel está usando una base de datos **distinta/vacía**. Ver [FIX_DATABASE_URL_VERCEL.md](./FIX_DATABASE_URL_VERCEL.md).
+
+**Si falla con tablas Kaled:** Las tablas `kaled_cohort_metrics`, `kaled_instructor_tasks`, `kaled_student_error_patterns` existen en el proyecto Neon correcto, pero Vercel puede estar usando otra base de datos.
 
 ## Cambios aplicados
 
