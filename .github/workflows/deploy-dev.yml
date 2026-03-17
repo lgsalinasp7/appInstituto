@@ -23,8 +23,8 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
 
-      - name: Seed develop
-        run: npx prisma db seed
+      - name: Seed develop (KaledAcademy — seguro, no borra datos)
+        run: npm run db:seed-kaledacademy-v3
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
 
