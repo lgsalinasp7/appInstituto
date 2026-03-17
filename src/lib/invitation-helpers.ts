@@ -49,11 +49,17 @@ export async function deleteOrphanUserIfExists(
     return { deleted: false };
   }
 
-  await db.user.delete({
-    where: { id: user.id },
-  });
-
-  return { deleted: true, userId: user.id };
+  try {
+    await db.user.delete({
+      where: { id: user.id },
+    });
+    return { deleted: true, userId: user.id };
+  } catch (err) {
+    // El usuario puede tener relaciones Restrict (ej. sentInvitations, advisor en Prospect)
+    // que impiden el delete. No fallar la transacción: la invitación ya se eliminó.
+    console.warn("[deleteOrphanUserIfExists] No se pudo eliminar usuario huérfano:", user.id, err);
+    return { deleted: false };
+  }
 }
 
 /**
