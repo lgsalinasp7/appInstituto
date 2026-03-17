@@ -30,5 +30,9 @@ Si tras el deploy sigue fallando:
 ## Después del deploy
 
 1. Haz push de los cambios y espera al deploy en Vercel.
-2. Ejecuta el workflow "Cron Jobs Vercel" manualmente (Actions → Run workflow → cron: kaled-daily).
-3. Si sigue fallando, revisa los logs de Vercel y el body de la respuesta en GitHub Actions.
+2. **Probar manualmente** (con CRON_SECRET de Vercel/GitHub):
+   ```powershell
+   $env:CRON_SECRET="tu-secret"; .\scripts\test-cron-kaled-daily.ps1
+   ```
+3. **O** ejecuta el workflow "Cron Jobs Vercel" en GitHub (Actions → Cron Jobs Vercel → Run workflow → cron: kaled-daily).
+4. Si sigue fallando, revisa los logs de Vercel y el body de la respuesta en GitHub Actions.
