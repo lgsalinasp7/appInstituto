@@ -5,6 +5,9 @@
 
 import prisma from "@/lib/prisma";
 
+/** Cliente de transacción (compatible con prisma.$transaction) */
+type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+
 /** Ventana de tiempo (ms) para considerar un User como huérfano de invitación fallida */
 const ORPHAN_USER_WINDOW_MS = 48 * 60 * 60 * 1000; // 48 horas
 
@@ -19,9 +22,12 @@ const ORPHAN_USER_WINDOW_MS = 48 * 60 * 60 * 1000; // 48 horas
  */
 export async function deleteOrphanUserIfExists(
   email: string,
-  tenantId: string
+  tenantId: string,
+  tx?: TxClient
 ): Promise<{ deleted: boolean; userId?: string }> {
-  const user = await prisma.user.findFirst({
+  const db = tx ?? prisma;
+
+  const user = await db.user.findFirst({
     where: {
       email: { equals: email, mode: "insensitive" },
       tenantId,
@@ -43,9 +49,29 @@ export async function deleteOrphanUserIfExists(
     return { deleted: false };
   }
 
-  await prisma.user.delete({
+  await db.user.delete({
     where: { id: user.id },
   });
 
   return { deleted: true, userId: user.id };
+}
+
+/**
+ * Elimina una invitación y su usuario huérfano (si existe) de forma atómica.
+ * Si cualquiera de las operaciones falla, se hace rollback de ambas.
+ */
+export async function deleteInvitationWithOrphanCleanup(invitation: {
+  id: string;
+  email: string;
+  tenantId: string;
+}): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    // 1. Eliminar invitación
+    await tx.invitation.delete({
+      where: { id: invitation.id },
+    });
+
+    // 2. Eliminar usuario huérfano si existe (dentro de la misma transacción)
+    await deleteOrphanUserIfExists(invitation.email, invitation.tenantId, tx);
+  });
 }

@@ -24,6 +24,7 @@ ALTER TABLE "AcademyEnrollment"
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'SoftwareSale') THEN
     ALTER TABLE "SoftwareSale"
+      ALTER COLUMN "paymentStatus" DROP DEFAULT,
       ALTER COLUMN "paymentStatus" TYPE "public"."FinancePaymentStatus"
       USING (
         CASE
@@ -31,6 +32,7 @@ DO $$ BEGIN
           THEN "paymentStatus"::text::"public"."FinancePaymentStatus"
           ELSE 'PENDING'::"public"."FinancePaymentStatus"
         END
-      );
+      ),
+      ALTER COLUMN "paymentStatus" SET DEFAULT 'PENDING'::"public"."FinancePaymentStatus";
   END IF;
 END $$;

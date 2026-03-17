@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { withTenantAuth, withTenantAuthAndCSRF } from "@/lib/api-auth";
-import { deleteOrphanUserIfExists } from "@/lib/invitation-helpers";
+import { deleteInvitationWithOrphanCleanup } from "@/lib/invitation-helpers";
 
 interface RouteParams {
   params: Promise<Record<string, string>>;
@@ -85,17 +85,8 @@ export const DELETE = withTenantAuthAndCSRF(async (request: NextRequest, user, t
     );
   }
 
-  const email = invitation.email;
-  const tenantId = invitation.tenantId;
-
-  // Delete the invitation
-  await prisma.invitation.delete({
-    where: { id },
-  });
-
-  // Si existe un User huérfano (creado por intento fallido de aceptación), eliminarlo
-  // para permitir reenviar la invitación
-  await deleteOrphanUserIfExists(email, tenantId);
+  // Eliminar invitación y usuario huérfano de forma atómica
+  await deleteInvitationWithOrphanCleanup(invitation);
 
   return NextResponse.json({
     success: true,
