@@ -21,7 +21,8 @@ jobs:
       - name: Run migrations en develop
         run: npx prisma migrate deploy
         env:
-          # Usar conexión directa (no pooler) para evitar P1002 advisory lock timeout
+          # Schema requiere DATABASE_URL; migrate usa DIRECT_URL (evita P1002 advisory lock)
+          DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL_DEV }}
           DIRECT_URL: ${{ secrets.DIRECT_DATABASE_URL_DEV }}
           MIGRATE_ADVISORY_LOCK_TIMEOUT: "30000"
 
