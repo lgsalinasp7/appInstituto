@@ -9,11 +9,12 @@ Los errores `PrismaClientKnownRequestError` (P1001) en producción se debían a:
 
 ## Cambios implementados
 
-### 1. Keep-alive cron (cada 4 minutos)
+### 1. Keep-alive cron (diario)
 
 - **Ruta**: `/api/cron/keep-alive`
-- **Función**: Ejecuta `SELECT 1` para mantener la BD activa y evitar suspensión.
-- **Configuración**: `vercel.json` → `*/4 * * * *`
+- **Función**: Ejecuta `SELECT 1` para despertar la BD (útil tras inactividad nocturna).
+- **Configuración**: `vercel.json` → `0 8 * * *` (8:00 UTC diario).
+- **Nota**: Vercel Hobby solo permite crons diarios. Para keep-alive cada 4 min necesitas plan Pro o un servicio externo (cron-job.org) que llame a tu API.
 
 ### 2. Timeouts automáticos en Prisma
 
