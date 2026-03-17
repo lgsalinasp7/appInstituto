@@ -1,0 +1,17 @@
+name: Cron - Process Kaled Emails
+
+on:
+  schedule:
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger process-kaled-emails
+        run: |
+          resp=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ vars.VERCEL_CRON_URL }}/api/cron/process-kaled-emails")
+          [ "$resp" = "200" ] || (echo "Failed: $resp" && exit 1)

@@ -1,0 +1,21 @@
+# Keep-alive para Neon DB
+# Neon free tier suspende el compute tras 5 min de inactividad.
+# Este workflow lo despierta cada 30 min para evitar cold starts.
+name: Neon Keep-Alive
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'   # cada 30 minutos
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Neon DB via keep-alive endpoint
+        run: |
+          resp=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ vars.VERCEL_CRON_URL }}/api/cron/keep-alive")
+          echo "Keep-alive response: $resp"
+          [ "$resp" = "200" ] || (echo "Keep-alive failed: $resp" && exit 1)
