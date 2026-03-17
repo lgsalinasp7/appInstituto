@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger kaled-daily
-        if: github.event.inputs.cron == 'kaled-daily' || github.event.inputs.cron == 'all' || github.event_name == 'schedule'
+        if: github.event_name == 'workflow_dispatch' && (github.event.inputs.cron == 'kaled-daily' || github.event.inputs.cron == 'all') || (github.event_name == 'schedule' && github.event.schedule == '0 5 * * *')
         run: |
           resp=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
@@ -28,7 +28,7 @@ jobs:
           [ "$resp" = "200" ] || (echo "kaled-daily failed: $resp" && exit 1)
 
       - name: Trigger notifications
-        if: github.event.inputs.cron == 'notifications' || github.event.inputs.cron == 'all' || github.event_name == 'schedule'
+        if: github.event_name == 'workflow_dispatch' && (github.event.inputs.cron == 'notifications' || github.event.inputs.cron == 'all') || (github.event_name == 'schedule' && github.event.schedule == '0 9 * * *')
         run: |
           resp=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
@@ -36,7 +36,7 @@ jobs:
           [ "$resp" = "200" ] || (echo "notifications failed: $resp" && exit 1)
 
       - name: Trigger process-kaled-emails
-        if: github.event.inputs.cron == 'process-kaled-emails' || github.event.inputs.cron == 'all' || github.event_name == 'schedule'
+        if: github.event_name == 'workflow_dispatch' && (github.event.inputs.cron == 'process-kaled-emails' || github.event.inputs.cron == 'all') || (github.event_name == 'schedule' && github.event.schedule == '0 10 * * *')
         run: |
           resp=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
@@ -44,7 +44,7 @@ jobs:
           [ "$resp" = "200" ] || (echo "process-kaled-emails failed: $resp" && exit 1)
 
       - name: Trigger process-subscriptions
-        if: github.event.inputs.cron == 'process-subscriptions' || github.event.inputs.cron == 'all' || github.event_name == 'schedule'
+        if: github.event_name == 'workflow_dispatch' && (github.event.inputs.cron == 'process-subscriptions' || github.event.inputs.cron == 'all') || (github.event_name == 'schedule' && github.event.schedule == '0 0 * * *')
         run: |
           resp=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
