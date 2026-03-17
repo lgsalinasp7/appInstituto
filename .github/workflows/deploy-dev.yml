@@ -23,10 +23,5 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
 
-      - name: Seed develop (KaledAcademy — seguro, no borra datos)
-        run: npm run db:seed-kaledacademy-v3
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
-
       - name: Trigger deploy en Vercel dev
         run: curl -X POST ${{ secrets.VERCEL_DEPLOY_HOOK_DEV }}
