@@ -49,5 +49,19 @@ jobs:
 
       - name: Trigger deploy en Vercel prod
         run: |
-          resp=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.VERCEL_DEPLOY_HOOK_PROD }}")
-          [ "$resp" = "200" ] || [ "$resp" = "201" ] || (echo "Deploy hook failed: HTTP $resp" && exit 1)
+          set -e
+          HOOK="${{ secrets.VERCEL_DEPLOY_HOOK_PROD }}"
+          if [ -z "$HOOK" ]; then
+            echo "::error::Falta VERCEL_DEPLOY_HOOK_PROD en Secrets → Actions."
+            exit 1
+          fi
+          resp=$(curl -sS -o /dev/null -w "%{http_code}" -X POST "$HOOK")
+          if [ "$resp" = "200" ] || [ "$resp" = "201" ]; then
+            echo "Deploy prod OK (HTTP $resp)"
+            exit 0
+          fi
+          echo "::error::Deploy hook prod falló: HTTP $resp"
+          if [ "$resp" = "404" ]; then
+            echo "::notice::404: crea un Deploy Hook en el proyecto de producción (rama main) y actualiza VERCEL_DEPLOY_HOOK_PROD."
+          fi
+          exit 1
