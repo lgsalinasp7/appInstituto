@@ -50,11 +50,28 @@ jobs:
       - name: Backup producción
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+          DIRECT_URL: ${{ secrets.DIRECT_DATABASE_URL_PROD }}
         run: |
-          FILENAME="prod-$(date +%Y%m%d-%H%M%S).sql.gz"
-          pg_dump "$DATABASE_URL" --no-owner --no-acl | gzip > "$FILENAME"
+          set -euo pipefail
+          DB="${DIRECT_URL:-$DATABASE_URL}"
+          if [ -z "$DB" ]; then
+            echo "::error::Configura DATABASE_URL_PROD o DIRECT_DATABASE_URL_PROD"
+            exit 1
+          fi
+          STAMP="prod-$(date +%Y%m%d-%H%M%S)"
+          SQL="${STAMP}.sql"
+          echo "pg_dump a $SQL (usa URL directa si falla el pooler)..."
+          pg_dump "$DB" --no-owner --no-acl -f "$SQL"
+          SIZE=$(stat -c%s "$SQL")
+          if [ "$SIZE" -lt 500 ]; then
+            echo "::error::Dump vacío o casi ($SIZE bytes). Suele ser URL pooler o credenciales. Usa conexión DIRECTA de Neon en DIRECT_DATABASE_URL_PROD."
+            head -20 "$SQL" || true
+            exit 1
+          fi
+          gzip -f "$SQL"
+          FILENAME="${STAMP}.sql.gz"
           rclone copy "$FILENAME" "gdrive:Instituto-Backups/prod/"
-          echo "Backup prod subido: $FILENAME"
+          echo "Backup prod OK: $FILENAME ($(stat -c%s "$FILENAME") bytes comprimido)"
 
       - name: Limpiar backups antiguos (últimos 30 días)
         run: |
