@@ -1,0 +1,35 @@
+name: Backup Neon a Google Drive
+
+on:
+  schedule:
+    - cron: '0 5 * * *'   # 05:00 UTC = 00:00 Colombia
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Instalar dependencias
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+          curl -sSf https://rclone.org/install.sh | sudo bash
+
+      - name: Configurar rclone con Google Drive
+        env:
+          RCLONE_DRIVE_TOKEN: ${{ secrets.RCLONE_DRIVE_TOKEN }}
+        run: |
+          mkdir -p ~/.config/rclone
+          printf '%s\n' "[gdrive]" "type = drive" "scope = drive" "token = ${RCLONE_DRIVE_TOKEN}" > ~/.config/rclone/rclone.conf
+
+      - name: Backup producción
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+        run: |
+          FILENAME="prod-$(date +%Y%m%d-%H%M%S).sql.gz"
+          pg_dump "$DATABASE_URL" --no-owner --no-acl | gzip > "$FILENAME"
+          rclone copy "$FILENAME" "gdrive:Instituto-Backups/prod/"
+          echo "Backup prod subido: $FILENAME"
+
+      - name: Limpiar backups antiguos (últimos 30 días)
+        run: |
+          rclone delete "gdrive:Instituto-Backups/prod/" --min-age 30d 2>/dev/null || true
