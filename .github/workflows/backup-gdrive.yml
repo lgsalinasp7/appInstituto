@@ -23,6 +23,12 @@ jobs:
       - name: Instalar rclone
         run: curl -sSf https://rclone.org/install.sh | sudo bash
 
+      # rclone/install.sh puede instalar postgresql-client (v16) y pisar /usr/bin/pg_dump
+      - name: Restaurar PostgreSQL 17 client
+        run: |
+          sudo apt-get install -y -qq postgresql-client-17
+          /usr/lib/postgresql/17/bin/pg_dump --version
+
       - name: Configurar rclone (token JSON completo)
         env:
           RCLONE_DRIVE_TOKEN: ${{ secrets.RCLONE_DRIVE_TOKEN }}
@@ -60,8 +66,13 @@ jobs:
           fi
           STAMP="prod-$(date +%Y%m%d-%H%M%S)"
           SQL="${STAMP}.sql"
-          echo "pg_dump a $SQL (usa URL directa si falla el pooler)..."
-          pg_dump "$DB" --no-owner --no-acl -f "$SQL"
+          PG_DUMP="/usr/lib/postgresql/17/bin/pg_dump"
+          if [ ! -x "$PG_DUMP" ]; then
+            echo "::error::No existe $PG_DUMP"
+            exit 1
+          fi
+          echo "pg_dump (PG17) a $SQL..."
+          "$PG_DUMP" "$DB" --no-owner --no-acl -f "$SQL"
           SIZE=$(stat -c%s "$SQL")
           if [ "$SIZE" -lt 500 ]; then
             echo "::error::Dump vacío o casi ($SIZE bytes). Suele ser URL pooler o credenciales. Usa conexión DIRECTA de Neon en DIRECT_DATABASE_URL_PROD."
