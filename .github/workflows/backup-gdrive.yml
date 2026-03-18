@@ -9,17 +9,43 @@ jobs:
   backup:
     runs-on: ubuntu-latest
     steps:
-      - name: Instalar dependencias
+      - name: Instalar PostgreSQL 17 client (Neon usa PG17)
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
-          curl -sSf https://rclone.org/install.sh | sudo bash
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq wget ca-certificates gnupg lsb-release
+          sudo mkdir -p /etc/apt/keyrings
+          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+          pg_dump --version
 
-      - name: Configurar rclone con Google Drive
+      - name: Instalar rclone
+        run: curl -sSf https://rclone.org/install.sh | sudo bash
+
+      - name: Configurar rclone (token JSON completo)
         env:
           RCLONE_DRIVE_TOKEN: ${{ secrets.RCLONE_DRIVE_TOKEN }}
         run: |
-          mkdir -p ~/.config/rclone
-          printf '%s\n' "[gdrive]" "type = drive" "scope = drive" "token = ${RCLONE_DRIVE_TOKEN}" > ~/.config/rclone/rclone.conf
+          python3 << 'PY'
+          import json, os, pathlib
+          raw = (os.environ.get("RCLONE_DRIVE_TOKEN") or "").strip()
+          if not raw.startswith("{"):
+              print("::error::RCLONE_DRIVE_TOKEN debe ser el JSON completo (empieza por {). En rclone.conf es la línea token = {...} sin 'token = '.")
+              raise SystemExit(1)
+          try:
+              json.loads(raw)
+          except json.JSONDecodeError as e:
+              print(f"::error::RCLONE_DRIVE_TOKEN no es JSON válido: {e}")
+              raise SystemExit(1)
+          d = pathlib.Path.home() / ".config" / "rclone"
+          d.mkdir(parents=True, exist_ok=True)
+          (d / "rclone.conf").write_text(
+              "[gdrive]\ntype = drive\nscope = drive\ntoken = " + raw + "\n",
+              encoding="utf-8",
+          )
+          print("rclone.conf OK")
+          PY
 
       - name: Backup producción
         env:
