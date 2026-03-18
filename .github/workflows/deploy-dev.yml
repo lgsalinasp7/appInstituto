@@ -55,5 +55,19 @@ jobs:
 
       - name: Trigger deploy en Vercel dev
         run: |
-          resp=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.VERCEL_DEPLOY_HOOK_DEV }}")
-          [ "$resp" = "200" ] || [ "$resp" = "201" ] || (echo "Deploy hook failed: HTTP $resp" && exit 1)
+          set -e
+          HOOK="${{ secrets.VERCEL_DEPLOY_HOOK_DEV }}"
+          if [ -z "$HOOK" ]; then
+            echo "::error::Falta el secreto VERCEL_DEPLOY_HOOK_DEV en GitHub (Settings → Secrets → Actions)."
+            exit 1
+          fi
+          resp=$(curl -sS -o /dev/null -w "%{http_code}" -X POST "$HOOK")
+          if [ "$resp" = "200" ] || [ "$resp" = "201" ]; then
+            echo "Deploy disparado OK (HTTP $resp)"
+            exit 0
+          fi
+          echo "::error::Deploy hook falló: HTTP $resp"
+          if [ "$resp" = "404" ]; then
+            echo "::notice::404 = la URL del hook ya no existe. En Vercel: proyecto **app-instituto-dev** (o el de develop) → Settings → Git → Deploy Hooks → crear hook (rama develop) → copiar URL → actualizar secreto VERCEL_DEPLOY_HOOK_DEV."
+          fi
+          exit 1
