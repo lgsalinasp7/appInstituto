@@ -64,6 +64,16 @@ CREATE INDEX IF NOT EXISTS kaled_cohort_metrics_cohortId_idx ON kaled_cohort_met
 `;
 
 async function main() {
+  // Vercel Preview a veces no inyecta DATABASE_URL en el paso de build; las tablas
+  // se aseguran en CI (deploy-dev / deploy-prod) tras migrate deploy.
+  if (!process.env.DATABASE_URL?.trim()) {
+    console.warn(
+      "[ensure-kaled-tables] Omitido: DATABASE_URL no definida (build sin DB). " +
+        "Las tablas Kaled deben existir por migraciones + paso CI ensure-kaled-tables."
+    );
+    return;
+  }
+
   const prisma = new PrismaClient();
   try {
     const statements = sql

@@ -26,6 +26,11 @@ jobs:
           DIRECT_URL: ${{ secrets.DIRECT_DATABASE_URL_PROD }}
           MIGRATE_ADVISORY_LOCK_TIMEOUT: "30000"
 
+      - name: Ensure Kaled tables (producción)
+        run: npx tsx prisma/ensure-kaled-tables.ts
+        env:
+          DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL_PROD }}
+
       - name: Trigger deploy en Vercel prod
         run: |
           resp=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.VERCEL_DEPLOY_HOOK_PROD }}")
