@@ -19,6 +19,35 @@ jobs:
       - run: npm ci
 
       - name: Run migrations en producción
-        run: npx prisma migrate deploy
+        run: |
+          set -e
+          DB="${DIRECT_DATABASE_URL_PROD}"
+          if [ -z "$DB" ]; then DB="${DATABASE_URL_PROD}"; fi
+          if [ -z "$DB" ]; then
+            echo "::error::Configura DIRECT_DATABASE_URL_PROD o DATABASE_URL_PROD (URL PostgreSQL prod)."
+            exit 1
+          fi
+          export DATABASE_URL="$DB"
+          export DIRECT_URL="$DB"
+          npx prisma migrate deploy
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+          DIRECT_DATABASE_URL_PROD: ${{ secrets.DIRECT_DATABASE_URL_PROD }}
+          DATABASE_URL_PROD: ${{ secrets.DATABASE_URL_PROD }}
+          MIGRATE_ADVISORY_LOCK_TIMEOUT: "30000"
+
+      - name: Ensure Kaled tables (producción)
+        run: |
+          set -e
+          DB="${DIRECT_DATABASE_URL_PROD}"
+          if [ -z "$DB" ]; then DB="${DATABASE_URL_PROD}"; fi
+          if [ -z "$DB" ]; then exit 1; fi
+          export DATABASE_URL="$DB"
+          npx tsx prisma/ensure-kaled-tables.ts
+        env:
+          DIRECT_DATABASE_URL_PROD: ${{ secrets.DIRECT_DATABASE_URL_PROD }}
+          DATABASE_URL_PROD: ${{ secrets.DATABASE_URL_PROD }}
+
+      - name: Trigger deploy en Vercel prod
+        run: |
+          resp=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.VERCEL_DEPLOY_HOOK_PROD }}")
+          [ "$resp" = "200" ] || [ "$resp" = "201" ] || (echo "Deploy hook failed: HTTP $resp" && exit 1)

@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { withTenantAuth, withTenantAuthAndCSRF } from "@/lib/api-auth";
+import { deleteInvitationWithOrphanCleanup } from "@/lib/invitation-helpers";
 
 interface RouteParams {
   params: Promise<Record<string, string>>;
@@ -84,10 +85,8 @@ export const DELETE = withTenantAuthAndCSRF(async (request: NextRequest, user, t
     );
   }
 
-  // Delete the invitation
-  await prisma.invitation.delete({
-    where: { id },
-  });
+  // Eliminar invitación y usuario huérfano de forma atómica
+  await deleteInvitationWithOrphanCleanup(invitation);
 
   return NextResponse.json({
     success: true,

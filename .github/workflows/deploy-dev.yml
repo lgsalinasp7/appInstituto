@@ -18,10 +18,42 @@ jobs:
 
       - run: npm ci
 
+      # Prisma exige DATABASE_URL y DIRECT_URL no vacíos. Usa DIRECT_DATABASE_URL_DEV
+      # (recomendado: URL sin pooler para migraciones) o, si no existe, DATABASE_URL_DEV.
       - name: Run migrations en develop
-        run: npx prisma migrate deploy
+        run: |
+          set -e
+          DB="${DIRECT_DATABASE_URL_DEV}"
+          if [ -z "$DB" ]; then DB="${DATABASE_URL_DEV}"; fi
+          if [ -z "$DB" ]; then
+            echo "::error::Configura el secreto del repo: DIRECT_DATABASE_URL_DEV o DATABASE_URL_DEV (URL PostgreSQL dev)."
+            exit 1
+          fi
+          export DATABASE_URL="$DB"
+          export DIRECT_URL="$DB"
+          npx prisma migrate deploy
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
+          DIRECT_DATABASE_URL_DEV: ${{ secrets.DIRECT_DATABASE_URL_DEV }}
+          DATABASE_URL_DEV: ${{ secrets.DATABASE_URL_DEV }}
+          MIGRATE_ADVISORY_LOCK_TIMEOUT: "30000"
+
+      # Tablas Kaled fuera de migraciones: aplicar en DB antes del build de Vercel
+      - name: Ensure Kaled tables (develop)
+        run: |
+          set -e
+          DB="${DIRECT_DATABASE_URL_DEV}"
+          if [ -z "$DB" ]; then DB="${DATABASE_URL_DEV}"; fi
+          if [ -z "$DB" ]; then
+            echo "::error::Mismo secreto que migraciones: DIRECT_DATABASE_URL_DEV o DATABASE_URL_DEV"
+            exit 1
+          fi
+          export DATABASE_URL="$DB"
+          npx tsx prisma/ensure-kaled-tables.ts
+        env:
+          DIRECT_DATABASE_URL_DEV: ${{ secrets.DIRECT_DATABASE_URL_DEV }}
+          DATABASE_URL_DEV: ${{ secrets.DATABASE_URL_DEV }}
 
       - name: Trigger deploy en Vercel dev
-        run: curl -X POST ${{ secrets.VERCEL_DEPLOY_HOOK_DEV }}
+        run: |
+          resp=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.VERCEL_DEPLOY_HOOK_DEV }}")
+          [ "$resp" = "200" ] || [ "$resp" = "201" ] || (echo "Deploy hook failed: HTTP $resp" && exit 1)

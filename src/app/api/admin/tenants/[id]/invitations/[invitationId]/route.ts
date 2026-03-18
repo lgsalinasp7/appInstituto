@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { withPlatformAdmin } from "@/lib/api-auth";
 import { handleApiError } from "@/lib/errors";
+import { deleteInvitationWithOrphanCleanup } from "@/lib/invitation-helpers";
 
 interface RouteContext {
   params: Promise<{ id: string; invitationId: string }>;
@@ -52,9 +53,8 @@ export const DELETE = withPlatformAdmin(
         );
       }
 
-      await prisma.invitation.delete({
-        where: { id: invitationId },
-      });
+      // Eliminar invitación y usuario huérfano de forma atómica
+      await deleteInvitationWithOrphanCleanup(invitation);
 
       return NextResponse.json({
         success: true,
