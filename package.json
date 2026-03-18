@@ -20,6 +20,7 @@
     "db:seed-kaledacademy-v3": "npx tsx prisma/seed-kaledacademy-v3.ts",
     "db:create-kaledsoft-tenant": "npx tsx prisma/create-kaledsoft-tenant.ts",
     "db:create-edutec-users": "npx tsx prisma/create-edutec-users.ts",
+    "db:validate-edutec-users": "npx tsx prisma/validate-edutec-users.ts",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage"

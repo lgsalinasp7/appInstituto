@@ -14,7 +14,7 @@
 // Ejecutar: npx tsx prisma/seed-kaledacademy-v3.ts
 // ============================================================
 
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -411,49 +411,61 @@ async function main() {
   }
 
   // ── Costos manuales por cohorte (rentabilidad 4 meses) ──────
-  await prisma.academyCohortCostAllocation.upsert({
-    where: { id: "cohort-cost-ads-2025-1" },
-    create: {
-      id: "cohort-cost-ads-2025-1",
-      tenantId: tenant.id,
-      cohortId: cohort.id,
-      category: "ADS",
-      sourceType: "MANUAL",
-      label: "Facebook Ads Cohorte 2025-1",
-      amountCop: 2800000,
-      allocationDate: new Date("2025-03-05"),
-      monthIndex: 1,
-      notes: "Inversión inicial de adquisición.",
-    },
-    update: {
-      amountCop: 2800000,
-      allocationDate: new Date("2025-03-05"),
-      monthIndex: 1,
-      notes: "Inversión inicial de adquisición.",
-    },
-  });
+  // Opcional: en bases con drift (migraciones aplicadas pero tabla ausente) no bloquea el seed.
+  try {
+    await prisma.academyCohortCostAllocation.upsert({
+      where: { id: "cohort-cost-ads-2025-1" },
+      create: {
+        id: "cohort-cost-ads-2025-1",
+        tenantId: tenant.id,
+        cohortId: cohort.id,
+        category: "ADS",
+        sourceType: "MANUAL",
+        label: "Facebook Ads Cohorte 2025-1",
+        amountCop: 2800000,
+        allocationDate: new Date("2025-03-05"),
+        monthIndex: 1,
+        notes: "Inversión inicial de adquisición.",
+      },
+      update: {
+        amountCop: 2800000,
+        allocationDate: new Date("2025-03-05"),
+        monthIndex: 1,
+        notes: "Inversión inicial de adquisición.",
+      },
+    });
 
-  await prisma.academyCohortCostAllocation.upsert({
-    where: { id: "cohort-cost-instructor-2025-1" },
-    create: {
-      id: "cohort-cost-instructor-2025-1",
-      tenantId: tenant.id,
-      cohortId: cohort.id,
-      category: "INSTRUCTOR",
-      sourceType: "MANUAL",
-      label: "Honorarios instructor cohorte",
-      amountCop: 3600000,
-      allocationDate: new Date("2025-04-01"),
-      monthIndex: 2,
-      notes: "Costo directo de operación académica.",
-    },
-    update: {
-      amountCop: 3600000,
-      allocationDate: new Date("2025-04-01"),
-      monthIndex: 2,
-      notes: "Costo directo de operación académica.",
-    },
-  });
+    await prisma.academyCohortCostAllocation.upsert({
+      where: { id: "cohort-cost-instructor-2025-1" },
+      create: {
+        id: "cohort-cost-instructor-2025-1",
+        tenantId: tenant.id,
+        cohortId: cohort.id,
+        category: "INSTRUCTOR",
+        sourceType: "MANUAL",
+        label: "Honorarios instructor cohorte",
+        amountCop: 3600000,
+        allocationDate: new Date("2025-04-01"),
+        monthIndex: 2,
+        notes: "Costo directo de operación académica.",
+      },
+      update: {
+        amountCop: 3600000,
+        allocationDate: new Date("2025-04-01"),
+        monthIndex: 2,
+        notes: "Costo directo de operación académica.",
+      },
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2021") {
+      console.warn(
+        "\n⚠️  Tabla AcademyCohortCostAllocation no existe: se omiten costos de cohorte.\n" +
+          "   Curso/lecciones se cargan igual. Para crear la tabla: npx prisma db push (dev) o repara migraciones en Neon.\n"
+      );
+    } else {
+      throw e;
+    }
+  }
 
   // ── Badges ───────────────────────────────────────────────
   const badges = [
