@@ -32,7 +32,9 @@ async function main() {
   });
 
   if (!tenant) {
-    console.error("❌ Tenant slug \"edutec\" no existe. Ejecuta prisma/seed.ts o crea el tenant.");
+    console.error(
+      '❌ Tenant slug "edutec" no existe. Ejecuta: npm run db:seed-edutec-incremental (recomendado en prod) o seed.ts con SEED_ALLOW_WIPE en BD vacía.',
+    );
     process.exit(1);
   }
 

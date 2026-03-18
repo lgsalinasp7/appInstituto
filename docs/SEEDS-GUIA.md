@@ -45,8 +45,11 @@ Si no está definido, el seed se bloquea y muestra un mensaje indicando qué hac
 | `npx tsx prisma/seed-email-sequences.ts` | Secuencias de email |
 | `npx tsx prisma/seed-academy-stack.ts` | Stack de academia |
 | `npx tsx prisma/create-kaledsoft-tenant.ts` | Crea tenant KaledSoft si no existe |
+| `npm run db:seed-edutec-incremental` | Crea o completa tenant **edutec** (branding, roles, 9 usuarios `@edutec.edu.co`, 5 programas, `MONTHLY_GOAL`). **No borra datos.** Ideal para producción cuando falta Edutec. Luego: `npm run db:validate-edutec-users`. |
 
-Estos seeds **no tocan** el tenant kaledsoft ni los usuarios existentes. Solo agregan o actualizan datos.
+Estos seeds **no tocan** el resto de tenants salvo lo indicado. Solo agregan o actualizan datos del alcance del script.
+
+**Edutec en producción:** no uses `seed.ts` (wipe). Usa `db:seed-edutec-incremental` con `DATABASE_URL` de prod y backup previo. Los usuarios nuevos reciben las contraseñas del seed (`Admin123!`, etc.); los que ya existían en Edutec **no** se les cambia la contraseña al re-ejecutar.
 
 ---
 

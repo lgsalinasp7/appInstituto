@@ -55,6 +55,7 @@ async function main() {
 ║    npm run db:seed-kaledacademy-v2                                ║
 ║    npm run db:seed-kaledacademy                                   ║
 ║    npx tsx prisma/seed-email-templates.ts                         ║
+║    npm run db:seed-edutec-incremental                             ║
 ║    etc.                                                           ║
 ╚══════════════════════════════════════════════════════════════════╝
 `);
