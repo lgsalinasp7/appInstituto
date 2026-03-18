@@ -18,20 +18,40 @@ jobs:
 
       - run: npm ci
 
+      # Prisma exige DATABASE_URL y DIRECT_URL no vacíos. Usa DIRECT_DATABASE_URL_DEV
+      # (recomendado: URL sin pooler para migraciones) o, si no existe, DATABASE_URL_DEV.
       - name: Run migrations en develop
-        run: npx prisma migrate deploy
+        run: |
+          set -e
+          DB="${DIRECT_DATABASE_URL_DEV}"
+          if [ -z "$DB" ]; then DB="${DATABASE_URL_DEV}"; fi
+          if [ -z "$DB" ]; then
+            echo "::error::Configura el secreto del repo: DIRECT_DATABASE_URL_DEV o DATABASE_URL_DEV (URL PostgreSQL dev)."
+            exit 1
+          fi
+          export DATABASE_URL="$DB"
+          export DIRECT_URL="$DB"
+          npx prisma migrate deploy
         env:
-          # Schema requiere DATABASE_URL; migrate usa DIRECT_URL (evita P1002 advisory lock)
-          DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL_DEV }}
-          DIRECT_URL: ${{ secrets.DIRECT_DATABASE_URL_DEV }}
+          DIRECT_DATABASE_URL_DEV: ${{ secrets.DIRECT_DATABASE_URL_DEV }}
+          DATABASE_URL_DEV: ${{ secrets.DATABASE_URL_DEV }}
           MIGRATE_ADVISORY_LOCK_TIMEOUT: "30000"
 
       # Tablas Kaled fuera de migraciones: aplicar en DB antes del build de Vercel
-      # (el build puede correr sin DATABASE_URL en Preview).
       - name: Ensure Kaled tables (develop)
-        run: npx tsx prisma/ensure-kaled-tables.ts
+        run: |
+          set -e
+          DB="${DIRECT_DATABASE_URL_DEV}"
+          if [ -z "$DB" ]; then DB="${DATABASE_URL_DEV}"; fi
+          if [ -z "$DB" ]; then
+            echo "::error::Mismo secreto que migraciones: DIRECT_DATABASE_URL_DEV o DATABASE_URL_DEV"
+            exit 1
+          fi
+          export DATABASE_URL="$DB"
+          npx tsx prisma/ensure-kaled-tables.ts
         env:
-          DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL_DEV }}
+          DIRECT_DATABASE_URL_DEV: ${{ secrets.DIRECT_DATABASE_URL_DEV }}
+          DATABASE_URL_DEV: ${{ secrets.DATABASE_URL_DEV }}
 
       - name: Trigger deploy en Vercel dev
         run: |
