@@ -26,11 +26,12 @@ export function StudentsManagement() {
   const [isTrialModalOpen, setIsTrialModalOpen] = useState(false);
   const { user } = useAuthStore();
   // Pueden invitar: Super Admin, Admin de Academia, o Administrador del tenant. Los profesores (ACADEMY_TEACHER) no pueden invitar.
+  const tenantRole = user?.role?.name?.trim().toUpperCase() ?? "";
   const canInvite =
-    (user?.role?.name?.toUpperCase() === "SUPERADMIN") ||
+    tenantRole === "SUPERADMIN" ||
+    tenantRole === "ADMINISTRADOR" ||
     user?.platformRole === "SUPER_ADMIN" ||
-    user?.platformRole === "ACADEMY_ADMIN" ||
-    user?.role?.name === "ADMINISTRADOR";
+    user?.platformRole === "ACADEMY_ADMIN";
 
   const fetchStudents = useCallback(() => {
     fetch("/api/academy/students")
