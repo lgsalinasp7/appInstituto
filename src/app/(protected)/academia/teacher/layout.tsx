@@ -27,27 +27,48 @@ export default async function TeacherLayout({
     redirect("/academia");
   }
 
-  const tenantId = dbUser ? (await prisma.user.findUnique({ where: { id: user.id }, select: { tenantId: true } }))?.tenantId : null;
-  const cohort = tenantId
-    ? await prisma.academyCohort.findFirst({
+  const tenantId = dbUser
+    ? (
+        await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { tenantId: true },
+        })
+      )?.tenantId
+    : null;
+
+  let cohortLabel: string | null = null;
+  if (tenantId && dbUser) {
+    if (dbUser.platformRole === "ACADEMY_ADMIN") {
+      const c = await prisma.academyCohort.findFirst({
         where: { status: "ACTIVE", tenantId },
         select: { name: true },
-      })
-    : null;
+      });
+      cohortLabel = c?.name ?? null;
+    } else {
+      const assign = await prisma.academyCohortTeacherAssignment.findFirst({
+        where: {
+          teacherId: user.id,
+          cohort: { tenantId, status: "ACTIVE" },
+        },
+        include: { cohort: { select: { name: true } } },
+      });
+      cohortLabel = assign?.cohort.name ?? null;
+    }
+  }
 
   return (
     <div className="academy-shell-dark w-full h-screen flex font-sans relative overflow-hidden">
       <TeacherSidebar
         userName={dbUser?.name ?? "Instructor"}
         userImage={dbUser?.image ?? undefined}
-        cohortName={cohort?.name}
+        cohortName={cohortLabel ?? undefined}
       />
 
       <div className="w-full flex flex-col min-w-0 min-h-0 lg:pl-[260px]">
         <TeacherTopbar
           userName={dbUser?.name ?? "Instructor"}
           userImage={dbUser?.image ?? undefined}
-          cohortName={cohort?.name}
+          cohortName={cohortLabel ?? undefined}
         />
         <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 px-4 py-5 sm:px-5 sm:py-6 lg:px-6 lg:py-8 pb-28 lg:pb-8">
           {children}

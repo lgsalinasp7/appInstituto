@@ -38,6 +38,32 @@ export class AcademyEnrollmentService {
   }
 
   static async enroll(data: CreateEnrollmentInput, tenantId: string) {
+    const trialFields = async (cohortId: string | undefined) => {
+      if (!cohortId) {
+        return {
+          isTrial: false,
+          trialExpiresAt: null as Date | null,
+          clearTrialLesson: true,
+        };
+      }
+      const cohort = await prisma.academyCohort.findFirst({
+        where: { id: cohortId, tenantId },
+        select: { kind: true, endDate: true },
+      });
+      if (cohort?.kind === "PROMOTIONAL") {
+        return {
+          isTrial: true,
+          trialExpiresAt: cohort.endDate,
+          clearTrialLesson: false,
+        };
+      }
+      return {
+        isTrial: false,
+        trialExpiresAt: null as Date | null,
+        clearTrialLesson: true,
+      };
+    };
+
     const existing = await prisma.academyEnrollment.findUnique({
       where: {
         userId_courseId: { userId: data.userId, courseId: data.courseId },
@@ -45,13 +71,20 @@ export class AcademyEnrollmentService {
     });
     if (existing) {
       if (data.cohortId && existing.cohortId !== data.cohortId) {
+        const t = await trialFields(data.cohortId);
         return prisma.academyEnrollment.update({
           where: { userId_courseId: { userId: data.userId, courseId: data.courseId } },
-          data: { cohortId: data.cohortId },
+          data: {
+            cohortId: data.cohortId,
+            isTrial: t.isTrial,
+            trialExpiresAt: t.trialExpiresAt,
+            ...(t.clearTrialLesson ? { trialAllowedLessonId: null } : {}),
+          },
         });
       }
       return existing;
     }
+    const t = await trialFields(data.cohortId);
     return prisma.academyEnrollment.create({
       data: {
         userId: data.userId,
@@ -59,6 +92,9 @@ export class AcademyEnrollmentService {
         cohortId: data.cohortId ?? undefined,
         status: "ACTIVE",
         progress: 0,
+        isTrial: t.isTrial,
+        trialExpiresAt: t.trialExpiresAt,
+        ...(t.clearTrialLesson ? { trialAllowedLessonId: null } : {}),
       },
     });
   }

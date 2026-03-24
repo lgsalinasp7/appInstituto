@@ -38,6 +38,9 @@ export class AcademyCourseService {
         },
         cohorts: {
           orderBy: { startDate: "desc" },
+          include: {
+            _count: { select: { enrollments: true } },
+          },
         },
         createdBy: {
           select: { id: true, name: true, email: true },

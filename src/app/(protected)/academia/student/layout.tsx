@@ -1,6 +1,7 @@
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { AcademyCohortLifecycleService } from "@/modules/academia/services/academy-cohort-lifecycle.service";
 import { StudentSidebar } from "@/modules/academia/components/student/StudentSidebar";
 import { StudentTopbar } from "@/modules/academia/components/student/StudentTopbar";
 import { TrialBanner } from "@/modules/academia/components/student/TrialBanner";
@@ -22,33 +23,42 @@ export default async function StudentLayout({
       email: true,
       image: true,
       platformRole: true,
-      academyEnrollments: {
-        where: { status: "ACTIVE" },
-        include: {
-          course: { select: { id: true, title: true } },
-          cohort: { select: { id: true, name: true } },
-        },
-        take: 1,
-      },
     },
   });
 
-  if (dbUser?.platformRole !== "ACADEMY_STUDENT") redirect("/academia");
+  if (!dbUser || dbUser.platformRole !== "ACADEMY_STUDENT") redirect("/academia");
 
-  const enrollment = dbUser.academyEnrollments[0] as
-    | (typeof dbUser.academyEnrollments[0] & {
-        isTrial?: boolean;
-        trialExpiresAt?: Date | null;
-      })
-    | undefined;
-  const snapshot = await prisma.academyStudentSnapshot.findFirst({
-    where: { userId: user.id },
-    select: {
-      overallProgress: true,
-      lessonsCompleted: true,
-      lessonsTotal: true,
+  const tenantIdRow = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { tenantId: true },
+  });
+  const tenantId = tenantIdRow?.tenantId;
+  if (tenantId) {
+    await AcademyCohortLifecycleService.applyPromotionalExpiryIfNeeded(
+      user.id,
+      tenantId
+    );
+  }
+
+  const enrollment = await prisma.academyEnrollment.findFirst({
+    where: { userId: user.id, status: "ACTIVE" },
+    include: {
+      course: { select: { id: true, title: true } },
+      cohort: { select: { id: true, name: true } },
     },
   });
+
+  const snapshot =
+    enrollment != null
+      ? await prisma.academyStudentSnapshot.findFirst({
+          where: { userId: user.id, enrollmentId: enrollment.id },
+          select: {
+            overallProgress: true,
+            lessonsCompleted: true,
+            lessonsTotal: true,
+          },
+        })
+      : null;
 
   const progress = Number(snapshot?.overallProgress ?? 0);
 
