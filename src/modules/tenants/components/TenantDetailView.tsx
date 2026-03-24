@@ -647,6 +647,9 @@ function UsersTab({
   const [isTrialModalOpen, setIsTrialModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"ACADEMY_STUDENT" | "ACADEMY_TEACHER" | "ACADEMY_ADMIN">("ACADEMY_STUDENT");
+  const [inviteCohortId, setInviteCohortId] = useState("");
+  const [inviteCohorts, setInviteCohorts] = useState<Array<{ id: string; name: string; courseTitle: string }>>([]);
+  const [inviteCohortsLoading, setInviteCohortsLoading] = useState(false);
   const [inviteLoading, setInviteLoading] = useState(false);
 
   const canShowInvite = showInviteAcademy;
@@ -659,19 +662,51 @@ function UsersTab({
     setPage,
   } = useTablePagination(users, 6);
 
+  useEffect(() => {
+    if (!isInviteOpen || !canShowInvite) return;
+    let cancelled = false;
+    setInviteCohortsLoading(true);
+    fetch(`/api/admin/tenants/${encodeURIComponent(tenantSlug)}/cohorts-for-invitation`, {
+      credentials: "include",
+    })
+      .then((r) => r.json())
+      .then((res) => {
+        if (cancelled) return;
+        if (res.success && Array.isArray(res.data)) setInviteCohorts(res.data);
+        else setInviteCohorts([]);
+      })
+      .catch(() => {
+        if (!cancelled) setInviteCohorts([]);
+      })
+      .finally(() => {
+        if (!cancelled) setInviteCohortsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isInviteOpen, canShowInvite, tenantSlug]);
+
   const handleInviteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail.trim()) {
       toast.error("Ingresa un correo electrónico");
       return;
     }
+    if (inviteRole === "ACADEMY_STUDENT" && !inviteCohortId) {
+      toast.error("Selecciona el cohorte donde quedará matriculado el estudiante");
+      return;
+    }
     setInviteLoading(true);
     try {
-      const res = await fetch("/api/admin/tenants/kaledacademy/invitations", {
+      const body: Record<string, unknown> = { email: inviteEmail.trim(), academyRole: inviteRole };
+      if (inviteRole === "ACADEMY_STUDENT" && inviteCohortId) {
+        body.academyCohortId = inviteCohortId;
+      }
+      const res = await fetch(`/api/admin/tenants/${encodeURIComponent(tenantSlug)}/invitations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email: inviteEmail.trim(), academyRole: inviteRole }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!data.success) {
@@ -681,6 +716,7 @@ function UsersTab({
       toast.success(`Invitación enviada a ${inviteEmail}`);
       setInviteEmail("");
       setInviteRole("ACADEMY_STUDENT");
+      setInviteCohortId("");
       setIsInviteOpen(false);
       onUserUpdated();
     } catch {
@@ -753,7 +789,10 @@ function UsersTab({
               <select
                 id="invite-role"
                 value={inviteRole}
-                onChange={(e) => setInviteRole(e.target.value as typeof inviteRole)}
+                onChange={(e) => {
+                  setInviteRole(e.target.value as typeof inviteRole);
+                  if (e.target.value !== "ACADEMY_STUDENT") setInviteCohortId("");
+                }}
                 className="mt-1.5 w-full h-10 rounded-lg bg-slate-800 border border-slate-700 text-white px-3"
               >
                 <option value="ACADEMY_STUDENT">Estudiante</option>
@@ -761,6 +800,34 @@ function UsersTab({
                 <option value="ACADEMY_ADMIN">Administrador</option>
               </select>
             </div>
+            {inviteRole === "ACADEMY_STUDENT" && (
+              <div>
+                <Label htmlFor="invite-cohort" className="text-slate-400">
+                  Cohorte (matrícula al aceptar)
+                </Label>
+                {inviteCohortsLoading ? (
+                  <p className="mt-1.5 text-xs text-slate-500">Cargando cohortes…</p>
+                ) : (
+                  <select
+                    id="invite-cohort"
+                    value={inviteCohortId}
+                    onChange={(e) => setInviteCohortId(e.target.value)}
+                    className="mt-1.5 w-full h-10 rounded-lg bg-slate-800 border border-slate-700 text-white px-3"
+                    required
+                  >
+                    <option value="">— Cohorte activo —</option>
+                    {inviteCohorts.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} · {c.courseTitle}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {inviteCohorts.length === 0 && !inviteCohortsLoading && (
+                  <p className="mt-1 text-xs text-amber-200/90">Crea un cohorte activo en el curso antes de invitar.</p>
+                )}
+              </div>
+            )}
             <div className="flex gap-2 pt-2">
               <Button type="submit" disabled={inviteLoading} className="flex-1">
                 {inviteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Enviar invitación"}
@@ -778,6 +845,7 @@ function UsersTab({
         onOpenChange={setIsTrialModalOpen}
         onInviteSuccess={onUserUpdated}
         useAdminApi={true}
+        adminTenantKey={tenantSlug}
       />
 
       <div className="overflow-x-auto">

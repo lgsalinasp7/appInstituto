@@ -31,6 +31,8 @@ interface InvitationData {
   tenantName?: string;
   expiresAt: string;
   academyRole?: string | null;
+  academyCohortName?: string | null;
+  isTrialInvitation?: boolean;
 }
 
 function getTenantLoginUrl(tenantSlug?: string): string {
@@ -76,7 +78,10 @@ export default function AcceptInvitationPage() {
         if (!data.success) {
           setError(data.error || "Invitación inválida");
         } else {
-          setInvitation(data.data);
+          setInvitation({
+            ...data.data,
+            isTrialInvitation: Boolean(data.data?.isTrialInvitation),
+          });
         }
       } catch {
         setError("Error al validar la invitación. Verifica tu conexión e intenta de nuevo.");
@@ -241,6 +246,15 @@ export default function AcceptInvitationPage() {
                   ? getAcademyRoleLabel(invitation.academyRole)
                   : invitation.role.name}
               </p>
+              {invitation.academyCohortName ? (
+                <p className="text-sm text-slate-300">
+                  <span className="font-semibold text-slate-400">Cohorte:</span>{" "}
+                  {invitation.academyCohortName}
+                  {invitation.isTrialInvitation ? (
+                    <span className="text-slate-500"> (acceso de prueba)</span>
+                  ) : null}
+                </p>
+              ) : null}
               <p className="text-sm text-slate-300">
                 <span className="font-semibold text-slate-400">Invitado por:</span>{" "}
                 {invitation.inviter.name || invitation.inviter.email}

@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { withAcademyAuth } from "@/lib/api-auth";
 import { AcademyCohortService } from "@/modules/academia";
@@ -27,7 +28,7 @@ export const PATCH = withAcademyAuth(
     await auditCohortAdminAction(
       { tenantId, actorUserId: user.id },
       "UPDATE_COHORT",
-      { cohortId: id, patch: parsed.data }
+      { cohortId: id, patch: parsed.data } as Prisma.InputJsonValue
     );
     return NextResponse.json({ success: true });
   }

@@ -693,13 +693,17 @@ model Invitation {
   trialExpiresAt      DateTime?
   trialCohortName     String?
   trialNextCohortDate DateTime?
+  /// Cohorte donde se matriculará el estudiante al aceptar (Kaled Academy).
+  academyCohortId     String?
   inviter      User             @relation("SentInvitations", fields: [inviterId], references: [id])
   role        Role             @relation(fields: [roleId], references: [id])
   tenant      Tenant           @relation(fields: [tenantId], references: [id])
+  academyCohort AcademyCohort? @relation("InvitationTargetCohort", fields: [academyCohortId], references: [id], onDelete: SetNull)
 
   @@index([email])
   @@index([token])
   @@index([inviterId])
+  @@index([academyCohortId])
 }
 
 model TrialUserActivity {
@@ -1539,6 +1543,7 @@ model AcademyCohort {
   announcements    AcademyAnnouncement[]
   costAllocations  AcademyCohortCostAllocation[]
   teacherAssignments AcademyCohortTeacherAssignment[]
+  invitationTargets  Invitation[]                     @relation("InvitationTargetCohort")
 
   @@index([courseId])
   @@index([tenantId])

@@ -4,11 +4,74 @@
  */
 
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { AuthService } from "@/modules/auth/services/auth.service";
 import { courseService } from "@/modules/academy/services/academy.service";
 import { z } from "zod";
 import { addYears } from "date-fns";
+
+async function enrollStudentFromInvitation(
+  tx: Prisma.TransactionClient,
+  opts: {
+    tenantId: string;
+    userId: string;
+    cohortId: string;
+    isTrial: boolean;
+    trialExpiresAt: Date | null;
+    trialAllowedLessonId: string | null;
+    lessonsTotalSnapshot: number;
+  }
+) {
+  const cohort = await tx.academyCohort.findFirst({
+    where: { id: opts.cohortId, tenantId: opts.tenantId },
+  });
+  if (!cohort) {
+    throw new Error("Cohorte no encontrado o no pertenece al instituto");
+  }
+
+  const dup = await tx.academyEnrollment.findFirst({
+    where: { userId: opts.userId, courseId: cohort.courseId },
+  });
+  if (dup) {
+    throw new Error("El estudiante ya tiene matrícula en este curso");
+  }
+
+  const enrollment = await tx.academyEnrollment.create({
+    data: {
+      userId: opts.userId,
+      courseId: cohort.courseId,
+      cohortId: cohort.id,
+      status: "ACTIVE",
+      progress: 0,
+      isTrial: opts.isTrial,
+      trialExpiresAt: opts.trialExpiresAt,
+      trialAllowedLessonId: opts.trialAllowedLessonId,
+    },
+  });
+
+  await tx.academyStudentSnapshot.create({
+    data: {
+      userId: opts.userId,
+      cohortId: cohort.id,
+      enrollmentId: enrollment.id,
+      overallProgress: 0,
+      lessonsCompleted: 0,
+      lessonsTotal: opts.lessonsTotalSnapshot,
+      quizzesPassed: 0,
+      quizzesTotal: 0,
+      deliverablesSubmitted: 0,
+      deliverablesApproved: 0,
+      kaledInteractions: 0,
+      tenantId: opts.tenantId,
+    },
+  });
+
+  await tx.academyCohort.update({
+    where: { id: cohort.id },
+    data: { currentStudents: { increment: 1 } },
+  });
+}
 
 // Validation schema
 const acceptInvitationSchema = z.object({
@@ -54,6 +117,9 @@ export async function GET(request: Request) {
             slug: true,
             name: true,
           },
+        },
+        academyCohort: {
+          select: { id: true, name: true },
         },
       },
     });
@@ -109,6 +175,8 @@ export async function GET(request: Request) {
         isTrialInvitation: inv.isTrialInvitation ?? false,
         trialCohortName: inv.trialCohortName ?? null,
         trialNextCohortDate: inv.trialNextCohortDate?.toISOString() ?? null,
+        academyCohortId: invitation.academyCohortId ?? null,
+        academyCohortName: invitation.academyCohort?.name ?? null,
       },
     });
   } catch (error) {
@@ -209,9 +277,16 @@ export async function POST(request: Request) {
       trialCohortName?: string | null;
     };
 
+    const tenantSlug = invitation.tenant?.slug;
+    const cohortIdOnInvite = invitation.academyCohortId ?? null;
+
+    const firstLessonIdForTrial =
+      inv.isTrialInvitation && tenantSlug === "kaledacademy"
+        ? await courseService.getFirstLessonOfModule1(invitation.tenantId)
+        : null;
+
     // Create user with hashed password using transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Create user
       const user = await AuthService.createUser({
         email: invitation.email,
         name,
@@ -221,89 +296,88 @@ export async function POST(request: Request) {
         ...(platformRole && { platformRole }),
       });
 
-      // Update invitation status
       await tx.invitation.update({
         where: { id: invitation.id },
         data: { status: "ACCEPTED" },
       });
 
-      // Trial enrollment: create cohort, enrollment, snapshot
-      if (inv.isTrialInvitation && invitation.tenant?.slug === "kaledacademy") {
+      if (inv.isTrialInvitation && tenantSlug === "kaledacademy") {
         const tenantId = invitation.tenantId;
         const trialExpiresAt = inv.trialExpiresAt ?? new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
-        const trialCohortName = inv.trialCohortName ?? "Prueba";
 
-        const firstLessonId = await courseService.getFirstLessonOfModule1(tenantId);
-        if (!firstLessonId) {
+        if (!firstLessonIdForTrial) {
           throw new Error("No se encontró la primera lección del Módulo 1 para el acceso de prueba");
         }
 
-        const course = await tx.academyCourse.findFirst({
-          where: { tenantId, isActive: true },
-        });
-        if (!course) {
-          throw new Error("No se encontró el curso principal de Kaled Academy");
-        }
-
-        let cohort = await tx.academyCohort.findFirst({
-          where: {
-            courseId: course.id,
+        if (cohortIdOnInvite) {
+          await enrollStudentFromInvitation(tx, {
             tenantId,
-            name: trialCohortName,
-            status: "ACTIVE",
-          },
-        });
-
-        if (!cohort) {
-          const now = new Date();
-          cohort = await tx.academyCohort.create({
-            data: {
-              name: trialCohortName,
-              startDate: now,
-              endDate: addYears(now, 1),
-              maxStudents: 9999,
-              currentStudents: 0,
-              status: "ACTIVE",
-              schedule: {},
-              courseId: course.id,
-              tenantId,
-            },
-          });
-        }
-
-        const enrollment = await tx.academyEnrollment.create({
-          data: {
             userId: user.id,
-            courseId: course.id,
-            cohortId: cohort.id,
-            status: "ACTIVE",
-            progress: 0,
+            cohortId: cohortIdOnInvite,
             isTrial: true,
             trialExpiresAt,
-            trialAllowedLessonId: firstLessonId,
-          },
-        });
+            trialAllowedLessonId: firstLessonIdForTrial,
+            lessonsTotalSnapshot: 1,
+          });
+        } else {
+          const trialCohortName = inv.trialCohortName ?? "Prueba";
 
-        await tx.academyStudentSnapshot.create({
-          data: {
+          const course = await tx.academyCourse.findFirst({
+            where: { tenantId, isActive: true },
+          });
+          if (!course) {
+            throw new Error("No se encontró el curso principal de Kaled Academy");
+          }
+
+          let cohort = await tx.academyCohort.findFirst({
+            where: {
+              courseId: course.id,
+              tenantId,
+              name: trialCohortName,
+              status: "ACTIVE",
+            },
+          });
+
+          if (!cohort) {
+            const now = new Date();
+            cohort = await tx.academyCohort.create({
+              data: {
+                name: trialCohortName,
+                startDate: now,
+                endDate: addYears(now, 1),
+                maxStudents: 9999,
+                currentStudents: 0,
+                status: "ACTIVE",
+                schedule: {},
+                courseId: course.id,
+                tenantId,
+              },
+            });
+          }
+
+          await enrollStudentFromInvitation(tx, {
+            tenantId,
             userId: user.id,
             cohortId: cohort.id,
-            enrollmentId: enrollment.id,
-            overallProgress: 0,
-            lessonsCompleted: 0,
-            lessonsTotal: 1,
-            quizzesPassed: 0,
-            quizzesTotal: 0,
-            deliverablesSubmitted: 0,
-            deliverablesApproved: 0,
-            kaledInteractions: 0,
-            tenantId,
-          },
-        });
-
-        await tx.academyCohort.update({
-          where: { id: cohort.id },
-          data: { currentStudents: { increment: 1 } },
+            isTrial: true,
+            trialExpiresAt,
+            trialAllowedLessonId: firstLessonIdForTrial,
+            lessonsTotalSnapshot: 1,
+          });
+        }
+      } else if (
+        tenantSlug === "kaledacademy" &&
+        platformRole === "ACADEMY_STUDENT" &&
+        cohortIdOnInvite
+      ) {
+        await enrollStudentFromInvitation(tx, {
+          tenantId: invitation.tenantId,
+          userId: user.id,
+          cohortId: cohortIdOnInvite,
+          isTrial: false,
+          trialExpiresAt: null,
+          trialAllowedLessonId: null,
+          lessonsTotalSnapshot: 0,
         });
       }
 

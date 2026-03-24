@@ -65,7 +65,6 @@ async function notifyCohortChange(params: {
 
   if (params.email) {
     try {
-      const tenantSlug = KALED_ACADEMY_CONFIG.tenantSlug;
       await sendTemplateEmail({
         to: params.email,
         subject: params.title,

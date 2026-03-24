@@ -30,10 +30,19 @@ const ACADEMY_ROLES = [
     { value: "ACADEMY_ADMIN", label: "Administrador Academia" },
 ] as const;
 
+interface CohortInviteOption {
+    id: string;
+    name: string;
+    courseTitle: string;
+}
+
 export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAdmin = false, defaultAcademyRole }: InviteUserModalProps) {
     const [email, setEmail] = useState("");
     const [roleId, setRoleId] = useState("");
     const [academyRole, setAcademyRole] = useState<string>(defaultAcademyRole ?? "");
+    const [academyCohortId, setAcademyCohortId] = useState("");
+    const [inviteCohorts, setInviteCohorts] = useState<CohortInviteOption[]>([]);
+    const [cohortsLoading, setCohortsLoading] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [roles, setRoles] = useState<RoleOption[]>([]);
     const { user } = useAuthStore();
@@ -87,10 +96,36 @@ export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAd
         }
     }, [open, isSuperAdmin, isAcademyTenant]);
 
+    useEffect(() => {
+        if (!open || !isAcademyTenant) return;
+        let cancelled = false;
+        setCohortsLoading(true);
+        fetch("/api/academy/cohorts/for-invitation", { credentials: "include" })
+            .then((r) => r.json())
+            .then((res) => {
+                if (cancelled) return;
+                if (res.success && Array.isArray(res.data)) {
+                    setInviteCohorts(res.data);
+                } else {
+                    setInviteCohorts([]);
+                }
+            })
+            .catch(() => {
+                if (!cancelled) setInviteCohorts([]);
+            })
+            .finally(() => {
+                if (!cancelled) setCohortsLoading(false);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [open, isAcademyTenant]);
+
     // Pre-seleccionar rol de Academia cuando se abre desde Academia → Usuarios o Configuración → Invitar estudiante
     useEffect(() => {
         if (open) {
             setAcademyRole(defaultAcademyRole ?? "");
+            setAcademyCohortId("");
         }
     }, [open, defaultAcademyRole]);
 
@@ -104,6 +139,13 @@ export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAd
         if (isAcademyTenant ? !academyRole : !roleId) {
             toast.error("Por favor selecciona un rol");
             return;
+        }
+
+        if (isAcademyTenant && academyRole === "ACADEMY_STUDENT") {
+            if (!academyCohortId) {
+                toast.error("Selecciona el cohorte donde quedará matriculado el estudiante");
+                return;
+            }
         }
 
         // Validate email format
@@ -138,6 +180,9 @@ export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAd
             };
             if (isAcademyTenant && academyRole) {
                 body.academyRole = academyRole;
+            }
+            if (isAcademyTenant && academyRole === "ACADEMY_STUDENT" && academyCohortId) {
+                body.academyCohortId = academyCohortId;
             }
 
             const response = await fetch("/api/invitations", {
@@ -212,7 +257,10 @@ export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAd
                             <select
                                 id="academyRole"
                                 value={academyRole}
-                                onChange={(e) => setAcademyRole(e.target.value)}
+                                onChange={(e) => {
+                                    setAcademyRole(e.target.value);
+                                    if (e.target.value !== "ACADEMY_STUDENT") setAcademyCohortId("");
+                                }}
                                 disabled={isLoading}
                                 className="flex h-10 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/40 disabled:cursor-not-allowed disabled:opacity-50"
                                 required
@@ -224,6 +272,37 @@ export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAd
                                     </option>
                                 ))}
                             </select>
+                            {academyRole === "ACADEMY_STUDENT" && (
+                                <div className="space-y-2 pt-2">
+                                    <Label htmlFor="inviteCohort" className="text-slate-300">
+                                        Cohorte (matrícula al aceptar)
+                                    </Label>
+                                    {cohortsLoading ? (
+                                        <p className="text-xs text-slate-500">Cargando cohortes…</p>
+                                    ) : (
+                                        <select
+                                            id="inviteCohort"
+                                            value={academyCohortId}
+                                            onChange={(e) => setAcademyCohortId(e.target.value)}
+                                            disabled={isLoading || inviteCohorts.length === 0}
+                                            className="flex h-10 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/40 disabled:cursor-not-allowed disabled:opacity-50"
+                                            required
+                                        >
+                                            <option value="">— Selecciona cohorte activo —</option>
+                                            {inviteCohorts.map((c) => (
+                                                <option key={c.id} value={c.id}>
+                                                    {c.name} · {c.courseTitle}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
+                                    {inviteCohorts.length === 0 && !cohortsLoading && (
+                                        <p className="text-[11px] text-amber-200/90">
+                                            Crea un cohorte activo en la gestión del curso antes de invitar estudiantes.
+                                        </p>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="space-y-2">
