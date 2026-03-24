@@ -134,14 +134,29 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
     } = validation.data;
     const academyCohortId = academyCohortIdRaw?.trim() || undefined;
 
+    if (inviterId !== user.id) {
+      return NextResponse.json(
+        { success: false, error: "Solo puedes enviar invitaciones en tu propio nombre" },
+        { status: 403 }
+      );
+    }
+
     // Ejecutar todas las verificaciones independientes en paralelo (eliminando waterfall de 5 queries secuenciales)
     const [inviter, existingInvitation, existingUser, role] = await Promise.all([
       prisma.user.findUnique({
         where: { id: inviterId },
-        include: { role: true },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          tenantId: true,
+          platformRole: true,
+          invitationLimit: true,
+          role: { select: { name: true } },
+        },
       }),
       prisma.invitation.findFirst({
-        where: { email, status: "PENDING" },
+        where: { email, tenantId, status: "PENDING" },
       }),
       prisma.user.findUnique({
         where: { email },
@@ -158,17 +173,31 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
       );
     }
 
-    // Check if inviter has permission (SUPERADMIN or ADMINISTRADOR)
-    const allowedRoles = ["SUPERADMIN", "ADMINISTRADOR"];
-    if (!inviter.role || !allowedRoles.includes(inviter.role.name)) {
+    if (inviter.tenantId !== tenantId) {
       return NextResponse.json(
-        { success: false, error: "No tienes permisos para enviar invitaciones" },
+        { success: false, error: "El invitador no pertenece a este instituto" },
+        { status: 403 }
+      );
+    }
+
+    const roleNameNorm = inviter.role?.name?.trim().toUpperCase() ?? "";
+    const canInviteByTenantRole =
+      roleNameNorm === "SUPERADMIN" || roleNameNorm === "ADMINISTRADOR";
+    const canInviteByAcademyRole = inviter.platformRole === "ACADEMY_ADMIN";
+
+    if (!canInviteByTenantRole && !canInviteByAcademyRole) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "No tienes permisos para enviar invitaciones. Se requiere rol Administrador del instituto o Administrador de Academia.",
+        },
         { status: 403 }
       );
     }
 
     // Check invitation limit for ADMINISTRADOR (requiere query adicional que depende de inviter)
-    if (inviter.role?.name === "ADMINISTRADOR") {
+    if (roleNameNorm === "ADMINISTRADOR") {
       const totalOccupiedSeats = await prisma.invitation.count({
         where: {
           inviterId,
