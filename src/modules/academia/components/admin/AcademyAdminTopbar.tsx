@@ -10,13 +10,14 @@ import {
   Menu,
   X,
   LayoutDashboard,
-  Users,
   BookOpen,
-  MessageSquare,
+  Users,
   Calendar,
   Trophy,
   UserCircle,
   LogOut,
+  Sparkles,
+  School,
 } from "lucide-react";
 import { performLogout } from "@/lib/logout";
 import { KALED_ACADEMY_CONFIG } from "../../config/academy-tenant.config";
@@ -24,26 +25,20 @@ import { KALED_ACADEMY_CONFIG } from "../../config/academy-tenant.config";
 interface Props {
   userName: string;
   userImage?: string;
-  cohortName?: string;
 }
 
 const NAV = [
-  { href: "/academia/teacher", label: "Inicio", icon: LayoutDashboard },
-  { href: "/academia/teacher/students", label: "Estudiantes", icon: Users },
-  { href: "/academia/teacher/courses", label: "Cursos", icon: BookOpen },
-  { href: "/academia/teacher/messages", label: "Mensajes", icon: MessageSquare },
-  { href: "/academia/teacher/profile", label: "Mi Perfil", icon: UserCircle },
-  { href: "/academia/teacher/calendar", label: "Calendario", icon: Calendar },
-  { href: "/academia/teacher/leaderboard", label: "Ranking", icon: Trophy },
+  { href: "/academia/admin/analytics", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/academia/admin/courses", label: "Cursos", icon: BookOpen },
+  { href: "/academia/admin/cohorts", label: "Cohortes", icon: School },
+  { href: "/academia/admin/calendar", label: "Calendario", icon: Calendar },
+  { href: "/academia/admin/leaderboard", label: "Leaderboard", icon: Trophy },
+  { href: "/academia/admin/users", label: "Usuarios", icon: Users },
+  { href: "/academia/admin/trial-activity", label: "Prueba", icon: Sparkles },
+  { href: "/academia/admin/profile", label: "Mi Perfil", icon: UserCircle },
 ];
 
-function formatCohortDisplay(name: string | undefined) {
-  if (!name) return "Instructor";
-  return name.replace(/\s*·\s*Montería\s*/gi, "").trim() || name;
-}
-
-export function TeacherTopbar({ userName, userImage, cohortName }: Props) {
-  const displayCohort = formatCohortDisplay(cohortName);
+export function AcademyAdminTopbar({ userName, userImage }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef<HTMLDivElement>(null);
@@ -76,7 +71,7 @@ export function TeacherTopbar({ userName, userImage, cohortName }: Props) {
             <Search className="w-4 h-4 text-slate-500 shrink-0" />
             <input
               type="text"
-              placeholder="Buscar estudiantes, cursos..."
+              placeholder="Buscar cursos, usuarios..."
               className="bg-transparent border-none outline-none text-[13px] text-slate-400 placeholder:text-slate-600 w-full"
             />
           </div>
@@ -97,7 +92,7 @@ export function TeacherTopbar({ userName, userImage, cohortName }: Props) {
             >
               <div className="text-right hidden sm:block">
                 <div className="text-[13px] font-semibold text-white leading-none">{userName}</div>
-                <div className="text-[11px] text-slate-500 mt-1 leading-none">{displayCohort}</div>
+                <div className="text-[11px] text-slate-500 mt-1 leading-none">Administrador</div>
               </div>
               {userImage ? (
                 <img
@@ -107,7 +102,7 @@ export function TeacherTopbar({ userName, userImage, cohortName }: Props) {
                 />
               ) : (
                 <div className="w-8 h-8 rounded-full border border-cyan-500/30 bg-cyan-500/10 flex items-center justify-center text-cyan-400 text-sm font-bold">
-                  {userName[0]?.toUpperCase() ?? "I"}
+                  {userName[0]?.toUpperCase() ?? "A"}
                 </div>
               )}
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0" />
@@ -128,12 +123,12 @@ export function TeacherTopbar({ userName, userImage, cohortName }: Props) {
                       />
                     ) : (
                       <div className="w-9 h-9 rounded-full border border-cyan-500/30 bg-cyan-500/10 flex items-center justify-center text-cyan-400 text-sm font-bold shrink-0">
-                        {userName[0]?.toUpperCase() ?? "I"}
+                        {userName[0]?.toUpperCase() ?? "A"}
                       </div>
                     )}
                     <div className="min-w-0">
                       <div className="text-sm font-semibold text-white truncate">{userName}</div>
-                      <div className="text-[11px] text-slate-500 truncate">{displayCohort}</div>
+                      <div className="text-[11px] text-slate-500 truncate">Administrador</div>
                     </div>
                   </div>
                 </div>
@@ -141,7 +136,7 @@ export function TeacherTopbar({ userName, userImage, cohortName }: Props) {
                   <button
                     onClick={() => {
                       setAvatarMenuOpen(false);
-                      router.push("/academia/teacher/profile");
+                      router.push("/academia/admin/profile");
                     }}
                     className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-slate-300 hover:bg-white/[0.05] hover:text-white transition-colors"
                   >
@@ -209,15 +204,15 @@ export function TeacherTopbar({ userName, userImage, cohortName }: Props) {
         </>
       )}
 
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-[72px] bg-slate-950/95 border-t border-white/[0.06] backdrop-blur-xl flex items-center justify-around px-2 z-40">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-[72px] bg-slate-950/95 border-t border-white/[0.06] backdrop-blur-xl flex items-center justify-around px-2 z-40 overflow-x-auto">
         {NAV.slice(0, 5).map((item) => (
           <Link
             key={item.href}
             href={item.href}
-            className="flex flex-col items-center gap-1 text-slate-500 hover:text-cyan-400 transition-colors p-2 shrink-0 min-w-[52px]"
+            className="flex flex-col items-center gap-1 text-slate-500 hover:text-cyan-400 transition-colors p-2 shrink-0 min-w-[56px]"
           >
             <item.icon className="w-6 h-6" />
-            <span className="text-[10px] font-medium text-center leading-tight">{item.label}</span>
+            <span className="text-[9px] font-medium text-center leading-tight">{item.label}</span>
           </Link>
         ))}
       </nav>

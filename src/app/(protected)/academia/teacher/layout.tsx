@@ -39,12 +39,11 @@ export default async function TeacherLayout({
     <div className="academy-shell-dark w-full h-screen flex font-sans relative overflow-hidden">
       <TeacherSidebar
         userName={dbUser?.name ?? "Instructor"}
-        userEmail={dbUser?.email ?? ""}
         userImage={dbUser?.image ?? undefined}
         cohortName={cohort?.name}
       />
 
-      <div className="w-full flex flex-col min-w-0 min-h-0 lg:pl-[220px]">
+      <div className="w-full flex flex-col min-w-0 min-h-0 lg:pl-[260px]">
         <TeacherTopbar
           userName={dbUser?.name ?? "Instructor"}
           userImage={dbUser?.image ?? undefined}

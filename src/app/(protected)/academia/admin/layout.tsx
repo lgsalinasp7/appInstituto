@@ -2,6 +2,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { AcademyAdminSidebar } from "@/modules/academia/components/admin/AcademyAdminSidebar";
+import { AcademyAdminTopbar } from "@/modules/academia/components/admin/AcademyAdminTopbar";
 
 export default async function AdminLayout({
   children,
@@ -25,18 +26,19 @@ export default async function AdminLayout({
   if (dbUser?.platformRole !== "ACADEMY_ADMIN") redirect("/academia");
 
   return (
-    <div className="academy-shell-dark min-h-screen flex">
+    <div className="academy-shell-dark w-full h-screen flex font-sans relative overflow-hidden">
       <AcademyAdminSidebar
         userName={dbUser.name ?? "Admin"}
         userEmail={dbUser.email ?? ""}
         userImage={dbUser.image ?? undefined}
       />
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="academy-topbar-dark sticky top-0 z-40 h-14 flex items-center px-4 lg:px-6">
-          <h1 className="text-lg font-bold text-white">Panel de Administración</h1>
-        </header>
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8">
+      <div className="w-full flex flex-col min-w-0 min-h-0 lg:pl-[260px]">
+        <AcademyAdminTopbar
+          userName={dbUser.name ?? "Admin"}
+          userImage={dbUser.image ?? undefined}
+        />
+        <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 px-4 py-5 sm:px-5 sm:py-6 lg:px-6 lg:py-8 pb-28 lg:pb-8">
           {children}
         </main>
       </div>
