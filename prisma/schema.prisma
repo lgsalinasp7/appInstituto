@@ -18,6 +18,8 @@ model Tenant {
   email       String?
   plan        String              @default("BASICO")
   status      String              @default("ACTIVO")
+  /// IANA timezone (e.g. America/Bogota) for cohort dates and promo cutoff
+  timezone    String              @default("America/Bogota")
   subscriptionEndsAt DateTime?
   invitations Invitation[]
   payments    Payment[]
@@ -75,6 +77,8 @@ model Tenant {
   academyBadges           AcademyBadge[]
   academyAnnouncements    AcademyAnnouncement[]
   trialUserActivities     TrialUserActivity[]
+  academyInAppNotifications AcademyInAppNotification[]
+  academyCohortAdminAudits  AcademyCohortAdminAudit[]
 
   // Lavadero Pro
   lavaderoCustomers LavaderoCustomer[]
@@ -131,6 +135,9 @@ model User {
   academyBadgesEarned            AcademyBadgeEarned[]
   academyAnnouncements           AcademyAnnouncement[]
   trialUserActivities            TrialUserActivity[]
+  academyCohortTeacherAssignments AcademyCohortTeacherAssignment[]
+  academyCohortAdminAuditsActor   AcademyCohortAdminAudit[] @relation("CohortAuditActor")
+  academyInAppNotifications       AcademyInAppNotification[]
 
   // Lavadero Pro
   lavaderoOrdersCreated   LavaderoOrder[]   @relation("LavaderoOrderCreator")
@@ -686,13 +693,17 @@ model Invitation {
   trialExpiresAt      DateTime?
   trialCohortName     String?
   trialNextCohortDate DateTime?
+  /// Cohorte donde se matriculará el estudiante al aceptar (Kaled Academy).
+  academyCohortId     String?
   inviter      User             @relation("SentInvitations", fields: [inviterId], references: [id])
   role        Role             @relation(fields: [roleId], references: [id])
   tenant      Tenant           @relation(fields: [tenantId], references: [id])
+  academyCohort AcademyCohort? @relation("InvitationTargetCohort", fields: [academyCohortId], references: [id], onDelete: SetNull)
 
   @@index([email])
   @@index([token])
   @@index([inviterId])
+  @@index([academyCohortId])
 }
 
 model TrialUserActivity {
@@ -1489,7 +1500,7 @@ model AcademyEnrollment {
 
   user     User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   course   AcademyCourse          @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  cohort   AcademyCohort?          @relation(fields: [cohortId], references: [id], onDelete: SetNull)
+  cohort   AcademyCohort?          @relation(fields: [cohortId], references: [id], onDelete: Restrict)
   snapshot AcademyStudentSnapshot?
 
   @@unique([userId, courseId])
@@ -1511,6 +1522,12 @@ model AcademyCohort {
   schedule        Json
   courseId        String
   tenantId        String
+  /// Academic bootcamp vs short promotional access (e.g. Facebook Ads masterclass)
+  kind            AcademyCohortKind        @default(ACADEMIC)
+  /// Preset used when creating promotional cohorts (CUSTOM = fully manual dates)
+  promoPreset     AcademyCohortPromoPreset?
+  /// Optional label for marketing / UTM tracking
+  campaignLabel   String?
   createdAt       DateTime                 @default(now())
   updatedAt       DateTime                 @updatedAt
 
@@ -1525,10 +1542,65 @@ model AcademyCohort {
   demoDayResults   AcademyDemoDayResult[]
   announcements    AcademyAnnouncement[]
   costAllocations  AcademyCohortCostAllocation[]
+  teacherAssignments AcademyCohortTeacherAssignment[]
+  invitationTargets  Invitation[]                     @relation("InvitationTargetCohort")
 
   @@index([courseId])
   @@index([tenantId])
   @@index([status])
+  @@index([kind])
+}
+
+/// N:M — which teachers can see/manage a cohort (admin assigns).
+model AcademyCohortTeacherAssignment {
+  id        String   @id @default(cuid())
+  cohortId  String
+  teacherId String
+  createdAt DateTime @default(now())
+
+  cohort  AcademyCohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  teacher User          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([cohortId, teacherId])
+  @@index([teacherId])
+}
+
+/// Immutable audit trail for admin cohort operations.
+model AcademyCohortAdminAudit {
+  id          String                       @id @default(cuid())
+  tenantId    String
+  actorUserId String
+  action      AcademyCohortAdminAuditAction
+  payload     Json
+  createdAt   DateTime                     @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actor  User   @relation("CohortAuditActor", fields: [actorUserId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([actorUserId])
+  @@index([createdAt])
+  @@index([action])
+}
+
+/// In-app notifications for academy users (e.g. cohort change).
+model AcademyInAppNotification {
+  id        String    @id @default(cuid())
+  userId    String
+  tenantId  String
+  type      String
+  title     String
+  body      String    @db.Text
+  readAt    DateTime?
+  metadata  Json?
+  createdAt DateTime  @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([tenantId])
+  @@index([createdAt])
 }
 
 model AcademyCohortEvent {
@@ -2123,6 +2195,27 @@ enum BadgeCondition {
   REAL_USERS_3
   DEMO_DAY_PASSED
   ALL_CRAL_DONE
+}
+
+enum AcademyCohortKind {
+  ACADEMIC
+  PROMOTIONAL
+}
+
+enum AcademyCohortPromoPreset {
+  DAYS_3
+  DAYS_7
+  CUSTOM
+}
+
+enum AcademyCohortAdminAuditAction {
+  CREATE_COHORT
+  UPDATE_COHORT
+  DELETE_COHORT
+  MOVE_STUDENT
+  MERGE_COHORTS
+  ASSIGN_TEACHER
+  UNASSIGN_TEACHER
 }
 
 enum AcademyCohortStatus {

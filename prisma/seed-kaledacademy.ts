@@ -141,11 +141,12 @@ async function main() {
       maxStudents: 20,
       currentStudents: students.length,
       status: "ACTIVE",
+      kind: "ACADEMIC",
       schedule: { days: ["LUNES", "MIERCOLES", "VIERNES"], time: "18:00", duration: 180, timezone: "America/Bogota" },
       courseId: course.id,
       tenantId: tenant.id,
     },
-    update: { currentStudents: students.length },
+    update: { currentStudents: students.length, kind: "ACADEMIC" },
   });
   console.log(`   ✓ Cohorte: ${cohort.name}\n`);
 

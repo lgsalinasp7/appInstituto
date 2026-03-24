@@ -51,10 +51,13 @@ export const createCohortSchema = z.object({
   name: z.string().min(1),
   startDate: z.coerce.date(),
   endDate: z.coerce.date(),
-  maxStudents: z.number().int().min(1),
+  maxStudents: z.number().int().min(1).default(9999),
   status: z.enum(["DRAFT", "ACTIVE", "COMPLETED", "CANCELLED"]),
   schedule: z.record(z.string(), z.unknown()),
   courseId: z.string().min(1),
+  kind: z.enum(["ACADEMIC", "PROMOTIONAL"]).optional().default("ACADEMIC"),
+  promoPreset: z.enum(["DAYS_3", "DAYS_7", "CUSTOM"]).optional().nullable(),
+  campaignLabel: z.string().optional().nullable(),
 });
 
 export const createCohortEventSchema = z.object({

@@ -9,8 +9,10 @@ interface Cohort {
   startDate: string;
   endDate: string;
   status: string;
+  kind?: string;
   maxStudents?: number;
   currentStudents?: number;
+  _count?: { enrollments: number };
   course: { title: string };
 }
 
@@ -61,9 +63,10 @@ export function CohortsManagement() {
                 <p className="text-xs text-slate-500 mt-1">
                   {new Date(c.startDate).toLocaleDateString()} -{" "}
                   {new Date(c.endDate).toLocaleDateString()}
-                  {(c.currentStudents != null || c.maxStudents != null) && (
-                    <> • {c.currentStudents ?? 0}/{c.maxStudents ?? 0} estudiantes</>
-                  )}
+                  {" • "}
+                  {c._count?.enrollments ?? c.currentStudents ?? 0}
+                  {c.maxStudents != null ? `/${c.maxStudents}` : ""} estudiantes
+                  {c.kind === "PROMOTIONAL" ? " · Promocional" : ""}
                 </p>
               </div>
               <span className={cn(

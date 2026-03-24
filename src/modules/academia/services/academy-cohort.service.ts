@@ -9,17 +9,66 @@ export class AcademyCohortService {
   static async listByTenant(tenantId: string) {
     return prisma.academyCohort.findMany({
       where: { tenantId },
-      include: { course: { select: { id: true, title: true } } },
+      include: {
+        course: { select: { id: true, title: true } },
+        _count: { select: { enrollments: true } },
+      },
+      orderBy: { startDate: "desc" },
+    });
+  }
+
+  /** Cohortes donde el estudiante tiene matrícula activa con cohorte asignado. */
+  static async listForStudent(userId: string, tenantId: string) {
+    const enrollments = await prisma.academyEnrollment.findMany({
+      where: {
+        userId,
+        status: "ACTIVE",
+        cohortId: { not: null },
+        course: { tenantId },
+      },
+      select: { cohortId: true },
+    });
+    const ids = [...new Set(enrollments.map((e) => e.cohortId!))];
+    if (ids.length === 0) return [];
+    return prisma.academyCohort.findMany({
+      where: { tenantId, id: { in: ids } },
+      include: {
+        course: { select: { id: true, title: true } },
+        _count: { select: { enrollments: true } },
+      },
+      orderBy: { startDate: "desc" },
+    });
+  }
+
+  /** Cohortes asignados al profesor (vacío si ninguno). */
+  static async listForTeacher(teacherUserId: string, tenantId: string) {
+    const { AcademyCohortLifecycleService } = await import(
+      "./academy-cohort-lifecycle.service"
+    );
+    const cohortIds = await AcademyCohortLifecycleService.listCohortIdsForTeacher(
+      teacherUserId,
+      tenantId
+    );
+    if (cohortIds.length === 0) return [];
+    return prisma.academyCohort.findMany({
+      where: { tenantId, id: { in: cohortIds } },
+      include: {
+        course: { select: { id: true, title: true } },
+        _count: { select: { enrollments: true } },
+      },
       orderBy: { startDate: "desc" },
     });
   }
 
   static async create(tenantId: string, data: CreateCohortInput) {
-    const { schedule, ...rest } = data;
+    const { schedule, kind, promoPreset, campaignLabel, ...rest } = data;
     return prisma.academyCohort.create({
       data: {
         tenantId,
         ...rest,
+        kind: kind ?? "ACADEMIC",
+        promoPreset: promoPreset ?? null,
+        campaignLabel: campaignLabel ?? null,
         schedule: schedule as Prisma.InputJsonValue,
       },
     });
@@ -100,15 +149,25 @@ export class AcademyCohortService {
         courseId: cohort.courseId,
         status: "ACTIVE",
       },
-      select: { isTrial: true, trialAllowedLessonId: true },
+      select: {
+        isTrial: true,
+        trialAllowedLessonId: true,
+        cohortId: true,
+      },
     });
 
-    const hasAccess =
-      !!enrollment ||
-      userPlatformRole === "ACADEMY_ADMIN" ||
-      userPlatformRole === "ACADEMY_TEACHER";
-
-    if (!hasAccess) return null;
+    if (userPlatformRole === "ACADEMY_STUDENT") {
+      if (!enrollment?.cohortId || enrollment.cohortId !== cohortId) {
+        return null;
+      }
+    } else if (userPlatformRole === "ACADEMY_TEACHER") {
+      const assigned = await prisma.academyCohortTeacherAssignment.findFirst({
+        where: { cohortId, teacherId: userId },
+      });
+      if (!assigned) return null;
+    } else if (userPlatformRole !== "ACADEMY_ADMIN") {
+      return null;
+    }
 
     // Deduplicar módulos por id y order (evita duplicados en la vista)
     const rawModules = cohort.course.modules;
@@ -190,6 +249,14 @@ export class AcademyCohortService {
   }
 
   static async delete(id: string, tenantId: string) {
+    const count = await prisma.academyEnrollment.count({
+      where: { cohortId: id },
+    });
+    if (count > 0) {
+      throw new Error(
+        "No se puede eliminar el cohorte mientras tenga estudiantes matriculados"
+      );
+    }
     return prisma.academyCohort.deleteMany({ where: { id, tenantId } });
   }
 

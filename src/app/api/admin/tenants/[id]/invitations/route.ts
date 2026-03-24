@@ -58,18 +58,38 @@ export const GET = withPlatformAdmin(
 const bodySchema = z.object({
   email: z.string().email("Email inválido"),
   academyRole: z.enum(["ACADEMY_STUDENT", "ACADEMY_TEACHER", "ACADEMY_ADMIN"]).optional(),
+  academyCohortId: z.string().min(1).optional(),
   isTrialInvitation: z.boolean().optional(),
   trialCohortName: z.string().min(1).optional(),
   trialNextCohortDate: z.string().optional(),
-}).refine(
-  (data) => {
-    if (data.isTrialInvitation) {
-      return !!data.trialCohortName && !!data.trialNextCohortDate;
+}).superRefine((data, ctx) => {
+  if (data.isTrialInvitation) {
+    const hasCohortPick = Boolean(data.academyCohortId?.trim());
+    const hasLegacyName = Boolean(data.trialCohortName?.trim());
+    if (!data.trialNextCohortDate?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Para invitación de prueba indica la fecha del próximo cohorte",
+        path: ["trialNextCohortDate"],
+      });
     }
-    return !!data.academyRole;
-  },
-  { message: "Para invitación trial: trialCohortName y trialNextCohortDate. Para invitación normal: academyRole." }
-);
+    if (!hasCohortPick && !hasLegacyName) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Selecciona un cohorte de prueba o indica el nombre del cohorte",
+        path: ["academyCohortId"],
+      });
+    }
+    return;
+  }
+  if (!data.academyRole) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Indica el rol de Academia",
+      path: ["academyRole"],
+    });
+  }
+});
 
 export const POST = withCSRF(
   withPlatformAdmin(["SUPER_ADMIN"], async (request: NextRequest, user, context) => {
@@ -91,7 +111,15 @@ export const POST = withCSRF(
           { status: 400 }
         );
       }
-      const { email, academyRole, isTrialInvitation, trialCohortName, trialNextCohortDate } = validation.data;
+      const {
+        email,
+        academyRole,
+        academyCohortId: academyCohortIdRaw,
+        isTrialInvitation,
+        trialCohortName,
+        trialNextCohortDate,
+      } = validation.data;
+      const academyCohortId = academyCohortIdRaw?.trim() || undefined;
 
       const tenant = await prisma.tenant.findFirst({
         where: {
@@ -150,6 +178,42 @@ export const POST = withCSRF(
         );
       }
 
+      if (
+        !isTrialInvitation &&
+        academyRole === "ACADEMY_STUDENT" &&
+        !academyCohortId
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Para invitar un estudiante debes indicar el cohorte (academyCohortId) donde quedará matriculado.",
+          },
+          { status: 400 }
+        );
+      }
+
+      let resolvedTrialCohortName = trialCohortName?.trim();
+      if (academyCohortId) {
+        const cohortRow = await prisma.academyCohort.findFirst({
+          where: {
+            id: academyCohortId,
+            tenantId: tenant.id,
+            status: "ACTIVE",
+          },
+          select: { id: true, name: true },
+        });
+        if (!cohortRow) {
+          return NextResponse.json(
+            { success: false, error: "El cohorte seleccionado no existe o no está activo" },
+            { status: 400 }
+          );
+        }
+        if (isTrialInvitation) {
+          resolvedTrialCohortName = resolvedTrialCohortName || cohortRow.name;
+        }
+      }
+
       const token = randomUUID();
       const expiresAt = isTrialInvitation ? addDays(new Date(), 2) : addDays(new Date(), 7);
 
@@ -181,11 +245,11 @@ export const POST = withCSRF(
         ? (TENANT_EMAIL_DEFAULTS[tenant.slug] ?? undefined)
         : undefined;
 
-      if (isTrialInvitation && trialCohortName && trialNextCohortDate) {
+      if (isTrialInvitation && resolvedTrialCohortName && trialNextCohortDate) {
         await sendTrialInvitationEmail({
           to: email,
           token,
-          trialCohortName,
+          trialCohortName: resolvedTrialCohortName,
           trialNextCohortDate: new Date(trialNextCohortDate),
           tenantSlug: tenant.slug,
           branding: tenantBranding,

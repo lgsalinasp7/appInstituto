@@ -373,10 +373,11 @@ async function main() {
       startDate: new Date("2025-03-03"), endDate: new Date("2025-06-27"),
       maxStudents: 15, currentStudents: estudiantes.length,
       status: "ACTIVE",
+      kind: "ACADEMIC",
       schedule: { days: ["LUNES", "MIERCOLES", "VIERNES"], time: "18:00", duration: 180, timezone: "America/Bogota" },
       courseId: course.id, tenantId: tenant.id,
     },
-    update: { currentStudents: estudiantes.length },
+    update: { currentStudents: estudiantes.length, kind: "ACADEMIC" },
   });
   for (const est of estudiantes) {
     const listPriceCop = 1800000;

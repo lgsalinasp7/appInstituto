@@ -18,18 +18,39 @@ const createInvitationSchema = z.object({
   roleId: z.string().min(1, "Rol requerido").optional(),
   inviterId: z.string().min(1, "Invitador requerido"),
   academyRole: z.enum(["ACADEMY_STUDENT", "ACADEMY_TEACHER", "ACADEMY_ADMIN"]).optional(),
+  /** Cohorte existente donde se matriculará el estudiante al aceptar. */
+  academyCohortId: z.string().min(1).optional(),
   isTrialInvitation: z.boolean().optional(),
   trialCohortName: z.string().min(1).optional(),
   trialNextCohortDate: z.string().optional(), // ISO date string
-}).refine(
-  (data) => {
-    if (data.isTrialInvitation) {
-      return !!data.trialCohortName && !!data.trialNextCohortDate;
+}).superRefine((data, ctx) => {
+  if (data.isTrialInvitation) {
+    const hasCohortPick = Boolean(data.academyCohortId?.trim());
+    const hasLegacyName = Boolean(data.trialCohortName?.trim());
+    if (!data.trialNextCohortDate?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Para invitación de prueba indica la fecha del próximo cohorte",
+        path: ["trialNextCohortDate"],
+      });
     }
-    return !!data.roleId;
-  },
-  { message: "Para invitación trial se requieren trialCohortName y trialNextCohortDate. Para invitación normal se requiere roleId." }
-);
+    if (!hasCohortPick && !hasLegacyName) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Selecciona un cohorte de prueba o indica el nombre del cohorte (flujo anterior)",
+        path: ["academyCohortId"],
+      });
+    }
+    return;
+  }
+  if (!data.roleId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Rol requerido",
+      path: ["roleId"],
+    });
+  }
+});
 
 /**
  * GET /api/invitations
@@ -101,7 +122,17 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
       );
     }
 
-    const { email, roleId, inviterId, academyRole, isTrialInvitation, trialCohortName, trialNextCohortDate } = validation.data;
+    const {
+      email,
+      roleId,
+      inviterId,
+      academyRole,
+      academyCohortId: academyCohortIdRaw,
+      isTrialInvitation,
+      trialCohortName,
+      trialNextCohortDate,
+    } = validation.data;
+    const academyCohortId = academyCohortIdRaw?.trim() || undefined;
 
     // Ejecutar todas las verificaciones independientes en paralelo (eliminando waterfall de 5 queries secuenciales)
     const [inviter, existingInvitation, existingUser, role] = await Promise.all([
@@ -196,6 +227,43 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
       );
     }
 
+    if (
+      tenant?.slug === "kaledacademy" &&
+      !isTrialInvitation &&
+      academyRole === "ACADEMY_STUDENT" &&
+      !academyCohortId
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Para invitar un estudiante debes seleccionar el cohorte donde quedará matriculado (créalo antes en la gestión del curso).",
+        },
+        { status: 400 }
+      );
+    }
+
+    let resolvedTrialCohortName = trialCohortName?.trim();
+    if (academyCohortId) {
+      const cohortRow = await prisma.academyCohort.findFirst({
+        where: {
+          id: academyCohortId,
+          tenantId,
+          status: "ACTIVE",
+        },
+        select: { id: true, name: true },
+      });
+      if (!cohortRow) {
+        return NextResponse.json(
+          { success: false, error: "El cohorte seleccionado no existe o no está activo en este instituto" },
+          { status: 400 }
+        );
+      }
+      if (isTrialInvitation) {
+        resolvedTrialCohortName = resolvedTrialCohortName || cohortRow.name;
+      }
+    }
+
     if (isTrialInvitation && tenant?.slug !== "kaledacademy") {
       return NextResponse.json(
         { success: false, error: "Las invitaciones de prueba solo están disponibles para Kaled Academy" },
@@ -219,10 +287,11 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
         expiresAt,
         status: "PENDING",
         ...(academyRole && { academyRole }),
+        ...(academyCohortId && { academyCohortId }),
         ...(isTrialInvitation && {
           isTrialInvitation: true,
           trialExpiresAt: expiresAt,
-          trialCohortName: trialCohortName!,
+          trialCohortName: resolvedTrialCohortName!,
           trialNextCohortDate: trialNextCohortDate ? new Date(trialNextCohortDate) : null,
           academyRole: "ACADEMY_STUDENT",
         }),
@@ -252,11 +321,11 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
         ? (TENANT_EMAIL_DEFAULTS[tenant.slug] ?? undefined)
         : undefined;
 
-      if (isTrialInvitation && trialCohortName && trialNextCohortDate) {
+      if (isTrialInvitation && resolvedTrialCohortName && trialNextCohortDate) {
         await sendTrialInvitationEmail({
           to: email,
           token,
-          trialCohortName,
+          trialCohortName: resolvedTrialCohortName,
           trialNextCohortDate: new Date(trialNextCohortDate),
           tenantSlug: tenant?.slug,
           branding: tenantBranding,

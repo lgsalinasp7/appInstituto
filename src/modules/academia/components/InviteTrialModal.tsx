@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,16 +11,25 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, Sparkles } from "lucide-react";
+import { Mail, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/lib/store/auth-store";
+
+interface CohortOption {
+  id: string;
+  name: string;
+  courseTitle: string;
+  kind: string;
+}
 
 interface InviteTrialModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onInviteSuccess?: () => void;
-  /** Si true, usa POST /api/admin/tenants/kaledacademy/invitations (para super admin) */
+  /** Si true, usa POST /api/admin/tenants/{adminTenantKey}/invitations */
   useAdminApi?: boolean;
+  /** Id o slug del tenant para APIs admin (cohortes e invitación) */
+  adminTenantKey?: string;
 }
 
 export function InviteTrialModal({
@@ -28,12 +37,47 @@ export function InviteTrialModal({
   onOpenChange,
   onInviteSuccess,
   useAdminApi = false,
+  adminTenantKey = "kaledacademy",
 }: InviteTrialModalProps) {
   const [email, setEmail] = useState("");
-  const [trialCohortName, setTrialCohortName] = useState("");
+  const [academyCohortId, setAcademyCohortId] = useState("");
   const [trialNextCohortDate, setTrialNextCohortDate] = useState("");
+  const [cohorts, setCohorts] = useState<CohortOption[]>([]);
+  const [cohortsLoading, setCohortsLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuthStore();
+
+  const loadCohorts = useCallback(async () => {
+    setCohortsLoading(true);
+    try {
+      const url = useAdminApi
+        ? `/api/admin/tenants/${encodeURIComponent(adminTenantKey)}/cohorts-for-invitation`
+        : "/api/academy/cohorts/for-invitation";
+      const res = await fetch(url, { credentials: "include" });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        setCohorts(data.data);
+      } else {
+        setCohorts([]);
+        toast.error(data.error || "No se pudieron cargar los cohortes");
+      }
+    } catch {
+      setCohorts([]);
+      toast.error("Error al cargar cohortes");
+    } finally {
+      setCohortsLoading(false);
+    }
+  }, [useAdminApi, adminTenantKey]);
+
+  useEffect(() => {
+    if (open) {
+      void loadCohorts();
+    } else {
+      setEmail("");
+      setAcademyCohortId("");
+      setTrialNextCohortDate("");
+    }
+  }, [open, loadCohorts]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,8 +86,8 @@ export function InviteTrialModal({
       toast.error("Por favor ingresa el correo electrónico");
       return;
     }
-    if (!trialCohortName) {
-      toast.error("Por favor ingresa el nombre del cohorte de prueba");
+    if (!academyCohortId) {
+      toast.error("Selecciona el cohorte de prueba (debe existir y estar activo)");
       return;
     }
     if (!trialNextCohortDate) {
@@ -67,17 +111,22 @@ export function InviteTrialModal({
 
     try {
       const body = useAdminApi
-        ? { email, isTrialInvitation: true, trialCohortName, trialNextCohortDate: date.toISOString() }
+        ? {
+            email,
+            isTrialInvitation: true,
+            academyCohortId,
+            trialNextCohortDate: date.toISOString(),
+          }
         : {
             email,
             inviterId: user?.id,
             isTrialInvitation: true,
-            trialCohortName,
+            academyCohortId,
             trialNextCohortDate: date.toISOString(),
           };
 
       const url = useAdminApi
-        ? "/api/admin/tenants/kaledacademy/invitations"
+        ? `/api/admin/tenants/${encodeURIComponent(adminTenantKey)}/invitations`
         : "/api/invitations";
 
       const response = await fetch(url, {
@@ -96,7 +145,7 @@ export function InviteTrialModal({
 
       toast.success(`Invitación de prueba enviada a ${email}`);
       setEmail("");
-      setTrialCohortName("");
+      setAcademyCohortId("");
       setTrialNextCohortDate("");
       onOpenChange(false);
       onInviteSuccess?.();
@@ -120,7 +169,7 @@ export function InviteTrialModal({
             Invitar a versión prueba
           </DialogTitle>
           <DialogDescription className="pt-2">
-            Envía una invitación por correo con acceso de 2 días a la primera lección del Módulo 1.
+            Elige un cohorte ya creado (por ejemplo masterclass). Al aceptar, el usuario queda matriculado ahí con acceso de prueba a la primera lección del Módulo 1.
           </DialogDescription>
         </DialogHeader>
 
@@ -128,7 +177,7 @@ export function InviteTrialModal({
           <div className="space-y-2">
             <Label htmlFor="trial-email" className="flex items-center gap-2 text-slate-300">
               <Mail size={16} />
-              Correo Electrónico
+              Correo electrónico
             </Label>
             <Input
               id="trial-email"
@@ -143,24 +192,41 @@ export function InviteTrialModal({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="trial-cohort" className="text-slate-300">
-              Nombre del cohorte de prueba
+            <Label htmlFor="trial-cohort-select" className="text-slate-300">
+              Cohorte de prueba
             </Label>
-            <Input
-              id="trial-cohort"
-              type="text"
-              placeholder="Ej: Masterclass Marzo 2025"
-              value={trialCohortName}
-              onChange={(e) => setTrialCohortName(e.target.value)}
-              required
-              disabled={isLoading}
-              className="bg-slate-950/70 border-slate-700"
-            />
+            {cohortsLoading ? (
+              <div className="flex items-center gap-2 text-sm text-slate-500 py-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Cargando cohortes…
+              </div>
+            ) : (
+              <select
+                id="trial-cohort-select"
+                value={academyCohortId}
+                onChange={(e) => setAcademyCohortId(e.target.value)}
+                required
+                disabled={isLoading || cohorts.length === 0}
+                className="flex h-10 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 disabled:opacity-50"
+              >
+                <option value="">— Selecciona cohorte —</option>
+                {cohorts.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} · {c.courseTitle}
+                  </option>
+                ))}
+              </select>
+            )}
+            {cohorts.length === 0 && !cohortsLoading && (
+              <p className="text-xs text-amber-200/80">
+                No hay cohortes activos. Crea uno en la gestión del curso antes de invitar.
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="trial-date" className="text-slate-300">
-              Fecha del próximo cohorte
+              Fecha del próximo cohorte (mensaje en el correo)
             </Label>
             <Input
               id="trial-date"
@@ -185,10 +251,10 @@ export function InviteTrialModal({
             </Button>
             <Button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || cohortsLoading || !academyCohortId}
               className="flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:from-amber-400 hover:to-orange-500"
             >
-              {isLoading ? "Enviando..." : "Enviar invitación a prueba"}
+              {isLoading ? "Enviando…" : "Enviar invitación a prueba"}
             </Button>
           </div>
         </form>
