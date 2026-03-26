@@ -1,13 +1,13 @@
 /**
  * API Route: DELETE /api/admin/tenants/[id]/invitations/[invitationId]
- * Permite a SUPER_ADMIN eliminar una invitación (solo PENDING) para poder reenviar.
+ * SUPER_ADMIN: elimina cualquier invitación. PENDING incluye limpieza de usuario huérfano cuando aplica.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { withPlatformAdmin } from "@/lib/api-auth";
 import { handleApiError } from "@/lib/errors";
-import { deleteInvitationWithOrphanCleanup } from "@/lib/invitation-helpers";
+import { deleteInvitationBySuperAdmin } from "@/lib/invitation-helpers";
 
 interface RouteContext {
   params: Promise<{ id: string; invitationId: string }>;
@@ -46,19 +46,19 @@ export const DELETE = withPlatformAdmin(
         return NextResponse.json({ success: false, error: "Invitación no encontrada" }, { status: 404 });
       }
 
-      if (invitation.status !== "PENDING") {
-        return NextResponse.json(
-          { success: false, error: "Solo se pueden eliminar invitaciones pendientes para reenviar" },
-          { status: 400 }
-        );
-      }
-
-      // Eliminar invitación y usuario huérfano de forma atómica
-      await deleteInvitationWithOrphanCleanup(invitation);
+      await deleteInvitationBySuperAdmin({
+        id: invitation.id,
+        email: invitation.email,
+        tenantId: invitation.tenantId,
+        status: invitation.status,
+      });
 
       return NextResponse.json({
         success: true,
-        message: "Invitación eliminada. Puedes enviar una nueva invitación.",
+        message:
+          invitation.status === "PENDING"
+            ? "Invitación eliminada. Puedes enviar una nueva invitación."
+            : "Registro de invitación eliminado. Si el usuario ya tenía cuenta, sigue existiendo en la pestaña Usuarios hasta que lo elimines ahí.",
       });
     } catch (error) {
       return handleApiError(error);

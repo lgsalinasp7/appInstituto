@@ -62,6 +62,7 @@
     "exceljs": "^4.4.0",
     "flags": "^4.0.3",
     "framer-motion": "^12.34.3",
+    "isomorphic-dompurify": "^3.7.1",
     "lucide-react": "^0.562.0",
     "next": "16.1.4",
     "next-themes": "^0.4.6",

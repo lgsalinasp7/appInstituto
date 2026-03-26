@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
+import { sanitizeEmailPreviewHtml } from '@/lib/sanitize-email-preview-html';
 import { z } from 'zod';
 
 const previewSchema = z.object({
@@ -91,6 +92,7 @@ export const POST = withPlatformAdmin(
       });
 
       previewHtml = normalizeLegacyPreviewStyles(previewHtml);
+      previewHtml = sanitizeEmailPreviewHtml(previewHtml);
 
       return NextResponse.json({
         success: true,

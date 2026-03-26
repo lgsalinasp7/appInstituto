@@ -84,3 +84,23 @@ export async function deleteInvitationWithOrphanCleanup(invitation: {
     }
   });
 }
+
+/**
+ * SUPER_ADMIN: elimina cualquier invitación del tenant.
+ * - PENDIENTE: misma lógica que deleteInvitationWithOrphanCleanup (huérfanos).
+ * - Aceptada / expirada: solo borra el registro de invitación (la cuenta de usuario, si existe, se gestiona apartado Usuarios).
+ */
+export async function deleteInvitationBySuperAdmin(invitation: {
+  id: string;
+  email: string;
+  tenantId: string;
+  status: string;
+}): Promise<void> {
+  if (invitation.status === "PENDING") {
+    await deleteInvitationWithOrphanCleanup(invitation);
+    return;
+  }
+  await prisma.invitation.delete({
+    where: { id: invitation.id },
+  });
+}

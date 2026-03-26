@@ -24,7 +24,16 @@ export default function AdminLoginPage() {
     fetch("/api/auth/me", { credentials: "include" }).then((res) => {
       if (res.ok) {
         res.json().then((data) => {
-          if (data?.id && data?.email) {
+          // Solo personal de plataforma (sin tenant) entra al panel admin.
+          // Si redirigimos a /admin con sesión de instituto, AdminLayoutWrapper
+          // intentaba /dashboard y el proxy devolvía a /admin → bucle infinito.
+          const isPlatformStaff =
+            data?.id &&
+            data?.email &&
+            !data.tenantId &&
+            data.platformRole &&
+            ["SUPER_ADMIN", "ASESOR_COMERCIAL", "MARKETING"].includes(data.platformRole);
+          if (isPlatformStaff) {
             login({ ...data, image: data.image ?? null, invitationLimit: data.invitationLimit ?? 0 });
             router.replace("/admin");
           }

@@ -12,6 +12,7 @@
 
 import { ReactNode } from "react";
 import { prisma } from "@/lib/prisma";
+import { sanitizeTenantCustomCss } from "@/lib/sanitize-tenant-custom-css";
 import { unstable_cache } from "next/cache";
 
 interface TenantThemeProviderProps {
@@ -90,7 +91,7 @@ export async function TenantThemeProvider({ tenantId, children }: TenantThemePro
     .btn-primary:hover { opacity: 0.9; }
     .btn-secondary { background-color: var(--tenant-secondary); color: white; }
     .btn-accent { background-color: var(--tenant-accent); color: white; }
-    ${theme.customCss || ""}
+    ${sanitizeTenantCustomCss(theme.customCss)}
   `;
 
   return (

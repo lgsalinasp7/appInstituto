@@ -35,6 +35,7 @@ export default async function TenantDetailPage({ params }: PageProps) {
     <TenantDetailView
       tenant={tenant}
       canInviteAcademy={canInviteAcademy}
+      canHardDeleteUsers={isSuperAdmin}
     />
   );
 }

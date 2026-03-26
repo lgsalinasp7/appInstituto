@@ -61,6 +61,8 @@ interface TenantDetailViewProps {
   tenant: TenantWithDetails;
   /** Si true, muestra el botón "Invitar estudiante" (solo para Super Admin en KaledAcademy) */
   canInviteAcademy?: boolean;
+  /** SUPER_ADMIN: eliminar usuarios del instituto e invitaciones (cualquier estado) de forma definitiva */
+  canHardDeleteUsers?: boolean;
 }
 
 const statusThemes: Record<TenantStatus, { color: string; bg: string; border: string; glow: string }> = {
@@ -77,7 +79,11 @@ const statusLabels: Record<TenantStatus, string> = {
   CANCELADO: "Cancelado",
 };
 
-export function TenantDetailView({ tenant, canInviteAcademy = false }: TenantDetailViewProps) {
+export function TenantDetailView({
+  tenant,
+  canInviteAcademy = false,
+  canHardDeleteUsers = false,
+}: TenantDetailViewProps) {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(
@@ -537,6 +543,7 @@ export function TenantDetailView({ tenant, canInviteAcademy = false }: TenantDet
                 tenantSlug={tenant.slug}
                 onUserUpdated={() => router.refresh()}
                 showInviteAcademy={canInviteAcademy}
+                canHardDeleteUsers={canHardDeleteUsers}
               />
             </div>
           </TabsContent>
@@ -569,7 +576,12 @@ export function TenantDetailView({ tenant, canInviteAcademy = false }: TenantDet
           {canInviteAcademy && (
             <TabsContent value="invitaciones" className="m-0 focus-visible:ring-0">
               <div className="p-8">
-                <InvitationsTab tenantId={tenant.id} tenantSlug={tenant.slug} onUpdated={() => router.refresh()} />
+                <InvitationsTab
+                  tenantId={tenant.id}
+                  tenantSlug={tenant.slug}
+                  onUpdated={() => router.refresh()}
+                  canHardDeleteUsers={canHardDeleteUsers}
+                />
               </div>
             </TabsContent>
           )}
@@ -635,14 +647,18 @@ function UsersTab({
   tenantSlug,
   onUserUpdated,
   showInviteAcademy = false,
+  canHardDeleteUsers = false,
 }: {
   users: TenantUser[];
   tenantId: string;
   tenantSlug: string;
   onUserUpdated: () => void;
   showInviteAcademy?: boolean;
+  canHardDeleteUsers?: boolean;
 }) {
   const [editingUser, setEditingUser] = useState<TenantUser | null>(null);
+  const [userToDelete, setUserToDelete] = useState<TenantUser | null>(null);
+  const [deleteUserLoading, setDeleteUserLoading] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isTrialModalOpen, setIsTrialModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -909,15 +925,28 @@ function UsersTab({
                 </td>
                 <td className="py-4 px-4">
                   {canEditUser(user) ? (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-9 w-9 rounded-lg text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10"
-                      onClick={() => setEditingUser(user)}
-                      title="Editar"
-                    >
-                      <Pencil size={16} />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-lg text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10"
+                        onClick={() => setEditingUser(user)}
+                        title="Editar"
+                      >
+                        <Pencil size={16} />
+                      </Button>
+                      {canHardDeleteUsers ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10"
+                          onClick={() => setUserToDelete(user)}
+                          title="Eliminar definitivamente"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      ) : null}
+                    </div>
                   ) : (
                     <span className="text-slate-600 text-xs">—</span>
                   )}
@@ -948,19 +977,58 @@ function UsersTab({
           }}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={!!userToDelete}
+        onClose={() => !deleteUserLoading && setUserToDelete(null)}
+        onConfirm={async () => {
+          if (!userToDelete) return;
+          setDeleteUserLoading(true);
+          try {
+            const res = await fetch(
+              `/api/admin/tenants/${encodeURIComponent(tenantSlug)}/users/${encodeURIComponent(userToDelete.id)}`,
+              { method: "DELETE", credentials: "include" }
+            );
+            const data = await res.json();
+            if (data.success) {
+              toast.success(data.message || "Usuario eliminado");
+              setUserToDelete(null);
+              onUserUpdated();
+            } else {
+              toast.error(data.error || "Error al eliminar");
+            }
+          } catch {
+            toast.error("Error al eliminar usuario");
+          } finally {
+            setDeleteUserLoading(false);
+          }
+        }}
+        title="Eliminar usuario del instituto"
+        description={
+          userToDelete
+            ? `Se eliminará definitivamente la cuenta de ${userToDelete.email}. Los pagos y prospectos que registró pasarán a otro usuario del instituto. No procede si es asesor de estudiantes sin reasignar.`
+            : ""
+        }
+        variant="destructive"
+        confirmText="Eliminar definitivamente"
+        isLoading={deleteUserLoading}
+      />
     </>
   );
 }
 
 function InvitationsTab({
-  tenantId,
+  tenantId: _tenantId,
   tenantSlug,
   onUpdated,
+  canHardDeleteUsers = false,
 }: {
   tenantId: string;
   tenantSlug: string;
   onUpdated: () => void;
+  canHardDeleteUsers?: boolean;
 }) {
+  void _tenantId;
   const [invitations, setInvitations] = useState<Array<{
     id: string;
     email: string;
@@ -972,6 +1040,11 @@ function InvitationsTab({
   }>>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [inviteToDelete, setInviteToDelete] = useState<{
+    id: string;
+    email: string;
+    status: string;
+  } | null>(null);
 
   const fetchInvitations = useCallback(async () => {
     setLoading(true);
@@ -990,15 +1063,18 @@ function InvitationsTab({
     fetchInvitations();
   }, [fetchInvitations]);
 
-  const handleDelete = async (invitationId: string) => {
-    setDeletingId(invitationId);
+  const runInvitationDelete = async () => {
+    if (!inviteToDelete) return;
+    setDeletingId(inviteToDelete.id);
     try {
-      const res = await fetch(`/api/admin/tenants/${tenantSlug}/invitations/${invitationId}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(
+        `/api/admin/tenants/${encodeURIComponent(tenantSlug)}/invitations/${encodeURIComponent(inviteToDelete.id)}`,
+        { method: "DELETE", credentials: "include" }
+      );
       const data = await res.json();
       if (data.success) {
-        toast.success("Invitación eliminada. Puedes enviar una nueva.");
+        toast.success(data.message || "Invitación eliminada");
+        setInviteToDelete(null);
         fetchInvitations();
         onUpdated();
       } else {
@@ -1033,7 +1109,9 @@ function InvitationsTab({
     <div className="space-y-6">
       <h3 className="text-lg font-bold text-white">Invitaciones enviadas</h3>
       <p className="text-sm text-slate-400">
-        Puedes eliminar invitaciones pendientes para reenviar en caso de error (email incorrecto, rol equivocado, etc.).
+        Como super administrador puedes eliminar cualquier registro de invitación. Las pendientes pueden borrar también
+        el usuario huérfano si aplica. Las ya aceptadas solo quitan el historial de invitación; la cuenta sigue en
+        Usuarios hasta que la elimines ahí.
       </p>
       <div className="overflow-x-auto rounded-xl border border-white/5">
         <table className="w-full">
@@ -1071,14 +1149,16 @@ function InvitationsTab({
                   {new Date(inv.createdAt).toLocaleDateString("es-CO")}
                 </td>
                 <td className="py-4 px-4">
-                  {inv.status === "PENDING" && (
+                  {canHardDeleteUsers ? (
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-9 w-9 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10"
-                      onClick={() => handleDelete(inv.id)}
+                      onClick={() =>
+                        setInviteToDelete({ id: inv.id, email: inv.email, status: inv.status })
+                      }
                       disabled={deletingId === inv.id}
-                      title="Eliminar para reenviar"
+                      title="Eliminar invitación"
                     >
                       {deletingId === inv.id ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -1086,13 +1166,30 @@ function InvitationsTab({
                         <Trash2 className="w-4 h-4" />
                       )}
                     </Button>
-                  )}
+                  ) : null}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      <ConfirmDialog
+        isOpen={!!inviteToDelete}
+        onClose={() => !deletingId && setInviteToDelete(null)}
+        onConfirm={runInvitationDelete}
+        title="Eliminar invitación"
+        description={
+          inviteToDelete
+            ? inviteToDelete.status === "PENDING"
+              ? `Se eliminará la invitación pendiente a ${inviteToDelete.email}. Si hubo un usuario huérfano sin matrícula, también se borrará.`
+              : `Se eliminará el registro de invitación de ${inviteToDelete.email} (estado: ${inviteToDelete.status}). Si ya aceptó, su cuenta de usuario no se borra automáticamente.`
+            : ""
+        }
+        variant="destructive"
+        confirmText="Eliminar"
+        isLoading={!!deletingId && inviteToDelete?.id === deletingId}
+      />
     </div>
   );
 }

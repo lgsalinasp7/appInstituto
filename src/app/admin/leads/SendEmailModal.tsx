@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { sanitizeEmailPreviewHtml } from '@/lib/sanitize-email-preview-html';
 
 interface KaledLead {
   id: string;
@@ -108,7 +109,7 @@ export default function SendEmailModal({
         subject = subject.replace(regex, value);
       });
 
-      setPreviewHtml(html);
+      setPreviewHtml(sanitizeEmailPreviewHtml(html));
       setPreviewSubject(subject);
     } catch (error) {
       toast.error('Error al generar vista previa');
