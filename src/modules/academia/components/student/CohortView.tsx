@@ -38,7 +38,8 @@ interface Lesson {
   videoUrl?: string | null;
   duration: number;
   order: number;
-  meta?: { weekNumber: number; dayOfWeek: string } | null;
+  meta?: { weekNumber: number; dayOfWeek: string; isPrecohort?: boolean } | null;
+  isLocked?: boolean;
 }
 
 interface Module {
@@ -49,9 +50,28 @@ interface Module {
 }
 
 interface CohortData {
-  cohort: { id: string; name: string; startDate: string; endDate: string; status: string };
+  cohort: {
+    id: string;
+    name: string;
+    startDate: string;
+    endDate: string;
+    status: string;
+    lessonGatingEnabled?: boolean;
+    timezone?: string | null;
+  };
   course: { id: string; title: string; modules: Module[] };
-  events: Array<{ id: string; title: string; type: string; dayOfWeek?: number | null; startTime?: string | null; endTime?: string | null; scheduledAt?: string | null }>;
+  events: Array<{
+    id: string;
+    title: string;
+    type: string;
+    dayOfWeek?: number | null;
+    startTime?: string | null;
+    endTime?: string | null;
+    scheduledAt?: string | null;
+    lessonId?: string | null;
+    sessionOrder?: number;
+    cancelled?: boolean;
+  }>;
   assessments: Array<{ id: string; title: string; type: string; scheduledAt: string }>;
   members: Array<{ id: string; name: string | null; email: string; image: string | null }>;
   completedLessonIds: string[];
@@ -202,9 +222,8 @@ export function CohortView({ data }: CohortViewProps) {
                 {displayModule.lessons.map((lesson, idx) => {
                   const globalNum = globalSessionOffset + idx + 1;
                   const isCompleted = completedSet.has(lesson.id);
-                  const prevCompleted = idx === 0 || completedSet.has(displayModule.lessons[idx - 1]?.id);
-                  const isInProgress = prevCompleted && !isCompleted;
-                  const isPending = !prevCompleted;
+                  const cohortLocked = lesson.isLocked === true;
+                  const canOpen = !cohortLocked || isCompleted;
 
                   const dayOfWeek = (lesson.meta?.dayOfWeek as string) ?? ["LUNES", "MIERCOLES", "VIERNES"][idx % 3];
                   const dayLabel = DAY_LABELS[dayOfWeek] ?? dayOfWeek;
@@ -216,7 +235,11 @@ export function CohortView({ data }: CohortViewProps) {
                     statusLabel = "Completada";
                     statusDot = "bg-emerald-400";
                     statusPill = "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
-                  } else if (isInProgress) {
+                  } else if (cohortLocked) {
+                    statusLabel = "Pendiente de liberación";
+                    statusDot = "bg-amber-500";
+                    statusPill = "bg-amber-500/15 text-amber-200/90 border-amber-500/35";
+                  } else {
                     statusLabel = "En curso";
                     statusDot = "bg-cyan-400";
                     statusPill = "bg-cyan-500/20 text-cyan-400 border-cyan-500/30";
@@ -225,10 +248,14 @@ export function CohortView({ data }: CohortViewProps) {
                   return (
                     <Link
                       key={lesson.id}
-                      href={isPending ? "#" : `/academia/student/courses/${course.id}/lesson/${lesson.id}`}
+                      href={
+                        canOpen
+                          ? `/academia/student/courses/${course.id}/lesson/${lesson.id}`
+                          : "#"
+                      }
                       className={cn(
                         "academy-card-dark rounded-xl sm:rounded-2xl p-4 sm:p-5 flex items-center gap-4 transition-all hover:border-white/10",
-                        isPending && "opacity-60 pointer-events-none cursor-not-allowed"
+                        !canOpen && "opacity-60 pointer-events-none cursor-not-allowed"
                       )}
                     >
                       <div className={cn("w-2.5 h-2.5 rounded-full shrink-0", statusDot)} />
@@ -238,6 +265,7 @@ export function CohortView({ data }: CohortViewProps) {
                         </div>
                         <p className="text-xs text-slate-500 mt-0.5">
                           {dayLabel} · {lesson.duration} min
+                          {cohortLocked && !isCompleted ? " · Esperando habilitación del administrador" : ""}
                         </p>
                       </div>
                       <span
@@ -248,13 +276,12 @@ export function CohortView({ data }: CohortViewProps) {
                       >
                         {statusLabel}
                       </span>
-                      {!isPending && (
-                        isCompleted ? (
+                      {canOpen &&
+                        (isCompleted ? (
                           <Check className="w-5 h-5 text-emerald-400 shrink-0" />
                         ) : (
                           <Play className="w-5 h-5 text-cyan-400 shrink-0" />
-                        )
-                      )}
+                        ))}
                     </Link>
                   );
                 })}
@@ -272,7 +299,12 @@ export function CohortView({ data }: CohortViewProps) {
                 : 0;
               const isActive = idx === activeModuleIdx;
               const isNext = idx === activeModuleIdx + 1;
-              const isLocked = idx > activeModuleIdx + 1;
+              const progressLocked = idx > activeModuleIdx + 1;
+              const cohortShellLocked =
+                module.lessons.length > 0 &&
+                module.lessons.every((l) => l.isLocked === true) &&
+                completedInModule === 0;
+              const isLocked = progressLocked || cohortShellLocked;
               const isCompleted = moduleProgress >= 100;
 
               let statusLabel = "Bloqueado";
@@ -353,7 +385,9 @@ export function CohortView({ data }: CohortViewProps) {
           <div className="space-y-3">
             {(isTrial
               ? course.modules.flatMap((m) => m.lessons.filter((l) => l.videoUrl)).slice(0, 1)
-              : course.modules.flatMap((m) => m.lessons.filter((l) => l.videoUrl))
+              : course.modules.flatMap((m) =>
+                  m.lessons.filter((l) => l.videoUrl && l.isLocked !== true)
+                )
             ).map((l) => (
                   <div
                     key={l.id}

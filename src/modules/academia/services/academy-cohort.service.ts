@@ -4,6 +4,10 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import type { CreateCohortInput, CreateCohortEventInput, CreateAssessmentInput } from "../schemas";
+import {
+  AcademyCohortLessonAccessService,
+  isLessonPrecohortMeta,
+} from "./academy-cohort-lesson-access.service";
 
 export class AcademyCohortService {
   static async listByTenant(tenantId: string) {
@@ -94,7 +98,9 @@ export class AcademyCohortService {
                 lessons: {
                   where: { isActive: true },
                   orderBy: { order: "asc" },
-                  include: { meta: { select: { weekNumber: true, dayOfWeek: true } } },
+                  include: {
+                    meta: { select: { weekNumber: true, dayOfWeek: true, isPrecohort: true } },
+                  },
                 },
               },
             },
@@ -112,9 +118,14 @@ export class AcademyCohortService {
   }
 
   /** Obtiene datos del cohorte para vista de estudiante (server-side). */
-  static async getCohortDataForStudent(userId: string, cohortId: string, userPlatformRole: string) {
+  static async getCohortDataForStudent(
+    userId: string,
+    cohortId: string,
+    userPlatformRole: string,
+    tenantId: string
+  ) {
     const cohort = await prisma.academyCohort.findFirst({
-      where: { id: cohortId },
+      where: { id: cohortId, tenantId },
       include: {
         course: {
           include: {
@@ -125,7 +136,9 @@ export class AcademyCohortService {
                 lessons: {
                   where: { isActive: true },
                   orderBy: { order: "asc" },
-                  include: { meta: { select: { weekNumber: true, dayOfWeek: true } } },
+                  include: {
+                    meta: { select: { weekNumber: true, dayOfWeek: true, isPrecohort: true } },
+                  },
                 },
               },
             },
@@ -152,6 +165,7 @@ export class AcademyCohortService {
       select: {
         isTrial: true,
         trialAllowedLessonId: true,
+        trialExpiresAt: true,
         cohortId: true,
       },
     });
@@ -183,9 +197,35 @@ export class AcademyCohortService {
       })
       .sort((a, b) => a.order - b.order);
 
+    const releasedSet = cohort.lessonGatingEnabled
+      ? await AcademyCohortLessonAccessService.getReleasedLessonIds(cohort.id)
+      : new Set<string>();
+
+    const trialExpired = Boolean(
+      enrollment?.isTrial &&
+        enrollment.trialExpiresAt &&
+        new Date() > enrollment.trialExpiresAt
+    );
+
     const courseWithUniqueModules = {
       ...cohort.course,
-      modules: uniqueModules,
+      modules: uniqueModules.map((mod) => ({
+        ...mod,
+        lessons: mod.lessons.map((l) => ({
+          ...l,
+          isLocked: AcademyCohortLessonAccessService.computeLessonLockedForStudentView({
+            platformRole: userPlatformRole,
+            lessonGatingEnabled: cohort.lessonGatingEnabled,
+            releasedLessonIds: releasedSet,
+            isPrecohort: isLessonPrecohortMeta(l.meta ?? undefined),
+            isTrial: enrollment?.isTrial ?? false,
+            trialExpired,
+            trialAllowedLessonId: enrollment?.trialAllowedLessonId ?? null,
+            lessonId: l.id,
+            enrollmentCohortId: enrollment?.cohortId ?? null,
+          }),
+        })),
+      })),
     };
 
     const lessonIds = uniqueModules.flatMap((m) => m.lessons.map((l) => l.id));
@@ -203,6 +243,8 @@ export class AcademyCohortService {
         endDate: cohort.endDate.toISOString(),
         status: cohort.status,
         courseId: cohort.courseId,
+        lessonGatingEnabled: cohort.lessonGatingEnabled,
+        timezone: cohort.timezone,
       },
       course: courseWithUniqueModules,
       events: cohort.events.map((e) => ({
@@ -213,6 +255,9 @@ export class AcademyCohortService {
         startTime: e.startTime,
         endTime: e.endTime,
         scheduledAt: e.scheduledAt?.toISOString?.() ?? "",
+        lessonId: e.lessonId,
+        sessionOrder: e.sessionOrder,
+        cancelled: e.cancelled,
       })),
       assessments: cohort.assessments.map((a) => ({
         id: a.id,
@@ -267,7 +312,7 @@ export class AcademyCohortService {
     if (!cohort) return null;
     return prisma.academyCohortEvent.findMany({
       where: { cohortId },
-      orderBy: [{ scheduledAt: "asc" }, { dayOfWeek: "asc" }],
+      orderBy: [{ sessionOrder: "asc" }, { scheduledAt: "asc" }, { dayOfWeek: "asc" }],
     });
   }
 
@@ -320,5 +365,114 @@ export class AcademyCohortService {
       email: e.user.email,
       image: e.user.image,
     }));
+  }
+
+  /** Estado de gating + lista plana de lecciones para editor admin / lectura profesor. */
+  static async getLessonAccessEditorState(cohortId: string, tenantId: string) {
+    const cohort = await prisma.academyCohort.findFirst({
+      where: { id: cohortId, tenantId },
+      include: {
+        course: {
+          include: {
+            modules: {
+              where: { isActive: true },
+              orderBy: { order: "asc" },
+              include: {
+                lessons: {
+                  where: { isActive: true },
+                  orderBy: { order: "asc" },
+                  select: {
+                    id: true,
+                    title: true,
+                    order: true,
+                    meta: { select: { weekNumber: true, dayOfWeek: true, isPrecohort: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!cohort) return null;
+    const releases = await prisma.academyCohortLessonRelease.findMany({
+      where: { cohortId },
+      select: { lessonId: true },
+    });
+    return {
+      cohortId: cohort.id,
+      lessonGatingEnabled: cohort.lessonGatingEnabled,
+      timezone: cohort.timezone,
+      releasedLessonIds: releases.map((r) => r.lessonId),
+      modules: cohort.course.modules,
+    };
+  }
+
+  static async setLessonReleases(
+    cohortId: string,
+    tenantId: string,
+    adminUserId: string,
+    data: { lessonGatingEnabled?: boolean; releasedLessonIds?: string[] }
+  ) {
+    const cohort = await prisma.academyCohort.findFirst({
+      where: { id: cohortId, tenantId },
+      select: { id: true, courseId: true },
+    });
+    if (!cohort) {
+      throw new Error("Cohorte no encontrado");
+    }
+
+    if (data.releasedLessonIds !== undefined && data.releasedLessonIds.length > 0) {
+      const valid = await prisma.academyLesson.count({
+        where: {
+          id: { in: data.releasedLessonIds },
+          module: { courseId: cohort.courseId },
+        },
+      });
+      if (valid !== data.releasedLessonIds.length) {
+        throw new Error("Alguna lección no pertenece al curso de este cohorte");
+      }
+    }
+
+    await prisma.$transaction(async (tx) => {
+      if (data.lessonGatingEnabled !== undefined) {
+        await tx.academyCohort.update({
+          where: { id: cohortId },
+          data: { lessonGatingEnabled: data.lessonGatingEnabled },
+        });
+      }
+      if (data.releasedLessonIds !== undefined) {
+        await tx.academyCohortLessonRelease.deleteMany({ where: { cohortId } });
+        if (data.releasedLessonIds.length > 0) {
+          await tx.academyCohortLessonRelease.createMany({
+            data: data.releasedLessonIds.map((lessonId) => ({
+              cohortId,
+              lessonId,
+              releasedByUserId: adminUserId,
+            })),
+          });
+        }
+      }
+    });
+  }
+
+  static async updateEvent(
+    eventId: string,
+    cohortId: string,
+    tenantId: string,
+    data: Prisma.AcademyCohortEventUpdateInput
+  ) {
+    const cohort = await prisma.academyCohort.findFirst({
+      where: { id: cohortId, tenantId },
+    });
+    if (!cohort) return null;
+    const existing = await prisma.academyCohortEvent.findFirst({
+      where: { id: eventId, cohortId },
+    });
+    if (!existing) return null;
+    return prisma.academyCohortEvent.update({
+      where: { id: eventId },
+      data,
+    });
   }
 }

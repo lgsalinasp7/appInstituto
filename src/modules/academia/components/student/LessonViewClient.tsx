@@ -304,15 +304,22 @@ export function LessonViewClient({ courseId, lessonId, userId }: LessonViewClien
     const isTrialExpired = error?.includes("prueba ha expirado");
     const isTrialRestricted =
       error?.includes("acceso de prueba") || isTrialExpired;
-    const friendlyMessage = isTrialRestricted
-      ? isTrialExpired
-        ? "Tu acceso de prueba ha expirado. Contáctanos para renovar el acceso al curso."
-        : "Tu acceso de prueba incluye solo la primera lección. Contáctanos para comprar el acceso completo y desbloquear el resto del curso."
-      : error ?? "Error desconocido";
+    const isCohortGating = error?.includes("no está habilitada para tu cohorte");
+    const friendlyMessage = isCohortGating
+      ? "Esta lección aún no está habilitada para tu cohorte. Cuando tu administrador la libere, podrás acceder desde la vista del cohorte."
+      : isTrialRestricted
+        ? isTrialExpired
+          ? "Tu acceso de prueba ha expirado. Contáctanos para renovar el acceso al curso."
+          : "Tu acceso de prueba incluye solo la primera lección. Contáctanos para comprar el acceso completo y desbloquear el resto del curso."
+        : error ?? "Error desconocido";
 
     return (
       <div className="academy-card-dark p-8">
-        <p className={isTrialRestricted ? "text-amber-400" : "text-red-400"}>
+        <p
+          className={
+            isTrialRestricted ? "text-amber-400" : isCohortGating ? "text-slate-300" : "text-red-400"
+          }
+        >
           {friendlyMessage}
         </p>
         <div className="mt-4 flex flex-wrap gap-3">

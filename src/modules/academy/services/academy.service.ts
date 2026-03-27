@@ -5,6 +5,10 @@
 
 import { prisma } from "@/lib/prisma";
 import type { DeliverableStatus, SaasProjectStatus } from "@prisma/client";
+import {
+  AcademyCohortLessonAccessService,
+  isLessonPrecohortMeta,
+} from "@/modules/academia/services/academy-cohort-lesson-access.service";
 
 // ============================================================
 // SERVICIO 1: CURSOS Y MÓDULOS
@@ -145,7 +149,12 @@ export const courseService = {
     return module?.lessons[0]?.id ?? null;
   },
 
-  async getLessonWithProgress(lessonId: string, tenantId: string, userId?: string) {
+  async getLessonWithProgress(
+    lessonId: string,
+    tenantId: string,
+    userId?: string,
+    auth?: { platformRole: string | null }
+  ) {
     const lesson = await prisma.academyLesson.findUnique({
       where: { id: lessonId },
       include: {
@@ -171,27 +180,37 @@ export const courseService = {
     });
 
     if (!lesson) throw new Error("Lección no encontrada");
+    if (lesson.module.course.tenantId !== tenantId) {
+      throw new Error("Lección no encontrada");
+    }
 
     await attachInteractiveAnimationFallbackIfMissing(lesson, tenantId);
 
     if (!userId) return { lesson, progress: null };
 
-    // Validar acceso trial
     const enrollment = await prisma.academyEnrollment.findFirst({
       where: {
         userId,
         courseId: lesson.module.courseId,
         status: "ACTIVE",
       },
+      select: {
+        isTrial: true,
+        trialExpiresAt: true,
+        trialAllowedLessonId: true,
+        cohortId: true,
+      },
     });
-    if (enrollment?.isTrial) {
-      if (enrollment.trialExpiresAt && new Date() > enrollment.trialExpiresAt) {
-        throw new Error("Tu acceso de prueba ha expirado");
-      }
-      if (enrollment.trialAllowedLessonId && lesson.id !== enrollment.trialAllowedLessonId) {
-        throw new Error("Esta lección no está incluida en tu acceso de prueba");
-      }
-    }
+
+    await AcademyCohortLessonAccessService.assertLessonReadableOrThrow({
+      userId,
+      platformRole: auth?.platformRole ?? null,
+      tenantId,
+      courseId: lesson.module.courseId,
+      lessonId,
+      isPrecohort: isLessonPrecohortMeta(lesson.meta ?? undefined),
+      enrollment,
+    });
 
     const [progress, quizResults, cralCompletions, deliverySubmission] =
       await Promise.all([
@@ -222,7 +241,12 @@ export const courseService = {
     return { lesson, progress, quizResults, cralCompletions, deliverySubmission };
   },
 
-  async getSidebarModules(courseId: string, userId: string, tenantId: string) {
+  async getSidebarModules(
+    courseId: string,
+    userId: string,
+    tenantId: string,
+    platformRole: string | null = null
+  ) {
     const [modules, enrollment] = await Promise.all([
       prisma.academyModule.findMany({
         where: { courseId, isActive: true },
@@ -235,16 +259,35 @@ export const courseService = {
               id: true,
               title: true,
               order: true,
-              meta: { select: { weekNumber: true, dayOfWeek: true } },
+              meta: { select: { weekNumber: true, dayOfWeek: true, isPrecohort: true } },
             },
           },
         },
       }),
       prisma.academyEnrollment.findFirst({
         where: { userId, courseId, status: "ACTIVE" },
-        select: { isTrial: true, trialExpiresAt: true, trialAllowedLessonId: true },
+        select: {
+          isTrial: true,
+          trialExpiresAt: true,
+          trialAllowedLessonId: true,
+          cohortId: true,
+        },
       }),
     ]);
+
+    const cohortId = enrollment?.cohortId ?? null;
+    let lessonGatingEnabled = false;
+    let releasedSet = new Set<string>();
+    if (cohortId) {
+      const cohort = await prisma.academyCohort.findFirst({
+        where: { id: cohortId, courseId, tenantId },
+        select: { lessonGatingEnabled: true },
+      });
+      lessonGatingEnabled = cohort?.lessonGatingEnabled ?? false;
+      if (lessonGatingEnabled) {
+        releasedSet = await AcademyCohortLessonAccessService.getReleasedLessonIds(cohortId);
+      }
+    }
 
     const lessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
     const completedLessons = await prisma.academyStudentProgress.findMany({
@@ -254,7 +297,9 @@ export const courseService = {
     const completedSet = new Set(completedLessons.map((p) => p.lessonId));
 
     const isTrial = enrollment?.isTrial ?? false;
-    const trialExpired = isTrial && enrollment?.trialExpiresAt && new Date() > enrollment.trialExpiresAt;
+    const trialExpired = Boolean(
+      isTrial && enrollment?.trialExpiresAt && new Date() > enrollment.trialExpiresAt
+    );
     const trialAllowedLessonId = enrollment?.trialAllowedLessonId ?? null;
 
     const result = modules.map((mod) => ({
@@ -262,9 +307,17 @@ export const courseService = {
       lessons: mod.lessons.map((l) => ({
         ...l,
         isCompleted: completedSet.has(l.id),
-        isLocked:
-          isTrial &&
-          (trialExpired || (trialAllowedLessonId != null && l.id !== trialAllowedLessonId)),
+        isLocked: AcademyCohortLessonAccessService.computeLessonLockedForStudentView({
+          platformRole,
+          lessonGatingEnabled,
+          releasedLessonIds: releasedSet,
+          isPrecohort: isLessonPrecohortMeta(l.meta ?? undefined),
+          isTrial,
+          trialExpired,
+          trialAllowedLessonId,
+          lessonId: l.id,
+          enrollmentCohortId: cohortId,
+        }),
       })),
       completedCount: mod.lessons.filter((l) => completedSet.has(l.id)).length,
       totalCount: mod.lessons.length,

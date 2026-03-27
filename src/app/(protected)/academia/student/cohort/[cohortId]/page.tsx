@@ -14,14 +14,17 @@ export default async function StudentCohortPage({ params }: PageProps) {
 
   const dbUser = await prisma.user.findUnique({
     where: { id: user.id },
-    select: { platformRole: true },
+    select: { platformRole: true, tenantId: true },
   });
 
   const { cohortId } = await params;
+  if (!dbUser?.tenantId) notFound();
+
   const data = await AcademyCohortService.getCohortDataForStudent(
     user.id,
     cohortId,
-    dbUser?.platformRole ?? "ACADEMY_STUDENT"
+    dbUser.platformRole ?? "ACADEMY_STUDENT",
+    dbUser.tenantId
   );
 
   if (!data) notFound();

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface Cohort {
@@ -69,12 +70,22 @@ export function CohortsManagement() {
                   {c.kind === "PROMOTIONAL" ? " · Promocional" : ""}
                 </p>
               </div>
-              <span className={cn(
-                "text-xs font-medium px-2 py-1 rounded-lg border",
-                STATUS_STYLE[c.status] ?? "bg-slate-500/20 text-slate-400 border-slate-500/30"
-              )}>
-                {c.status}
-              </span>
+              <div className="flex flex-col items-end gap-2 shrink-0">
+                <span
+                  className={cn(
+                    "text-xs font-medium px-2 py-1 rounded-lg border",
+                    STATUS_STYLE[c.status] ?? "bg-slate-500/20 text-slate-400 border-slate-500/30"
+                  )}
+                >
+                  {c.status}
+                </span>
+                <Link
+                  href={`/academia/admin/cohorts/${c.id}/access`}
+                  className="text-xs font-semibold text-cyan-400 hover:text-cyan-300"
+                >
+                  Lecciones y calendario
+                </Link>
+              </div>
             </div>
           ))}
         </div>

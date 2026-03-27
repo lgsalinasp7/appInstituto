@@ -139,6 +139,7 @@ model User {
   academyCohortTeacherAssignments AcademyCohortTeacherAssignment[]
   academyCohortAdminAuditsActor   AcademyCohortAdminAudit[] @relation("CohortAuditActor")
   academyInAppNotifications       AcademyInAppNotification[]
+  academyCohortLessonReleasesReleased AcademyCohortLessonRelease[] @relation("CohortLessonReleaseActor")
 
   // Lavadero Pro
   lavaderoOrdersCreated   LavaderoOrder[]   @relation("LavaderoOrderCreator")
@@ -1475,9 +1476,28 @@ model AcademyLesson {
   quizzes        AcademyQuiz[]
   deliverables   AcademyDeliverable[]
   kaledSessions  AcademyKaledSession[]
+  cohortReleases AcademyCohortLessonRelease[]
+  cohortEvents   AcademyCohortEvent[]
 
   @@index([moduleId])
   @@index([order])
+}
+
+/// Lessons explicitly released for a cohort (when lessonGatingEnabled is true).
+model AcademyCohortLessonRelease {
+  id               String   @id @default(cuid())
+  cohortId         String
+  lessonId         String
+  releasedAt       DateTime @default(now())
+  releasedByUserId String?
+
+  cohort     AcademyCohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  lesson     AcademyLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  releasedBy User?         @relation("CohortLessonReleaseActor", fields: [releasedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([cohortId, lessonId])
+  @@index([cohortId])
+  @@index([lessonId])
 }
 
 model AcademyEnrollment {
@@ -1529,6 +1549,10 @@ model AcademyCohort {
   promoPreset     AcademyCohortPromoPreset?
   /// Optional label for marketing / UTM tracking
   campaignLabel   String?
+  /// When true, students (with cohort) only see lesson content listed in AcademyCohortLessonRelease (+ pre-cohort lessons).
+  lessonGatingEnabled Boolean              @default(false)
+  /// Optional IANA timezone override; falls back to Tenant.timezone when null.
+  timezone        String?
   createdAt       DateTime                 @default(now())
   updatedAt       DateTime                 @updatedAt
 
@@ -1536,6 +1560,7 @@ model AcademyCohort {
   tenant           Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   enrollments      AcademyEnrollment[]
   events           AcademyCohortEvent[]
+  lessonReleases   AcademyCohortLessonRelease[]
   assessments      AcademyAssessment[]
   kaledSessions    AcademyKaledSession[]
   studentSnapshots AcademyStudentSnapshot[]
@@ -1613,11 +1638,17 @@ model AcademyCohortEvent {
   startTime   String?      // "09:00"
   endTime     String?
   scheduledAt DateTime?    // para eventos puntuales
+  /// Optional link to the academy lesson covered by this live session.
+  lessonId    String?
+  sessionOrder Int         @default(0)
+  cancelled   Boolean      @default(false)
   createdAt   DateTime     @default(now())
 
   cohort AcademyCohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  lesson AcademyLesson? @relation(fields: [lessonId], references: [id], onDelete: SetNull)
 
   @@index([cohortId])
+  @@index([lessonId])
 }
 
 model AcademyAssessment {
@@ -1703,6 +1734,8 @@ model AcademyLessonMeta {
   sessionType SessionType @default(TEORIA)
   weekNumber  Int
   dayOfWeek   DayOfWeek
+  /// Welcome / norms / prework — always visible when gating is on (after enroll).
+  isPrecohort Boolean     @default(false)
   phaseTarget CRALPhase?
   videoUrl    String?
   videoTitle  String?
