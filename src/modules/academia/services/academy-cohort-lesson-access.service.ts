@@ -4,14 +4,7 @@
  */
 import { prisma } from "@/lib/prisma";
 
-/** Pre-cohorte: flag en meta o semana 0 (convención). */
-export function isLessonPrecohortMeta(
-  meta: { isPrecohort?: boolean; weekNumber?: number } | null | undefined
-): boolean {
-  if (!meta) return false;
-  if (meta.isPrecohort === true) return true;
-  return meta.weekNumber === 0;
-}
+export { isLessonPrecohortMeta } from "../utils/is-lesson-precohort-meta";
 
 export class AcademyCohortLessonAccessService {
   /** Load released lesson IDs for a cohort (empty if none). */

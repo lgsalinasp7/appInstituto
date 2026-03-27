@@ -483,47 +483,45 @@ export function AdminCourseManageView({ courseId }: { courseId: string }) {
                 key={module.id}
                 className="rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden"
               >
-                <div>
+                <div className="flex items-stretch min-w-0">
                   <button
                     type="button"
                     onClick={() => setOpenModuleId((prev) => (prev === module.id ? null : module.id))}
-                    className="w-full px-5 py-4 text-left flex items-center justify-between hover:bg-white/[0.02] transition-colors"
+                    className="min-w-0 flex-1 px-5 py-4 text-left flex items-center justify-between gap-3 hover:bg-white/[0.02] transition-colors"
                   >
-                    <div className="flex items-center gap-3">
-                      <BookOpen className="w-5 h-5 text-white/60" />
-                      <div>
-                        <h3 className="text-lg font-bold text-white">{module.title}</h3>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <BookOpen className="w-5 h-5 text-white/60 shrink-0" />
+                      <div className="min-w-0">
+                        <h3 className="text-lg font-bold text-white truncate">{module.title}</h3>
                         <p className="text-xs text-slate-400">{module.lessons.length} lecciones</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setModuleModal({ open: true, editing: module });
-                        }}
-                        className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5"
-                        title="Editar módulo"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteModule(module.id);
-                        }}
-                        className="p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10"
-                        title="Eliminar módulo"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                      <ChevronDown
-                        className={cn("w-5 h-5 text-slate-400 transition-transform", openModuleId === module.id && "rotate-180")}
-                      />
-                    </div>
+                    <ChevronDown
+                      className={cn(
+                        "w-5 h-5 text-slate-400 shrink-0 transition-transform",
+                        openModuleId === module.id && "rotate-180"
+                      )}
+                    />
                   </button>
+                  <div className="flex items-center gap-1 pr-3 shrink-0 border-l border-white/[0.06]">
+                    <button
+                      type="button"
+                      onClick={() => setModuleModal({ open: true, editing: module })}
+                      className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5"
+                      title="Editar módulo"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteModule(module.id)}
+                      className="p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+                      title="Eliminar módulo"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
                   {openModuleId === module.id && (
                     <div className="px-5 pb-4 space-y-2 border-t border-white/[0.06] pt-4">
                       <div className="flex justify-between items-center mb-2">
@@ -571,7 +569,6 @@ export function AdminCourseManageView({ courseId }: { courseId: string }) {
                       )}
                     </div>
                   )}
-                </div>
               </div>
             ))}
             {course.modules.length === 0 && (

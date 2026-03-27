@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { isLessonPrecohortMeta } from "@/modules/academia/services/academy-cohort-lesson-access.service";
+import { isLessonPrecohortMeta } from "@/modules/academia/utils/is-lesson-precohort-meta";
 
 interface LessonRow {
   id: string;
