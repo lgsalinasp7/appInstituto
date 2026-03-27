@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>El Viaje de una URL</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;600;700;800&display=swap');
+
+:root {
+  --bg: #05070f;
+  --surf: #090c18;
+  --card: #0b0f1e;
+  --border: #141d35;
+  --text: #d8e4ff;
+  --muted: #3d5080;
+  --dim: #1a2440;
+
+  --ip:   #38bdf8;
+  --dns:  #22d3ee;
+  --tcp:  #34d399;
+  --tls:  #fbbf24;
+  --http: #f472b6;
+  --cdn:  #a78bfa;
+  --browser: #86efac;
+}
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  min-height: 100vh;
+}
+
+/* ── STARFIELD ── */
+body::before {
+  content:'';
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    radial-gradient(1px 1px at 15% 25%, #ffffff1a, transparent),
+    radial-gradient(1px 1px at 45% 60%, #ffffff12, transparent),
+    radial-gradient(1px 1px at 75% 15%, #ffffff18, transparent),
+    radial-gradient(1px 1px at 85% 75%, #ffffff10, transparent),
+    radial-gradient(1px 1px at 25% 85%, #ffffff14, transparent),
+    radial-gradient(1px 1px at 60% 40%, #ffffff0e, transparent);
+}
+
+.shell {
+  position:relative;z-index:1;
+  max-width:820px;margin:0 auto;
+  padding:36px 20px 100px;
+}
+
+/* ── HEADER ── */
+.hero {
+  text-align:center;
+  padding-bottom:40px;
+  animation: fadeIn .7s ease both;
+}
+.hero-eyebrow {
+  font-family:'Space Mono',monospace;
+  font-size:10px;letter-spacing:4px;
+  color:var(--muted);text-transform:uppercase;
+  margin-bottom:16px;
+}
+.hero h1 {
+  font-size:clamp(26px,5vw,48px);
+  font-weight:800;line-height:1.1;
+  background:linear-gradient(130deg,#38bdf8,#a78bfa 50%,#f472b6);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-desc {
+  margin-top:12px;font-size:14px;color:var(--muted);line-height:1.6;
+}
+.hero-desc code {
+  font-family:'Space Mono',monospace;color:var(--ip);
+  background:#38bdf812;padding:1px 7px;border-radius:4px;font-size:12px;
+}
+
+/* ── STEP COUNTER ── */
+.step-counter {
+  display:flex;align-items:center;justify-content:center;
+  gap:6px;margin-bottom:32px;
+  animation:fadeIn .7s .1s ease both;
+}
+.sc-dot {
+  width:8px;height:8px;border-radius:50%;
+  background:var(--border);
+  transition:all .4s ease;
+  cursor:pointer;
+}
+.sc-dot.done  { background:var(--muted); }
+.sc-dot.active{ width:24px;border-radius:4px; }
+
+/* ── MAIN STAGE ── */
+.stage {
+  background:var(--surf);
+  border:1px solid var(--border);
+  border-radius:20px;
+  overflow:hidden;
+  margin-bottom:20px;
+  animation:fadeIn .7s .2s ease both;
+  position:relative;
+}
+
+.stage-top {
+  padding:24px 28px 0;
+  display:flex;align-items:flex-start;gap:16px;
+}
+
+.step-badge {
+  flex-shrink:0;
+  width:44px;height:44px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;
+  background:var(--dim);
+  border:1px solid var(--border);
+  transition:all .4s ease;
+}
+
+.step-meta { flex:1; }
+.step-number {
+  font-family:'Space Mono',monospace;
+  font-size:10px;letter-spacing:3px;
+  color:var(--muted);text-transform:uppercase;
+  margin-bottom:4px;
+}
+.step-title {
+  font-size:clamp(18px,3vw,26px);
+  font-weight:800;line-height:1.2;
+  transition:color .4s ease;
+}
+.step-tagline {
+  font-size:13px;color:var(--muted);margin-top:4px;line-height:1.5;
+}
+
+/* ── ANIMATION CANVAS ── */
+.anim-area {
+  margin:24px 0;
+  min-height:160px;
+  position:relative;
+  overflow:hidden;
+}
+
+/* ── EXPLANATION ── */
+.explanation {
+  padding:0 28px;
+  margin-bottom:8px;
+}
+.explanation p {
+  font-size:14px;line-height:1.8;color:#8899cc;
+  margin-bottom:12px;
+}
+.explanation p strong { color:var(--text); }
+.explanation p code {
+  font-family:'Space Mono',monospace;font-size:11px;
+  padding:2px 7px;border-radius:5px;
+  background:var(--dim);
+}
+
+/* ── SUB-STEPS ── */
+.substeps {
+  padding:0 28px 8px;
+}
+.substep {
+  display:flex;gap:14px;
+  padding:12px 0;
+  border-bottom:1px solid var(--border);
+  opacity:0;transform:translateY(8px);
+  transition:opacity .5s ease, transform .5s ease;
+}
+.substep:last-child{border-bottom:none;}
+.substep.visible{opacity:1;transform:translateY(0);}
+.substep-num {
+  font-family:'Space Mono',monospace;
+  font-size:11px;font-weight:700;
+  width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-top:1px;
+  background:var(--dim);color:var(--muted);
+  border:1px solid var(--border);
+  transition:all .3s ease;
+}
+.substep.visible .substep-num {
+  background:currentColor;
+  filter:brightness(0.3) saturate(0);
+}
+.substep-text { font-size:13px;color:#6677aa;line-height:1.7; }
+.substep-text strong { color:var(--text); }
+.substep-text code {
+  font-family:'Space Mono',monospace;font-size:11px;
+  padding:1px 6px;border-radius:4px;background:var(--dim);
+}
+
+/* ── CONTROLS ── */
+.controls {
+  padding:20px 28px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-top:1px solid var(--border);
+  gap:12px;flex-wrap:wrap;
+}
+.ctrl-info {
+  font-family:'Space Mono',monospace;
+  font-size:11px;color:var(--muted);
+}
+.ctrl-buttons { display:flex;gap:10px; }
+
+.btn {
+  font-family:'Space Mono',monospace;
+  font-size:11px;letter-spacing:1px;
+  padding:10px 20px;border-radius:9px;
+  cursor:pointer;border:none;
+  transition:all .2s ease;
+  display:flex;align-items:center;gap:8px;
+}
+.btn-prev {
+  background:var(--dim);color:var(--muted);
+  border:1px solid var(--border);
+}
+.btn-prev:hover { color:var(--text);border-color:var(--muted); }
+.btn-next {
+  background:var(--dim);color:var(--text);
+  border:1px solid var(--border);
+  position:relative;overflow:hidden;
+}
+.btn-next::after {
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,#ffffff08,transparent);
+  transform:translateX(-100%);transition:transform .4s ease;
+}
+.btn-next:hover::after { transform:translateX(100%); }
+.btn-next:hover { border-color:#4466aa; }
+.btn-next:disabled { opacity:.3;pointer-events:none; }
+.btn-replay {
+  background:transparent;color:var(--muted);
+  border:1px solid var(--border);font-size:13px;padding:8px 12px;
+}
+.btn-replay:hover{color:var(--text);}
+
+/* ── VISUAL NODES ── */
+.vis-node {
+  position:absolute;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  transition:all .5s cubic-bezier(.4,0,.2,1);
+}
+.vis-node-circle {
+  width:54px;height:54px;border-radius:16px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;
+  background:var(--card);
+  border:1.5px solid var(--border);
+  transition:all .4s ease;
+  position:relative;
+}
+.vis-node-circle.lit {
+  border-color:currentColor;
+  box-shadow:0 0 0 4px currentColor, 0 0 20px currentColor;
+  filter:brightness(1.1);
+}
+.vis-node-circle.pulse {
+  animation: nodePulse 1s ease infinite;
+}
+.vis-node-label {
+  font-family:'Space Mono',monospace;
+  font-size:9px;letter-spacing:1px;
+  color:var(--muted);text-align:center;
+  white-space:nowrap;
+}
+
+/* ── PACKET ── */
+.packet {
+  position:absolute;
+  width:20px;height:14px;border-radius:5px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:8px;font-weight:700;
+  font-family:'Space Mono',monospace;
+  top:50%;transform:translateY(-50%);
+  opacity:0;
+  transition:left 1.2s cubic-bezier(.4,0,.6,1), opacity .3s ease;
+  z-index:10;
+  box-shadow:0 0 10px currentColor;
+}
+
+/* ── CONNECTOR LINE ── */
+.conn-line {
+  position:absolute;
+  height:1.5px;
+  top:50%;transform:translateY(-50%);
+  background:var(--border);
+  transition:background .4s ease, box-shadow .4s ease;
+}
+.conn-line.active {
+  box-shadow:0 0 6px currentColor;
+}
+
+/* ── IP VISUAL ── */
+.ip-display {
+  display:flex;gap:6px;align-items:center;justify-content:center;
+  flex-wrap:wrap;padding:16px;
+}
+.ip-octet {
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;
+  padding:10px 14px;
+  font-family:'Space Mono',monospace;
+  font-size:20px;font-weight:700;
+  color:var(--dim);
+  transition:all .5s ease;
+  min-width:60px;text-align:center;
+}
+.ip-octet.lit { color:var(--ip); border-color:var(--ip); box-shadow:0 0 14px #38bdf840; }
+.ip-sep {
+  font-size:20px;color:var(--muted);font-weight:700;
+  font-family:'Space Mono',monospace;
+}
+.ip-label {
+  width:100%;text-align:center;
+  font-size:11px;color:var(--muted);
+  font-family:'Space Mono',monospace;letter-spacing:2px;
+}
+
+/* ── DNS TREE ── */
+.dns-tree { padding:8px 28px 8px; }
+.dns-row {
+  display:flex;align-items:center;gap:10px;
+  padding:7px 0;
+  opacity:0;transform:translateX(-8px);
+  transition:opacity .5s ease,transform .5s ease;
+  font-size:13px;
+}
+.dns-row.show { opacity:1;transform:translateX(0); }
+.dns-arrow { color:var(--muted);font-size:14px; }
+.dns-from { color:var(--muted);font-family:'Space Mono',monospace;font-size:11px;width:130px;flex-shrink:0; }
+.dns-to   { color:var(--dns);font-family:'Space Mono',monospace;font-size:11px; }
+.dns-desc { color:#445588;font-size:12px;margin-left:auto; }
+
+/* ── TCP HANDSHAKE ── */
+.hs-visual {
+  display:flex;align-items:flex-start;justify-content:space-between;
+  padding:8px 40px;gap:20px;
+  position:relative;
+}
+.hs-col { display:flex;flex-direction:column;gap:10px;align-items:center;width:120px; }
+.hs-peer-label {
+  font-size:12px;font-weight:700;
+  font-family:'Space Mono',monospace;
+  padding:6px 14px;border-radius:8px;
+  background:var(--card);border:1px solid var(--border);
+  white-space:nowrap;
+}
+.hs-arrow-wrap {
+  display:flex;flex-direction:column;gap:12px;
+  flex:1;align-self:center;
+  padding-top:8px;
+}
+.hs-msg {
+  display:flex;align-items:center;gap:8px;
+  opacity:0;transform:scaleX(.6);
+  transition:opacity .5s ease,transform .5s ease;
+}
+.hs-msg.show { opacity:1;transform:scaleX(1); }
+.hs-msg.right { flex-direction:row-reverse; }
+.hs-line {
+  flex:1;height:1.5px;
+  background:linear-gradient(90deg,var(--tcp),var(--tcp));
+  position:relative;
+}
+.hs-line::after {
+  content:'▶';position:absolute;right:-8px;top:50%;
+  transform:translateY(-50%);
+  font-size:10px;color:var(--tcp);
+}
+.hs-msg.right .hs-line::after {
+  content:'◀';right:auto;left:-8px;
+}
+.hs-tag {
+  font-family:'Space Mono',monospace;font-size:10px;
+  padding:3px 8px;border-radius:5px;
+  white-space:nowrap;font-weight:700;
+}
+
+/* ── TLS LAYERS ── */
+.tls-stack {
+  display:flex;flex-direction:column;gap:6px;
+  padding:8px 28px;
+}
+.tls-layer-row {
+  display:flex;align-items:center;gap:14px;
+  padding:10px 14px;border-radius:10px;
+  background:var(--card);border:1px solid var(--border);
+  opacity:0;transform:translateY(6px);
+  transition:all .5s ease;
+}
+.tls-layer-row.show { opacity:1;transform:translateY(0); }
+.tls-layer-icon { font-size:18px;width:28px;text-align:center; }
+.tls-layer-name { font-size:13px;font-weight:700;width:120px;flex-shrink:0; }
+.tls-layer-desc { font-size:12px;color:var(--muted);flex:1; }
+.tls-layer-time { font-family:'Space Mono',monospace;font-size:10px;color:var(--tls);flex-shrink:0; }
+
+/* ── HTTP REQUEST CARD ── */
+.http-terminal {
+  margin:8px 28px;
+  background:#020408;border:1px solid #0f1a30;border-radius:12px;
+  overflow:hidden;
+}
+.http-bar {
+  padding:8px 14px;background:#060c1a;
+  display:flex;gap:6px;align-items:center;
+  border-bottom:1px solid #0f1a30;
+}
+.http-dot { width:10px;height:10px;border-radius:50%; }
+.http-title { font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);margin-left:8px;letter-spacing:2px; }
+.http-body { padding:14px 18px; }
+.http-line {
+  font-family:'Space Mono',monospace;font-size:12px;
+  line-height:1.8;
+  opacity:0;transform:translateX(-6px);
+  transition:opacity .4s ease,transform .4s ease;
+  white-space:pre;
+}
+.http-line.show { opacity:1;transform:translateX(0); }
+.http-method { color:#f472b6; }
+.http-path   { color:#86efac; }
+.http-ver    { color:var(--muted); }
+.http-key    { color:#7dd3fc; }
+.http-val    { color:#fde68a; }
+.http-status { color:#34d399; }
+.http-blank  { color:transparent; }
+
+/* ── CDN MAP ── */
+.cdn-map {
+  position:relative;height:160px;
+  margin:8px 28px;border-radius:12px;
+  background:linear-gradient(135deg,#060c1a,#030610);
+  border:1px solid var(--border);overflow:hidden;
+}
+.cdn-grid {
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(var(--border) 1px,transparent 1px),
+    linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:30px 30px;
+  opacity:.3;
+}
+.cdn-node {
+  position:absolute;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+}
+.cdn-node-dot {
+  width:12px;height:12px;border-radius:50%;
+  border:1.5px solid var(--border);background:var(--card);
+  transition:all .4s ease;
+  cursor:pointer;
+}
+.cdn-node-dot.origin {
+  width:18px;height:18px;border-radius:50%;
+}
+.cdn-node-dot.lit {
+  border-color:currentColor;
+  box-shadow:0 0 8px currentColor;
+  background:currentColor;
+  filter:brightness(.5);
+}
+.cdn-node-lbl {
+  font-family:'Space Mono',monospace;font-size:8px;
+  color:var(--muted);white-space:nowrap;
+}
+.cdn-beam {
+  position:absolute;height:1px;
+  transform-origin:left center;
+  background:var(--muted);
+  transition:background .4s ease,box-shadow .4s ease;
+}
+.cdn-beam.lit { background:var(--cdn);box-shadow:0 0 6px var(--cdn); }
+
+/* ── BROWSER RENDER ── */
+.browser-mock {
+  margin:8px 28px;
+  background:#020408;border-radius:12px;
+  overflow:hidden;border:1px solid #0f1a30;
+}
+.browser-chrome {
+  padding:8px 14px;background:#060c1a;
+  display:flex;align-items:center;gap:8px;
+  border-bottom:1px solid #0f1a30;
+}
+.b-dots { display:flex;gap:5px; }
+.b-dot { width:10px;height:10px;border-radius:50%; }
+.b-url-bar {
+  flex:1;background:var(--card);border:1px solid var(--border);
+  border-radius:6px;padding:4px 10px;
+  font-family:'Space Mono',monospace;font-size:10px;color:var(--browser);
+}
+.browser-viewport {
+  padding:14px;display:flex;flex-direction:column;gap:8px;
+}
+.bv-row {
+  height:12px;border-radius:4px;background:var(--dim);
+  transform:scaleX(0);transform-origin:left;
+  transition:transform .6s cubic-bezier(.4,0,.2,1);
+}
+.bv-row.rendered { transform:scaleX(1); }
+.bv-nav { height:32px;border-radius:6px;background:var(--dim); }
+.bv-hero { height:60px;border-radius:8px;background:var(--dim); }
+.bv-grid { display:flex;gap:8px; }
+.bv-card { flex:1;height:40px;border-radius:6px;background:var(--dim); }
+
+/* ── SUMMARY ── */
+.summary {
+  background:var(--surf);border:1px solid var(--border);border-radius:20px;
+  padding:28px;margin-top:20px;
+  animation:fadeIn .6s ease both;
+  display:none;
+}
+.summary.show { display:block; }
+.summary-title { font-size:20px;font-weight:800;margin-bottom:20px; }
+.summary-row {
+  display:flex;align-items:center;gap:14px;
+  padding:12px 0;border-bottom:1px solid var(--border);
+}
+.summary-row:last-child{border:none;}
+.sum-icon { font-size:20px;width:32px;text-align:center;flex-shrink:0; }
+.sum-body { flex:1; }
+.sum-name { font-size:14px;font-weight:700;margin-bottom:2px; }
+.sum-desc { font-size:12px;color:var(--muted);line-height:1.5; }
+.sum-time {
+  font-family:'Space Mono',monospace;font-size:11px;
+  padding:3px 8px;border-radius:6px;background:var(--dim);
+  flex-shrink:0;
+}
+
+/* ── KEYFRAMES ── */
+@keyframes fadeIn {
+  from{opacity:0;transform:translateY(10px);}
+  to{opacity:1;transform:translateY(0);}
+}
+@keyframes nodePulse {
+  0%,100%{box-shadow:0 0 0 4px currentColor,0 0 18px currentColor;}
+  50%{box-shadow:0 0 0 8px currentColor,0 0 30px currentColor;}
+}
+@keyframes orbit {
+  from{transform:rotate(0deg) translateX(28px) rotate(0deg);}
+  to{transform:rotate(360deg) translateX(28px) rotate(-360deg);}
+}
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0} }
+
+.cursor { display:inline-block;width:2px;height:13px;background:var(--ip);animation:blink 1s step-end infinite;vertical-align:middle;margin-left:2px; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- HEADER -->
+  <div class="hero">
+    <div class="hero-eyebrow">AI SaaS Engineering Bootcamp · Módulo 1</div>
+    <h1>El Viaje de una URL</h1>
+    <p class="hero-desc">
+      Desde que escribes <code>kaledsoft.tech</code> hasta que ves el dashboard.<br>
+      Paso a paso. Sin saltarnos nada.
+    </p>
+  </div>
+
+  <!-- DOTS -->
+  <div class="step-counter" id="dotBar"></div>
+
+  <!-- STAGE -->
+  <div class="stage" id="stage">
+    <div class="stage-top">
+      <div class="step-badge" id="stageBadge">💻</div>
+      <div class="step-meta">
+        <div class="step-number" id="stepNumber">PASO 0 DE 7</div>
+        <div class="step-title" id="stepTitle">Cargando…</div>
+        <div class="step-tagline" id="stepTagline"></div>
+      </div>
+    </div>
+
+    <div class="anim-area" id="animArea"></div>
+
+    <div class="explanation" id="explanation"></div>
+    <div id="extraContent"></div>
+
+    <div class="substeps" id="substepsContainer"></div>
+
+    <div class="controls">
+      <div class="ctrl-info" id="ctrlInfo"></div>
+      <div class="ctrl-buttons">
+        <button class="btn btn-replay" id="btnReplay" onclick="replayStep()">↺</button>
+        <button class="btn btn-prev" id="btnPrev" onclick="goStep(-1)">← Anterior</button>
+        <button class="btn btn-next" id="btnNext" onclick="goStep(1)">Siguiente →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="summary" id="summary">
+    <div class="summary-title">⚡ Resumen: el viaje completo</div>
+    <div class="summary-row">
+      <div class="sum-icon">💻</div>
+      <div class="sum-body">
+        <div class="sum-name" style="color:var(--ip)">Dirección IP — Tu computadora</div>
+        <div class="sum-desc">Tu PC tiene una IP privada (ej. 192.168.1.5) asignada por el router via DHCP. El router tiene una IP pública que es la visible en internet.</div>
+      </div>
+      <div class="sum-time" style="color:var(--ip)">~0ms</div>
+    </div>
+    <div class="summary-row">
+      <div class="sum-icon">🌐</div>
+      <div class="sum-body">
+        <div class="sum-name" style="color:var(--dns)">DNS — Traducción de nombre a IP</div>
+        <div class="sum-desc">kaledsoft.tech → 93.184.216.34. Tu OS consulta la jerarquía DNS: cache → resolver → root → TLD → autoritativo.</div>
+      </div>
+      <div class="sum-time" style="color:var(--dns)">~10ms</div>
+    </div>
+    <div class="summary-row">
+      <div class="sum-icon">🤝</div>
+      <div class="sum-body">
+        <div class="sum-name" style="color:var(--tcp)">TCP — Conexión confiable</div>
+        <div class="sum-desc">3-way handshake (SYN → SYN-ACK → ACK). Garantiza que los paquetes lleguen en orden y completos.</div>
+      </div>
+      <div class="sum-time" style="color:var(--tcp)">~80ms</div>
+    </div>
+    <div class="summary-row">
+      <div class="sum-icon">🔐</div>
+      <div class="sum-body">
+        <div class="sum-name" style="color:var(--tls)">TLS — Cifrado del canal</div>
+        <div class="sum-desc">El candado 🔒. Negocia claves de cifrado. Nadie en el camino puede leer tus datos.</div>
+      </div>
+      <div class="sum-time" style="color:var(--tls)">~120ms</div>
+    </div>
+    <div class="summary-row">
+      <div class="sum-icon">📡</div>
+      <div class="sum-body">
+        <div class="sum-name" style="color:var(--http)">HTTP/2 — La petición</div>
+        <div class="sum-desc">GET /dashboard con headers. El servidor responde 200 OK + HTML. Multiplexing permite múltiples assets en paralelo.</div>
+      </div>
+      <div class="sum-time" style="color:var(--http)">~200ms</div>
+    </div>
+    <div class="summary-row">
+      <div class="sum-icon">🌍</div>
+      <div class="sum-body">
+        <div class="sum-name" style="color:var(--cdn)">CDN — Servidor más cercano</div>
+        <div class="sum-desc">Cloudflare/Vercel Edge sirve el contenido desde el nodo más cercano a ti. Sin CDN serías 150ms+ más lento.</div>
+      </div>
+      <div class="sum-time" style="color:var(--cdn)">~12ms</div>
+    </div>
+    <div class="summary-row">
+      <div class="sum-icon">🖥️</div>
+      <div class="sum-body">
+        <div class="sum-name" style="color:var(--browser)">Browser — Render final</div>
+        <div class="sum-desc">HTML → DOM, CSS → CSSOM, JS ejecutado. Paint y composite. Ves la página. Total: ~380ms desde el primer keystroke.</div>
+      </div>
+      <div class="sum-time" style="color:var(--browser)">~380ms</div>
+    </div>
+    <div style="text-align:center;margin-top:24px">
+      <button class="btn btn-next" onclick="currentStep=0;renderStep();" style="margin:auto">↺ Volver al inicio</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//   STEPS DATA
+// ═══════════════════════════════════════════════════════
+const STEPS = [
+  // ── 0: IP en tu PC ──────────────────────────────────
+  {
+    badge: '💻',
+    color: '#38bdf8',
+    title: 'La dirección IP — Tu computadora',
+    tagline: 'Antes de hablar con internet, tu máquina necesita su propia dirección',
+    explanation: `
+      <p>
+        Internet es una red gigante donde cada dispositivo necesita una <strong>dirección única</strong> para enviar y recibir datos — igual que necesitas una dirección física para recibir correo.
+        Esa dirección se llama <strong>IP (Internet Protocol)</strong>.
+      </p>
+      <p>
+        Cuando enciendes tu computadora y se conecta al WiFi, el router le asigna automáticamente una <strong>IP privada</strong> como <code>192.168.1.5</code>. Esto lo hace un protocolo llamado <strong>DHCP</strong>. Tu PC no elige su IP — se la dan.
+      </p>
+    `,
+    substeps: [
+      { color: '#38bdf8', text: '<strong>IP privada</strong> — Tu PC recibe una dirección como <code>192.168.1.5</code>. Solo existe dentro de tu red local (WiFi de casa u oficina).' },
+      { color: '#38bdf8', text: '<strong>IP pública</strong> — Tu router tiene UNA sola IP pública visible en internet (ej. <code>181.52.34.10</code>). Todos los dispositivos de tu red salen por esa misma IP.' },
+      { color: '#38bdf8', text: '<strong>IPv4 vs IPv6</strong> — IPv4 tiene formato <code>0-255.0-255.0-255.0-255</code> (4 mil millones de IPs). Ya se acabaron. IPv6 usa 128 bits y tiene billones de billones de direcciones.' },
+      { color: '#38bdf8', text: '<strong>¿Por qué importa?</strong> — Sin IP no hay comunicación. Todo lo que viene después (DNS, TCP, TLS, HTTP) depende de que tanto tú como el servidor tengan una IP.' },
+    ],
+    ctrlInfo: 'Fundamentos de red',
+    buildAnim: buildIPAnim,
+  },
+
+  // ── 1: El Explorador ────────────────────────────────
+  {
+    badge: '🔍',
+    color: '#86efac',
+    title: 'El Explorador — Punto de partida',
+    tagline: 'Escribes kaledsoft.tech y presionas Enter. ¿Qué pasa en ese instante?',
+    explanation: `
+      <p>
+        El <strong>navegador</strong> (Chrome, Firefox, Safari) es un programa que sabe hablar el idioma de internet. Cuando escribes una URL y presionas Enter, hace exactamente lo siguiente — en este orden:
+      </p>
+    `,
+    substeps: [
+      { color: '#86efac', text: '<strong>Paso 1 — Cache del browser:</strong> ¿Ya visitaste esta página? El browser revisa su caché local. Si tiene una copia fresca, la muestra directamente. Sin ir a la red.' },
+      { color: '#86efac', text: '<strong>Paso 2 — Parsea la URL:</strong> Descompone <code>https://kaledsoft.tech/dashboard</code> en partes: protocolo (<code>https</code>), dominio (<code>kaledsoft.tech</code>), ruta (<code>/dashboard</code>).' },
+      { color: '#86efac', text: '<strong>Paso 3 — Necesita la IP:</strong> El browser no sabe a qué IP conectarse con solo el nombre. Le pide al sistema operativo que resuelva <code>kaledsoft.tech</code> → IP. Aquí entra el DNS.' },
+      { color: '#86efac', text: '<strong>Paso 4 — Cache del OS:</strong> Antes de consultar DNS, el SO revisa su propia caché. Si ya resolvió este dominio recientemente (y el TTL no expiró), usa esa IP directamente.' },
+    ],
+    ctrlInfo: 'Navegador web',
+    buildAnim: buildBrowserAnim,
+  },
+
+  // ── 2: DNS ──────────────────────────────────────────
+  {
+    badge: '🌐',
+    color: '#22d3ee',
+    title: 'DNS — La guía telefónica de internet',
+    tagline: 'kaledsoft.tech no significa nada para los routers. Necesitan una IP.',
+    explanation: `
+      <p>
+        <strong>DNS (Domain Name System)</strong> es un sistema distribuido de servidores que traduce nombres legibles por humanos (<code>kaledsoft.tech</code>) en direcciones IP que las máquinas entienden (<code>93.184.216.34</code>).
+      </p>
+      <p>
+        No hay un solo servidor con todos los dominios del mundo. Es una jerarquía de 4 niveles. Tu consulta sube y baja por esa jerarquía hasta encontrar la respuesta exacta.
+      </p>
+    `,
+    substeps: [
+      { color: '#22d3ee', text: '<strong>Resolver (tu ISP):</strong> Tu OS le pregunta al servidor DNS configurado (normalmente el de Claro, ETB, o 8.8.8.8 de Google). Ese servidor se encarga de ir buscando la respuesta.' },
+      { color: '#22d3ee', text: '<strong>Root Server:</strong> El resolver consulta uno de los 13 root servers del mundo. Ellos no saben la IP, pero saben quién tiene info sobre <code>.tech</code>.' },
+      { color: '#22d3ee', text: '<strong>TLD Server (.tech):</strong> El servidor del dominio de primer nivel <code>.tech</code> dice: "el dominio <code>kaledsoft.tech</code> está registrado con el Name Server de Vercel/Cloudflare".' },
+      { color: '#22d3ee', text: '<strong>Name Server autoritativo:</strong> Este servidor SÍ tiene la respuesta final: <code>kaledsoft.tech → 76.76.21.21</code>. También devuelve el <strong>TTL</strong> (cuántos segundos cachear esa respuesta).' },
+    ],
+    ctrlInfo: 'Domain Name System',
+    buildAnim: buildDNSAnim,
+    extraContent: buildDNSTree,
+  },
+
+  // ── 3: TCP ──────────────────────────────────────────
+  {
+    badge: '🤝',
+    color: '#34d399',
+    title: 'TCP — El apretón de manos',
+    tagline: 'Ya tienes la IP. Ahora necesitas abrir un canal de comunicación confiable.',
+    explanation: `
+      <p>
+        <strong>TCP (Transmission Control Protocol)</strong> es el protocolo que garantiza que los datos lleguen <strong>en orden, completos, y sin errores</strong>. Antes de enviar cualquier dato, los dos extremos deben "presentarse" mutuamente.
+      </p>
+      <p>
+        Este proceso de presentación se llama <strong>3-Way Handshake</strong> (apretón de manos en 3 pasos). Mientras no termine, no se puede enviar una sola petición HTTP.
+      </p>
+    `,
+    substeps: [
+      { color: '#34d399', text: '<strong>SYN</strong> — Tu PC envía un paquete al servidor diciéndole: "Quiero conectarme. Mi número de secuencia inicial es X".' },
+      { color: '#34d399', text: '<strong>SYN-ACK</strong> — El servidor responde: "Ok, recibí tu SYN. Mi número de secuencia es Y. Confirmo el tuyo (X+1)".' },
+      { color: '#34d399', text: '<strong>ACK</strong> — Tu PC confirma: "Recibí tu SYN-ACK. Confirmo Y+1". La conexión está abierta. Ahora sí podemos hablar.' },
+      { color: '#34d399', text: '<strong>Costo en tiempo:</strong> Cada paso es un viaje de ida (RTT = Round Trip Time). Bogotá → servidor en US ≈ 80ms por handshake, antes de enviar un solo byte de datos.' },
+    ],
+    ctrlInfo: '3-Way Handshake',
+    buildAnim: buildTCPAnim,
+    extraContent: buildHandshake,
+  },
+
+  // ── 4: TLS ──────────────────────────────────────────
+  {
+    badge: '🔐',
+    color: '#fbbf24',
+    title: 'TLS — El candado del candado',
+    tagline: 'La conexión TCP está abierta. Ahora la ciframos para que nadie espíe.',
+    explanation: `
+      <p>
+        <strong>TLS (Transport Layer Security)</strong> es el protocolo detrás del <code>https://</code> y del candado 🔒. Sin él, cualquier router entre tú y el servidor podría leer (y modificar) todo lo que envías.
+      </p>
+      <p>
+        TLS negocia un canal cifrado <strong>antes</strong> de que se envíe la primera petición HTTP. En TLS 1.3 (el actual), esto cuesta solo <strong>1 RTT adicional</strong> (~120ms).
+      </p>
+    `,
+    substeps: [
+      { color: '#fbbf24', text: '<strong>ClientHello:</strong> Tu browser dice qué versiones TLS soporta y qué algoritmos de cifrado (cipher suites) conoce.' },
+      { color: '#fbbf24', text: '<strong>ServerHello + Certificado:</strong> El servidor elige el mejor cipher suite, envía su certificado TLS (firmado por una CA como Let\'s Encrypt).' },
+      { color: '#fbbf24', text: '<strong>Verificación del certificado:</strong> Tu browser verifica que el cert sea válido, no esté vencido, y esté firmado por una CA de confianza. Si algo falla → ⚠️ "Tu conexión no es segura".' },
+      { color: '#fbbf24', text: '<strong>Claves simétricas:</strong> Ambos derivan la misma clave secreta usando criptografía asimétrica. A partir de aquí todo viaja cifrado con AES-256. 🔒' },
+    ],
+    ctrlInfo: 'Transport Layer Security',
+    buildAnim: buildTLSAnim,
+    extraContent: buildTLSStack,
+  },
+
+  // ── 5: HTTP/2 ───────────────────────────────────────
+  {
+    badge: '📡',
+    color: '#f472b6',
+    title: 'HTTP/2 — La petición real',
+    tagline: 'Canal abierto y cifrado. Por fin el browser puede pedir la página.',
+    explanation: `
+      <p>
+        <strong>HTTP (HyperText Transfer Protocol)</strong> es el idioma que usan browser y servidor para pedir y enviar contenido. El browser hace un <strong>GET</strong> a <code>/dashboard</code> y el servidor responde con el HTML.
+      </p>
+      <p>
+        <strong>HTTP/2</strong> (la versión actual) mejora HTTP/1.1 con <strong>multiplexing</strong>: puede enviar 50 requests (JS, CSS, imágenes) en paralelo sobre la misma conexión TCP, sin esperar respuesta una por una.
+      </p>
+    `,
+    substeps: [
+      { color: '#f472b6', text: '<strong>Request:</strong> <code>GET /dashboard HTTP/2</code> con headers como <code>Host</code>, <code>Authorization</code>, <code>Accept-Encoding</code>. Todo viaja cifrado por TLS.' },
+      { color: '#f472b6', text: '<strong>Response 200 OK:</strong> El servidor procesa la petición (valida sesión, consulta DB, renderiza template) y devuelve el HTML con status <code>200 OK</code>.' },
+      { color: '#f472b6', text: '<strong>Multiplexing:</strong> El browser ve el HTML y pide 20 assets más (JS, CSS, imágenes). HTTP/2 los envía todos en paralelo. HTTP/1.1 los habría enviado de 6 en 6.' },
+      { color: '#f472b6', text: '<strong>Status codes clave:</strong> <code>200</code> = OK · <code>301</code> = Redirect · <code>401</code> = No autenticado · <code>403</code> = Sin permisos · <code>404</code> = No existe · <code>500</code> = Error del servidor.' },
+    ],
+    ctrlInfo: 'HTTP Request / Response',
+    buildAnim: buildHTTPAnim,
+    extraContent: buildHTTPTerminal,
+  },
+
+  // ── 6: CDN ──────────────────────────────────────────
+  {
+    badge: '🌍',
+    color: '#a78bfa',
+    title: 'CDN — El servidor más cercano a ti',
+    tagline: 'No vas hasta el servidor origen. El CDN ya tiene tu página más cerca.',
+    explanation: `
+      <p>
+        <strong>CDN (Content Delivery Network)</strong> es una red de cientos de servidores distribuidos por todo el mundo. Cuando alguien en Bogotá pide <code>kaledsoft.tech</code>, en vez de ir al servidor en us-east-1, va al <strong>nodo edge de Bogotá o Miami</strong>.
+      </p>
+      <p>
+        Plataformas como <strong>Vercel, Cloudflare y AWS CloudFront</strong> manejan esto automáticamente. Tu app Next.js se despliega en 100+ locations simultáneamente.
+      </p>
+    `,
+    substeps: [
+      { color: '#a78bfa', text: '<strong>Sin CDN:</strong> Bogotá → servidor en Virginia, USA → ~160ms de latencia base. Cada request hace ese viaje.' },
+      { color: '#a78bfa', text: '<strong>Con CDN:</strong> Bogotá → edge en São Paulo o Miami → ~15ms. El CDN ya tiene el contenido cacheado desde antes.' },
+      { color: '#a78bfa', text: '<strong>¿Qué cachea?</strong> Assets estáticos (JS, CSS, imágenes), páginas SSG/ISR, y API responses con header <code>Cache-Control: public, s-maxage=3600</code>.' },
+      { color: '#a78bfa', text: '<strong>Cache invalidation:</strong> Cuando haces deploy nuevo en Vercel, el CDN invalida automáticamente el cache. Por eso los cambios se ven inmediatamente.' },
+    ],
+    ctrlInfo: 'Content Delivery Network',
+    buildAnim: buildCDNAnim,
+    extraContent: buildCDNMap,
+  },
+
+  // ── 7: Browser Render ───────────────────────────────
+  {
+    badge: '🖥️',
+    color: '#86efac',
+    title: 'Browser — Renderizar la página',
+    tagline: 'El HTML llegó. Ahora el explorador lo convierte en píxeles.',
+    explanation: `
+      <p>
+        Recibir el HTML es solo el comienzo. El browser tiene que <strong>parsearlo, construir árboles, calcular estilos, posiciones, y finalmente pintar</strong> cada píxel en tu pantalla. Este proceso se llama <strong>Critical Rendering Path</strong>.
+      </p>
+      <p>
+        Cada milisegundo aquí afecta las métricas de <strong>Core Web Vitals</strong> que Google usa para rankear tu sitio: FCP, LCP, CLS, TTI.
+      </p>
+    `,
+    substeps: [
+      { color: '#86efac', text: '<strong>HTML → DOM:</strong> El parser lee el HTML de arriba a abajo y construye el árbol DOM (Document Object Model). Cada tag se convierte en un nodo.' },
+      { color: '#86efac', text: '<strong>CSS → CSSOM:</strong> El CSS se parsea y forma el CSSOM (CSS Object Model). El browser combina DOM + CSSOM para crear el <strong>Render Tree</strong>.' },
+      { color: '#86efac', text: '<strong>Layout + Paint:</strong> Calcula posición y tamaño de cada elemento (Layout/Reflow), luego dibuja los píxeles en capas (Paint), y las combina en la GPU (Composite).' },
+      { color: '#86efac', text: '<strong>JavaScript:</strong> El JS puede bloquear el parsing. Por eso usamos <code>defer</code> o <code>async</code>. Frameworks como React/Next.js hacen hydration: el HTML ya llega renderizado, el JS solo lo "activa".' },
+    ],
+    ctrlInfo: 'Critical Rendering Path',
+    buildAnim: buildBrowserRenderAnim,
+    extraContent: buildBrowserMock,
+  },
+];
+
+// ═══════════════════════════════════════════════════════
+//   STATE
+// ═══════════════════════════════════════════════════════
+let currentStep = 0;
+let substepTimers = [];
+
+// ═══════════════════════════════════════════════════════
+//   RENDER
+// ═══════════════════════════════════════════════════════
+function renderStep() {
+  clearTimers();
+  const s = STEPS[currentStep];
+  const isLast = currentStep === STEPS.length - 1;
+  const isFirst = currentStep === 0;
+
+  // dots
+  buildDots();
+
+  // badge + title
+  const badge = document.getElementById('stageBadge');
+  badge.textContent = s.badge;
+  badge.style.borderColor = s.color + '88';
+  badge.style.boxShadow = `0 0 16px ${s.color}44`;
+
+  document.getElementById('stepNumber').textContent = `PASO ${currentStep + 1} DE ${STEPS.length}`;
+  const title = document.getElementById('stepTitle');
+  title.textContent = s.title;
+  title.style.color = s.color;
+
+  document.getElementById('stepTagline').textContent = s.tagline;
+  document.getElementById('explanation').innerHTML = s.explanation;
+  document.getElementById('ctrlInfo').textContent = s.ctrlInfo;
+
+  // anim area
+  const anim = document.getElementById('animArea');
+  anim.innerHTML = '';
+  s.buildAnim(anim, s.color);
+
+  // extra
+  const extra = document.getElementById('extraContent');
+  extra.innerHTML = '';
+  if (s.extraContent) s.extraContent(extra, s.color);
+
+  // substeps
+  const sc = document.getElementById('substepsContainer');
+  sc.innerHTML = '';
+  s.substeps.forEach((sub, i) => {
+    const div = document.createElement('div');
+    div.className = 'substep';
+    div.style.color = sub.color;
+    div.innerHTML = `
+      <div class="substep-num">${i+1}</div>
+      <div class="substep-text">${sub.text}</div>
+    `;
+    sc.appendChild(div);
+    substepTimers.push(setTimeout(() => div.classList.add('visible'), 600 + i * 700));
+  });
+
+  // buttons
+  document.getElementById('btnPrev').style.display = isFirst ? 'none' : '';
+  const btnNext = document.getElementById('btnNext');
+  btnNext.textContent = isLast ? '✓ Ver Resumen →' : 'Siguiente →';
+  btnNext.disabled = false;
+
+  // summary
+  document.getElementById('summary').classList.remove('show');
+
+  // scroll to top
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function goStep(dir) {
+  const next = currentStep + dir;
+  if (next < 0) return;
+  if (next >= STEPS.length) {
+    showSummary(); return;
+  }
+  currentStep = next;
+  renderStep();
+}
+
+function replayStep() {
+  renderStep();
+}
+
+function showSummary() {
+  clearTimers();
+  document.getElementById('stage').style.display = 'none';
+  document.getElementById('dotBar').style.display = 'none';
+  const sum = document.getElementById('summary');
+  sum.classList.add('show');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function buildDots() {
+  const bar = document.getElementById('dotBar');
+  bar.innerHTML = '';
+  STEPS.forEach((s, i) => {
+    const d = document.createElement('div');
+    d.className = 'sc-dot' + (i < currentStep ? ' done' : i === currentStep ? ' active' : '');
+    d.style.background = i === currentStep ? s.color : i < currentStep ? s.color + '66' : '';
+    d.onclick = () => { currentStep = i; renderStep(); };
+    bar.appendChild(d);
+  });
+}
+
+function clearTimers() {
+  substepTimers.forEach(clearTimeout);
+  substepTimers = [];
+}
+
+// ═══════════════════════════════════════════════════════
+//   ANIMATION BUILDERS
+// ═══════════════════════════════════════════════════════
+
+// ── IP ANIMATION ──
+function buildIPAnim(container, color) {
+  container.style.background = 'linear-gradient(135deg, #060c1a, #030610)';
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.alignItems = 'center';
+  container.style.justifyContent = 'center';
+  container.style.padding = '20px';
+  container.style.gap = '16px';
+
+  // Private IP
+  const privWrap = document.createElement('div');
+  privWrap.innerHTML = `<div class="ip-label">IP PRIVADA (tu PC)</div>`;
+  const privRow = document.createElement('div');
+  privRow.className = 'ip-display';
+  const privOctets = ['192', '168', '1', '5'];
+  privOctets.forEach((o, i) => {
+    if (i > 0) { const s = document.createElement('span'); s.className = 'ip-sep'; s.textContent = '.'; privRow.appendChild(s); }
+    const oc = document.createElement('div'); oc.className = 'ip-octet'; oc.textContent = o;
+    privRow.appendChild(oc);
+    substepTimers.push(setTimeout(() => oc.classList.add('lit'), 300 + i * 200));
+  });
+  privWrap.appendChild(privRow);
+  container.appendChild(privWrap);
+
+  // Arrow
+  const arrow = document.createElement('div');
+  arrow.style.cssText = `color:var(--muted);font-size:18px;animation:none;opacity:0;transition:opacity .5s ease;`;
+  arrow.textContent = '↓ NAT (router) ↓';
+  arrow.style.fontFamily = "'Space Mono',monospace"; arrow.style.fontSize = '11px'; arrow.style.letterSpacing = '2px';
+  container.appendChild(arrow);
+  substepTimers.push(setTimeout(() => arrow.style.opacity = '1', 1200));
+
+  // Public IP
+  const pubWrap = document.createElement('div');
+  pubWrap.innerHTML = `<div class="ip-label" style="opacity:0;transition:opacity .5s ease" id="pubLabel">IP PÚBLICA (router)</div>`;
+  const pubRow = document.createElement('div');
+  pubRow.className = 'ip-display';
+  pubRow.style.opacity = '0'; pubRow.style.transition = 'opacity .5s ease';
+  const pubOctets = ['181', '52', '34', '10'];
+  pubOctets.forEach((o, i) => {
+    if (i > 0) { const s = document.createElement('span'); s.className = 'ip-sep'; s.textContent = '.'; pubRow.appendChild(s); }
+    const oc = document.createElement('div'); oc.className = 'ip-octet'; oc.textContent = o; oc.style.borderColor = '#38bdf888'; oc.style.color = '#38bdf8';
+    pubRow.appendChild(oc);
+  });
+  pubWrap.appendChild(pubRow);
+  container.appendChild(pubWrap);
+  substepTimers.push(setTimeout(() => {
+    pubWrap.querySelector('#pubLabel').style.opacity = '1';
+    pubRow.style.opacity = '1';
+  }, 1500));
+}
+
+// ── BROWSER ANIM ──
+function buildBrowserAnim(container, color) {
+  container.style.padding = '20px 28px';
+  container.innerHTML = `
+    <div style="background:#020408;border-radius:14px;overflow:hidden;border:1px solid #0f1a30;">
+      <div style="padding:10px 16px;background:#060c1a;display:flex;align-items:center;gap:8px;border-bottom:1px solid #0f1a30;">
+        <div style="display:flex;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#ff5f57"></div><div style="width:10px;height:10px;border-radius:50%;background:#febc2e"></div><div style="width:10px;height:10px;border-radius:50%;background:#28c840"></div></div>
+        <div id="animUrlBar" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);"></div>
+      </div>
+      <div style="padding:16px;min-height:80px;display:flex;align-items:center;justify-content:center;">
+        <div id="browserStatus" style="font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);text-align:center;line-height:1.8;"></div>
+      </div>
+    </div>
+  `;
+  const urlBar = container.querySelector('#animUrlBar');
+  const status = container.querySelector('#browserStatus');
+  const url = 'https://kaledsoft.tech/dashboard';
+  let typed = '';
+  const type = () => {
+    if (typed.length < url.length) {
+      typed += url[typed.length];
+      urlBar.innerHTML = `<span style="color:${color}">${typed}</span><span class="cursor"></span>`;
+      substepTimers.push(setTimeout(type, 55));
+    } else {
+      urlBar.innerHTML = `<span style="color:${color}">${typed}</span>`;
+      substepTimers.push(setTimeout(() => {
+        status.innerHTML = `⌛ Revisando cache del browser…`;
+        substepTimers.push(setTimeout(() => {
+          status.innerHTML = `🌐 Parseando URL…<br><span style="color:#445588;font-size:10px">protocolo: https · dominio: kaledsoft.tech · ruta: /dashboard</span>`;
+          substepTimers.push(setTimeout(() => {
+            status.innerHTML = `🔍 Necesita IP para kaledsoft.tech<br><span style="color:#445588;font-size:10px">→ consultando DNS del sistema operativo…</span>`;
+          }, 1200));
+        }, 900));
+      }, 400));
+    }
+  };
+  setTimeout(type, 300);
+}
+
+// ── DNS ANIM ──
+function buildDNSAnim(container, color) {
+  container.style.padding = '16px 28px';
+  const nodes = [
+    { label: 'Tu PC', icon: '💻', x: '5%' },
+    { label: 'Resolver', icon: '📡', x: '28%' },
+    { label: 'Root', icon: '🌍', x: '51%' },
+    { label: '.tech TLD', icon: '📋', x: '74%' },
+    { label: 'Autoritativo', icon: '✅', x: '91%' },
+  ];
+  container.style.position = 'relative';
+  container.style.height = '130px';
+
+  // lines
+  for (let i = 0; i < nodes.length - 1; i++) {
+    const line = document.createElement('div');
+    line.style.cssText = `position:absolute;top:52px;height:1px;background:var(--border);`;
+    const lx = parseFloat(nodes[i].x) + 4;
+    const rx = parseFloat(nodes[i+1].x) + 4;
+    line.style.left = lx + '%'; line.style.width = (rx - lx) + '%';
+    line.id = 'dnsLine' + i;
+    container.appendChild(line);
+  }
+
+  // nodes
+  nodes.forEach((n, i) => {
+    const el = document.createElement('div');
+    el.style.cssText = `position:absolute;top:20px;display:flex;flex-direction:column;align-items:center;gap:5px;`;
+    el.style.left = n.x;
+    el.innerHTML = `
+      <div style="width:44px;height:44px;border-radius:12px;background:var(--card);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;transition:all .4s ease" id="dnsNode${i}">${n.icon}</div>
+      <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);white-space:nowrap">${n.label}</div>
+    `;
+    container.appendChild(el);
+  });
+
+  // packet animation
+  const packet = document.createElement('div');
+  packet.style.cssText = `position:absolute;top:44px;width:16px;height:16px;border-radius:50%;background:${color};box-shadow:0 0 10px ${color};transition:left 1s ease,opacity .3s ease;opacity:0;z-index:5;`;
+  container.appendChild(packet);
+
+  // animate
+  const positions = ['5%', '28%', '51%', '74%', '91%', '74%', '5%'];
+  let pi = 0;
+  const advance = () => {
+    if (pi >= positions.length) return;
+    packet.style.opacity = '1';
+    packet.style.left = positions[pi];
+    const nodeIdx = Math.min(pi, nodes.length - 1);
+    const node = container.querySelector('#dnsNode' + nodeIdx);
+    if (node) { node.style.borderColor = color; node.style.boxShadow = `0 0 12px ${color}66`; }
+    if (pi < nodes.length - 1) {
+      const line = container.querySelector('#dnsLine' + Math.min(pi, nodes.length - 2));
+      if (line) { line.style.background = color; line.style.boxShadow = `0 0 4px ${color}`; }
+    }
+    pi++;
+    if (pi < positions.length) substepTimers.push(setTimeout(advance, pi < 5 ? 900 : 700));
+    else packet.style.opacity = '0';
+  };
+  substepTimers.push(setTimeout(advance, 500));
+}
+
+// extra: DNS tree
+function buildDNSTree(container, color) {
+  container.innerHTML = `<div class="dns-tree" id="dnsTreeRows"></div>`;
+  const rows = [
+    { from: 'Tu PC', to: 'Resolver (8.8.8.8)', desc: 'Pregunta: ¿IP de kaledsoft.tech?' },
+    { from: 'Resolver', to: 'Root Server', desc: '¿Quién maneja .tech?' },
+    { from: 'Root Server', to: 'Servidor TLD .tech', desc: 'Ve a ns.nic.tech' },
+    { from: 'TLD .tech', to: 'ns1.vercel-dns.com', desc: 'Ese dominio está aquí' },
+    { from: 'Autoritativo', to: 'Tu PC', desc: '✅ 76.76.21.21 · TTL 300s' },
+  ];
+  const wrap = container.querySelector('#dnsTreeRows');
+  rows.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'dns-row';
+    div.innerHTML = `<span class="dns-from">${r.from}</span><span class="dns-arrow">→</span><span class="dns-to">${r.to}</span><span class="dns-desc">${r.desc}</span>`;
+    wrap.appendChild(div);
+    substepTimers.push(setTimeout(() => div.classList.add('show'), 400 + i * 600));
+  });
+}
+
+// ── TCP ANIM ──
+function buildTCPAnim(container, color) {
+  container.style.padding = '20px 28px';
+  container.style.display = 'flex';
+  container.style.alignItems = 'center';
+  container.style.justifyContent = 'center';
+  container.style.gap = '16px';
+
+  container.innerHTML = `
+    <div style="text-align:center">
+      <div style="font-size:28px">💻</div>
+      <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px">Tu Browser</div>
+    </div>
+    <div style="flex:1;position:relative;height:70px;display:flex;flex-direction:column;justify-content:space-around">
+      <div class="tcp-msg" id="tcpSyn"  style="display:flex;align-items:center;gap:6px;opacity:0;transition:all .5s ease;justify-content:flex-start">
+        <div style="padding:3px 10px;border-radius:5px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;background:#34d39920;color:var(--tcp);border:1px solid var(--tcp)">SYN</div>
+        <div style="flex:1;height:1px;background:var(--tcp);position:relative"><div style="position:absolute;right:-6px;top:-5px;color:var(--tcp);font-size:10px">▶</div></div>
+      </div>
+      <div class="tcp-msg" id="tcpSynAck" style="display:flex;align-items:center;gap:6px;opacity:0;transition:all .5s ease;justify-content:flex-end">
+        <div style="flex:1;height:1px;background:#fbbf24;position:relative"><div style="position:absolute;left:-6px;top:-5px;color:#fbbf24;font-size:10px">◀</div></div>
+        <div style="padding:3px 10px;border-radius:5px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;background:#fbbf2420;color:#fbbf24;border:1px solid #fbbf24">SYN-ACK</div>
+      </div>
+      <div class="tcp-msg" id="tcpAck"   style="display:flex;align-items:center;gap:6px;opacity:0;transition:all .5s ease;justify-content:flex-start">
+        <div style="padding:3px 10px;border-radius:5px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;background:#f472b620;color:#f472b6;border:1px solid #f472b6">ACK</div>
+        <div style="flex:1;height:1px;background:#f472b6;position:relative"><div style="position:absolute;right:-6px;top:-5px;color:#f472b6;font-size:10px">▶</div></div>
+      </div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:28px">🌐</div>
+      <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px">Servidor</div>
+    </div>
+  `;
+  ['tcpSyn','tcpSynAck','tcpAck'].forEach((id, i) => {
+    substepTimers.push(setTimeout(() => {
+      document.getElementById(id).style.opacity = '1';
+    }, 500 + i * 900));
+  });
+}
+
+// extra: handshake detail
+function buildHandshake(container, color) {
+  container.innerHTML = `<div class="hs-visual" id="hsVis"></div>`;
+  const vis = container.querySelector('#hsVis');
+  vis.innerHTML = `
+    <div class="hs-col">
+      <div class="hs-peer-label" style="color:var(--ip)">💻 Browser</div>
+      <div class="hs-steps" style="display:flex;flex-direction:column;gap:8px;width:100%">
+        <div class="hs-step syn"  id="hsc1" style="font-family:'Space Mono',monospace;font-size:11px;padding:6px 10px;border-radius:7px;background:var(--card);border:1px solid var(--border);opacity:.3;transition:all .4s ease;color:var(--tcp)">→ SYN</div>
+        <div class="hs-step ack"  id="hsc3" style="font-family:'Space Mono',monospace;font-size:11px;padding:6px 10px;border-radius:7px;background:var(--card);border:1px solid var(--border);opacity:.3;transition:all .4s ease;color:var(--tls)">← SYN-ACK ✓</div>
+        <div class="hs-step data" id="hsc5" style="font-family:'Space Mono',monospace;font-size:11px;padding:6px 10px;border-radius:7px;background:var(--card);border:1px solid var(--border);opacity:.3;transition:all .4s ease;color:var(--http)">→ ACK + GET /</div>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center">
+      <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);text-align:center;line-height:2">RTT<br>~80ms</div>
+    </div>
+    <div class="hs-col">
+      <div class="hs-peer-label" style="color:var(--tcp)">🌐 Servidor</div>
+      <div class="hs-steps" style="display:flex;flex-direction:column;gap:8px;width:100%">
+        <div id="hsc2" style="font-family:'Space Mono',monospace;font-size:11px;padding:6px 10px;border-radius:7px;background:var(--card);border:1px solid var(--border);opacity:.3;transition:all .4s ease;color:var(--tcp)">SYN recibido ✓</div>
+        <div id="hsc4" style="font-family:'Space Mono',monospace;font-size:11px;padding:6px 10px;border-radius:7px;background:var(--card);border:1px solid var(--border);opacity:.3;transition:all .4s ease;color:var(--tls)">← SYN-ACK</div>
+        <div id="hsc6" style="font-family:'Space Mono',monospace;font-size:11px;padding:6px 10px;border-radius:7px;background:var(--card);border:1px solid var(--border);opacity:.3;transition:all .4s ease;color:var(--http)">ACK recibido · 200 OK</div>
+      </div>
+    </div>
+  `;
+  [1,2,3,4,5,6].forEach(i => {
+    substepTimers.push(setTimeout(() => {
+      const el = document.getElementById('hsc' + i);
+      if (el) { el.style.opacity = '1'; el.style.borderColor = 'currentColor'; }
+    }, 400 + i * 500));
+  });
+}
+
+// ── TLS ANIM ──
+function buildTLSAnim(container, color) {
+  container.style.padding = '16px 28px';
+  container.style.display = 'flex';
+  container.style.alignItems = 'center';
+  container.style.justifyContent = 'center';
+  container.style.gap = '0';
+  container.style.flexDirection = 'column';
+
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;gap:20px;width:100%">
+      <div style="text-align:center">
+        <div style="font-size:28px">💻</div>
+        <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted)">Browser</div>
+      </div>
+      <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;position:relative" id="tlsChannel">
+        <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted)" id="tlsStatus">Negoción TLS 1.3…</div>
+        <div style="font-size:20px;margin-top:4px" id="tlsIcon">⚙️</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:28px">🌐</div>
+        <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted)">Servidor</div>
+      </div>
+    </div>
+  `;
+  const channel = container.querySelector('#tlsChannel');
+  const tlsStatus = container.querySelector('#tlsStatus');
+  const tlsIcon = container.querySelector('#tlsIcon');
+  const stages = [
+    { status: 'ClientHello → cipher suites…', icon: '👋', color2: color },
+    { status: 'ServerHello + Certificado…', icon: '📜', color2: color },
+    { status: 'Verificando CA…', icon: '🔍', color2: color },
+    { status: '🔒 Canal cifrado establecido', icon: '🔐', color2: '#34d399', border: '#34d399' },
+  ];
+  stages.forEach((st, i) => {
+    substepTimers.push(setTimeout(() => {
+      tlsStatus.textContent = st.status;
+      tlsStatus.style.color = st.color2;
+      tlsIcon.textContent = st.icon;
+      if (st.border) {
+        channel.style.borderColor = st.border;
+        channel.style.boxShadow = `0 0 16px ${st.border}44`;
+      }
+    }, 600 + i * 900));
+  });
+}
+
+// extra: TLS stack
+function buildTLSStack(container, color) {
+  container.innerHTML = `<div class="tls-stack" id="tlsStackRows"></div>`;
+  const rows = [
+    { icon: '👋', name: 'ClientHello', desc: 'Browser envía versiones TLS + cipher suites soportados', time: '0ms' },
+    { icon: '📜', name: 'ServerHello', desc: 'Servidor elige cipher + envía certificado X.509', time: '+20ms' },
+    { icon: '🔍', name: 'Verify cert', desc: 'Browser valida firma de CA (Let\'s Encrypt, DigiCert…)', time: '+10ms' },
+    { icon: '🔑', name: 'Key Exchange', desc: 'Ambos derivan clave simétrica (ECDHE). Nadie más puede calcularla.', time: '+20ms' },
+    { icon: '🔒', name: 'Cifrado activo', desc: 'Todo el tráfico cifrado con AES-256-GCM a partir de aquí', time: '+0ms' },
+  ];
+  const wrap = container.querySelector('#tlsStackRows');
+  rows.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'tls-layer-row';
+    div.style.borderColor = i === rows.length - 1 ? '#34d39966' : '';
+    div.innerHTML = `<div class="tls-layer-icon">${r.icon}</div><div class="tls-layer-name" style="color:${color}">${r.name}</div><div class="tls-layer-desc">${r.desc}</div><div class="tls-layer-time">${r.time}</div>`;
+    wrap.appendChild(div);
+    substepTimers.push(setTimeout(() => div.classList.add('show'), 300 + i * 500));
+  });
+}
+
+// ── HTTP ANIM ──
+function buildHTTPAnim(container, color) {
+  container.style.padding = '16px 28px';
+  container.style.display = 'flex';
+  container.style.alignItems = 'center';
+  container.style.justifyContent = 'space-between';
+  container.style.gap = '14px';
+
+  container.innerHTML = `
+    <div style="text-align:center;flex-shrink:0">
+      <div style="font-size:28px">💻</div>
+      <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted)">Browser</div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:10px;align-items:center">
+      <div id="reqArrow" style="display:flex;align-items:center;gap:8px;width:100%;opacity:0;transition:opacity .5s ease">
+        <div style="padding:3px 10px;border-radius:5px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;background:#f472b620;color:#f472b6;border:1px solid #f472b6;white-space:nowrap">GET /dashboard</div>
+        <div style="flex:1;height:1px;background:#f472b6;position:relative"><div style="position:absolute;right:-6px;top:-5px;color:#f472b6;font-size:10px">▶</div></div>
+      </div>
+      <div id="resArrow" style="display:flex;align-items:center;gap:8px;width:100%;opacity:0;transition:opacity .5s ease">
+        <div style="flex:1;height:1px;background:#34d399;position:relative"><div style="position:absolute;left:-6px;top:-5px;color:#34d399;font-size:10px">◀</div></div>
+        <div style="padding:3px 10px;border-radius:5px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;background:#34d39920;color:#34d399;border:1px solid #34d399;white-space:nowrap">200 OK + HTML</div>
+      </div>
+    </div>
+    <div style="text-align:center;flex-shrink:0">
+      <div style="font-size:28px">🌐</div>
+      <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted)">Servidor</div>
+    </div>
+  `;
+  substepTimers.push(setTimeout(() => container.querySelector('#reqArrow').style.opacity = '1', 400));
+  substepTimers.push(setTimeout(() => container.querySelector('#resArrow').style.opacity = '1', 1400));
+}
+
+// extra: HTTP terminal
+function buildHTTPTerminal(container, color) {
+  container.innerHTML = `
+    <div class="http-terminal">
+      <div class="http-bar">
+        <div class="http-dot" style="background:#ff5f57"></div>
+        <div class="http-dot" style="background:#febc2e"></div>
+        <div class="http-dot" style="background:#28c840"></div>
+        <div class="http-title">HTTP REQUEST / RESPONSE</div>
+      </div>
+      <div class="http-body" id="httpBody"></div>
+    </div>
+  `;
+  const body = container.querySelector('#httpBody');
+  const lines = [
+    { cls: 'http-method', text: 'GET ', extra: '<span class="http-path">/dashboard</span><span class="http-ver"> HTTP/2</span>' },
+    { cls: 'http-key', text: 'Host: ', extra: '<span class="http-val">kaledsoft.tech</span>' },
+    { cls: 'http-key', text: 'Authorization: ', extra: '<span class="http-val">Bearer eyJhbGciOiJIUzI1NiJ9…</span>' },
+    { cls: 'http-key', text: 'Accept-Encoding: ', extra: '<span class="http-val">gzip, br</span>' },
+    { cls: 'http-blank', text: '─────────────────────────────────────', extra: '' },
+    { cls: 'http-status', text: 'HTTP/2 200 OK', extra: '' },
+    { cls: 'http-key', text: 'Content-Type: ', extra: '<span class="http-val">text/html; charset=utf-8</span>' },
+    { cls: 'http-key', text: 'Cache-Control: ', extra: '<span class="http-val">public, s-maxage=86400</span>' },
+    { cls: 'http-key', text: 'X-Vercel-Cache: ', extra: '<span class="http-val">HIT</span>' },
+  ];
+  lines.forEach((l, i) => {
+    const div = document.createElement('div');
+    div.className = 'http-line';
+    div.innerHTML = `<span class="${l.cls}">${l.text}</span>${l.extra}`;
+    body.appendChild(div);
+    substepTimers.push(setTimeout(() => div.classList.add('show'), 200 + i * 350));
+  });
+}
+
+// ── CDN ANIM ──
+function buildCDNAnim(container, color) {
+  container.style.padding = '16px 28px';
+  container.style.display = 'flex';
+  container.style.alignItems = 'center';
+  container.style.justifyContent = 'center';
+  container.style.gap = '20px';
+
+  container.innerHTML = `
+    <div style="text-align:center">
+      <div style="font-size:30px">💻</div>
+      <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px">Bogotá</div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <div id="cdnRouteA" style="display:flex;align-items:center;gap:8px;opacity:0;transition:all .5s ease">
+        <div style="padding:3px 10px;border-radius:5px;font-family:'Space Mono',monospace;font-size:9px;background:#a78bfa20;color:#a78bfa;border:1px solid #a78bfa;white-space:nowrap">CDN Edge · Miami</div>
+        <div style="flex:1;height:1.5px;background:#a78bfa;position:relative"><div style="position:absolute;right:-6px;top:-5px;color:#a78bfa;font-size:10px">▶</div></div>
+        <div style="padding:3px 8px;border-radius:5px;font-family:'Space Mono',monospace;font-size:9px;color:#34d399">~15ms ✓</div>
+      </div>
+      <div id="cdnRouteB" style="display:flex;align-items:center;gap:8px;opacity:.2">
+        <div style="padding:3px 10px;border-radius:5px;font-family:'Space Mono',monospace;font-size:9px;background:var(--dim);color:var(--muted);border:1px solid var(--border);white-space:nowrap">Sin CDN · us-east-1</div>
+        <div style="flex:1;height:1px;background:var(--muted);position:relative;border-top:1px dashed var(--muted)"></div>
+        <div style="padding:3px 8px;border-radius:5px;font-family:'Space Mono',monospace;font-size:9px;color:var(--http)">~160ms ✗</div>
+      </div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:30px">🏠</div>
+      <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px">Servidor</div>
+    </div>
+  `;
+  substepTimers.push(setTimeout(() => container.querySelector('#cdnRouteA').style.opacity = '1', 400));
+}
+
+// extra: CDN map
+function buildCDNMap(container, color) {
+  container.innerHTML = `<div class="cdn-map" id="cdnMapBox"><div class="cdn-grid"></div></div>
+  <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);text-align:center;padding:6px 28px 4px" id="cdnMapInfo">↑ Click en un nodo para ver la latencia</div>`;
+
+  const map = container.querySelector('#cdnMapBox');
+  const info = container.querySelector('#cdnMapInfo');
+
+  const origin = { x: 50, y: 50, label: 'us-east-1', icon: '🏠', color: color };
+  const edges = [
+    { x: 22, y: 65, label: 'Bogotá',  latency: '15ms', icon: '📍' },
+    { x: 28, y: 42, label: 'Miami',   latency: '22ms', icon: '📍' },
+    { x: 50, y: 22, label: 'London',  latency: '12ms', icon: '📍' },
+    { x: 62, y: 30, label: 'Fráncfort', latency: '10ms', icon: '📍' },
+    { x: 78, y: 48, label: 'Mumbai',  latency: '20ms', icon: '📍' },
+    { x: 82, y: 68, label: 'Sydney',  latency: '25ms', icon: '📍' },
+    { x: 14, y: 35, label: 'Seattle', latency: '30ms', icon: '📍' },
+  ];
+
+  // origin
+  const orig = document.createElement('div');
+  orig.className = 'cdn-node';
+  orig.style.left = origin.x + '%'; orig.style.top = origin.y + '%';
+  orig.style.transform = 'translate(-50%,-50%)';
+  orig.innerHTML = `<div class="cdn-node-dot origin lit" style="color:${color};background:${color}44;border-color:${color}"></div><div class="cdn-node-lbl" style="color:${color}">${origin.label}</div>`;
+  map.appendChild(orig);
+
+  edges.forEach(e => {
+    // beam
+    const ox = origin.x, oy = origin.y;
+    const dx = e.x - ox, dy = e.y - oy;
+    const w = map.offsetWidth || 600, h = 160;
+    const len = Math.sqrt((dx/100*w)**2 + (dy/100*h)**2);
+    const angle = Math.atan2(dy/100*h, dx/100*w) * 180 / Math.PI;
+    const beam = document.createElement('div');
+    beam.className = 'cdn-beam'; beam.id = 'beam-' + e.label;
+    beam.style.left = (ox/100*w) + 'px';
+    beam.style.top = (oy/100*h) + 'px';
+    beam.style.width = len + 'px';
+    beam.style.transform = `rotate(${angle}deg)`;
+    map.insertBefore(beam, map.firstChild.nextSibling);
+
+    // node
+    const node = document.createElement('div');
+    node.className = 'cdn-node';
+    node.style.left = e.x + '%'; node.style.top = e.y + '%';
+    node.style.transform = 'translate(-50%,-50%)';
+    node.style.cursor = 'pointer';
+    node.innerHTML = `<div class="cdn-node-dot" style="color:var(--tcp)" id="cdnDot-${e.label}"></div><div class="cdn-node-lbl">${e.label}</div>`;
+    node.onclick = () => {
+      document.querySelectorAll('.cdn-beam').forEach(b => b.classList.remove('lit'));
+      document.querySelectorAll('.cdn-node-dot:not(.origin)').forEach(d => d.classList.remove('lit'));
+      document.querySelector('#beam-' + e.label).classList.add('lit');
+      document.querySelector('#cdnDot-' + e.label).classList.add('lit');
+      info.innerHTML = `📍 <b style="color:var(--cdn)">${e.label}</b> → 🏠 us-east-1 · <b style="color:var(--tcp)">${e.latency}</b> con CDN · <span style="color:var(--muted)">vs ~160ms directo</span>`;
+    };
+    map.appendChild(node);
+  });
+}
+
+// ── BROWSER RENDER ANIM ──
+function buildBrowserRenderAnim(container, color) {
+  container.style.padding = '16px 28px';
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;gap:20px">
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+        <div style="font-size:28px">📄</div>
+        <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted)">HTML</div>
+        <div style="font-size:14px;color:var(--muted)" id="htmlCheck" style="opacity:0">→</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+        <div style="font-size:28px">🌳</div>
+        <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted)">DOM</div>
+      </div>
+      <div style="font-size:14px;color:var(--muted)">+</div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+        <div style="font-size:28px">🎨</div>
+        <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted)">CSSOM</div>
+      </div>
+      <div style="font-size:14px;color:var(--muted)">→</div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+        <div style="font-size:28px" id="paintIcon">⬜</div>
+        <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted)">Paint</div>
+      </div>
+      <div style="font-size:14px;color:var(--muted)">→</div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+        <div style="font-size:28px" id="finalIcon">🖥️</div>
+        <div style="font-family:'Space Mono',monospace;font-size:9px;color:${color}" id="finalLabel">Cargando…</div>
+      </div>
+    </div>
+  `;
+  substepTimers.push(setTimeout(() => {
+    container.querySelector('#paintIcon').textContent = '🖼️';
+  }, 800));
+  substepTimers.push(setTimeout(() => {
+    container.querySelector('#finalLabel').textContent = '✅ Visible';
+    container.querySelector('#finalLabel').style.color = '#34d399';
+  }, 1600));
+}
+
+// extra: browser mock
+function buildBrowserMock(container, color) {
+  container.innerHTML = `
+    <div class="browser-mock">
+      <div class="browser-chrome">
+        <div class="b-dots">
+          <div class="b-dot" style="background:#ff5f57"></div>
+          <div class="b-dot" style="background:#febc2e"></div>
+          <div class="b-dot" style="background:#28c840"></div>
+        </div>
+        <div class="b-url-bar">🔒 kaledsoft.tech/dashboard</div>
+      </div>
+      <div class="browser-viewport">
+        <div class="bv-row bv-nav" id="bvNav" style="height:28px;border-radius:6px;background:var(--dim);transform:scaleX(0);transform-origin:left;transition:transform .6s ease"></div>
+        <div class="bv-row bv-hero" id="bvHero" style="height:55px;border-radius:8px;background:var(--dim);transform:scaleX(0);transform-origin:left;transition:transform .7s ease"></div>
+        <div style="display:flex;gap:8px">
+          ${[0,1,2].map(i=>`<div id="bvCard${i}" style="flex:1;height:36px;border-radius:6px;background:var(--dim);transform:scaleX(0);transform-origin:left;transition:transform .6s ease"></div>`).join('')}
+        </div>
+        <div class="bv-row" id="bvLine1" style="height:8px;width:70%;border-radius:4px;background:var(--dim);transform:scaleX(0);transform-origin:left;transition:transform .5s ease"></div>
+        <div class="bv-row" id="bvLine2" style="height:8px;width:50%;border-radius:4px;background:var(--dim);transform:scaleX(0);transform-origin:left;transition:transform .5s ease"></div>
+      </div>
+    </div>
+  `;
+  const order = ['bvNav','bvHero','bvCard0','bvCard1','bvCard2','bvLine1','bvLine2'];
+  order.forEach((id, i) => {
+    substepTimers.push(setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) { el.style.transform = 'scaleX(1)'; el.style.background = id.startsWith('bvCard') ? '#1a2f4a' : id === 'bvHero' ? '#122240' : '#16213a'; }
+    }, 300 + i * 250));
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//   INIT
+// ═══════════════════════════════════════════════════════
+renderStep();
+</script>
+</body>
+</html>

@@ -1,0 +1,2280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lenguajes de Programación & IDEs</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080b14;
+    --surface: #0e1220;
+    --surface2: #151a2e;
+    --border: #1e2a45;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --accent3: #f59e0b;
+    --accent4: #10b981;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --js: #f7df1e;
+    --py: #3776ab;
+    --ts: #3178c6;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  .main-nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: rgba(8,11,20,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; gap: 0;
+    height: 56px;
+    overflow-x: auto;
+  }
+  .nav-logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent);
+    letter-spacing: 2px;
+    margin-right: 2rem;
+    white-space: nowrap;
+  }
+  .nav-btn {
+    background: none; border: none;
+    color: var(--text-muted);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    padding: 0 1rem;
+    height: 56px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+    letter-spacing: 0.5px;
+  }
+  .nav-btn:hover { color: var(--text); }
+  .nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* SECTIONS */
+  .section {
+    display: none;
+    min-height: 100vh;
+    padding: 80px 2rem 4rem;
+  }
+  .section.active { display: block; }
+
+  /* HERO */
+  #hero {
+    display: none;
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    padding: 80px 2rem 4rem;
+  }
+  #hero.active { display: flex; }
+
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridDrift 20s linear infinite;
+  }
+  @keyframes gridDrift {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(60px); }
+  }
+
+  .hero-orbs {
+    position: absolute; inset: 0; pointer-events: none;
+  }
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    animation: orbFloat 8s ease-in-out infinite;
+  }
+  .orb1 { width: 400px; height: 400px; background: rgba(0,212,255,0.08); top: 10%; left: 10%; animation-delay: 0s; }
+  .orb2 { width: 300px; height: 300px; background: rgba(124,58,237,0.1); top: 50%; right: 5%; animation-delay: 3s; }
+  .orb3 { width: 200px; height: 200px; background: rgba(245,158,11,0.08); bottom: 15%; left: 30%; animation-delay: 5s; }
+  @keyframes orbFloat {
+    0%,100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-30px) scale(1.05); }
+  }
+
+  .hero-content { position: relative; z-index: 1; }
+  .hero-tag {
+    display: inline-block;
+    background: rgba(0,212,255,0.1);
+    border: 1px solid rgba(0,212,255,0.3);
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    padding: 6px 16px;
+    border-radius: 2px;
+    margin-bottom: 1.5rem;
+    animation: fadeInUp 0.8s ease both;
+  }
+  .hero-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.5rem, 6vw, 5.5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    margin-bottom: 1.5rem;
+    animation: fadeInUp 0.8s ease 0.2s both;
+  }
+  .hero-title span { color: var(--accent); }
+  .hero-sub {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto 3rem;
+    line-height: 1.7;
+    animation: fadeInUp 0.8s ease 0.4s both;
+  }
+
+  .hero-cards {
+    display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+    animation: fadeInUp 0.8s ease 0.6s both;
+  }
+  .hero-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    min-width: 140px;
+    text-align: center;
+  }
+  .hero-card:hover {
+    border-color: var(--accent);
+    background: rgba(0,212,255,0.05);
+    transform: translateY(-4px);
+  }
+  .hero-card-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+  .hero-card-label { font-size: 0.8rem; color: var(--text-muted); font-family: 'Space Mono', monospace; }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* SECTION HEADERS */
+  .section-header {
+    text-align: center;
+    margin-bottom: 4rem;
+    animation: fadeInUp 0.7s ease both;
+  }
+  .section-tag {
+    display: inline-block;
+    background: rgba(0,212,255,0.1);
+    border: 1px solid rgba(0,212,255,0.2);
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+    padding: 4px 14px;
+    border-radius: 2px;
+    margin-bottom: 1rem;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.8rem, 4vw, 3.2rem);
+    font-weight: 800;
+    line-height: 1.1;
+  }
+  .section-title span { color: var(--accent); }
+  .section-desc {
+    color: var(--text-muted);
+    margin-top: 0.8rem;
+    font-size: 1rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* TIMELINE */
+  .timeline {
+    position: relative;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0; bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, transparent, var(--accent), var(--accent2), transparent);
+    transform: translateX(-50%);
+  }
+  @media (max-width: 640px) {
+    .timeline::before { left: 20px; }
+  }
+
+  .tl-item {
+    display: flex;
+    justify-content: flex-end;
+    padding-right: calc(50% + 2rem);
+    margin-bottom: 3rem;
+    position: relative;
+    opacity: 0;
+    transform: translateX(-30px);
+    transition: all 0.6s ease;
+  }
+  .tl-item.visible { opacity: 1; transform: translateX(0); }
+  .tl-item.right {
+    justify-content: flex-start;
+    padding-right: 0;
+    padding-left: calc(50% + 2rem);
+    transform: translateX(30px);
+  }
+  .tl-item.right.visible { transform: translateX(0); }
+
+  @media (max-width: 640px) {
+    .tl-item, .tl-item.right {
+      justify-content: flex-start;
+      padding-right: 0;
+      padding-left: 3.5rem;
+      transform: translateX(0);
+    }
+  }
+
+  .tl-dot {
+    position: absolute;
+    left: 50%; top: 1.2rem;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid var(--bg);
+    transform: translateX(-50%);
+    box-shadow: 0 0 12px var(--accent);
+    z-index: 1;
+  }
+  @media (max-width: 640px) {
+    .tl-dot { left: 20px; transform: translateX(-50%); }
+  }
+
+  .tl-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
+    max-width: 380px;
+    transition: all 0.3s;
+  }
+  .tl-card:hover {
+    border-color: var(--accent);
+    background: var(--surface2);
+    transform: scale(1.02);
+  }
+  .tl-year {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    letter-spacing: 2px;
+    margin-bottom: 0.3rem;
+  }
+  .tl-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+  }
+  .tl-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; }
+  .tl-badge {
+    display: inline-block;
+    margin-top: 0.6rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* LANG TYPES GRID */
+  .types-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .type-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.8rem;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
+  }
+  .type-card.visible { opacity: 1; transform: translateY(0); }
+  .type-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--card-color, var(--accent));
+  }
+  .type-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--card-color, var(--accent));
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  }
+  .type-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+  .type-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .type-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1rem; }
+  .type-langs {
+    display: flex; flex-wrap: wrap; gap: 0.4rem;
+  }
+  .lang-pill {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-family: 'Space Mono', monospace;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+
+  /* JS JOURNEY */
+  .journey-container {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .journey-path {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .journey-item {
+    display: grid;
+    grid-template-columns: 1fr 60px 1fr;
+    align-items: start;
+    gap: 0;
+    opacity: 0;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .journey-item.visible { opacity: 1; }
+  .journey-item:nth-child(odd) { transform: translateX(-20px); }
+  .journey-item:nth-child(even) { transform: translateX(20px); }
+  .journey-item.visible { transform: translateX(0) !important; }
+
+  .journey-left { text-align: right; padding: 0 1.5rem 2rem 0; }
+  .journey-right { padding: 0 0 2rem 1.5rem; }
+  .journey-empty { opacity: 0; pointer-events: none; }
+
+  .journey-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .journey-node {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    z-index: 2;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .journey-line {
+    width: 2px;
+    flex: 1;
+    min-height: 40px;
+  }
+
+  .j-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    transition: all 0.3s;
+  }
+  .j-card:hover { transform: scale(1.03); }
+  .j-year { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--accent); letter-spacing: 2px; }
+  .j-title { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; margin: 0.2rem 0; }
+  .j-desc { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    margin-top: 0.8rem;
+  }
+  .c-keyword { color: #ff79c6; }
+  .c-func { color: #8be9fd; }
+  .c-string { color: #f1fa8c; }
+  .c-comment { color: #6272a4; }
+  .c-num { color: #bd93f9; }
+  .c-var { color: #50fa7b; }
+
+  /* IDE CARDS */
+  .ide-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .ide-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
+  }
+  .ide-card.visible { opacity: 1; transform: translateY(0); }
+  .ide-card:hover {
+    border-color: var(--ide-color, var(--accent));
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  }
+  .ide-header {
+    padding: 1.5rem;
+    background: rgba(255,255,255,0.02);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .ide-logo {
+    width: 48px; height: 48px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    flex-shrink: 0;
+  }
+  .ide-name { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; }
+  .ide-tagline { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem; }
+  .ide-body { padding: 1.5rem; }
+  .ide-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1rem; }
+  .ide-features { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+  .ide-features li {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    padding-left: 1.2rem;
+    position: relative;
+  }
+  .ide-features li::before {
+    content: '▸';
+    position: absolute; left: 0;
+    color: var(--ide-color, var(--accent));
+  }
+  .ide-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-family: 'Space Mono', monospace;
+    margin-top: 1rem;
+    border: 1px solid;
+  }
+
+  /* FAKE EDITOR */
+  .fake-editor {
+    background: #1e1e1e;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #333;
+    max-width: 700px;
+    margin: 2rem auto;
+  }
+  .editor-titlebar {
+    background: #323233;
+    padding: 8px 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot.red { background: #ff5f57; }
+  .dot.yellow { background: #febc2e; }
+  .dot.green { background: #28c840; }
+  .editor-filename { font-family: 'Space Mono', monospace; font-size: 0.72rem; color: #888; margin-left: 8px; }
+  .editor-body {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+  }
+  .line-nums {
+    background: #1e1e1e;
+    padding: 1rem 0.5rem;
+    text-align: right;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: #4a4a4a;
+    line-height: 1.7;
+    border-right: 1px solid #2d2d2d;
+    user-select: none;
+  }
+  .editor-code {
+    padding: 1rem 1.2rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.7;
+    color: #d4d4d4;
+    overflow-x: auto;
+  }
+
+  /* COMPARISON TABLE */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    max-width: 900px;
+    margin: 0 auto;
+    font-size: 0.85rem;
+  }
+  .compare-table th {
+    background: var(--surface2);
+    padding: 1rem 1.2rem;
+    text-align: left;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    color: var(--accent);
+    border-bottom: 2px solid var(--border);
+  }
+  .compare-table td {
+    padding: 0.9rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    vertical-align: top;
+  }
+  .compare-table tr:hover td { background: var(--surface); }
+  .compare-table .td-name {
+    font-weight: 600;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+  }
+  .check { color: var(--accent4); }
+  .cross { color: #ef4444; }
+
+  /* VSCODE FORK SECTION */
+  .fork-intro {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 2rem;
+  }
+  .fork-tree {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 3rem;
+    position: relative;
+  }
+  .fork-root {
+    background: #007acc;
+    color: white;
+    padding: 0.8rem 2rem;
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+  .fork-trunk {
+    width: 2px;
+    height: 40px;
+    background: var(--border);
+  }
+  .fork-branches {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    position: relative;
+  }
+  .fork-branches::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: var(--border);
+  }
+  .fork-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .fork-stem {
+    width: 2px;
+    height: 20px;
+    background: var(--border);
+  }
+  .fork-card {
+    padding: 0.8rem 1.2rem;
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-align: center;
+    border: 2px solid;
+    min-width: 110px;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+  .fork-card:hover { transform: scale(1.05); }
+
+  /* ANIMATION CLASSES */
+  .stagger-1 { animation-delay: 0.1s; }
+  .stagger-2 { animation-delay: 0.2s; }
+  .stagger-3 { animation-delay: 0.3s; }
+  .stagger-4 { animation-delay: 0.4s; }
+  .stagger-5 { animation-delay: 0.5s; }
+
+  /* FLOATING CODE PARTICLES */
+  .particles {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: rgba(0,212,255,0.06);
+    animation: particleFall linear infinite;
+    white-space: nowrap;
+  }
+  @keyframes particleFall {
+    from { transform: translateY(-50px); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    to { transform: translateY(110vh); opacity: 0; }
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .tab-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .tab-btn.active, .tab-btn:hover {
+    background: rgba(0,212,255,0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* PROGRESS BARS */
+  .progress-section { max-width: 700px; margin: 0 auto; }
+  .prog-item { margin-bottom: 1.2rem; }
+  .prog-header { display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: 0.85rem; }
+  .prog-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .prog-fill {
+    height: 100%;
+    border-radius: 3px;
+    width: 0;
+    transition: width 1.5s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    .journey-item { grid-template-columns: 30px 1fr; }
+    .journey-left.journey-empty { display: none; }
+    .journey-right { padding-left: 1rem; }
+    .ide-grid { grid-template-columns: 1fr; }
+  }
+
+  .highlight-box {
+    background: rgba(0,212,255,0.05);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 2rem auto;
+    max-width: 800px;
+  }
+  .highlight-box h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    margin-bottom: 0.8rem;
+    color: var(--accent);
+  }
+  .highlight-box p {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+
+  .ai-glow {
+    animation: aiPulse 2s ease-in-out infinite;
+  }
+  @keyframes aiPulse {
+    0%,100% { box-shadow: 0 0 20px rgba(124,58,237,0.3); }
+    50% { box-shadow: 0 0 40px rgba(124,58,237,0.6); }
+  }
+
+  .terminal-demo {
+    background: #0d1117;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 1.5rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.82rem;
+    max-width: 700px;
+    margin: 1.5rem auto;
+  }
+  .terminal-line { line-height: 2; }
+  .terminal-prompt { color: var(--accent4); }
+  .terminal-cmd { color: var(--text); }
+  .terminal-output { color: var(--text-muted); padding-left: 1rem; }
+  .terminal-cursor {
+    display: inline-block;
+    width: 8px; height: 14px;
+    background: var(--accent);
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+  }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+</style>
+</head>
+<body>
+
+<!-- Particles -->
+<div class="particles" id="particles"></div>
+
+<!-- Navigation -->
+<nav class="main-nav">
+  <div class="nav-logo">DEV.EDU</div>
+  <button class="nav-btn active" onclick="showSection('hero')">🏠 Inicio</button>
+  <button class="nav-btn" onclick="showSection('historia')">📅 Historia</button>
+  <button class="nav-btn" onclick="showSection('tipos')">🗂 Tipos</button>
+  <button class="nav-btn" onclick="showSection('javascript')">⚡ JavaScript</button>
+  <button class="nav-btn" onclick="showSection('python')">🐍 Python & IA</button>
+  <button class="nav-btn" onclick="showSection('ides')">🖥 IDEs</button>
+  <button class="nav-btn" onclick="showSection('vscode')">💙 VSCode & Forks</button>
+  <button class="nav-btn" onclick="showSection('ai-ides')">🤖 IA en IDEs</button>
+</nav>
+
+<!-- ═══════════════════════════════════════ HERO ═══════════════════════════════════════ -->
+<section id="hero" class="section active">
+  <div class="hero-grid"></div>
+  <div class="hero-orbs">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+  <div class="hero-content">
+    <div class="hero-tag">CURSO COMPLETO</div>
+    <h1 class="hero-title">Lenguajes de<br><span>Programación</span> & IDEs</h1>
+    <p class="hero-sub">De las primeras líneas de código en los años 50 hasta la era de la Inteligencia Artificial. Entiende cómo funciona el mundo del desarrollo moderno.</p>
+    <div class="hero-cards">
+      <div class="hero-card" onclick="showSection('historia')">
+        <div class="hero-card-icon">📅</div>
+        <div class="hero-card-label">HISTORIA</div>
+      </div>
+      <div class="hero-card" onclick="showSection('tipos')">
+        <div class="hero-card-icon">🗂</div>
+        <div class="hero-card-label">TIPOS</div>
+      </div>
+      <div class="hero-card" onclick="showSection('javascript')">
+        <div class="hero-card-icon">⚡</div>
+        <div class="hero-card-label">JAVASCRIPT</div>
+      </div>
+      <div class="hero-card" onclick="showSection('python')">
+        <div class="hero-card-icon">🐍</div>
+        <div class="hero-card-label">PYTHON & IA</div>
+      </div>
+      <div class="hero-card" onclick="showSection('ides')">
+        <div class="hero-card-icon">🖥</div>
+        <div class="hero-card-label">IDEs</div>
+      </div>
+      <div class="hero-card" onclick="showSection('vscode')">
+        <div class="hero-card-icon">💙</div>
+        <div class="hero-card-label">VSCODE FORKS</div>
+      </div>
+      <div class="hero-card" onclick="showSection('ai-ides')">
+        <div class="hero-card-icon">🤖</div>
+        <div class="hero-card-label">IA EN IDEs</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ HISTORIA ═══════════════════════════════════════ -->
+<section id="historia" class="section">
+  <div class="section-header">
+    <div class="section-tag">MÓDULO 01</div>
+    <h2 class="section-title">Historia de los <span>Lenguajes</span></h2>
+    <p class="section-desc">Desde el lenguaje ensamblador hasta la IA generativa — un viaje de 70 años</p>
+  </div>
+
+  <div class="timeline" id="timeline-historia">
+
+    <div class="tl-item" data-tl>
+      <div class="tl-dot" style="background:#ef4444;box-shadow:0 0 12px #ef4444"></div>
+      <div class="tl-card">
+        <div class="tl-year">1940s – 1950s</div>
+        <div class="tl-title">🔌 Lenguaje Máquina & Ensamblador</div>
+        <div class="tl-desc">Los primeros computadores se programaban con 0s y 1s directamente. El ensamblador fue el primer paso hacia instrucciones más humanas: <code>MOV AX, 01h</code></div>
+        <span class="tl-badge" style="background:rgba(239,68,68,0.1);color:#ef4444;border-color:rgba(239,68,68,0.3)">Lenguaje Máquina</span>
+      </div>
+    </div>
+
+    <div class="tl-item right" data-tl>
+      <div class="tl-dot" style="background:#f59e0b;box-shadow:0 0 12px #f59e0b"></div>
+      <div class="tl-card">
+        <div class="tl-year">1954</div>
+        <div class="tl-title">📐 FORTRAN — El primero de alto nivel</div>
+        <div class="tl-desc">IBM crea el primer lenguaje de alto nivel para cálculos científicos y matemáticos. Por primera vez los programadores podían escribir algo parecido al álgebra.</div>
+        <span class="tl-badge" style="background:rgba(245,158,11,0.1);color:#f59e0b;border-color:rgba(245,158,11,0.3)">IBM · 1954</span>
+      </div>
+    </div>
+
+    <div class="tl-item" data-tl>
+      <div class="tl-dot" style="background:#f59e0b;box-shadow:0 0 12px #f59e0b"></div>
+      <div class="tl-card">
+        <div class="tl-year">1959</div>
+        <div class="tl-title">💼 COBOL — Lenguaje de negocios</div>
+        <div class="tl-desc">Grace Hopper lidera el desarrollo de COBOL para aplicaciones comerciales. Todavía hoy miles de millones de transacciones bancarias corren en COBOL.</div>
+        <span class="tl-badge" style="background:rgba(245,158,11,0.1);color:#f59e0b;border-color:rgba(245,158,11,0.3)">Grace Hopper</span>
+      </div>
+    </div>
+
+    <div class="tl-item right" data-tl>
+      <div class="tl-dot" style="background:#10b981;box-shadow:0 0 12px #10b981"></div>
+      <div class="tl-card">
+        <div class="tl-year">1972</div>
+        <div class="tl-title">⚙️ C — La base de todo</div>
+        <div class="tl-desc">Dennis Ritchie en Bell Labs crea C. Es el padre de casi todos los lenguajes modernos: C++, Java, Python, JavaScript y más. Linux y Unix están escritos en C.</div>
+        <span class="tl-badge" style="background:rgba(16,185,129,0.1);color:#10b981;border-color:rgba(16,185,129,0.3)">Bell Labs · Dennis Ritchie</span>
+      </div>
+    </div>
+
+    <div class="tl-item" data-tl>
+      <div class="tl-dot" style="background:#3b82f6;box-shadow:0 0 12px #3b82f6"></div>
+      <div class="tl-card">
+        <div class="tl-year">1983</div>
+        <div class="tl-title">🏗 C++ — Orientado a Objetos</div>
+        <div class="tl-desc">Bjarne Stroustrup añade orientación a objetos a C. Los videojuegos, motores gráficos y sistemas operativos se construyen en C++.</div>
+        <span class="tl-badge" style="background:rgba(59,130,246,0.1);color:#3b82f6;border-color:rgba(59,130,246,0.3)">POO · Stroustrup</span>
+      </div>
+    </div>
+
+    <div class="tl-item right" data-tl>
+      <div class="tl-dot" style="background:#f7df1e;box-shadow:0 0 12px #f7df1e"></div>
+      <div class="tl-card">
+        <div class="tl-year">1991 – 1995</div>
+        <div class="tl-title">🚀 Python & JavaScript nacen</div>
+        <div class="tl-desc">Guido van Rossum crea Python (1991) por su legibilidad. Brendan Eich crea JavaScript en 10 días (1995) para hacer las páginas web interactivas.</div>
+        <span class="tl-badge" style="background:rgba(247,223,30,0.1);color:#f7df1e;border-color:rgba(247,223,30,0.3)">Era Web · 1990s</span>
+      </div>
+    </div>
+
+    <div class="tl-item" data-tl>
+      <div class="tl-dot" style="background:#f89820;box-shadow:0 0 12px #f89820"></div>
+      <div class="tl-card">
+        <div class="tl-year">1995</div>
+        <div class="tl-title">☕ Java — Write Once, Run Anywhere</div>
+        <div class="tl-desc">Sun Microsystems lanza Java con la promesa de ejecutarse en cualquier plataforma. Domina el desarrollo empresarial y Android por décadas.</div>
+        <span class="tl-badge" style="background:rgba(248,152,32,0.1);color:#f89820;border-color:rgba(248,152,32,0.3)">Sun Microsystems</span>
+      </div>
+    </div>
+
+    <div class="tl-item right" data-tl>
+      <div class="tl-dot" style="background:#c084fc;box-shadow:0 0 12px #c084fc"></div>
+      <div class="tl-card">
+        <div class="tl-year">2000s</div>
+        <div class="tl-title">🌐 La era de la Web</div>
+        <div class="tl-desc">PHP, Ruby, ASP.NET proliferan para el desarrollo web. Rails (2004) revoluciona la productividad. AJAX hace las páginas dinámicas sin recargar.</div>
+        <span class="tl-badge" style="background:rgba(192,132,252,0.1);color:#c084fc;border-color:rgba(192,132,252,0.3)">Web 2.0</span>
+      </div>
+    </div>
+
+    <div class="tl-item" data-tl>
+      <div class="tl-dot" style="background:#3178c6;box-shadow:0 0 12px #3178c6"></div>
+      <div class="tl-card">
+        <div class="tl-year">2012</div>
+        <div class="tl-title">🔷 TypeScript — JS con tipos</div>
+        <div class="tl-desc">Microsoft lanza TypeScript para añadir tipado estático a JavaScript. Se convierte en el estándar para proyectos grandes y escalables.</div>
+        <span class="tl-badge" style="background:rgba(49,120,198,0.1);color:#3178c6;border-color:rgba(49,120,198,0.3)">Microsoft · Anders Hejlsberg</span>
+      </div>
+    </div>
+
+    <div class="tl-item right" data-tl>
+      <div class="tl-dot" style="background:#00d4ff;box-shadow:0 0 12px #00d4ff"></div>
+      <div class="tl-card">
+        <div class="tl-year">2015 – Hoy</div>
+        <div class="tl-title">🤖 Era de la Inteligencia Artificial</div>
+        <div class="tl-desc">Python domina la IA con TensorFlow, PyTorch y scikit-learn. Rust, Go y Kotlin toman fuerza. Los LLMs como GPT y Claude cambian cómo programamos.</div>
+        <span class="tl-badge" style="background:rgba(0,212,255,0.1);color:#00d4ff;border-color:rgba(0,212,255,0.3)">IA · LLMs · 2024+</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ TIPOS ═══════════════════════════════════════ -->
+<section id="tipos" class="section">
+  <div class="section-header">
+    <div class="section-tag">MÓDULO 02</div>
+    <h2 class="section-title">Tipos de <span>Lenguajes</span></h2>
+    <p class="section-desc">Clasificaciones clave que todo desarrollador debe entender</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('tab-nivel')">Por Nivel</button>
+    <button class="tab-btn" onclick="showTab('tab-paradigma')">Por Paradigma</button>
+    <button class="tab-btn" onclick="showTab('tab-tipado')">Por Tipado</button>
+    <button class="tab-btn" onclick="showTab('tab-ejecucion')">Por Ejecución</button>
+  </div>
+
+  <!-- NIVEL -->
+  <div id="tab-nivel" class="tab-content active">
+    <div class="types-grid" id="grid-nivel">
+      <div class="type-card" style="--card-color:#ef4444" data-anim>
+        <div class="type-icon">⚙️</div>
+        <div class="type-name">Bajo Nivel</div>
+        <div class="type-desc">Muy cercanos al hardware. Ofrecen control total pero son difíciles de escribir. Un error puede corromper la memoria del sistema.</div>
+        <div class="type-langs">
+          <span class="lang-pill">Ensamblador</span>
+          <span class="lang-pill">Lenguaje Máquina</span>
+        </div>
+        <div style="margin-top:1rem">
+          <div class="code-block" style="font-size:0.7rem">
+<span class="c-comment">; Hola mundo en Ensamblador x86</span><br>
+<span class="c-keyword">section</span> <span class="c-var">.data</span><br>
+&nbsp;&nbsp;msg <span class="c-keyword">db</span> <span class="c-string">'Hola, Mundo!'</span>, <span class="c-num">0Ah</span><br>
+<span class="c-keyword">section</span> <span class="c-var">.text</span><br>
+&nbsp;&nbsp;<span class="c-keyword">mov</span> <span class="c-var">eax</span>, <span class="c-num">4</span><br>
+&nbsp;&nbsp;<span class="c-keyword">int</span> <span class="c-num">0x80</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="type-card" style="--card-color:#f59e0b" data-anim>
+        <div class="type-icon">🔧</div>
+        <div class="type-name">Nivel Medio</div>
+        <div class="type-desc">Balance entre control del hardware y legibilidad. C y C++ permiten manejar memoria directamente pero con una sintaxis más humana.</div>
+        <div class="type-langs">
+          <span class="lang-pill">C</span>
+          <span class="lang-pill">C++</span>
+          <span class="lang-pill">Rust</span>
+        </div>
+        <div style="margin-top:1rem">
+          <div class="code-block" style="font-size:0.7rem">
+<span class="c-comment">// C — Hola Mundo</span><br>
+<span class="c-keyword">#include</span> <span class="c-string">&lt;stdio.h&gt;</span><br>
+<span class="c-keyword">int</span> <span class="c-func">main</span>() {<br>
+&nbsp;&nbsp;<span class="c-func">printf</span>(<span class="c-string">"Hola, Mundo!\n"</span>);<br>
+&nbsp;&nbsp;<span class="c-keyword">return</span> <span class="c-num">0</span>;<br>
+}
+          </div>
+        </div>
+      </div>
+
+      <div class="type-card" style="--card-color:#10b981" data-anim>
+        <div class="type-icon">✨</div>
+        <div class="type-name">Alto Nivel</div>
+        <div class="type-desc">Muy cercanos al lenguaje humano. El programador no gestiona memoria manualmente. Son más lentos que C pero mucho más productivos.</div>
+        <div class="type-langs">
+          <span class="lang-pill">Python</span>
+          <span class="lang-pill">JavaScript</span>
+          <span class="lang-pill">Java</span>
+          <span class="lang-pill">Ruby</span>
+          <span class="lang-pill">PHP</span>
+        </div>
+        <div style="margin-top:1rem">
+          <div class="code-block" style="font-size:0.7rem">
+<span class="c-comment"># Python — tan simple como inglés</span><br>
+<span class="c-func">print</span>(<span class="c-string">"Hola, Mundo!"</span>)<br><br>
+<span class="c-comment"># Una línea es todo lo que necesitas</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARADIGMA -->
+  <div id="tab-paradigma" class="tab-content">
+    <div class="types-grid" id="grid-paradigma">
+      <div class="type-card" style="--card-color:#3b82f6" data-anim>
+        <div class="type-icon">📋</div>
+        <div class="type-name">Imperativo / Procedural</div>
+        <div class="type-desc">Le dices al computador CÓMO hacer algo, paso a paso. El flujo de control es explícito: si esto, entonces aquello.</div>
+        <div class="type-langs"><span class="lang-pill">C</span><span class="lang-pill">Pascal</span><span class="lang-pill">BASIC</span></div>
+      </div>
+      <div class="type-card" style="--card-color:#8b5cf6" data-anim>
+        <div class="type-icon">🧩</div>
+        <div class="type-name">Orientado a Objetos (POO)</div>
+        <div class="type-desc">Organiza el código en objetos que tienen propiedades y comportamientos. Simula el mundo real: un Carro tiene motor, color y puede acelerar.</div>
+        <div class="type-langs"><span class="lang-pill">Java</span><span class="lang-pill">C++</span><span class="lang-pill">Python</span><span class="lang-pill">Ruby</span></div>
+        <div style="margin-top:1rem">
+          <div class="code-block" style="font-size:0.7rem">
+<span class="c-keyword">class</span> <span class="c-func">Carro</span>:<br>
+&nbsp;&nbsp;<span class="c-keyword">def</span> <span class="c-func">__init__</span>(self, color):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;self.<span class="c-var">color</span> = color<br>
+&nbsp;&nbsp;<span class="c-keyword">def</span> <span class="c-func">acelerar</span>(self):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="c-func">print</span>(<span class="c-string">"¡Vroom!"</span>)
+          </div>
+        </div>
+      </div>
+      <div class="type-card" style="--card-color:#f59e0b" data-anim>
+        <div class="type-icon">λ</div>
+        <div class="type-name">Funcional</div>
+        <div class="type-desc">Las funciones son ciudadanos de primera clase. No hay estado mutable. Ideal para procesar datos y evitar efectos secundarios.</div>
+        <div class="type-langs"><span class="lang-pill">Haskell</span><span class="lang-pill">Erlang</span><span class="lang-pill">Clojure</span><span class="lang-pill">Elixir</span></div>
+      </div>
+      <div class="type-card" style="--card-color:#10b981" data-anim>
+        <div class="type-icon">🔍</div>
+        <div class="type-name">Declarativo</div>
+        <div class="type-desc">Le dices QUÉ quieres, no cómo obtenerlo. SQL es el ejemplo perfecto: describes el resultado y la base de datos decide cómo obtenerlo.</div>
+        <div class="type-langs"><span class="lang-pill">SQL</span><span class="lang-pill">HTML</span><span class="lang-pill">CSS</span><span class="lang-pill">Prolog</span></div>
+        <div style="margin-top:1rem">
+          <div class="code-block" style="font-size:0.7rem">
+<span class="c-comment">-- SQL: qué quiero, no cómo</span><br>
+<span class="c-keyword">SELECT</span> nombre, edad<br>
+<span class="c-keyword">FROM</span> usuarios<br>
+<span class="c-keyword">WHERE</span> edad > <span class="c-num">18</span><br>
+<span class="c-keyword">ORDER BY</span> nombre
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIPADO -->
+  <div id="tab-tipado" class="tab-content">
+    <div class="types-grid" id="grid-tipado">
+      <div class="type-card" style="--card-color:#00d4ff" data-anim>
+        <div class="type-icon">🔒</div>
+        <div class="type-name">Tipado Estático</div>
+        <div class="type-desc">Los tipos se definen y verifican en tiempo de compilación. Más errores detectados antes de ejecutar. Más verboso pero más seguro.</div>
+        <div class="type-langs"><span class="lang-pill">Java</span><span class="lang-pill">C#</span><span class="lang-pill">TypeScript</span><span class="lang-pill">Rust</span><span class="lang-pill">Go</span></div>
+        <div style="margin-top:1rem">
+          <div class="code-block" style="font-size:0.7rem">
+<span class="c-comment">// TypeScript — tipos explícitos</span><br>
+<span class="c-keyword">let</span> <span class="c-var">edad</span>: <span class="c-func">number</span> = <span class="c-num">25</span>;<br>
+<span class="c-keyword">let</span> <span class="c-var">nombre</span>: <span class="c-func">string</span> = <span class="c-string">"Ana"</span>;<br>
+<span class="c-comment">// Error en tiempo de compilación:</span><br>
+<span class="c-var">edad</span> = <span class="c-string">"hola"</span>; <span class="c-comment">// ❌ Error!</span>
+          </div>
+        </div>
+      </div>
+      <div class="type-card" style="--card-color:#f59e0b" data-anim>
+        <div class="type-icon">🔓</div>
+        <div class="type-name">Tipado Dinámico</div>
+        <div class="type-desc">Los tipos se verifican en tiempo de ejecución. Más flexible y rápido para escribir, pero los errores aparecen cuando el programa corre.</div>
+        <div class="type-langs"><span class="lang-pill">Python</span><span class="lang-pill">JavaScript</span><span class="lang-pill">Ruby</span><span class="lang-pill">PHP</span></div>
+        <div style="margin-top:1rem">
+          <div class="code-block" style="font-size:0.7rem">
+<span class="c-comment"># Python — flexible</span><br>
+<span class="c-var">x</span> = <span class="c-num">10</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="c-comment"># número</span><br>
+<span class="c-var">x</span> = <span class="c-string">"hola"</span>&nbsp;&nbsp;<span class="c-comment"># ahora string</span><br>
+<span class="c-var">x</span> = [<span class="c-num">1</span>,<span class="c-num">2</span>,<span class="c-num">3</span>]&nbsp;<span class="c-comment"># ahora lista ✓</span>
+          </div>
+        </div>
+      </div>
+      <div class="type-card" style="--card-color:#8b5cf6" data-anim>
+        <div class="type-icon">🧠</div>
+        <div class="type-name">Tipado Fuerte vs Débil</div>
+        <div class="type-desc">Fuerte: no hace conversiones automáticas de tipo. Débil: convierte tipos automáticamente (puede causar bugs inesperados).</div>
+        <div class="type-langs"><span class="lang-pill">Python (fuerte)</span><span class="lang-pill">JavaScript (débil)</span></div>
+        <div style="margin-top:1rem">
+          <div class="code-block" style="font-size:0.7rem">
+<span class="c-comment">// JS débil — suma rara:</span><br>
+<span class="c-num">1</span> + <span class="c-string">"2"</span> = <span class="c-string">"12"</span>&nbsp;<span class="c-comment">// concatena!</span><br><br>
+<span class="c-comment"># Python fuerte:</span><br>
+<span class="c-num">1</span> + <span class="c-string">"2"</span>&nbsp;<span class="c-comment"># ❌ TypeError</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EJECUCION -->
+  <div id="tab-ejecucion" class="tab-content">
+    <div class="types-grid" id="grid-ejecucion">
+      <div class="type-card" style="--card-color:#ef4444" data-anim>
+        <div class="type-icon">⚡</div>
+        <div class="type-name">Compilados</div>
+        <div class="type-desc">El código fuente se traduce COMPLETO a lenguaje máquina antes de ejecutarse. Muy rápidos en ejecución. El binario resultante es independiente.</div>
+        <div class="type-langs"><span class="lang-pill">C</span><span class="lang-pill">C++</span><span class="lang-pill">Rust</span><span class="lang-pill">Go</span></div>
+        <div style="margin-top:0.8rem;font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--text-muted)">
+          código.c → <span style="color:#ef4444">compilador</span> → programa.exe
+        </div>
+      </div>
+      <div class="type-card" style="--card-color:#3b82f6" data-anim>
+        <div class="type-icon">🔄</div>
+        <div class="type-name">Interpretados</div>
+        <div class="type-desc">El código se ejecuta línea por línea en tiempo real por un intérprete. Más lentos pero portables y fáciles de depurar. No necesitan compilación.</div>
+        <div class="type-langs"><span class="lang-pill">Python</span><span class="lang-pill">Ruby</span><span class="lang-pill">PHP</span><span class="lang-pill">Bash</span></div>
+        <div style="margin-top:0.8rem;font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--text-muted)">
+          código.py → <span style="color:#3b82f6">intérprete</span> → resultado
+        </div>
+      </div>
+      <div class="type-card" style="--card-color:#10b981" data-anim>
+        <div class="type-icon">🌉</div>
+        <div class="type-name">Compilados a Bytecode (JVM)</div>
+        <div class="type-desc">Se compilan a un código intermedio (bytecode) que corre en una máquina virtual. Combina portabilidad y velocidad relativa.</div>
+        <div class="type-langs"><span class="lang-pill">Java</span><span class="lang-pill">Kotlin</span><span class="lang-pill">Scala</span><span class="lang-pill">C#</span></div>
+        <div style="margin-top:0.8rem;font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--text-muted)">
+          App.java → .class bytecode → <span style="color:#10b981">JVM</span> → ejecución
+        </div>
+      </div>
+      <div class="type-card" style="--card-color:#f7df1e" data-anim>
+        <div class="type-icon">🏎</div>
+        <div class="type-name">JIT (Just-In-Time)</div>
+        <div class="type-desc">Compilan en tiempo de ejecución las partes más usadas del código. JavaScript moderno usa V8 con JIT — por eso es tan rápido hoy.</div>
+        <div class="type-langs"><span class="lang-pill">JavaScript (V8)</span><span class="lang-pill">Python (PyPy)</span><span class="lang-pill">Java HotSpot</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ JAVASCRIPT ═══════════════════════════════════════ -->
+<section id="javascript" class="section">
+  <div class="section-header">
+    <div class="section-tag">MÓDULO 03</div>
+    <h2 class="section-title">La Historia de <span>JavaScript</span></h2>
+    <p class="section-desc">De 10 días de desarrollo a dominar el mundo del desarrollo moderno</p>
+  </div>
+
+  <div class="journey-container">
+    <div class="journey-path" id="js-journey">
+
+      <div class="journey-item" data-journey>
+        <div class="journey-left">
+          <div class="j-card">
+            <div class="j-year">1995</div>
+            <div class="j-title">⚡ Nacimiento en 10 días</div>
+            <div class="j-desc">Brendan Eich crea JavaScript en solo 10 días para Netscape. Su objetivo: hacer las páginas web interactivas. Originalmente se llamó "Mocha", luego "LiveScript".</div>
+          </div>
+        </div>
+        <div class="journey-center">
+          <div class="journey-node" style="background:#f7df1e;color:#000">JS</div>
+          <div class="journey-line" style="background:linear-gradient(to bottom, #f7df1e, #3b82f6)"></div>
+        </div>
+        <div class="journey-right journey-empty"></div>
+      </div>
+
+      <div class="journey-item" data-journey>
+        <div class="journey-left journey-empty"></div>
+        <div class="journey-center">
+          <div class="journey-node" style="background:#3b82f6;color:#fff">ES</div>
+          <div class="journey-line" style="background:linear-gradient(to bottom, #3b82f6, #10b981)"></div>
+        </div>
+        <div class="journey-right">
+          <div class="j-card">
+            <div class="j-year">1997</div>
+            <div class="j-title">📋 ECMAScript — El estándar</div>
+            <div class="j-desc">ECMA International estandariza JavaScript como ECMAScript. Esto unifica las implementaciones entre Netscape e Internet Explorer. ES1 es el punto de partida.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="journey-item" data-journey>
+        <div class="journey-left">
+          <div class="j-card">
+            <div class="j-year">2005</div>
+            <div class="j-title">🔄 AJAX — La revolución</div>
+            <div class="j-desc">AJAX (Asynchronous JavaScript and XML) permite actualizar partes de la página sin recargarla. Gmail y Google Maps demuestran el poder. La web 2.0 nace.</div>
+            <div class="code-block" style="font-size:0.7rem;margin-top:0.6rem">
+<span class="c-comment">// Fetch sin recargar la página</span><br>
+<span class="c-func">fetch</span>(<span class="c-string">'/api/datos'</span>)<br>
+&nbsp;&nbsp;.then(<span class="c-var">res</span> => <span class="c-var">res</span>.<span class="c-func">json</span>())<br>
+&nbsp;&nbsp;.then(<span class="c-var">data</span> => <span class="c-func">render</span>(<span class="c-var">data</span>));
+            </div>
+          </div>
+        </div>
+        <div class="journey-center">
+          <div class="journey-node" style="background:#10b981;color:#fff">AX</div>
+          <div class="journey-line" style="background:linear-gradient(to bottom, #10b981, #f59e0b)"></div>
+        </div>
+        <div class="journey-right journey-empty"></div>
+      </div>
+
+      <div class="journey-item" data-journey>
+        <div class="journey-left journey-empty"></div>
+        <div class="journey-center">
+          <div class="journey-node" style="background:#f59e0b;color:#000">V8</div>
+          <div class="journey-line" style="background:linear-gradient(to bottom, #f59e0b, #ef4444)"></div>
+        </div>
+        <div class="journey-right">
+          <div class="j-card">
+            <div class="j-year">2008</div>
+            <div class="j-title">🚀 Motor V8 de Google</div>
+            <div class="j-desc">Google Chrome lanza el motor V8 con compilación JIT. JavaScript pasa de "lento" a increíblemente rápido. Esto cambia todo lo que vendrá después.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="journey-item" data-journey>
+        <div class="journey-left">
+          <div class="j-card">
+            <div class="j-year">2009</div>
+            <div class="j-title">🟢 Node.js — JS en el servidor</div>
+            <div class="j-desc">Ryan Dahl toma V8 y lo pone en el servidor. Por primera vez un mismo lenguaje corre en frontend Y backend. El desarrollo full-stack con JS se vuelve posible.</div>
+            <div class="code-block" style="font-size:0.7rem;margin-top:0.6rem">
+<span class="c-keyword">const</span> <span class="c-var">http</span> = <span class="c-func">require</span>(<span class="c-string">'http'</span>);<br>
+<span class="c-var">http</span>.<span class="c-func">createServer</span>((<span class="c-var">req</span>, <span class="c-var">res</span>) => {<br>
+&nbsp;&nbsp;<span class="c-var">res</span>.<span class="c-func">end</span>(<span class="c-string">'¡Hola desde Node!'</span>);<br>
+}).<span class="c-func">listen</span>(<span class="c-num">3000</span>);
+            </div>
+          </div>
+        </div>
+        <div class="journey-center">
+          <div class="journey-node" style="background:#68a063;color:#fff">N</div>
+          <div class="journey-line" style="background:linear-gradient(to bottom, #68a063, #61dafb)"></div>
+        </div>
+        <div class="journey-right journey-empty"></div>
+      </div>
+
+      <div class="journey-item" data-journey>
+        <div class="journey-left journey-empty"></div>
+        <div class="journey-center">
+          <div class="journey-node" style="background:#61dafb;color:#000">Re</div>
+          <div class="journey-line" style="background:linear-gradient(to bottom, #61dafb, #3178c6)"></div>
+        </div>
+        <div class="journey-right">
+          <div class="j-card">
+            <div class="j-year">2013</div>
+            <div class="j-title">⚛️ React — UI declarativa</div>
+            <div class="j-desc">Facebook lanza React. Los componentes reutilizables y el Virtual DOM revolucionan cómo se construyen interfaces. El modelo mental cambia para siempre.</div>
+            <div class="code-block" style="font-size:0.7rem;margin-top:0.6rem">
+<span class="c-keyword">function</span> <span class="c-func">Saludo</span>({ <span class="c-var">nombre</span> }) {<br>
+&nbsp;&nbsp;<span class="c-keyword">return</span> &lt;<span class="c-func">h1</span>&gt;Hola, {<span class="c-var">nombre</span>}!&lt;/<span class="c-func">h1</span>&gt;;<br>
+}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="journey-item" data-journey>
+        <div class="journey-left">
+          <div class="j-card">
+            <div class="j-year">2015</div>
+            <div class="j-title">🎯 ES6 / ES2015 — El gran salto</div>
+            <div class="j-desc">La mayor actualización de JS: arrow functions, clases, módulos, promesas, destructuring, template literals, let/const. El lenguaje se moderniza completamente.</div>
+            <div class="code-block" style="font-size:0.7rem;margin-top:0.6rem">
+<span class="c-comment">// ES6: mucho más limpio</span><br>
+<span class="c-keyword">const</span> <span class="c-func">sumar</span> = (<span class="c-var">a</span>, <span class="c-var">b</span>) => <span class="c-var">a</span> + <span class="c-var">b</span>;<br>
+<span class="c-keyword">const</span> [<span class="c-var">x</span>, <span class="c-var">y</span>] = [<span class="c-num">1</span>, <span class="c-num">2</span>];<br>
+<span class="c-keyword">const</span> msg = <span class="c-string">`Hola ${<span class="c-var">nombre</span>}`</span>;
+            </div>
+          </div>
+        </div>
+        <div class="journey-center">
+          <div class="journey-node" style="background:#ff6b6b;color:#fff">6+</div>
+          <div class="journey-line" style="background:linear-gradient(to bottom, #ff6b6b, #3178c6)"></div>
+        </div>
+        <div class="journey-right journey-empty"></div>
+      </div>
+
+      <div class="journey-item" data-journey>
+        <div class="journey-left journey-empty"></div>
+        <div class="journey-center">
+          <div class="journey-node" style="background:#3178c6;color:#fff">TS</div>
+          <div class="journey-line" style="background:linear-gradient(to bottom, #3178c6, #000)"></div>
+        </div>
+        <div class="journey-right">
+          <div class="j-card">
+            <div class="j-year">2016 – 2019</div>
+            <div class="j-title">🔷 TypeScript domina</div>
+            <div class="j-desc">Microsoft's TypeScript se adopta masivamente. Angular lo adopta como lenguaje oficial. Vue y React siguen. Los proyectos grandes ya no se conciben sin tipos.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="journey-item" data-journey>
+        <div class="journey-left">
+          <div class="j-card">
+            <div class="j-year">2016</div>
+            <div class="j-title">▲ Next.js — El meta-framework</div>
+            <div class="j-desc">Vercel lanza Next.js sobre React. SSR (Server Side Rendering), SSG, routing automático, API Routes. Se convierte en el estándar para aplicaciones React de producción.</div>
+            <div class="code-block" style="font-size:0.7rem;margin-top:0.6rem">
+<span class="c-comment">// pages/index.tsx — Next.js</span><br>
+<span class="c-keyword">export default function</span> <span class="c-func">Home</span>() {<br>
+&nbsp;&nbsp;<span class="c-keyword">return</span> &lt;<span class="c-func">h1</span>&gt;Mi App Next.js&lt;/<span class="c-func">h1</span>&gt;<br>
+}<br>
+<span class="c-comment">// SSR automático ✓ SEO ✓</span>
+            </div>
+          </div>
+        </div>
+        <div class="journey-center">
+          <div class="journey-node" style="background:#000;color:#fff;border:2px solid #fff">NX</div>
+          <div class="journey-line" style="background:linear-gradient(to bottom, #000, #00d4ff)"></div>
+        </div>
+        <div class="journey-right journey-empty"></div>
+      </div>
+
+      <div class="journey-item" data-journey>
+        <div class="journey-left journey-empty"></div>
+        <div class="journey-center">
+          <div class="journey-node" style="background:linear-gradient(135deg,#00d4ff,#7c3aed);color:#fff">AI</div>
+        </div>
+        <div class="journey-right">
+          <div class="j-card">
+            <div class="j-year">2023 – Hoy</div>
+            <div class="j-title">🤖 JS + IA — El futuro</div>
+            <div class="j-desc">Vercel AI SDK, LangChain.js, OpenAI SDK. JavaScript lidera la integración de IA en el frontend. Los Server Components de Next.js 13+ cambian la arquitectura web.</div>
+            <div class="code-block" style="font-size:0.7rem;margin-top:0.6rem">
+<span class="c-comment">// Next.js + IA (Vercel AI SDK)</span><br>
+<span class="c-keyword">import</span> { useChat } <span class="c-keyword">from</span> <span class="c-string">'ai/react'</span>;<br>
+<span class="c-keyword">export default function</span> <span class="c-func">Chat</span>() {<br>
+&nbsp;&nbsp;<span class="c-keyword">const</span> { messages, <span class="c-var">input</span> } = <span class="c-func">useChat</span>();<br>
+}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="highlight-box">
+    <h3>🏆 Ecosistema JavaScript hoy (2024)</h3>
+    <p>JavaScript es el lenguaje más popular del mundo por 12 años consecutivos (Stack Overflow Survey). Node.js, React, Vue, Angular, Next.js, Nuxt, SvelteKit, Bun, Deno — el ecosistema es enorme. TypeScript es ahora el estándar para proyectos serios. Y con la explosión de la IA, JavaScript/TypeScript es el lenguaje #1 para integrar LLMs en aplicaciones web.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ PYTHON & IA ═══════════════════════════════════════ -->
+<section id="python" class="section">
+  <div class="section-header">
+    <div class="section-tag">MÓDULO 04</div>
+    <h2 class="section-title"><span>Python</span> & la Era de la IA</h2>
+    <p class="section-desc">El lenguaje más simple que dominó la ciencia de datos y la inteligencia artificial</p>
+  </div>
+
+  <div class="journey-container">
+    <div class="journey-path" id="py-journey">
+
+      <div class="journey-item" data-journey>
+        <div class="journey-left">
+          <div class="j-card">
+            <div class="j-year">1991</div>
+            <div class="j-title">🐍 Nace Python</div>
+            <div class="j-desc">Guido van Rossum publica Python 1.0. Su filosofía: el código debe ser legible como prosa inglesa. El Zen de Python dice: "La legibilidad cuenta".</div>
+            <div class="code-block" style="font-size:0.7rem;margin-top:0.6rem">
+<span class="c-comment"># Hola Mundo en Python</span><br>
+<span class="c-func">print</span>(<span class="c-string">"Hola, Mundo!"</span>)<br><br>
+<span class="c-comment"># Así de simple. Un lenguaje</span><br>
+<span class="c-comment"># que se lee como inglés.</span>
+            </div>
+          </div>
+        </div>
+        <div class="journey-center">
+          <div class="journey-node" style="background:#3776ab;color:#fff">Py</div>
+          <div class="journey-line" style="background:linear-gradient(to bottom, #3776ab, #ffd43b)"></div>
+        </div>
+        <div class="journey-right journey-empty"></div>
+      </div>
+
+      <div class="journey-item" data-journey>
+        <div class="journey-left journey-empty"></div>
+        <div class="journey-center">
+          <div class="journey-node" style="background:#ffd43b;color:#000">2.x</div>
+          <div class="journey-line" style="background:linear-gradient(to bottom, #ffd43b, #ff6b35)"></div>
+        </div>
+        <div class="journey-right">
+          <div class="j-card">
+            <div class="j-year">2000</div>
+            <div class="j-title">📦 Python 2 — Adopción masiva</div>
+            <div class="j-desc">Python 2.0 introduce comprensión de listas, garbage collection y soporte Unicode. La comunidad crece y empiezan a surgir librerías científicas clave.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="journey-item" data-journey>
+        <div class="journey-left">
+          <div class="j-card">
+            <div class="j-year">2006 – 2010</div>
+            <div class="j-title">🔬 NumPy, SciPy, Django</div>
+            <div class="j-desc">NumPy (2006) trae arrays eficientes. SciPy para cálculo científico. Django (2005) para web. Matplotlib para gráficas. Python se convierte en herramienta científica.</div>
+            <div class="code-block" style="font-size:0.7rem;margin-top:0.6rem">
+<span class="c-keyword">import</span> numpy <span class="c-keyword">as</span> <span class="c-var">np</span><br>
+<span class="c-var">a</span> = <span class="c-var">np</span>.<span class="c-func">array</span>([<span class="c-num">1</span>, <span class="c-num">2</span>, <span class="c-num">3</span>])<br>
+<span class="c-var">b</span> = <span class="c-var">a</span> * <span class="c-num">2</span>&nbsp;<span class="c-comment"># [2, 4, 6]</span><br>
+<span class="c-comment"># Operaciones vectorizadas!</span>
+            </div>
+          </div>
+        </div>
+        <div class="journey-center">
+          <div class="journey-node" style="background:#ff6b35;color:#fff">NP</div>
+          <div class="journey-line" style="background:linear-gradient(to bottom, #ff6b35, #3776ab)"></div>
+        </div>
+        <div class="journey-right journey-empty"></div>
+      </div>
+
+      <div class="journey-item" data-journey>
+        <div class="journey-left journey-empty"></div>
+        <div class="journey-center">
+          <div class="journey-node" style="background:#3776ab;color:#fff">3.x</div>
+          <div class="journey-line" style="background:linear-gradient(to bottom, #3776ab, #f59e0b)"></div>
+        </div>
+        <div class="journey-right">
+          <div class="j-card">
+            <div class="j-year">2008</div>
+            <div class="j-title">🔄 Python 3 — El gran reboot</div>
+            <div class="j-desc">Python 3.0 rompe compatibilidad con Python 2 para hacer el lenguaje más limpio. La migración fue lenta y dolorosa — duró 12 años. Python 2 murió en 2020.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="journey-item" data-journey>
+        <div class="journey-left">
+          <div class="j-card">
+            <div class="j-year">2012 – 2015</div>
+            <div class="j-title">🧠 Machine Learning explota</div>
+            <div class="j-desc">scikit-learn (2011) democratiza ML. Pandas (2008) para datos. Jupyter Notebooks hacen el código científico interactivo. Los data scientists adoptan Python masivamente.</div>
+            <div class="code-block" style="font-size:0.7rem;margin-top:0.6rem">
+<span class="c-keyword">from</span> sklearn.linear_model <span class="c-keyword">import</span> <span class="c-func">LinearRegression</span><br>
+<span class="c-var">model</span> = <span class="c-func">LinearRegression</span>()<br>
+<span class="c-var">model</span>.<span class="c-func">fit</span>(<span class="c-var">X_train</span>, <span class="c-var">y_train</span>)<br>
+<span class="c-var">predicciones</span> = <span class="c-var">model</span>.<span class="c-func">predict</span>(<span class="c-var">X_test</span>)
+            </div>
+          </div>
+        </div>
+        <div class="journey-center">
+          <div class="journey-node" style="background:#f59e0b;color:#000">ML</div>
+          <div class="journey-line" style="background:linear-gradient(to bottom, #f59e0b, #ef4444)"></div>
+        </div>
+        <div class="journey-right journey-empty"></div>
+      </div>
+
+      <div class="journey-item" data-journey>
+        <div class="journey-left journey-empty"></div>
+        <div class="journey-center">
+          <div class="journey-node" style="background:#ef4444;color:#fff">TF</div>
+          <div class="journey-line" style="background:linear-gradient(to bottom, #ef4444, #ee4c2c)"></div>
+        </div>
+        <div class="journey-right">
+          <div class="j-card">
+            <div class="j-year">2015 – 2019</div>
+            <div class="j-title">🔥 TensorFlow & PyTorch</div>
+            <div class="j-desc">Google lanza TensorFlow (2015). Facebook responde con PyTorch (2016). El Deep Learning se democratiza. Redes neuronales, convolucionales, y RNNs son accesibles para todos.</div>
+            <div class="code-block" style="font-size:0.7rem;margin-top:0.6rem">
+<span class="c-keyword">import</span> torch<br>
+<span class="c-keyword">import</span> torch.nn <span class="c-keyword">as</span> <span class="c-var">nn</span><br>
+<span class="c-var">model</span> = <span class="c-var">nn</span>.<span class="c-func">Sequential</span>(<br>
+&nbsp;&nbsp;<span class="c-var">nn</span>.<span class="c-func">Linear</span>(<span class="c-num">784</span>, <span class="c-num">128</span>),<br>
+&nbsp;&nbsp;<span class="c-var">nn</span>.<span class="c-func">ReLU</span>(), <span class="c-var">nn</span>.<span class="c-func">Linear</span>(<span class="c-num">128</span>, <span class="c-num">10</span>)<br>
+)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="journey-item" data-journey>
+        <div class="journey-left">
+          <div class="j-card">
+            <div class="j-year">2020 – 2022</div>
+            <div class="j-title">🤗 Transformers & GPT</div>
+            <div class="j-desc">Hugging Face democratiza los Transformers. GPT-3 de OpenAI (2020) shockea al mundo. BERT, T5, DALL-E. Python es el lenguaje de la IA generativa. LangChain surge en 2022.</div>
+            <div class="code-block" style="font-size:0.7rem;margin-top:0.6rem">
+<span class="c-keyword">from</span> transformers <span class="c-keyword">import</span> pipeline<br>
+<span class="c-var">chat</span> = <span class="c-func">pipeline</span>(<span class="c-string">"text-generation"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="c-var">model</span>=<span class="c-string">"gpt2"</span>)<br>
+<span class="c-func">print</span>(<span class="c-var">chat</span>(<span class="c-string">"Había una vez"</span>))
+            </div>
+          </div>
+        </div>
+        <div class="journey-center">
+          <div class="journey-node" style="background:#f97316;color:#fff">🤗</div>
+          <div class="journey-line" style="background:linear-gradient(to bottom, #f97316, #7c3aed)"></div>
+        </div>
+        <div class="journey-right journey-empty"></div>
+      </div>
+
+      <div class="journey-item" data-journey>
+        <div class="journey-left journey-empty"></div>
+        <div class="journey-center">
+          <div class="journey-node" style="background:linear-gradient(135deg,#7c3aed,#00d4ff);color:#fff">🤖</div>
+        </div>
+        <div class="journey-right">
+          <div class="j-card">
+            <div class="j-year">2023 – Hoy</div>
+            <div class="j-title">💥 ChatGPT & la Era LLM</div>
+            <div class="j-desc">ChatGPT (Nov 2022) cambia el mundo. Python domina totalmente la IA: OpenAI SDK, LangChain, AutoGen, CrewAI, FastAPI para APIs de IA. Python es sinónimo de IA.</div>
+            <div class="code-block" style="font-size:0.7rem;margin-top:0.6rem">
+<span class="c-keyword">from</span> openai <span class="c-keyword">import</span> OpenAI<br>
+<span class="c-var">client</span> = <span class="c-func">OpenAI</span>()<br>
+<span class="c-var">resp</span> = <span class="c-var">client</span>.chat.completions.<span class="c-func">create</span>(<br>
+&nbsp;&nbsp;<span class="c-var">model</span>=<span class="c-string">"gpt-4"</span>,<br>
+&nbsp;&nbsp;<span class="c-var">messages</span>=[{<span class="c-string">"role"</span>:<span class="c-string">"user"</span>,<span class="c-string">"content"</span>:<span class="c-string">"Hola"</span>}]<br>
+)
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="highlight-box" style="border-color:rgba(124,58,237,0.3);background:rgba(124,58,237,0.05)">
+    <h3 style="color:#a78bfa">🤖 Python & IA: ¿Por qué tan dominante?</h3>
+    <p>Python tiene la combinación perfecta: sintaxis simple que permite a matemáticos y científicos adoptarlo, NumPy para cálculo vectorizado eficiente, y una comunidad investigadora que publica sus modelos en Python. Cuando DeepMind, OpenAI, Google Brain y Meta AI todos publican en Python, el resto del ecosistema sigue. Hoy el 75% de los repositorios de IA en GitHub son Python.</p>
+  </div>
+
+  <div style="max-width:800px;margin:2rem auto">
+    <h3 style="font-family:'Syne',sans-serif;margin-bottom:1.5rem;text-align:center">Popularidad en IA (2024)</h3>
+    <div class="progress-section" id="py-progress">
+      <div class="prog-item">
+        <div class="prog-header"><span>Python (ML/IA)</span><span style="color:var(--accent)">95%</span></div>
+        <div class="prog-bar"><div class="prog-fill" style="background:var(--py)" data-width="95"></div></div>
+      </div>
+      <div class="prog-item">
+        <div class="prog-header"><span>JavaScript/TypeScript</span><span style="color:var(--accent)">72%</span></div>
+        <div class="prog-bar"><div class="prog-fill" style="background:var(--js)" data-width="72"></div></div>
+      </div>
+      <div class="prog-item">
+        <div class="prog-header"><span>Julia (ciencia)</span><span style="color:var(--accent)">28%</span></div>
+        <div class="prog-bar"><div class="prog-fill" style="background:#9d4edd" data-width="28"></div></div>
+      </div>
+      <div class="prog-item">
+        <div class="prog-header"><span>R (estadística)</span><span style="color:var(--accent)">35%</span></div>
+        <div class="prog-bar"><div class="prog-fill" style="background:#276dc3" data-width="35"></div></div>
+      </div>
+      <div class="prog-item">
+        <div class="prog-header"><span>Rust (sistemas IA)</span><span style="color:var(--accent)">18%</span></div>
+        <div class="prog-bar"><div class="prog-fill" style="background:#ce422b" data-width="18"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ IDEs ═══════════════════════════════════════ -->
+<section id="ides" class="section">
+  <div class="section-header">
+    <div class="section-tag">MÓDULO 05</div>
+    <h2 class="section-title">Historia de los <span>IDEs</span></h2>
+    <p class="section-desc">De editar en Notepad a que la IA escriba código por ti</p>
+  </div>
+
+  <div class="highlight-box" style="margin-bottom:3rem">
+    <h3>¿Qué es un IDE?</h3>
+    <p>Un <strong style="color:var(--accent)">Integrated Development Environment (IDE)</strong> es un programa que combina todo lo que necesitas para programar: editor de código, depurador, terminal, control de versiones y más — todo en una sola ventana. Es la diferencia entre escribir código en un bloc de notas versus tener un copiloto inteligente.</p>
+  </div>
+
+  <div class="timeline" id="timeline-ides">
+
+    <div class="tl-item" data-tl>
+      <div class="tl-dot" style="background:#6b7280"></div>
+      <div class="tl-card">
+        <div class="tl-year">1970s – 1980s</div>
+        <div class="tl-title">📟 Los editores de texto</div>
+        <div class="tl-desc">Vi (1976) y Emacs (1976) nacen en Unix. No eran IDEs pero sí poderosos editores. Sus atajos de teclado siguen siendo referencia hoy. "Salir de Vim" sigue siendo un meme.</div>
+        <span class="tl-badge" style="background:rgba(107,114,128,0.1);color:#9ca3af;border-color:rgba(107,114,128,0.3)">Vi · Emacs · 1976</span>
+      </div>
+    </div>
+
+    <div class="tl-item right" data-tl>
+      <div class="tl-dot" style="background:#f59e0b"></div>
+      <div class="tl-card">
+        <div class="tl-year">1991</div>
+        <div class="tl-title">🖼 Turbo Pascal — El primer IDE moderno</div>
+        <div class="tl-desc">Borland crea Turbo Pascal con una interfaz visual, depurador integrado y compilación instantánea. Es considerado el primer IDE verdadero. Revoluciona la productividad.</div>
+        <span class="tl-badge" style="background:rgba(245,158,11,0.1);color:#f59e0b;border-color:rgba(245,158,11,0.3)">Borland · GUI</span>
+      </div>
+    </div>
+
+    <div class="tl-item" data-tl>
+      <div class="tl-dot" style="background:#3b82f6"></div>
+      <div class="tl-card">
+        <div class="tl-year">1997 – 2001</div>
+        <div class="tl-title">☕ Eclipse & NetBeans</div>
+        <div class="tl-desc">IBM lanza Eclipse (2001), Sun NetBeans (1997). IDEs gratuitos y open source para Java que establecen el estándar: proyectos, depurador, refactoring, plugins.</div>
+        <span class="tl-badge" style="background:rgba(59,130,246,0.1);color:#3b82f6;border-color:rgba(59,130,246,0.3)">Java IDEs</span>
+      </div>
+    </div>
+
+    <div class="tl-item right" data-tl>
+      <div class="tl-dot" style="background:#c084fc"></div>
+      <div class="tl-card">
+        <div class="tl-year">2000 – 2008</div>
+        <div class="tl-title">🏢 Visual Studio & Xcode</div>
+        <div class="tl-desc">Microsoft Visual Studio domina el desarrollo Windows/C#. Apple lanza Xcode para Mac/iOS. Los IDEs se vuelven masivos — miles de MB, pero increíblemente potentes.</div>
+        <span class="tl-badge" style="background:rgba(192,132,252,0.1);color:#c084fc;border-color:rgba(192,132,252,0.3)">Microsoft · Apple</span>
+      </div>
+    </div>
+
+    <div class="tl-item" data-tl>
+      <div class="tl-dot" style="background:#ef4444"></div>
+      <div class="tl-card">
+        <div class="tl-year">2008 – 2013</div>
+        <div class="tl-title">🧠 JetBrains — IDEs inteligentes</div>
+        <div class="tl-desc">IntelliJ IDEA, PyCharm, WebStorm. JetBrains reinventa los IDEs con autocompletado profundo, análisis estático y refactoring avanzado. "¿Cómo lo sabe?" era la reacción común.</div>
+        <span class="tl-badge" style="background:rgba(239,68,68,0.1);color:#ef4444;border-color:rgba(239,68,68,0.3)">JetBrains</span>
+      </div>
+    </div>
+
+    <div class="tl-item right" data-tl>
+      <div class="tl-dot" style="background:#007acc"></div>
+      <div class="tl-card">
+        <div class="tl-year">2015</div>
+        <div class="tl-title">💙 VS Code — La revolución ligera</div>
+        <div class="tl-desc">Microsoft lanza Visual Studio Code. Open source, gratuito, rápido. En 3 años se convierte en el editor #1 del mundo. El marketplace de extensiones cambia todo.</div>
+        <span class="tl-badge" style="background:rgba(0,122,204,0.1);color:#007acc;border-color:rgba(0,122,204,0.3)">Microsoft · Open Source</span>
+      </div>
+    </div>
+
+    <div class="tl-item" data-tl>
+      <div class="tl-dot" style="background:#10b981"></div>
+      <div class="tl-card">
+        <div class="tl-year">2020 – 2023</div>
+        <div class="tl-title">☁️ IDEs en la nube</div>
+        <div class="tl-desc">GitHub Codespaces, GitPod, Replit, StackBlitz. Programar desde el navegador sin instalar nada. La pandemia acelera su adopción. El IDE viaja en la URL.</div>
+        <span class="tl-badge" style="background:rgba(16,185,129,0.1);color:#10b981;border-color:rgba(16,185,129,0.3)">Cloud IDEs</span>
+      </div>
+    </div>
+
+    <div class="tl-item right" data-tl>
+      <div class="tl-dot" style="background:linear-gradient(#7c3aed,#00d4ff);box-shadow:0 0 16px #7c3aed"></div>
+      <div class="tl-card">
+        <div class="tl-year">2021 – Hoy</div>
+        <div class="tl-title">🤖 IDEs con IA — El presente</div>
+        <div class="tl-desc">GitHub Copilot (2021) integra IA en VSCode. Cursor, Windsurf, y Claude Code llevan la IA al centro del flujo de trabajo. Ya no autocompletamos — la IA escribe funciones completas.</div>
+        <span class="tl-badge" style="background:rgba(124,58,237,0.1);color:#a78bfa;border-color:rgba(124,58,237,0.3)">AI-First IDEs · 2024</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Tabla comparativa IDEs tradicionales -->
+  <div style="margin-top:4rem">
+    <h3 style="font-family:'Syne',sans-serif;text-align:center;margin-bottom:1.5rem">IDEs Tradicionales: Comparativa</h3>
+    <div style="overflow-x:auto">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>IDE</th>
+            <th>Creador</th>
+            <th>Lenguaje Principal</th>
+            <th>Gratis</th>
+            <th>Open Source</th>
+            <th>IA Integrada</th>
+            <th>Peso</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-name">VS Code</td>
+            <td>Microsoft</td>
+            <td>Todos</td>
+            <td class="check">✓ Sí</td>
+            <td class="check">✓ Sí</td>
+            <td>Copilot (pago)</td>
+            <td>~100MB</td>
+          </tr>
+          <tr>
+            <td class="td-name">IntelliJ IDEA</td>
+            <td>JetBrains</td>
+            <td>Java/Kotlin</td>
+            <td class="cross">✗ Community</td>
+            <td class="cross">✗ No</td>
+            <td>AI Assistant</td>
+            <td>~800MB</td>
+          </tr>
+          <tr>
+            <td class="td-name">PyCharm</td>
+            <td>JetBrains</td>
+            <td>Python</td>
+            <td class="cross">✗ Community</td>
+            <td class="cross">✗ No</td>
+            <td>AI Assistant</td>
+            <td>~600MB</td>
+          </tr>
+          <tr>
+            <td class="td-name">Visual Studio</td>
+            <td>Microsoft</td>
+            <td>C#/.NET</td>
+            <td class="check">✓ Community</td>
+            <td class="cross">✗ No</td>
+            <td>Copilot (pago)</td>
+            <td>~2-10GB</td>
+          </tr>
+          <tr>
+            <td class="td-name">Xcode</td>
+            <td>Apple</td>
+            <td>Swift/ObjC</td>
+            <td class="check">✓ Sí</td>
+            <td class="cross">✗ No</td>
+            <td>Predictive Code</td>
+            <td>~12GB</td>
+          </tr>
+          <tr>
+            <td class="td-name">Neovim</td>
+            <td>Comunidad</td>
+            <td>Todos</td>
+            <td class="check">✓ Sí</td>
+            <td class="check">✓ Sí</td>
+            <td>Via plugins</td>
+            <td>~5MB</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ VSCODE & FORKS ═══════════════════════════════════════ -->
+<section id="vscode" class="section">
+  <div class="section-header">
+    <div class="section-tag">MÓDULO 06</div>
+    <h2 class="section-title">VSCode y sus <span>Forks</span></h2>
+    <p class="section-desc">El editor open source que se convirtió en plataforma para la siguiente generación de IDEs con IA</p>
+  </div>
+
+  <!-- ÁRBOL DE FORKS -->
+  <div class="fork-intro">
+    <h3 style="font-family:'Syne',sans-serif;margin-bottom:0.8rem">¿Qué es un "Fork"?</h3>
+    <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.7">VS Code es open source (MIT License). Cualquiera puede tomar su código, modificarlo y lanzar su propio editor. Esto creó un ecosistema de "forks" — editores que heredan la base de VS Code pero añaden características propias, especialmente inteligencia artificial.</p>
+  </div>
+
+  <div class="fork-tree">
+    <div class="fork-root">💙 Visual Studio Code (Microsoft)</div>
+    <div class="fork-trunk"></div>
+    <div class="fork-branches">
+      <div class="fork-item">
+        <div class="fork-stem"></div>
+        <div class="fork-card" style="background:rgba(124,58,237,0.15);border-color:#7c3aed;color:#a78bfa" onclick="showSection('vscode');scrollToCard('cursor-card')">Cursor</div>
+      </div>
+      <div class="fork-item">
+        <div class="fork-stem"></div>
+        <div class="fork-card" style="background:rgba(16,185,129,0.15);border-color:#10b981;color:#6ee7b7">Windsurf</div>
+      </div>
+      <div class="fork-item">
+        <div class="fork-stem"></div>
+        <div class="fork-card" style="background:rgba(245,158,11,0.15);border-color:#f59e0b;color:#fcd34d">Gitpod</div>
+      </div>
+      <div class="fork-item">
+        <div class="fork-stem"></div>
+        <div class="fork-card" style="background:rgba(239,68,68,0.15);border-color:#ef4444;color:#fca5a5">Code-OSS</div>
+      </div>
+      <div class="fork-item">
+        <div class="fork-stem"></div>
+        <div class="fork-card" style="background:rgba(0,212,255,0.15);border-color:#00d4ff;color:#67e8f9">VSCodium</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORKS DETALLE -->
+  <div class="ide-grid" id="forks-grid">
+
+    <div class="ide-card" id="cursor-card" style="--ide-color:#7c3aed" data-anim>
+      <div class="ide-header">
+        <div class="ide-logo" style="background:rgba(124,58,237,0.2);color:#a78bfa">⌨</div>
+        <div>
+          <div class="ide-name">Cursor</div>
+          <div class="ide-tagline">El IDE construido para la era de la IA</div>
+        </div>
+      </div>
+      <div class="ide-body">
+        <p class="ide-desc">Fork de VSCode creado por Anysphere. Pone la IA al centro: puedes hablar con tu codebase completo, pedir que edite múltiples archivos a la vez, y tiene Tab para autocompletar bloques enteros.</p>
+        <ul class="ide-features">
+          <li>Chat con contexto de todo el proyecto</li>
+          <li>Ctrl+K: edita código con lenguaje natural</li>
+          <li>Cursor Tab: autocomplete multi-línea</li>
+          <li>Composer: genera features completas</li>
+          <li>Compatible con todas las extensiones de VS Code</li>
+          <li>Modelos: GPT-4, Claude 3.5, Gemini</li>
+        </ul>
+        <span class="ide-badge" style="color:#a78bfa;border-color:#7c3aed">AI-First · $20/mes Pro</span>
+        <div class="code-block" style="font-size:0.72rem;margin-top:1rem">
+<span class="c-comment">// En Cursor puedes escribir:</span><br>
+<span class="c-comment">// "Crea una función que valide</span><br>
+<span class="c-comment">//  emails y retorne true/false"</span><br>
+<span class="c-comment">// → Cursor escribe la función ✓</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ide-card" style="--ide-color:#10b981" data-anim>
+      <div class="ide-header">
+        <div class="ide-logo" style="background:rgba(16,185,129,0.2);color:#6ee7b7">🌊</div>
+        <div>
+          <div class="ide-name">Windsurf</div>
+          <div class="ide-tagline">El IDE agéntico de Codeium</div>
+        </div>
+      </div>
+      <div class="ide-body">
+        <p class="ide-desc">Lanzado por Codeium en 2024. Introduce el concepto de "Cascade" — un agente de IA que puede navegar el proyecto, ejecutar comandos de terminal, y hacer cambios complejos de forma autónoma.</p>
+        <ul class="ide-features">
+          <li>Cascade: agente que actúa de forma autónoma</li>
+          <li>Puede ejecutar comandos de terminal</li>
+          <li>Navega entre archivos automáticamente</li>
+          <li>Contexto de toda la codebase</li>
+          <li>Gratuito con límites generosos</li>
+          <li>Modelo propio: Codeium + Claude/GPT</li>
+        </ul>
+        <span class="ide-badge" style="color:#6ee7b7;border-color:#10b981">Agentic AI · Freemium</span>
+      </div>
+    </div>
+
+    <div class="ide-card" style="--ide-color:#f59e0b" data-anim>
+      <div class="ide-header">
+        <div class="ide-logo" style="background:rgba(245,158,11,0.2);color:#fcd34d;font-size:1rem">VSC</div>
+        <div>
+          <div class="ide-name">VSCodium</div>
+          <div class="ide-tagline">VS Code sin telemetría de Microsoft</div>
+        </div>
+      </div>
+      <div class="ide-body">
+        <p class="ide-desc">VS Code sin el tracking y telemetría de Microsoft. 100% open source, misma experiencia pero sin enviar datos a Microsoft. Ideal para quienes valoran la privacidad total.</p>
+        <ul class="ide-features">
+          <li>Sin telemetría ni tracking</li>
+          <li>Binarios 100% open source (MIT)</li>
+          <li>Mismo editor, diferente publisher</li>
+          <li>Marketplace alternativo: Open VSX</li>
+          <li>Gratuito y libre para siempre</li>
+        </ul>
+        <span class="ide-badge" style="color:#fcd34d;border-color:#f59e0b">Privacy-First · Gratis</span>
+      </div>
+    </div>
+
+    <div class="ide-card" style="--ide-color:#3b82f6" data-anim>
+      <div class="ide-header">
+        <div class="ide-logo" style="background:rgba(59,130,246,0.2);color:#93c5fd">🔌</div>
+        <div>
+          <div class="ide-name">Cline</div>
+          <div class="ide-tagline">Extensión agéntica para VS Code</div>
+        </div>
+      </div>
+      <div class="ide-body">
+        <p class="ide-desc">Cline (antes Claude Dev) es una extensión de VS Code, no un fork. Pero merece mención especial: es un agente de IA autónomo que puede crear archivos, ejecutar comandos, navegar la web y completar tareas complejas.</p>
+        <ul class="ide-features">
+          <li>Extensión de VS Code (no fork)</li>
+          <li>Agente autónomo multi-paso</li>
+          <li>Crea, edita y borra archivos</li>
+          <li>Ejecuta comandos de terminal</li>
+          <li>Navega páginas web</li>
+          <li>Soporta Claude, GPT-4, Gemini</li>
+        </ul>
+        <span class="ide-badge" style="color:#93c5fd;border-color:#3b82f6">Extensión · Open Source</span>
+      </div>
+    </div>
+
+    <div class="ide-card" style="--ide-color:#00d4ff" data-anim>
+      <div class="ide-header">
+        <div class="ide-logo" style="background:rgba(0,212,255,0.2);color:#67e8f9;font-size:0.9rem">GIT</div>
+        <div>
+          <div class="ide-name">Gitpod</div>
+          <div class="ide-tagline">VS Code en la nube, listo en segundos</div>
+        </div>
+      </div>
+      <div class="ide-body">
+        <p class="ide-desc">Fork de VS Code diseñado para correr en navegador o desktop conectado a la nube. Abre cualquier repositorio de GitHub en segundos con todo el entorno configurado automáticamente.</p>
+        <ul class="ide-features">
+          <li>Entorno listo en segundos desde GitHub</li>
+          <li>Sin configuración local</li>
+          <li>Corre en tu browser</li>
+          <li>Prebuild automático de entornos</li>
+          <li>Colaboración en tiempo real</li>
+        </ul>
+        <span class="ide-badge" style="color:#67e8f9;border-color:#00d4ff">Cloud IDE · Freemium</span>
+      </div>
+    </div>
+
+    <div class="ide-card" style="--ide-color:#ef4444" data-anim>
+      <div class="ide-header">
+        <div class="ide-logo" style="background:rgba(239,68,68,0.2);color:#fca5a5;font-size:1rem">OSS</div>
+        <div>
+          <div class="ide-name">Code-OSS / Theia</div>
+          <div class="ide-tagline">La base open source pura</div>
+        </div>
+      </div>
+      <div class="ide-body">
+        <p class="ide-desc">Code-OSS es el repositorio open source de VS Code sin branding de Microsoft. Eclipse Theia usa el mismo engine para construir IDEs customizados para empresas y herramientas cloud.</p>
+        <ul class="ide-features">
+          <li>Base de VS Code sin Microsoft</li>
+          <li>Ideal para builds empresariales</li>
+          <li>Eclipse Theia lo usa como base</li>
+          <li>AWS Cloud9 usa este engine</li>
+          <li>100% customizable</li>
+        </ul>
+        <span class="ide-badge" style="color:#fca5a5;border-color:#ef4444">Enterprise · Open Source</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ AI IDEs ═══════════════════════════════════════ -->
+<section id="ai-ides" class="section">
+  <div class="section-header">
+    <div class="section-tag">MÓDULO 07</div>
+    <h2 class="section-title">IDEs de <span>IA Pura</span></h2>
+    <p class="section-desc">La nueva generación de herramientas donde la IA NO es un plugin — es el núcleo</p>
+  </div>
+
+  <div class="highlight-box" style="margin-bottom:3rem;border-color:rgba(124,58,237,0.4)">
+    <h3 style="color:#a78bfa">🚀 El paradigma cambió</h3>
+    <p>Los IDEs tradicionales son editores de texto con IA añadida encima. La nueva generación invierte esto: son sistemas de IA que también tienen editor de texto. Algunos ni siquiera tienen interfaz visual — operan desde la terminal como agentes autónomos.</p>
+  </div>
+
+  <div class="ide-grid" id="ai-ides-grid">
+
+    <div class="ide-card ai-glow" style="--ide-color:#f97316" data-anim>
+      <div class="ide-header">
+        <div class="ide-logo" style="background:rgba(249,115,22,0.2);color:#fed7aa">CC</div>
+        <div>
+          <div class="ide-name">Claude Code</div>
+          <div class="ide-tagline">El agente de terminal de Anthropic</div>
+        </div>
+      </div>
+      <div class="ide-body">
+        <p class="ide-desc">Claude Code es un agente de IA que corre directamente en tu terminal. <strong style="color:var(--text)">No tiene interfaz visual</strong> — es una CLI (Command Line Interface). Le dices qué quieres y él navega archivos, escribe código, ejecuta tests y hace commits.</p>
+        <ul class="ide-features">
+          <li>Sin interfaz visual — 100% terminal</li>
+          <li>Entiende todo el contexto del proyecto</li>
+          <li>Hace commits, crea ramas, abre PRs</li>
+          <li>Ejecuta tests y los corrige automáticamente</li>
+          <li>Navega y edita múltiples archivos</li>
+          <li>Creado por Anthropic (creadores de Claude)</li>
+        </ul>
+        <span class="ide-badge" style="color:#fed7aa;border-color:#f97316">CLI · Agentic · Anthropic</span>
+        <div class="terminal-demo" style="margin-top:1.2rem">
+          <div class="terminal-line"><span class="terminal-prompt">$ </span><span class="terminal-cmd">claude</span></div>
+          <div class="terminal-line terminal-output">✓ Conectado a Claude Sonnet</div>
+          <div class="terminal-line terminal-output">✓ Analizando proyecto...</div>
+          <div class="terminal-line"><span class="terminal-prompt">&gt; </span><span class="terminal-cmd">Agrega autenticación JWT al backend</span></div>
+          <div class="terminal-line terminal-output">Creando auth/middleware.js...</div>
+          <div class="terminal-line terminal-output">Actualizando routes/users.js...</div>
+          <div class="terminal-line terminal-output">✓ Listo. 3 archivos modificados.</div>
+          <div class="terminal-line"><span class="terminal-prompt">&gt; </span><span class="terminal-cursor"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ide-card" style="--ide-color:#10b981" data-anim>
+      <div class="ide-header">
+        <div class="ide-logo" style="background:rgba(16,185,129,0.2);color:#6ee7b7;font-size:0.85rem">GH</div>
+        <div>
+          <div class="ide-name">GitHub Copilot Agent</div>
+          <div class="ide-tagline">El agente en el workspace</div>
+        </div>
+      </div>
+      <div class="ide-body">
+        <p class="ide-desc">GitHub Copilot evolucionó de autocompletado a agente. En modo "Agent" puede ejecutar múltiples pasos: entender el contexto, editar archivos, ejecutar tests y proponer soluciones completas.</p>
+        <ul class="ide-features">
+          <li>Integrado en VS Code y JetBrains</li>
+          <li>Modo agente: múltiples pasos autónomos</li>
+          <li>GitHub Copilot Chat en el workspace</li>
+          <li>Genera tests automáticamente</li>
+          <li>Pull Request summaries con IA</li>
+          <li>$10/mes o gratis estudiantes</li>
+        </ul>
+        <span class="ide-badge" style="color:#6ee7b7;border-color:#10b981">GitHub · Microsoft</span>
+      </div>
+    </div>
+
+    <div class="ide-card" style="--ide-color:#3b82f6" data-anim>
+      <div class="ide-header">
+        <div class="ide-logo" style="background:rgba(59,130,246,0.2);color:#93c5fd;font-size:0.85rem">AM</div>
+        <div>
+          <div class="ide-name">Amazon Q Developer</div>
+          <div class="ide-tagline">El agente de AWS</div>
+        </div>
+      </div>
+      <div class="ide-body">
+        <p class="ide-desc">Amazon Q es el asistente de IA de AWS para desarrolladores. Especializado en código relacionado con servicios cloud de Amazon: Lambda, DynamoDB, S3. Se integra en VS Code y JetBrains.</p>
+        <ul class="ide-features">
+          <li>Especializado en servicios AWS</li>
+          <li>Genera infraestructura como código</li>
+          <li>Transforma código legacy automáticamente</li>
+          <li>Escanea vulnerabilidades de seguridad</li>
+          <li>Gratis para uso individual básico</li>
+        </ul>
+        <span class="ide-badge" style="color:#93c5fd;border-color:#3b82f6">AWS · Cloud Specialist</span>
+      </div>
+    </div>
+
+    <div class="ide-card" style="--ide-color:#c084fc" data-anim>
+      <div class="ide-header">
+        <div class="ide-logo" style="background:rgba(192,132,252,0.2);color:#e9d5ff">🌌</div>
+        <div>
+          <div class="ide-name">Devin</div>
+          <div class="ide-tagline">El primer "ingeniero de software" IA</div>
+        </div>
+      </div>
+      <div class="ide-body">
+        <p class="ide-desc">Cognition AI lanzó Devin como "el primer ingeniero de software IA autónomo". Puede recibir un ticket de trabajo y completarlo de principio a fin: investigar, planear, codificar, testear y desplegar.</p>
+        <ul class="ide-features">
+          <li>Agente completamente autónomo</li>
+          <li>Tiene su propio navegador, terminal y editor</li>
+          <li>Puede desplegar aplicaciones</li>
+          <li>Aprende del feedback</li>
+          <li>API para integrarlo en flujos</li>
+        </ul>
+        <span class="ide-badge" style="color:#e9d5ff;border-color:#c084fc">Autonomous Agent · Enterprise</span>
+      </div>
+    </div>
+
+    <div class="ide-card" style="--ide-color:#f59e0b" data-anim>
+      <div class="ide-header">
+        <div class="ide-logo" style="background:rgba(245,158,11,0.2);color:#fcd34d;font-size:1rem">SWE</div>
+        <div>
+          <div class="ide-name">Aider</div>
+          <div class="ide-tagline">Pair programming con IA en terminal</div>
+        </div>
+      </div>
+      <div class="ide-body">
+        <p class="ide-desc">Aider es una herramienta open source de terminal para pair programming con IA. <strong style="color:var(--text)">Sin interfaz visual</strong>. Le dices qué cambiar y hace commits automáticos. Compatible con cualquier editor.</p>
+        <ul class="ide-features">
+          <li>CLI open source y gratuito</li>
+          <li>Hace commits automáticos</li>
+          <li>Entiende todo el repo con git</li>
+          <li>Soporta Claude, GPT-4, Gemini</li>
+          <li>Modo "architect": planea antes de codear</li>
+        </ul>
+        <span class="ide-badge" style="color:#fcd34d;border-color:#f59e0b">CLI · Open Source · Gratis</span>
+        <div class="terminal-demo" style="margin-top:1.2rem">
+          <div class="terminal-line"><span class="terminal-prompt">$ </span><span class="terminal-cmd">aider --model claude-3-5-sonnet</span></div>
+          <div class="terminal-line terminal-output">Aider v0.50.0, using claude-3-5-sonnet</div>
+          <div class="terminal-line"><span class="terminal-prompt">&gt; </span><span class="terminal-cmd">Refactoriza el módulo de autenticación</span></div>
+          <div class="terminal-line terminal-output">Editing auth/index.js...</div>
+          <div class="terminal-line terminal-output">✓ Commit: refactor auth module</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ide-card" style="--ide-color:#ef4444" data-anim>
+      <div class="ide-header">
+        <div class="ide-logo" style="background:rgba(239,68,68,0.2);color:#fca5a5">🔴</div>
+        <div>
+          <div class="ide-name">OpenHands (OpenDevin)</div>
+          <div class="ide-tagline">Agente open source autónomo</div>
+        </div>
+      </div>
+      <div class="ide-body">
+        <p class="ide-desc">Antes llamado OpenDevin. Plataforma open source para agentes de IA que desarrollan software. Tiene su propia sandbox (entorno aislado), puede navegar la web, escribir y ejecutar código.</p>
+        <ul class="ide-features">
+          <li>100% open source (Apache 2.0)</li>
+          <li>Sandbox aislado y seguro</li>
+          <li>Puede navegar la web para investigar</li>
+          <li>Múltiples modelos disponibles</li>
+          <li>Comunidad activa en GitHub</li>
+        </ul>
+        <span class="ide-badge" style="color:#fca5a5;border-color:#ef4444">Open Source · Community</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RESUMEN FINAL -->
+  <div style="max-width:900px;margin:4rem auto 0">
+    <div style="text-align:center;margin-bottom:2rem">
+      <h3 style="font-family:'Syne',sans-serif;font-size:1.6rem">¿Cuál usar? Una guía rápida</h3>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Herramienta</th>
+            <th>Tipo</th>
+            <th>Interfaz Visual</th>
+            <th>Ideal Para</th>
+            <th>Precio</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-name">VS Code + Copilot</td>
+            <td>IDE + plugin</td>
+            <td class="check">✓ Sí</td>
+            <td>Flujo tradicional con IA</td>
+            <td>$10/mes</td>
+          </tr>
+          <tr>
+            <td class="td-name">Cursor</td>
+            <td>IDE (fork VSCode)</td>
+            <td class="check">✓ Sí</td>
+            <td>Desarrolladores que quieren IA central</td>
+            <td>$20/mes</td>
+          </tr>
+          <tr>
+            <td class="td-name">Windsurf</td>
+            <td>IDE (fork VSCode)</td>
+            <td class="check">✓ Sí</td>
+            <td>Agente autónomo con visual</td>
+            <td>Freemium</td>
+          </tr>
+          <tr>
+            <td class="td-name">Claude Code</td>
+            <td>CLI agente</td>
+            <td class="cross">✗ Solo terminal</td>
+            <td>Tareas complejas autónomas</td>
+            <td>API Anthropic</td>
+          </tr>
+          <tr>
+            <td class="td-name">Aider</td>
+            <td>CLI agente</td>
+            <td class="cross">✗ Solo terminal</td>
+            <td>Pair programming rápido</td>
+            <td>Gratis (paga API)</td>
+          </tr>
+          <tr>
+            <td class="td-name">Cline (ext.)</td>
+            <td>Extensión VSCode</td>
+            <td class="check">✓ Dentro de VSCode</td>
+            <td>Agente dentro de tu VSCode actual</td>
+            <td>Gratis (paga API)</td>
+          </tr>
+          <tr>
+            <td class="td-name">Devin</td>
+            <td>Agente completo</td>
+            <td class="check">✓ Web UI</td>
+            <td>Tareas de sprint completas</td>
+            <td>Enterprise</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="highlight-box" style="margin-top:2rem;border-color:rgba(0,212,255,0.3)">
+      <h3>🎯 La conclusión para estudiantes</h3>
+      <p>No hay una herramienta "correcta" — depende de tu flujo de trabajo. <strong style="color:var(--text)">Comienza con VS Code</strong> porque es la base de todo el ecosistema. Cuando seas cómodo con él, prueba <strong style="color:#a78bfa">Cursor o Windsurf</strong> para ver el poder de la IA integrada. Si quieres entender los agentes de terminal, instala <strong style="color:#fcd34d">Aider</strong> o prueba <strong style="color:#fed7aa">Claude Code</strong>. El futuro del desarrollo es IA + humano — y estas herramientas son el presente de ese futuro.</p>
+    </div>
+  </div>
+
+</section>
+
+<script>
+// ═══════════════════ NAV ═══════════════════
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const sec = document.getElementById(id);
+  if (sec) sec.classList.add('active');
+  const btns = document.querySelectorAll('.nav-btn');
+  btns.forEach(b => { if(b.getAttribute('onclick')?.includes(id)) b.classList.add('active'); });
+  window.scrollTo(0,0);
+  setTimeout(() => triggerAnimations(), 100);
+}
+
+// ═══════════════════ TABS ═══════════════════
+function showTab(id) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const tab = document.getElementById(id);
+  if (tab) { tab.classList.add('active'); triggerCardAnims(tab); }
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.getAttribute('onclick')?.includes(id)) b.classList.add('active');
+  });
+}
+
+// ═══════════════════ ANIMATIONS ═══════════════════
+function triggerAnimations() {
+  // Timeline items
+  document.querySelectorAll('[data-tl]').forEach((el, i) => {
+    setTimeout(() => el.classList.add('visible'), i * 120);
+  });
+  // Journey items
+  document.querySelectorAll('[data-journey]').forEach((el, i) => {
+    setTimeout(() => el.classList.add('visible'), i * 150);
+  });
+  // Card items
+  document.querySelectorAll('[data-anim]').forEach((el, i) => {
+    setTimeout(() => el.classList.add('visible'), i * 100);
+  });
+  // Progress bars
+  document.querySelectorAll('.prog-fill').forEach((el) => {
+    const w = el.getAttribute('data-width');
+    setTimeout(() => { el.style.width = w + '%'; }, 400);
+  });
+}
+
+function triggerCardAnims(container) {
+  if (!container) return;
+  container.querySelectorAll('[data-anim]').forEach((el, i) => {
+    setTimeout(() => el.classList.add('visible'), i * 100);
+  });
+}
+
+// ═══════════════════ PARTICLES ═══════════════════
+const codeSnippets = ['const', 'function', 'return', 'import', 'class', 'async', 'await', 'def', 'print()', '=>', '{}', '[]', '===', '!==', 'npm', 'git', 'node', 'python', 'react', 'next', '<div>', '</>', '&&', '||', '++', 'true', 'null', '0x00', 'AI', 'LLM', 'API'];
+const container = document.getElementById('particles');
+for (let i = 0; i < 20; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.textContent = codeSnippets[Math.floor(Math.random() * codeSnippets.length)];
+  p.style.left = Math.random() * 100 + '%';
+  p.style.animationDuration = (15 + Math.random() * 25) + 's';
+  p.style.animationDelay = (Math.random() * 20) + 's';
+  container.appendChild(p);
+}
+
+// ═══════════════════ INTERSECTION OBSERVER ═══════════════════
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); }
+  });
+}, { threshold: 0.15 });
+document.querySelectorAll('[data-tl], [data-journey], [data-anim]').forEach(el => obs.observe(el));
+
+// Init
+setTimeout(() => triggerAnimations(), 200);
+</script>
+</body>
+</html>

@@ -1,6 +1,10 @@
 'use client';
 
 import { KaledEmailTemplate } from '@prisma/client';
+import {
+  sanitizeEmailPreviewHtml,
+  sanitizeEmailPreviewSubject,
+} from '@/lib/sanitize-email-preview-html';
 import { X } from 'lucide-react';
 
 interface EmailTemplateQuickPreviewProps {
@@ -81,8 +85,12 @@ export function EmailTemplateQuickPreview({
     return normalizePreviewHtmlStyles(rendered);
   };
 
-  const renderedSubject = renderWithSampleData(template.subject);
-  const renderedHtml = renderWithSampleData(template.htmlContent);
+  const renderedSubject = sanitizeEmailPreviewSubject(
+    renderWithSampleData(template.subject)
+  );
+  const renderedHtml = sanitizeEmailPreviewHtml(
+    renderWithSampleData(template.htmlContent)
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">

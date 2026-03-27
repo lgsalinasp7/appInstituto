@@ -10,6 +10,86 @@ import type { DeliverableStatus, SaasProjectStatus } from "@prisma/client";
 // SERVICIO 1: CURSOS Y MÓDULOS
 // ============================================================
 
+const VIAJE_URL_TITLE_SNIPPET = "viaje de una url";
+
+type LessonMetaWithInteractive = {
+  title: string;
+  meta: {
+    interactiveAnimation: {
+      id: string;
+      slug: string;
+      title: string;
+      description: string | null;
+    } | null;
+  } | null;
+};
+
+async function loadInteractiveOrFallback(
+  tenantId: string,
+  slug: string,
+  fallbackTitle: string
+): Promise<{
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+}> {
+  const row = await prisma.academyInteractiveAnimation.findUnique({
+    where: { tenantId_slug: { tenantId, slug } },
+    select: { id: true, slug: true, title: true, description: true },
+  });
+  return (
+    row ?? {
+      id: `${slug}-fallback`,
+      slug,
+      title: fallbackTitle,
+      description: null,
+    }
+  );
+}
+
+/**
+ * Si la meta no tiene FK al catálogo, intenta inferir el slug del registry por título (Módulo 1 y migraciones sin re-seed).
+ */
+async function attachInteractiveAnimationFallbackIfMissing(
+  lesson: LessonMetaWithInteractive,
+  tenantId: string
+) {
+  if (!lesson.meta || lesson.meta.interactiveAnimation) return;
+  const t = lesson.title.toLowerCase();
+
+  if (t.includes(VIAJE_URL_TITLE_SNIPPET)) {
+    lesson.meta.interactiveAnimation = await loadInteractiveOrFallback(
+      tenantId,
+      "viaje_url",
+      "El viaje de una URL"
+    );
+    return;
+  }
+
+  if (t.includes("http") && (t.includes("cliente") || t.includes("servidor"))) {
+    lesson.meta.interactiveAnimation = await loadInteractiveOrFallback(
+      tenantId,
+      "http_cliente_servidor",
+      "HTTP y el modelo cliente-servidor"
+    );
+    return;
+  }
+
+  const looksLangIde =
+    (t.includes("lenguajes") && (t.includes("vscode") || t.includes("vs code") || t.includes("taller"))) ||
+    ((t.includes("vscode") || t.includes("vs code")) && t.includes("html")) ||
+    (t.includes("lenguajes") && t.includes("html"));
+
+  if (looksLangIde) {
+    lesson.meta.interactiveAnimation = await loadInteractiveOrFallback(
+      tenantId,
+      "lenguajes_ide",
+      "Lenguajes, IDE y primer HTML"
+    );
+  }
+}
+
 export const courseService = {
   async getBootcampCourse(tenantId: string) {
     return prisma.academyCourse.findFirst({
@@ -69,7 +149,18 @@ export const courseService = {
     const lesson = await prisma.academyLesson.findUnique({
       where: { id: lessonId },
       include: {
-        meta: true,
+        meta: {
+          include: {
+            interactiveAnimation: {
+              select: {
+                id: true,
+                slug: true,
+                title: true,
+                description: true,
+              },
+            },
+          },
+        },
         module: { include: { course: true } },
         quizzes: { include: { options: true }, orderBy: { order: "asc" } },
         cralChallenges: { orderBy: { order: "asc" } },
@@ -80,6 +171,8 @@ export const courseService = {
     });
 
     if (!lesson) throw new Error("Lección no encontrada");
+
+    await attachInteractiveAnimationFallbackIfMissing(lesson, tenantId);
 
     if (!userId) return { lesson, progress: null };
 

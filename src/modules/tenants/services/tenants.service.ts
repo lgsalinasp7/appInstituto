@@ -502,4 +502,120 @@ export const TenantsService = {
 
     return tempPassword ? { tempPassword } : {};
   },
+
+  /**
+   * Eliminación definitiva de un usuario del instituto (solo SUPER_ADMIN de plataforma vía API).
+   * Reasigna pagos, prospectos, cursos y anuncios a otro usuario del mismo tenant.
+   * Bloquea si el usuario es asesor de estudiantes del instituto.
+   */
+  async deleteTenantUserPermanently(
+    tenantIdOrSlug: string,
+    targetUserId: string,
+    options: { actorUserId: string }
+  ): Promise<void> {
+    const tenant = await prisma.tenant.findFirst({
+      where: {
+        OR: [
+          { id: tenantIdOrSlug },
+          { slug: { equals: tenantIdOrSlug, mode: 'insensitive' } },
+        ],
+      },
+      select: { id: true },
+    });
+    if (!tenant) {
+      throw new Error('Tenant no encontrado');
+    }
+
+    if (options.actorUserId === targetUserId) {
+      throw new Error('No puedes eliminar tu propio usuario con esta acción');
+    }
+
+    const target = await prisma.user.findFirst({
+      where: { id: targetUserId, tenantId: tenant.id },
+    });
+    if (!target) {
+      throw new Error('Usuario no encontrado o no pertenece al instituto');
+    }
+
+    const studentAdvisorCount = await prisma.student.count({
+      where: { tenantId: tenant.id, advisorId: targetUserId },
+    });
+    if (studentAdvisorCount > 0) {
+      throw new Error(
+        `No se puede eliminar: el usuario es asesor de ${studentAdvisorCount} estudiante(s). Reasigna los estudiantes a otro asesor primero.`
+      );
+    }
+
+    const fallback = await prisma.user.findFirst({
+      where: { tenantId: tenant.id, NOT: { id: targetUserId } },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true },
+    });
+    if (!fallback) {
+      throw new Error(
+        'Debe existir al menos otro usuario en el instituto para reasignar pagos, prospectos y cursos vinculados a este usuario.'
+      );
+    }
+
+    try {
+      await prisma.$transaction(async (tx) => {
+        await tx.invitation.deleteMany({
+          where: { tenantId: tenant.id, inviterId: targetUserId },
+        });
+        await tx.invitation.deleteMany({
+          where: {
+            tenantId: tenant.id,
+            email: { equals: target.email, mode: 'insensitive' },
+          },
+        });
+
+        await tx.payment.updateMany({
+          where: { tenantId: tenant.id, registeredById: targetUserId },
+          data: { registeredById: fallback.id },
+        });
+        await tx.prospect.updateMany({
+          where: { tenantId: tenant.id, advisorId: targetUserId },
+          data: { advisorId: fallback.id },
+        });
+        await tx.prospectInteraction.updateMany({
+          where: { tenantId: tenant.id, advisorId: targetUserId },
+          data: { advisorId: null },
+        });
+        await tx.academyCourse.updateMany({
+          where: { tenantId: tenant.id, createdById: targetUserId },
+          data: { createdById: fallback.id },
+        });
+        await tx.academyAnnouncement.updateMany({
+          where: { tenantId: tenant.id, authorId: targetUserId },
+          data: { authorId: fallback.id },
+        });
+        await tx.academyDeliverableSubmission.updateMany({
+          where: { reviewedById: targetUserId },
+          data: { reviewedById: null },
+        });
+        await tx.kaledLeadInteraction.updateMany({
+          where: { userId: targetUserId },
+          data: { userId: null },
+        });
+        await tx.lavaderoOrder.updateMany({
+          where: { tenantId: tenant.id, createdBy: targetUserId },
+          data: { createdBy: fallback.id },
+        });
+        await tx.lavaderoPayment.updateMany({
+          where: { tenantId: tenant.id, createdBy: targetUserId },
+          data: { createdBy: fallback.id },
+        });
+
+        await tx.user.delete({ where: { id: targetUserId } });
+      });
+    } catch (e: unknown) {
+      const code = typeof e === 'object' && e !== null && 'code' in e ? String((e as { code: string }).code) : '';
+      if (code === 'P2003') {
+        throw new Error(
+          'No se puede eliminar: aún hay registros en el sistema que referencian a este usuario. Contacta soporte o revisa pagos, prospectos y contenido de academia.'
+        );
+      }
+      throw e;
+    }
+  },
 };

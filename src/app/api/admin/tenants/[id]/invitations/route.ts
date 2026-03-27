@@ -226,11 +226,12 @@ export const POST = withCSRF(
           token,
           expiresAt,
           status: "PENDING",
+          ...(academyCohortId && { academyCohortId }),
           ...(isTrialInvitation
             ? {
                 isTrialInvitation: true,
                 trialExpiresAt: expiresAt,
-                trialCohortName: trialCohortName!,
+                trialCohortName: resolvedTrialCohortName!,
                 trialNextCohortDate: trialNextCohortDate ? new Date(trialNextCohortDate) : null,
                 academyRole: "ACADEMY_STUDENT",
               }
