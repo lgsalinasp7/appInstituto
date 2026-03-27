@@ -12,10 +12,20 @@
 // Módulo 4: IA, pagos, lanzamiento — todo lo anterior disponible
 //
 // Ejecutar: npx tsx prisma/seed-kaledacademy-v3.ts
+//
+// DATABASE_URL: igual que Prisma CLI — primero variables ya definidas en el shell,
+// luego .env y .env.local (override). Para prod, en PowerShell:
+//   $env:DATABASE_URL="postgresql://..."; $env:DIRECT_URL=$env:DATABASE_URL; npx tsx prisma/seed-kaledacademy-v3.ts
 // ============================================================
 
+import path from "node:path";
+import { config as loadEnv } from "dotenv";
 import { PrismaClient, Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
+
+const root = process.cwd();
+loadEnv({ path: path.join(root, ".env") });
+loadEnv({ path: path.join(root, ".env.local"), override: true });
 
 const prisma = new PrismaClient();
 
