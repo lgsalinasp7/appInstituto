@@ -29,6 +29,12 @@ interface ApiLesson {
     analogyText: string | null;
     kaledIntro: string | null;
     concepts: unknown;
+    interactiveAnimation?: {
+      id: string;
+      slug: string;
+      title: string;
+      description: string | null;
+    } | null;
   } | null;
   module: {
     title: string;
@@ -189,6 +195,17 @@ export function LessonViewClient({ courseId, lessonId, userId }: LessonViewClien
 
         const meta = lesson.meta;
         const videoUrl = meta?.videoUrl ?? lesson.videoUrl ?? undefined;
+        const titleIsViajeUrl = lesson.title.toLowerCase().includes("viaje de una url");
+        const interactiveAnimation =
+          meta?.interactiveAnimation ??
+          (titleIsViajeUrl
+            ? {
+                id: "viaje_url-fallback",
+                slug: "viaje_url",
+                title: "El viaje de una URL",
+                description: null as string | null,
+              }
+            : undefined);
 
         const deliverable = lesson.deliverables[0];
         const deliverableData = deliverable
@@ -227,6 +244,7 @@ export function LessonViewClient({ courseId, lessonId, userId }: LessonViewClien
             analogyText: meta?.analogyText ?? undefined,
             kaledIntro: meta?.kaledIntro ?? undefined,
             concepts: parseConcepts(meta?.concepts),
+            interactiveAnimation,
             cralChallenges: lesson.cralChallenges.map((c) => ({
               id: c.id,
               phase: c.phase,

@@ -64,7 +64,8 @@ model Tenant {
   academyCohorts  AcademyCohort[]
 
   // KaledAcademy extensión
-  academyLessonMetas      AcademyLessonMeta[]
+  academyLessonMetas            AcademyLessonMeta[]
+  academyInteractiveAnimations AcademyInteractiveAnimation[]
   academyCRALChallenges   AcademyCRALChallenge[]
   academyCRALCompletions  AcademyCRALCompletion[]
   academyQuizzes          AcademyQuiz[]
@@ -1675,6 +1676,27 @@ model AcademyStudentProgress {
 // KALEDACADEMY — Modelos extendidos (bootcamp AI SaaS)
 // ============================================================
 
+/// Catálogo de animaciones interactivas por tenant (slug enlazado al registry en frontend).
+model AcademyInteractiveAnimation {
+  id             String   @id @default(cuid())
+  tenantId       String
+  slug           String
+  title          String
+  description    String?  @db.Text
+  /// Referencia editorial al HTML fuente en docs/Temas (no se usa en runtime).
+  sourceDocHint  String?
+  isActive       Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lessonMetas  AcademyLessonMeta[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+}
+
 model AcademyLessonMeta {
   id          String      @id @default(cuid())
   lessonId    String      @unique
@@ -1688,13 +1710,16 @@ model AcademyLessonMeta {
   kaledIntro  String?     @db.Text
   concepts    Json?
   tenantId    String
+  interactiveAnimationId String?
 
-  lesson AcademyLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  tenant Tenant        @relation(fields: [tenantId], references: [id])
+  lesson                 AcademyLesson                 @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  tenant                 Tenant                        @relation(fields: [tenantId], references: [id])
+  interactiveAnimation AcademyInteractiveAnimation?  @relation(fields: [interactiveAnimationId], references: [id], onDelete: SetNull)
 
   @@index([lessonId])
   @@index([weekNumber])
   @@index([tenantId])
+  @@index([interactiveAnimationId])
 }
 
 model AcademyCRALChallenge {

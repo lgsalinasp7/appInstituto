@@ -1,0 +1,2632 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTTP & El Modelo Cliente-Servidor</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --panel: #0f0f1a;
+    --border: #1e1e3a;
+    --accent1: #00f5c4;
+    --accent2: #7c3aed;
+    --accent3: #f59e0b;
+    --accent4: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --card: #13131f;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ─── NAV ─── */
+  #nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(10,10,15,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    height: 56px;
+    gap: 6px;
+    overflow-x: auto;
+  }
+
+  .nav-tab {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1px solid transparent;
+    color: var(--muted);
+    background: transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .nav-tab:hover { color: var(--text); border-color: var(--border); }
+  .nav-tab.active { color: var(--accent1); border-color: var(--accent1); background: rgba(0,245,196,0.07); }
+
+  /* ─── SLIDES ─── */
+  #slides {
+    position: fixed;
+    top: 56px; bottom: 0; left: 0; right: 0;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    overflow-y: auto;
+    padding: 40px 32px 80px;
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+    transition: opacity 0.5s, transform 0.5s;
+  }
+  .slide.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
+  }
+
+  /* ─── BOTTOM NAV ─── */
+  #bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 56px;
+    background: rgba(10,10,15,0.95);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    z-index: 100;
+  }
+  .btn-nav {
+    display: flex; align-items: center; gap: 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-nav:hover { color: var(--accent1); border-color: var(--accent1); }
+  .btn-nav:disabled { opacity: 0.3; cursor: default; }
+  #progress-dots {
+    display: flex; gap: 8px;
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .dot.active { background: var(--accent1); transform: scale(1.3); }
+
+  /* ─── TYPOGRAPHY ─── */
+  .eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent1);
+    margin-bottom: 12px;
+  }
+  h1 { font-size: clamp(32px, 5vw, 62px); font-weight: 800; line-height: 1.05; }
+  h2 { font-size: clamp(24px, 3.5vw, 42px); font-weight: 800; line-height: 1.1; }
+  h3 { font-size: 20px; font-weight: 700; }
+  p { font-size: 15px; line-height: 1.7; color: #94a3b8; }
+
+  /* ─── CARDS & GRID ─── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 24px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 24px; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent1));
+  }
+  .card.green::before { background: linear-gradient(90deg, var(--accent1), #06b6d4); }
+  .card.amber::before { background: linear-gradient(90deg, var(--accent3), #f97316); }
+  .card.red::before { background: linear-gradient(90deg, var(--accent4), #f97316); }
+  .card.purple::before { background: linear-gradient(90deg, var(--accent2), #ec4899); }
+
+  .card-icon { font-size: 28px; margin-bottom: 10px; display: block; }
+  .card h3 { font-size: 16px; margin-bottom: 6px; }
+  .card p { font-size: 13px; }
+  .card .year {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent1);
+    margin-bottom: 6px;
+  }
+
+  /* ─── TIMELINE ─── */
+  .timeline {
+    position: relative;
+    margin: 32px 0;
+    padding-left: 32px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px; top: 0; bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--accent2), var(--accent1));
+  }
+  .tl-item {
+    position: relative;
+    margin-bottom: 28px;
+    opacity: 0;
+    transform: translateX(-16px);
+    transition: opacity 0.5s, transform 0.5s;
+  }
+  .tl-item.visible { opacity: 1; transform: translateX(0); }
+  .tl-dot {
+    position: absolute;
+    left: -28px;
+    top: 4px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--accent1);
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 12px var(--accent1);
+  }
+  .tl-year {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent1);
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .tl-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .tl-desc { font-size: 13px; color: #94a3b8; line-height: 1.6; }
+
+  /* ─── CODE BLOCK ─── */
+  .code-block {
+    background: #070711;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+  .code-block .k { color: var(--accent2); }
+  .code-block .s { color: var(--accent1); }
+  .code-block .c { color: var(--muted); font-style: italic; }
+  .code-block .n { color: var(--accent3); }
+  .code-block .v { color: #f472b6; }
+
+  /* ─── METHOD BADGES ─── */
+  .method {
+    display: inline-flex; align-items: center;
+    padding: 4px 12px;
+    border-radius: 5px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .method.get { background: rgba(0,245,196,0.15); color: var(--accent1); border: 1px solid rgba(0,245,196,0.3); }
+  .method.post { background: rgba(245,158,11,0.15); color: var(--accent3); border: 1px solid rgba(245,158,11,0.3); }
+  .method.put { background: rgba(124,58,237,0.15); color: #a78bfa; border: 1px solid rgba(124,58,237,0.3); }
+  .method.delete { background: rgba(239,68,68,0.15); color: var(--accent4); border: 1px solid rgba(239,68,68,0.3); }
+  .method.patch { background: rgba(14,165,233,0.15); color: #38bdf8; border: 1px solid rgba(14,165,233,0.3); }
+
+  /* ─── STATUS CODES ─── */
+  .status {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .s2xx { background: rgba(0,245,196,0.1); border: 1px solid rgba(0,245,196,0.2); }
+  .s2xx .status-dot { background: var(--accent1); }
+  .s3xx { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); }
+  .s3xx .status-dot { background: var(--accent3); }
+  .s4xx { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); }
+  .s4xx .status-dot { background: var(--accent4); }
+  .s5xx { background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.2); }
+  .s5xx .status-dot { background: #a855f7; }
+
+  /* ─── HIGHLIGHT BOX ─── */
+  .highlight {
+    border-left: 3px solid var(--accent1);
+    padding: 14px 20px;
+    background: rgba(0,245,196,0.05);
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .highlight.amber { border-color: var(--accent3); background: rgba(245,158,11,0.05); }
+  .highlight.purple { border-color: var(--accent2); background: rgba(124,58,237,0.05); }
+
+  /* ─── HERO SECTION ─── */
+  .hero {
+    min-height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+  }
+
+  /* ─── ANIMATED GRID BG ─── */
+  .grid-bg {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+      linear-gradient(rgba(0,245,196,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,196,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  /* ─── PACKET ANIMATION ─── */
+  .packet-demo {
+    display: flex; align-items: center; gap: 16px;
+    padding: 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin: 20px 0;
+    overflow: hidden;
+  }
+  .node {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    min-width: 80px;
+  }
+  .node-icon {
+    width: 52px; height: 52px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+  }
+  .node-label { font-size: 11px; color: var(--muted); font-family: 'Space Mono', monospace; text-align: center; }
+
+  .wire {
+    flex: 1;
+    height: 2px;
+    background: var(--border);
+    position: relative;
+    overflow: visible;
+  }
+  .packet {
+    position: absolute;
+    top: 50%; left: 0;
+    transform: translateY(-50%);
+    width: 12px; height: 12px;
+    background: var(--accent1);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--accent1);
+    animation: travel 2s linear infinite;
+  }
+  @keyframes travel {
+    0% { left: -10px; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { left: calc(100% + 10px); opacity: 0; }
+  }
+
+  /* ─── API INTERFACE DIAGRAM ─── */
+  .api-diagram {
+    display: flex; align-items: stretch; gap: 0;
+    border-radius: 12px; overflow: hidden;
+    border: 1px solid var(--border);
+    margin: 20px 0;
+  }
+  .api-side {
+    flex: 1; padding: 20px;
+    background: var(--card);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .api-middle {
+    width: 120px; flex-shrink: 0;
+    background: rgba(0,245,196,0.05);
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px; padding: 20px;
+    text-align: center;
+  }
+  .api-middle .label {
+    font-size: 10px; font-family: 'Space Mono', monospace;
+    color: var(--accent1); letter-spacing: 0.15em; text-transform: uppercase;
+  }
+  .api-arrow { font-size: 20px; color: var(--accent1); }
+
+  /* ─── REST TABLE ─── */
+  .rest-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+  .rest-table th {
+    text-align: left; padding: 10px 14px;
+    font-family: 'Space Mono', monospace; font-size: 11px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); border-bottom: 1px solid var(--border);
+  }
+  .rest-table td {
+    padding: 12px 14px; font-size: 13px;
+    border-bottom: 1px solid rgba(30,30,58,0.5);
+    vertical-align: top;
+  }
+  .rest-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* ─── IDEMPOTENCY ─── */
+  .idemp-row {
+    display: grid; grid-template-columns: 120px 1fr 120px;
+    align-items: center; gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .check { color: var(--accent1); }
+  .cross { color: var(--accent4); }
+
+  /* ─── MCP SECTION ─── */
+  .mcp-flow {
+    display: flex; align-items: center; gap: 0;
+    margin: 20px 0;
+    overflow-x: auto;
+  }
+  .mcp-node {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    min-width: 110px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .mcp-node .icon { font-size: 24px; margin-bottom: 6px; display: block; }
+  .mcp-node .name { font-size: 12px; font-weight: 700; }
+  .mcp-node .sub { font-size: 10px; color: var(--muted); font-family: 'Space Mono', monospace; }
+  .mcp-arrow {
+    flex-shrink: 0; width: 40px; text-align: center;
+    color: var(--accent1); font-size: 18px; position: relative;
+  }
+  .mcp-arrow::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 0; right: 0;
+    height: 1px;
+    background: var(--accent1);
+    transform: translateY(-50%);
+  }
+
+  /* ─── TAG ─── */
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    background: rgba(124,58,237,0.2);
+    color: #a78bfa;
+    border: 1px solid rgba(124,58,237,0.3);
+    margin: 2px;
+  }
+  .tag.green { background: rgba(0,245,196,0.1); color: var(--accent1); border-color: rgba(0,245,196,0.25); }
+  .tag.amber { background: rgba(245,158,11,0.1); color: var(--accent3); border-color: rgba(245,158,11,0.25); }
+
+  /* ─── HEADER ROW ─── */
+  .header-row {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-key { color: #a78bfa; min-width: 280px; flex-shrink: 0; }
+  .header-val { color: var(--accent1); flex: 1; word-break: break-all; }
+  .header-desc { color: var(--muted); font-size: 11px; min-width: 200px; text-align: right; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  @media (max-width: 700px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .api-diagram { flex-direction: column; }
+    .api-middle { width: 100%; height: 60px; flex-direction: row; border-left: none; border-right: none; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .header-desc { display: none; }
+    .header-key { min-width: 180px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="nav">
+  <button class="nav-tab active" onclick="goTo(0)">① Historia</button>
+  <button class="nav-tab" onclick="goTo(1)">② ¿Qué es HTTP?</button>
+  <button class="nav-tab" onclick="goTo(2)">③ ¿Qué es una API?</button>
+  <button class="nav-tab" onclick="goTo(3)">④ REST & Arquitectura</button>
+  <button class="nav-tab" onclick="goTo(4)">⑤ Verbos HTTP</button>
+  <button class="nav-tab" onclick="goTo(5)">⑥ Códigos de Estado</button>
+  <button class="nav-tab" onclick="goTo(6)">⑦ Headers</button>
+  <button class="nav-tab" onclick="goTo(7)">⑧ Idempotencia</button>
+  <button class="nav-tab" onclick="goTo(8)">⑨ Diseño de APIs</button>
+  <button class="nav-tab" onclick="goTo(9)">⑩ MCP & IA</button>
+</nav>
+
+<div id="slides">
+
+  <!-- ───────── SLIDE 0: HISTORIA ───────── -->
+  <div class="slide active" id="s0">
+    <div class="grid-bg"></div>
+    <div class="hero" style="position:relative; z-index:1;">
+      <div class="eyebrow">AI SaaS Engineering Bootcamp · Clase 2</div>
+      <h1>La historia de <span style="color:var(--accent1)">cómo se hablan</span><br>las computadoras</h1>
+      <p style="max-width:580px; margin-top:16px; font-size:16px;">Desde el telégrafo hasta los MCP de inteligencia artificial — la necesidad de que las máquinas se comuniquen ha existido siempre.</p>
+    </div>
+
+    <div class="timeline" id="timeline">
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">1960s — ARPANET</div>
+        <div class="tl-title">🔬 Los primeros nodos conectados</div>
+        <div class="tl-desc">El Departamento de Defensa de EE.UU. conecta 4 universidades. La primera transmisión fue "LO" (querían enviar "LOGIN" pero el sistema colapsó). La idea: una red descentralizada que sobreviva a un ataque nuclear.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">1974 — TCP/IP</div>
+        <div class="tl-title">📦 Vint Cerf & Bob Kahn inventan TCP/IP</div>
+        <div class="tl-desc">El protocolo que todo lo cambió. TCP divide la información en <strong style="color:var(--accent1)">paquetes</strong>, los envía por la red y los reensambla al llegar. IP define la dirección de destino. Sin TCP/IP, no existe internet moderno.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">1983 — DNS</div>
+        <div class="tl-title">🗺️ El directorio telefónico de internet</div>
+        <div class="tl-desc">Antes de DNS había que memorizar IPs numéricas. DNS traduce "google.com" a "142.250.80.46". Es el sistema de nombres que hace internet usable para humanos.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">1991 — HTTP/1.0</div>
+        <div class="tl-title">🌐 Tim Berners-Lee inventa la Web</div>
+        <div class="tl-desc">Trabajando en el CERN, Berners-Lee crea HTTP, HTML y URLs. Su objetivo: que los físicos puedan compartir documentos. Accidentally inventa la World Wide Web. Una conexión por request.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">1997 — HTTP/1.1</div>
+        <div class="tl-title">⚡ Conexiones persistentes</div>
+        <div class="tl-desc">Se mantiene la conexión abierta para múltiples requests. Cache control, virtual hosting. El web se vuelve más rápido y las aplicaciones dinámicas se vuelven posibles.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">2000 — REST</div>
+        <div class="tl-title">🏗️ Roy Fielding define REST en su tesis doctoral</div>
+        <div class="tl-desc">Arquitectura sin estado para construir APIs escalables sobre HTTP. Se convierte en el estándar de facto para APIs web. Lo estudiaremos a fondo hoy.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">2015 — HTTP/2</div>
+        <div class="tl-title">🚀 Multiplexing y compresión</div>
+        <div class="tl-desc">Múltiples requests simultáneos sobre una sola conexión. Compresión de headers. Servidor push. La web moderna necesitaba esto para cargar decenas de recursos en paralelo.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">2022 — HTTP/3 & QUIC</div>
+        <div class="tl-title">💨 UDP reemplaza a TCP</div>
+        <div class="tl-desc">HTTP/3 corre sobre QUIC (basado en UDP). Conexiones más rápidas, sin "head-of-line blocking". TikTok, YouTube y Google ya lo usan. 26% del tráfico web es HTTP/3.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--accent3); box-shadow: 0 0 12px var(--accent3);"></div>
+        <div class="tl-year">2024 — MCP (Model Context Protocol)</div>
+        <div class="tl-title">🤖 Anthropic define el estándar para conectar IAs</div>
+        <div class="tl-desc">La misma necesidad de 1974: que los sistemas se comuniquen. Ahora los agentes de IA necesitan su propio "TCP/IP". MCP es el protocolo que permite a Claude, GPT y otros modelos conectarse a herramientas externas de forma estándar.</div>
+      </div>
+    </div>
+
+    <!-- TCP/IP visual -->
+    <div style="margin-top:32px;">
+      <div class="eyebrow">TCP/IP — la magia de los paquetes</div>
+
+      <div id="tcpViz" style="background:#070711; border:1px solid var(--border); border-radius:16px; padding:28px 24px 20px; margin-top:12px; position:relative; overflow:hidden;">
+
+        <!-- Phase label -->
+        <div id="tcpPhaseLabel" style="text-align:center; margin-bottom:18px; height:20px;">
+          <span id="tcpLabel" style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent3); transition:color 0.4s;">
+            Enviando REQUEST del cliente al servidor...
+          </span>
+        </div>
+
+        <!-- SVG canvas -->
+        <svg id="tcpSvg" viewBox="0 0 800 160" xmlns="http://www.w3.org/2000/svg"
+             style="width:100%; height:auto; display:block;">
+
+          <!-- Wire lines -->
+          <!-- CLIENT -> ROUTER1 -->
+          <line x1="100" y1="70" x2="270" y2="70" stroke="#1e1e3a" stroke-width="2"/>
+          <!-- ROUTER1 -> ROUTER2 -->
+          <line x1="330" y1="70" x2="470" y2="70" stroke="#1e1e3a" stroke-width="2"/>
+          <!-- ROUTER2 -> SERVER -->
+          <line x1="530" y1="70" x2="700" y2="70" stroke="#1e1e3a" stroke-width="2"/>
+
+          <!-- Nodes background circles -->
+          <circle cx="60" cy="70" r="38" fill="#0f0f1a" stroke="#1e1e3a" stroke-width="1.5"/>
+          <circle cx="300" cy="70" r="30" fill="#0f0f1a" stroke="#1e1e3a" stroke-width="1.5"/>
+          <circle cx="500" cy="70" r="30" fill="#0f0f1a" stroke="#1e1e3a" stroke-width="1.5"/>
+          <circle cx="740" cy="70" r="38" fill="#0f0f1a" stroke="#1e1e3a" stroke-width="1.5"/>
+
+          <!-- Node icons (text emojis) -->
+          <text x="60"  y="80" text-anchor="middle" font-size="28">💻</text>
+          <text x="300" y="80" text-anchor="middle" font-size="22">🔀</text>
+          <text x="500" y="80" text-anchor="middle" font-size="22">🔀</text>
+          <text x="740" y="80" text-anchor="middle" font-size="26">🖥️</text>
+
+          <!-- Node labels -->
+          <text x="60"  y="122" text-anchor="middle" font-family="Space Mono, monospace" font-size="9" fill="#64748b" letter-spacing="1">CLIENT</text>
+          <text x="300" y="112" text-anchor="middle" font-family="Space Mono, monospace" font-size="9" fill="#64748b" letter-spacing="1">ROUTER 1</text>
+          <text x="500" y="112" text-anchor="middle" font-family="Space Mono, monospace" font-size="9" fill="#64748b" letter-spacing="1">ROUTER 2</text>
+          <text x="740" y="122" text-anchor="middle" font-family="Space Mono, monospace" font-size="9" fill="#64748b" letter-spacing="1">SERVER</text>
+
+          <!-- Packet (animated via JS) -->
+          <g id="tcpPacket">
+            <!-- glow -->
+            <circle id="tcpGlow" cx="60" cy="70" r="18" fill="none" stroke="#f59e0b" stroke-width="8" opacity="0.18"/>
+            <!-- body -->
+            <rect id="tcpBody" x="44" y="54" width="32" height="32" rx="7" fill="#f59e0b" opacity="0.95"/>
+            <!-- label -->
+            <text id="tcpPktLabel" x="60" y="74" text-anchor="middle"
+                  font-family="Space Mono, monospace" font-size="9" font-weight="700"
+                  fill="#0a0a0f">PKT</text>
+            <!-- number -->
+            <text id="tcpPktNum" x="60" y="84" text-anchor="middle"
+                  font-family="Space Mono, monospace" font-size="7"
+                  fill="#0a0a0f">#1</text>
+          </g>
+
+          <!-- Node highlight rings (activated on arrival) -->
+          <circle id="hl-router1" cx="300" cy="70" r="32" fill="none" stroke="#f59e0b" stroke-width="2" opacity="0"/>
+          <circle id="hl-router2" cx="500" cy="70" r="32" fill="none" stroke="#f59e0b" stroke-width="2" opacity="0"/>
+          <circle id="hl-server"  cx="740" cy="70" r="40" fill="none" stroke="#f59e0b" stroke-width="2" opacity="0"/>
+          <circle id="hl-client"  cx="60"  cy="70" r="40" fill="none" stroke="#00f5c4" stroke-width="2" opacity="0"/>
+
+        </svg>
+
+        <!-- Status bar -->
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-top:16px; padding-top:12px; border-top:1px solid var(--border);">
+          <div style="display:flex; gap:6px; align-items:center;">
+            <div id="tcpDot" style="width:8px;height:8px;border-radius:50%;background:var(--accent3);box-shadow:0 0 8px var(--accent3);"></div>
+            <span id="tcpStatus" style="font-family:'Space Mono',monospace; font-size:10px; color:var(--muted);">Iniciando transmisión...</span>
+          </div>
+          <button onclick="tcpRestart()" style="background:rgba(0,245,196,0.08); border:1px solid rgba(0,245,196,0.25); color:var(--accent1); font-family:'Space Mono',monospace; font-size:10px; padding:5px 14px; border-radius:5px; cursor:pointer; letter-spacing:0.08em;">↺ REINICIAR</button>
+        </div>
+      </div>
+
+      <div class="highlight" style="margin-top:12px;">
+        <strong>TCP</strong> divide tu mensaje en paquetes numerados, los envía por cualquier ruta disponible, y los reensambla en destino en el orden correcto. Si un paquete se pierde, se reenvía automáticamente.
+      </div>
+    </div>
+
+    <script>
+    // TCP/IP Packet Animation
+    var TCP = {
+      svg: null, packet: null, glow: null, body: null, lbl: null, num: null,
+      hlEls: {}, labelEl: null, statusEl: null, dotEl: null,
+      raf: null, running: false,
+
+      phases: [
+        {
+          name: 'request',
+          color: '#f59e0b',
+          textColor: '#f59e0b',
+          phaseLabel: 'Enviando REQUEST del cliente al servidor...',
+          segments: [
+            { x0:60,  y0:70, x1:300, y1:70, dur:2000, arrive:'router1', pktTop:'PKT', pktBot:'#1', status:'Paquete #1 viajando hacia Router 1...' },
+            { x0:300, y0:70, x1:500, y1:70, dur:1600, arrive:'router2', pktTop:'PKT', pktBot:'#1', status:'Paquete #1 viajando hacia Router 2...' },
+            { x0:500, y0:70, x1:740, y1:70, dur:2000, arrive:'server',  pktTop:'PKT', pktBot:'#1', status:'Paquete #1 llegando al servidor!' }
+          ]
+        },
+        {
+          name: 'processing',
+          pause: 1100,
+          phaseLabel: 'Servidor procesando el request...',
+          status: 'Servidor procesa, consulta DB, prepara response...'
+        },
+        {
+          name: 'response',
+          color: '#00f5c4',
+          textColor: '#00f5c4',
+          phaseLabel: 'Enviando RESPONSE del servidor al cliente...',
+          segments: [
+            { x0:740, y0:70, x1:500, y1:70, dur:2000, arrive:'router2', pktTop:'RES', pktBot:'#1', status:'Respuesta viajando hacia Router 2...' },
+            { x0:500, y0:70, x1:300, y1:70, dur:1600, arrive:'router1', pktTop:'RES', pktBot:'#1', status:'Respuesta viajando hacia Router 1...' },
+            { x0:300, y0:70, x1:60,  y1:70, dur:2000, arrive:'client',  pktTop:'RES', pktBot:'#1', status:'Respuesta llegando al cliente!' }
+          ]
+        }
+      ],
+
+      init: function() {
+        this.svg      = document.getElementById('tcpSvg');
+        this.packet   = document.getElementById('tcpPacket');
+        this.glow     = document.getElementById('tcpGlow');
+        this.body     = document.getElementById('tcpBody');
+        this.lbl      = document.getElementById('tcpPktLabel');
+        this.num      = document.getElementById('tcpPktNum');
+        this.labelEl  = document.getElementById('tcpLabel');
+        this.statusEl = document.getElementById('tcpStatus');
+        this.dotEl    = document.getElementById('tcpDot');
+        this.hlEls    = {
+          router1: document.getElementById('hl-router1'),
+          router2: document.getElementById('hl-router2'),
+          server:  document.getElementById('hl-server'),
+          client:  document.getElementById('hl-client')
+        };
+        this.resetHighlights();
+        this.run();
+      },
+
+      resetHighlights: function() {
+        var self = this;
+        Object.keys(self.hlEls).forEach(function(k) {
+          var el = self.hlEls[k];
+          if (el) el.setAttribute('opacity', '0');
+        });
+      },
+
+      flashNode: function(id) {
+        var el = this.hlEls[id];
+        if (!el) return;
+        el.setAttribute('opacity', '0.85');
+        setTimeout(function(){ el.setAttribute('opacity','0'); }, 500);
+      },
+
+      setColor: function(color) {
+        this.glow.setAttribute('stroke', color);
+        this.body.setAttribute('fill', color);
+        this.lbl.setAttribute('fill', '#0a0a0f');
+        this.num.setAttribute('fill', '#0a0a0f');
+        this.dotEl.style.background = color;
+        this.dotEl.style.boxShadow = '0 0 8px ' + color;
+      },
+
+      moveTo: function(x, y) {
+        // packet group: rect at x-16,y-16, glow at x,y
+        this.packet.setAttribute('transform', 'translate(' + (x - 60) + ',' + (y - 70) + ')');
+      },
+
+      setLabels: function(top, bot) {
+        this.lbl.textContent = top;
+        this.num.textContent = bot;
+      },
+
+      animateSegment: function(seg, color, doneCb) {
+        var self = this;
+        self.setLabels(seg.pktTop, seg.pktBot);
+        self.statusEl.textContent = seg.status;
+        var startT = performance.now();
+        var x0 = seg.x0, y0 = seg.y0, x1 = seg.x1, y1 = seg.y1;
+        var dur = seg.dur;
+
+        function tick(now) {
+          var t = Math.min((now - startT) / dur, 1);
+          var e = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
+          var x = x0 + (x1 - x0) * e;
+          var y = y0 + (y1 - y0) * e;
+          self.moveTo(x, y);
+
+          var pulse = 0.12 + 0.08 * Math.sin(now / 80);
+          self.glow.setAttribute('opacity', String(pulse));
+
+          if (t < 1) {
+            self.raf = requestAnimationFrame(tick);
+          } else {
+            self.moveTo(x1, y1);
+            self.flashNode(seg.arrive);
+            setTimeout(doneCb, 300);
+          }
+        }
+        self.raf = requestAnimationFrame(tick);
+      },
+
+      run: function() {
+        if (this.running) return;
+        this.running = true;
+        this.resetHighlights();
+        this.moveTo(60, 70);
+        this.setColor('#f59e0b');
+        this.packet.setAttribute('opacity','1');
+
+        var self = this;
+        var phaseIdx = 0;
+        var segIdx = 0;
+
+        function nextStep() {
+          if (!self.running) return;
+          var phase = self.phases[phaseIdx];
+          if (!phase) {
+            self.packet.setAttribute('opacity','0');
+            self.statusEl.textContent = 'Transmision completa. Reiniciando...';
+            setTimeout(function(){ self.running = false; self.init(); }, 2000);
+            return;
+          }
+
+          if (phase.name === 'processing') {
+            self.labelEl.textContent = phase.phaseLabel;
+            self.labelEl.style.color = '#64748b';
+            self.statusEl.textContent = phase.status;
+            self.packet.setAttribute('opacity','0.12');
+            var p = 0;
+            function pulse() {
+              if (!self.running) return;
+              self.hlEls.server.setAttribute('opacity', String(0.4 + 0.35 * Math.sin(p)));
+              p += 0.1;
+              self.raf = requestAnimationFrame(pulse);
+            }
+            self.raf = requestAnimationFrame(pulse);
+            setTimeout(function(){
+              cancelAnimationFrame(self.raf);
+              self.hlEls.server.setAttribute('opacity','0');
+              self.packet.setAttribute('opacity','1');
+              phaseIdx++;
+              segIdx = 0;
+              nextStep();
+            }, phase.pause);
+            return;
+          }
+
+          if (phase.segments) {
+            if (segIdx < phase.segments.length) {
+              if (segIdx === 0) {
+                self.labelEl.textContent = phase.phaseLabel;
+                self.labelEl.style.color = phase.textColor;
+                self.setColor(phase.color);
+                var s0 = phase.segments[0];
+                self.moveTo(s0.x0, s0.y0);
+              }
+              var seg = phase.segments[segIdx];
+              self.animateSegment(seg, phase.color, function(){
+                segIdx++;
+                setTimeout(nextStep, 150);
+              });
+            } else {
+              phaseIdx++;
+              segIdx = 0;
+              setTimeout(nextStep, 200);
+            }
+          }
+        }
+
+        setTimeout(nextStep, 500);
+      },
+
+      stop: function() {
+        this.running = false;
+        cancelAnimationFrame(this.raf);
+      }
+    };
+
+    function tcpRestart() {
+      TCP.stop();
+      TCP.packet.setAttribute('opacity','1');
+      setTimeout(function(){ TCP.init(); }, 100);
+    }
+
+    setTimeout(function(){ TCP.init(); }, 800);
+    </script>
+  </div>
+
+  <!-- ───────── SLIDE 1: QUÉ ES HTTP ───────── -->
+  <div class="slide" id="s1">
+    <div class="eyebrow">El protocolo de la web</div>
+    <h2>¿Qué es <span style="color:var(--accent1)">HTTP</span>?</h2>
+    <p style="margin-top:12px; max-width:600px;">HyperText Transfer Protocol — el idioma estándar con que cliente y servidor se comunican. Cada vez que abres una URL, tu navegador habla HTTP.</p>
+
+    <!-- HTTP Scene: Laptop + Form + Server -->
+    <div id="httpScene" style="margin-top:28px; background:#070711; border:1px solid var(--border); border-radius:16px; padding:24px 20px 18px; position:relative;">
+
+      <!-- Phase label -->
+      <div style="text-align:center; margin-bottom:16px;">
+        <span id="httpLabel" style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:#64748b; transition:color 0.4s;">Listo — completa el formulario y haz clic en Buscar</span>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:0; width:100%; overflow-x:auto;">
+
+        <!-- LEFT: Laptop with form -->
+        <div style="flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:8px;">
+          <!-- Laptop shell -->
+          <div style="position:relative; width:210px;">
+            <!-- Screen bezel -->
+            <div style="background:#1a1a2e; border:2px solid #2d2d4a; border-radius:8px 8px 0 0; padding:6px 6px 0; box-shadow:0 0 20px rgba(0,0,0,0.5);">
+              <!-- Browser chrome -->
+              <div style="background:#0f0f1a; border-radius:4px 4px 0 0; padding:5px 8px; display:flex; align-items:center; gap:5px; border-bottom:1px solid #2d2d4a;">
+                <div style="width:6px;height:6px;border-radius:50%;background:#ef4444;"></div>
+                <div style="width:6px;height:6px;border-radius:50%;background:#f59e0b;"></div>
+                <div style="width:6px;height:6px;border-radius:50%;background:#22c55e;"></div>
+                <div id="httpUrlBar" style="flex:1; background:#0a0a0f; border-radius:3px; padding:2px 7px; font-family:'DM Mono',monospace; font-size:8px; color:#64748b; border:1px solid #1e1e3a; white-space:nowrap; overflow:hidden;">api.kaleddental.com/clientes</div>
+              </div>
+              <!-- Page content -->
+              <div id="httpPageContent" style="background:#0d0d1a; min-height:130px; padding:10px; border-radius:0 0 4px 4px; display:flex; flex-direction:column; gap:6px;">
+                <!-- App header -->
+                <div style="display:flex; align-items:center; gap:6px; padding-bottom:6px; border-bottom:1px solid #1e1e3a;">
+                  <div style="width:14px;height:14px;border-radius:3px;background:linear-gradient(135deg,#7c3aed,#00f5c4);"></div>
+                  <span style="font-family:'Syne',sans-serif; font-size:9px; font-weight:700; color:#e2e8f0;">KaledDental</span>
+                  <span style="font-size:8px; margin-left:auto; color:#64748b; font-family:'DM Mono',monospace;">Dr. Pérez</span>
+                </div>
+                <!-- Form title -->
+                <div style="font-family:'Syne',sans-serif; font-size:9px; font-weight:700; color:#e2e8f0;">Buscar Paciente</div>
+                <!-- Form fields -->
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                  <div>
+                    <div style="font-size:7px; color:#64748b; font-family:'DM Mono',monospace; margin-bottom:2px;">ID Paciente</div>
+                    <div id="httpFormId" style="background:#070711; border:1px solid #2d2d4a; border-radius:3px; padding:3px 6px; font-family:'DM Mono',monospace; font-size:8px; color:#38bdf8;">123</div>
+                  </div>
+                  <div>
+                    <div style="font-size:7px; color:#64748b; font-family:'DM Mono',monospace; margin-bottom:2px;">Token Auth</div>
+                    <div style="background:#070711; border:1px solid #2d2d4a; border-radius:3px; padding:3px 6px; font-family:'DM Mono',monospace; font-size:8px; color:#a78bfa;">Bearer eyJhbGci...</div>
+                  </div>
+                </div>
+                <!-- Button -->
+                <button id="httpBtn" onclick="httpStart()" style="background:linear-gradient(90deg,#7c3aed,#00f5c4); border:none; border-radius:4px; padding:5px 10px; font-family:'Syne',sans-serif; font-size:9px; font-weight:700; color:#0a0a0f; cursor:pointer; margin-top:2px; transition:opacity 0.2s;">
+                  Buscar Cliente →
+                </button>
+                <!-- Response area -->
+                <div id="httpResponseCard" style="display:none; background:#070711; border:1px solid rgba(0,245,196,0.3); border-radius:4px; padding:6px 8px; animation: fadeInUp 0.4s ease;">
+                  <div style="font-size:7px; color:var(--accent1); font-family:'DM Mono',monospace; margin-bottom:3px;">200 OK — Paciente encontrado</div>
+                  <div style="font-family:'Syne',sans-serif; font-size:9px; font-weight:700; color:#e2e8f0;">Valentina Ríos</div>
+                  <div style="font-size:8px; color:#64748b; font-family:'DM Mono',monospace;">Plan: Premium · ID: 123</div>
+                </div>
+              </div>
+            </div>
+            <!-- Laptop base -->
+            <div style="background:#1e1e38; height:8px; border-radius:0 0 4px 4px; border:2px solid #2d2d4a; border-top:none;"></div>
+            <div style="background:#252540; height:3px; border-radius:0 0 8px 8px; width:120%; margin-left:-10%;"></div>
+          </div>
+          <div style="font-family:'Space Mono',monospace; font-size:9px; color:#64748b; letter-spacing:0.1em; text-align:center;">CLIENTE<br>Navegador</div>
+        </div>
+
+        <!-- Wire CLIENT -> SERVER -->
+        <div style="flex:1; position:relative; height:60px; min-width:60px;">
+          <!-- Top wire: REQUEST -->
+          <div style="position:absolute; top:18px; left:0; right:0; height:2px; background:#1e1e3a;"></div>
+          <!-- Bottom wire: RESPONSE -->
+          <div style="position:absolute; top:38px; left:0; right:0; height:2px; background:#1e1e3a;"></div>
+          <!-- Labels -->
+          <div style="position:absolute; top:4px; left:50%; transform:translateX(-50%); font-size:8px; color:#f59e0b; font-family:'Space Mono',monospace; white-space:nowrap;">REQUEST →</div>
+          <div style="position:absolute; top:44px; left:50%; transform:translateX(-50%); font-size:8px; color:var(--accent1); font-family:'Space Mono',monospace; white-space:nowrap;">← RESPONSE</div>
+          <!-- Packet Request -->
+          <div id="httpPktReq" style="position:absolute; top:10px; left:-14px; display:none;">
+            <div style="width:28px;height:18px;background:#f59e0b;border-radius:4px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 10px rgba(245,158,11,0.6);">
+              <span style="font-family:'DM Mono',monospace;font-size:7px;font-weight:700;color:#0a0a0f;">GET</span>
+            </div>
+          </div>
+          <!-- Packet Response -->
+          <div id="httpPktRes" style="position:absolute; top:30px; right:-14px; display:none;">
+            <div style="width:28px;height:18px;background:var(--accent1);border-radius:4px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 10px rgba(0,245,196,0.6);">
+              <span style="font-family:'DM Mono',monospace;font-size:7px;font-weight:700;color:#0a0a0f;">200</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Server -->
+        <div style="flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:8px;">
+          <!-- Server box -->
+          <div style="width:120px; background:#0f0f1a; border:2px solid #2d2d4a; border-radius:8px; overflow:hidden; box-shadow:0 0 20px rgba(0,0,0,0.5);">
+            <!-- Server header -->
+            <div style="background:#1a1a2e; padding:6px 10px; border-bottom:1px solid #2d2d4a; display:flex; align-items:center; gap:5px;">
+              <div id="httpSrvDot" style="width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;"></div>
+              <span style="font-family:'DM Mono',monospace;font-size:8px;color:#94a3b8;">Node.js</span>
+            </div>
+            <!-- Server internals -->
+            <div style="padding:8px; display:flex; flex-direction:column; gap:5px;">
+              <div id="httpSrvStep1" style="background:#070711; border:1px solid #1e1e3a; border-radius:3px; padding:4px 6px; font-family:'DM Mono',monospace; font-size:7px; color:#64748b; transition:all 0.3s;">
+                1. Parse URL
+              </div>
+              <div id="httpSrvStep2" style="background:#070711; border:1px solid #1e1e3a; border-radius:3px; padding:4px 6px; font-family:'DM Mono',monospace; font-size:7px; color:#64748b; transition:all 0.3s;">
+                2. Auth check
+              </div>
+              <div id="httpSrvStep3" style="background:#070711; border:1px solid #1e1e3a; border-radius:3px; padding:4px 6px; font-family:'DM Mono',monospace; font-size:7px; color:#64748b; transition:all 0.3s;">
+                3. DB query
+              </div>
+              <div id="httpSrvStep4" style="background:#070711; border:1px solid #1e1e3a; border-radius:3px; padding:4px 6px; font-family:'DM Mono',monospace; font-size:7px; color:#64748b; transition:all 0.3s;">
+                4. Build JSON
+              </div>
+            </div>
+          </div>
+          <div style="font-family:'Space Mono',monospace; font-size:9px; color:#64748b; letter-spacing:0.1em; text-align:center;">SERVIDOR<br>Backend</div>
+        </div>
+
+      </div>
+
+      <!-- Status bar -->
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-top:14px; padding-top:12px; border-top:1px solid var(--border);">
+        <div style="display:flex; gap:6px; align-items:center;">
+          <div id="httpDot" style="width:8px;height:8px;border-radius:50%;background:#64748b;"></div>
+          <span id="httpStatus" style="font-family:'Space Mono',monospace; font-size:10px; color:var(--muted);">Haz clic en "Buscar Cliente" para iniciar</span>
+        </div>
+        <button onclick="httpReset()" style="background:rgba(0,245,196,0.08); border:1px solid rgba(0,245,196,0.25); color:var(--accent1); font-family:'Space Mono',monospace; font-size:10px; padding:5px 14px; border-radius:5px; cursor:pointer; letter-spacing:0.08em;">↺ RESET</button>
+      </div>
+    </div>
+
+    <style>
+      @keyframes fadeInUp {
+        from { opacity:0; transform:translateY(6px); }
+        to   { opacity:1; transform:translateY(0); }
+      }
+      @keyframes srvPulse {
+        0%,100% { box-shadow: 0 0 6px #22c55e; }
+        50%      { box-shadow: 0 0 14px #22c55e; }
+      }
+    </style>
+
+    <script>
+    var httpAnimating = false;
+
+    function httpSetLabel(txt, color) {
+      var el = document.getElementById('httpLabel');
+      if (el) { el.textContent = txt; el.style.color = color || '#64748b'; }
+    }
+    function httpSetStatus(txt, color) {
+      var d = document.getElementById('httpDot');
+      var s = document.getElementById('httpStatus');
+      if (s) s.textContent = txt;
+      if (d) { d.style.background = color || '#64748b'; d.style.boxShadow = '0 0 8px ' + (color || '#64748b'); }
+    }
+    function httpHighlightStep(id, on) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      if (on) {
+        el.style.background = 'rgba(245,158,11,0.15)';
+        el.style.borderColor = '#f59e0b';
+        el.style.color = '#f59e0b';
+      } else {
+        el.style.background = 'rgba(0,245,196,0.1)';
+        el.style.borderColor = 'rgba(0,245,196,0.3)';
+        el.style.color = '#00f5c4';
+      }
+    }
+    function httpResetSteps() {
+      ['httpSrvStep1','httpSrvStep2','httpSrvStep3','httpSrvStep4'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (el) { el.style.background='#070711'; el.style.borderColor='#1e1e3a'; el.style.color='#64748b'; }
+      });
+    }
+
+    function animatePktAcross(pktId, fromPct, toPct, topPx, duration, cb) {
+      var wire = document.querySelector('#httpScene > div:nth-child(2) > div:nth-child(2)');
+      var pkt = document.getElementById(pktId);
+      if (!pkt || !wire) { if(cb) cb(); return; }
+      var wRect = wire.getBoundingClientRect();
+      var wWidth = wRect.width;
+      pkt.style.display = 'block';
+      pkt.style.top = topPx + 'px';
+      var start = null;
+      function frame(ts) {
+        if (!start) start = ts;
+        var t = Math.min((ts - start) / duration, 1);
+        var e = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
+        var pct = fromPct + (toPct - fromPct) * e;
+        pkt.style.left = (pct * 100) + '%';
+        if (t < 1) {
+          requestAnimationFrame(frame);
+        } else {
+          setTimeout(function(){ pkt.style.display='none'; if(cb) cb(); }, 200);
+        }
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function httpStart() {
+      if (httpAnimating) return;
+      httpAnimating = true;
+      var btn = document.getElementById('httpBtn');
+      if (btn) btn.style.opacity = '0.4';
+
+      // Reset
+      httpResetSteps();
+      document.getElementById('httpResponseCard').style.display = 'none';
+      document.getElementById('httpPktReq').style.display = 'none';
+      document.getElementById('httpPktRes').style.display = 'none';
+
+      // Step 1: send request
+      httpSetLabel('Enviando GET /api/clientes/123 al servidor...', '#f59e0b');
+      httpSetStatus('Cliente enviando REQUEST...', '#f59e0b');
+
+      // Animate request packet left->right
+      var pkt = document.getElementById('httpPktReq');
+      pkt.style.display = 'block';
+      pkt.style.top = '10px';
+      pkt.style.left = '0%';
+      pkt.style.position = 'absolute';
+      pkt.style.transition = 'none';
+
+      var wireEl = document.getElementById('httpPktReq').parentElement;
+      var startT = null;
+      var dur1 = 1800;
+
+      function animReq(ts) {
+        if (!startT) startT = ts;
+        var t = Math.min((ts - startT) / dur1, 1);
+        var e = t < 0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+        pkt.style.left = (e * 90) + '%';
+        if (t < 1) { requestAnimationFrame(animReq); }
+        else {
+          pkt.style.display = 'none';
+          serverProcess();
+        }
+      }
+      requestAnimationFrame(animReq);
+    }
+
+    function serverProcess() {
+      var steps = ['httpSrvStep1','httpSrvStep2','httpSrvStep3','httpSrvStep4'];
+      var labels = [
+        'Parseando URL y método...',
+        'Verificando JWT token...',
+        'Consultando base de datos...',
+        'Construyendo JSON response...'
+      ];
+      var statuses = [
+        'Parse: GET /api/clientes/123',
+        'Auth: Bearer token OK',
+        'DB: SELECT * WHERE id=123',
+        'Response: 200 OK + JSON'
+      ];
+
+      httpSetLabel('Servidor procesando el request...', '#a78bfa');
+      httpSetStatus('Servidor recibio el request', '#a78bfa');
+
+      var i = 0;
+      function nextStep() {
+        if (i > 0) httpHighlightStep(steps[i-1], false);
+        if (i >= steps.length) {
+          setTimeout(sendResponse, 300);
+          return;
+        }
+        httpSetStatus(statuses[i], '#f59e0b');
+        httpHighlightStep(steps[i], true);
+        i++;
+        setTimeout(nextStep, 550);
+      }
+      nextStep();
+    }
+
+    function sendResponse() {
+      httpSetLabel('Enviando RESPONSE 200 OK al cliente...', '#00f5c4');
+      httpSetStatus('Servidor enviando respuesta...', '#00f5c4');
+
+      var pkt = document.getElementById('httpPktRes');
+      pkt.style.display = 'block';
+      pkt.style.top = '30px';
+      pkt.style.right = '0%';
+      pkt.style.left = 'auto';
+      pkt.style.position = 'absolute';
+
+      var startT = null;
+      var dur2 = 1800;
+
+      function animRes(ts) {
+        if (!startT) startT = ts;
+        var t = Math.min((ts - startT) / dur2, 1);
+        var e = t < 0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+        // goes right to left: right starts at 0%, goes to 90%
+        pkt.style.right = (e * 90) + '%';
+        if (t < 1) { requestAnimationFrame(animRes); }
+        else {
+          pkt.style.display = 'none';
+          showResult();
+        }
+      }
+      requestAnimationFrame(animRes);
+    }
+
+    function showResult() {
+      httpSetLabel('Respuesta recibida — renderizando en el navegador!', '#00f5c4');
+      httpSetStatus('200 OK — Datos del paciente recibidos!', '#00f5c4');
+
+      // Show response card in laptop
+      var card = document.getElementById('httpResponseCard');
+      card.style.display = 'block';
+
+      // Update url bar
+      var urlBar = document.getElementById('httpUrlBar');
+      if (urlBar) urlBar.style.color = '#00f5c4';
+
+      var btn = document.getElementById('httpBtn');
+      if (btn) { btn.style.opacity = '1'; btn.textContent = 'Buscar Cliente →'; }
+
+      setTimeout(function(){ httpAnimating = false; }, 500);
+    }
+
+    function httpReset() {
+      httpAnimating = false;
+      httpResetSteps();
+      var card = document.getElementById('httpResponseCard');
+      if (card) card.style.display = 'none';
+      var urlBar = document.getElementById('httpUrlBar');
+      if (urlBar) urlBar.style.color = '#64748b';
+      var btn = document.getElementById('httpBtn');
+      if (btn) { btn.style.opacity = '1'; btn.textContent = 'Buscar Cliente →'; }
+      document.getElementById('httpPktReq').style.display = 'none';
+      document.getElementById('httpPktRes').style.display = 'none';
+      httpSetLabel('Listo — completa el formulario y haz clic en Buscar', '#64748b');
+      httpSetStatus('Haz clic en "Buscar Cliente" para iniciar', '#64748b');
+    }
+    </script>
+
+    <!-- ANATOMY SECTION -->
+    <style>
+      .anatomy-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+      @media(max-width:780px){ .anatomy-wrap { grid-template-columns: 1fr; } }
+
+      .anatomy-box {
+        background: #070711;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+        font-family: 'DM Mono', monospace;
+      }
+      .anatomy-box-title {
+        padding: 10px 18px;
+        font-family: 'Space Mono', monospace;
+        font-size: 10px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; gap: 8px;
+      }
+      .anatomy-box-title.req { color: var(--accent3); background: rgba(245,158,11,0.06); }
+      .anatomy-box-title.res { color: var(--accent1); background: rgba(0,245,196,0.06); }
+
+      .anat-line {
+        display: flex;
+        align-items: stretch;
+        border-bottom: 1px solid rgba(30,30,58,0.7);
+        position: relative;
+        transition: background 0.2s;
+      }
+      .anat-line:last-child { border-bottom: none; }
+      .anat-line:hover { background: rgba(255,255,255,0.025); }
+
+      .anat-badge {
+        width: 90px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 6px;
+        border-right: 1px solid rgba(30,30,58,0.7);
+        font-size: 9px;
+        font-family: 'Space Mono', monospace;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        text-align: center;
+        line-height: 1.3;
+        font-weight: 700;
+      }
+      .anat-badge.b-method { color: var(--accent3); background: rgba(245,158,11,0.08); }
+      .anat-badge.b-url    { color: #38bdf8; background: rgba(56,189,248,0.08); }
+      .anat-badge.b-proto  { color: var(--muted); background: rgba(100,116,139,0.07); }
+      .anat-badge.b-header { color: #a78bfa; background: rgba(124,58,237,0.08); }
+      .anat-badge.b-body   { color: var(--accent1); background: rgba(0,245,196,0.08); }
+      .anat-badge.b-status { color: var(--accent1); background: rgba(0,245,196,0.08); }
+
+      .anat-content {
+        flex: 1;
+        padding: 10px 14px;
+        font-size: 12.5px;
+        line-height: 1.5;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .anat-code { color: #e2e8f0; }
+      .anat-desc {
+        font-size: 10.5px;
+        color: #64748b;
+        font-family: 'Syne', sans-serif;
+        font-weight: 400;
+        margin-top: 2px;
+      }
+      .anat-hl-method { color: var(--accent3); font-weight: 700; }
+      .anat-hl-url    { color: #38bdf8; }
+      .anat-hl-proto  { color: #94a3b8; }
+      .anat-hl-key    { color: #a78bfa; }
+      .anat-hl-val    { color: var(--accent1); }
+      .anat-hl-status-ok { color: var(--accent1); font-weight: 700; }
+      .anat-hl-json-key { color: #a78bfa; }
+      .anat-hl-json-str { color: var(--accent1); }
+      .anat-hl-json-num { color: var(--accent3); }
+
+      .anat-separator {
+        padding: 6px 14px 6px 104px;
+        font-size: 10px;
+        color: var(--muted);
+        font-family: 'Space Mono', monospace;
+        background: rgba(0,0,0,0.2);
+        border-bottom: 1px solid rgba(30,30,58,0.7);
+        letter-spacing: 0.1em;
+      }
+
+      .part-legend {
+        display: flex; flex-wrap: wrap; gap: 8px;
+        margin-top: 14px;
+      }
+      .legend-item {
+        display: flex; align-items: center; gap: 6px;
+        font-size: 11px; font-family: 'Space Mono', monospace;
+        color: var(--muted);
+      }
+      .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+    </style>
+
+    <div class="anatomy-wrap">
+      <!-- REQUEST -->
+      <div>
+        <div class="eyebrow" style="margin-top:4px; margin-bottom:10px;">① Anatomía de un Request</div>
+
+        <!-- RAW MESSAGE -->
+        <div style="background:#070711; border:1px solid rgba(245,158,11,0.35); border-radius:12px; padding:16px 18px; margin-bottom:12px; position:relative;">
+          <div style="position:absolute; top:-9px; left:14px; background:#070711; padding:0 8px; font-family:'Space Mono',monospace; font-size:9px; letter-spacing:0.15em; color:var(--accent3); text-transform:uppercase;">📤 Mensaje real enviado por el cliente</div>
+          <pre style="font-family:'DM Mono',monospace; font-size:12.5px; line-height:1.9; margin:0; white-space:pre-wrap;"><span style="color:var(--accent3);font-weight:700;">GET</span> <span style="color:#38bdf8;">/api/clientes/123</span> <span style="color:#64748b;">HTTP/1.1</span>
+<span style="color:#a78bfa;">Host:</span> <span style="color:var(--accent1);">api.kaleddental.com</span>
+<span style="color:#a78bfa;">Authorization:</span> <span style="color:var(--accent1);">Bearer eyJhbGci...</span>
+<span style="color:#a78bfa;">Accept:</span> <span style="color:var(--accent1);">application/json</span>
+<span style="color:#a78bfa;">Cache-Control:</span> <span style="color:var(--accent1);">no-cache</span></pre>
+        </div>
+
+        <div class="anatomy-box">
+          <div class="anatomy-box-title req">
+            <span>🔍</span> Explicación parte por parte
+          </div>
+
+          <!-- Request line -->
+          <div class="anat-line">
+            <div class="anat-badge b-method">MÉTODO</div>
+            <div class="anat-content">
+              <span class="anat-code"><span class="anat-hl-method">GET</span></span>
+              <span class="anat-desc">¿Qué quiero hacer? Leer datos sin modificar nada. Otros: POST, PUT, PATCH, DELETE</span>
+            </div>
+          </div>
+          <div class="anat-line">
+            <div class="anat-badge b-url">URL / PATH</div>
+            <div class="anat-content">
+              <span class="anat-code"><span class="anat-hl-url">/api/clientes/123</span></span>
+              <span class="anat-desc">¿A qué recurso? "Dame al cliente con ID 123". Las URLs son sustantivos, nunca verbos.</span>
+            </div>
+          </div>
+          <div class="anat-line">
+            <div class="anat-badge b-proto">PROTOCOLO</div>
+            <div class="anat-content">
+              <span class="anat-code"><span class="anat-hl-proto">HTTP/1.1</span></span>
+              <span class="anat-desc">Versión del protocolo. Hoy en día casi siempre HTTP/2 o HTTP/3.</span>
+            </div>
+          </div>
+
+          <div class="anat-separator">── HEADERS (metadatos) ──────────────────</div>
+
+          <div class="anat-line">
+            <div class="anat-badge b-header">HEADER</div>
+            <div class="anat-content">
+              <span class="anat-code"><span class="anat-hl-key">Host:</span> <span class="anat-hl-val">api.kaleddental.com</span></span>
+              <span class="anat-desc">¿A qué servidor va? Necesario para virtual hosting (un servidor, múltiples dominios).</span>
+            </div>
+          </div>
+          <div class="anat-line">
+            <div class="anat-badge b-header">HEADER</div>
+            <div class="anat-content">
+              <span class="anat-code"><span class="anat-hl-key">Authorization:</span> <span class="anat-hl-val">Bearer eyJhbGci...</span></span>
+              <span class="anat-desc">¿Quién eres? JWT token. Sin esto → 401. El token identifica al usuario en cada request.</span>
+            </div>
+          </div>
+          <div class="anat-line">
+            <div class="anat-badge b-header">HEADER</div>
+            <div class="anat-content">
+              <span class="anat-code"><span class="anat-hl-key">Accept:</span> <span class="anat-hl-val">application/json</span></span>
+              <span class="anat-desc">¿Qué formato quieres recibir? Le dices al servidor que solo entiendes JSON.</span>
+            </div>
+          </div>
+          <div class="anat-line">
+            <div class="anat-badge b-header">HEADER</div>
+            <div class="anat-content">
+              <span class="anat-code"><span class="anat-hl-key">Cache-Control:</span> <span class="anat-hl-val">no-cache</span></span>
+              <span class="anat-desc">¿Usar caché? "no-cache" = siempre pide datos frescos al servidor, no uses versión guardada.</span>
+            </div>
+          </div>
+        </div>
+        <div class="part-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--accent3)"></div>Método</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#38bdf8"></div>URL / Recurso</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#94a3b8"></div>Protocolo</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#a78bfa"></div>Headers</div>
+        </div>
+      </div>
+
+      <!-- RESPONSE -->
+      <div>
+        <div class="eyebrow" style="margin-top:4px; margin-bottom:10px;">② Anatomía de un Response</div>
+
+        <!-- RAW MESSAGE -->
+        <div style="background:#070711; border:1px solid rgba(0,245,196,0.3); border-radius:12px; padding:16px 18px; margin-bottom:12px; position:relative;">
+          <div style="position:absolute; top:-9px; left:14px; background:#070711; padding:0 8px; font-family:'Space Mono',monospace; font-size:9px; letter-spacing:0.15em; color:var(--accent1); text-transform:uppercase;">📥 Mensaje real que responde el servidor</div>
+          <pre style="font-family:'DM Mono',monospace; font-size:12.5px; line-height:1.9; margin:0; white-space:pre-wrap;"><span style="color:#64748b;">HTTP/1.1</span> <span style="color:var(--accent1);font-weight:700;">200 OK</span>
+<span style="color:#a78bfa;">Content-Type:</span> <span style="color:var(--accent1);">application/json</span>
+<span style="color:#a78bfa;">Cache-Control:</span> <span style="color:var(--accent1);">max-age=3600</span>
+<span style="color:#a78bfa;">X-Request-Id:</span> <span style="color:var(--accent1);">abc-123-xyz</span>
+
+<span style="color:#64748b;">// Body:</span>
+{
+  <span style="color:#a78bfa;">"id":</span> <span style="color:var(--accent3);">123</span>,
+  <span style="color:#a78bfa;">"nombre":</span> <span style="color:var(--accent1);">"Valentina Ríos"</span>,
+  <span style="color:#a78bfa;">"plan":</span> <span style="color:var(--accent1);">"Premium"</span>
+}</pre>
+        </div>
+
+        <div class="anatomy-box">
+          <div class="anatomy-box-title res">
+            <span>🔍</span> Explicación parte por parte
+          </div>
+
+          <!-- Status line -->
+          <div class="anat-line">
+            <div class="anat-badge b-proto">PROTOCOLO</div>
+            <div class="anat-content">
+              <span class="anat-code"><span class="anat-hl-proto">HTTP/1.1</span></span>
+              <span class="anat-desc">Versión con la que responde el servidor.</span>
+            </div>
+          </div>
+          <div class="anat-line">
+            <div class="anat-badge b-status">CÓDIGO</div>
+            <div class="anat-content">
+              <span class="anat-code"><span class="anat-hl-status-ok">200 OK</span></span>
+              <span class="anat-desc">¿Qué pasó? 200 = éxito total. El sistema de señales de HTTP: 2xx éxito, 4xx tu error, 5xx nuestro error.</span>
+            </div>
+          </div>
+
+          <div class="anat-separator">── HEADERS DE RESPUESTA ─────────────────</div>
+
+          <div class="anat-line">
+            <div class="anat-badge b-header">HEADER</div>
+            <div class="anat-content">
+              <span class="anat-code"><span class="anat-hl-key">Content-Type:</span> <span class="anat-hl-val">application/json</span></span>
+              <span class="anat-desc">¿En qué formato viene el body? El navegador/app usa esto para saber cómo leerlo.</span>
+            </div>
+          </div>
+          <div class="anat-line">
+            <div class="anat-badge b-header">HEADER</div>
+            <div class="anat-content">
+              <span class="anat-code"><span class="anat-hl-key">Cache-Control:</span> <span class="anat-hl-val">max-age=3600</span></span>
+              <span class="anat-desc">Puedes guardar esta respuesta en caché por 1 hora (3600 seg). No hagas el mismo request.</span>
+            </div>
+          </div>
+          <div class="anat-line">
+            <div class="anat-badge b-header">HEADER</div>
+            <div class="anat-content">
+              <span class="anat-code"><span class="anat-hl-key">X-Request-Id:</span> <span class="anat-hl-val">abc-123-xyz</span></span>
+              <span class="anat-desc">ID único de esta operación. Si algo falla, lo buscas en los logs con este ID exacto.</span>
+            </div>
+          </div>
+
+          <div class="anat-separator">── BODY (los datos que pediste) ─────────</div>
+
+          <div class="anat-line">
+            <div class="anat-badge b-body">BODY</div>
+            <div class="anat-content">
+              <span class="anat-code">
+                {<br>
+                &nbsp;&nbsp;<span class="anat-hl-json-key">"id":</span> <span class="anat-hl-json-num">123</span>,<br>
+                &nbsp;&nbsp;<span class="anat-hl-json-key">"nombre":</span> <span class="anat-hl-json-str">"Valentina Ríos"</span>,<br>
+                &nbsp;&nbsp;<span class="anat-hl-json-key">"plan":</span> <span class="anat-hl-json-str">"Premium"</span><br>
+                }
+              </span>
+              <span class="anat-desc">El recurso que pediste — el cliente 123. Formato JSON. Esto es lo que usas en tu app.</span>
+            </div>
+          </div>
+        </div>
+        <div class="part-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#94a3b8"></div>Protocolo</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--accent1)"></div>Código de estado</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#a78bfa"></div>Headers</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--accent1); opacity:0.5"></div>Body / Datos</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="highlight amber" style="margin-top:20px;">
+      <strong>HTTP es stateless</strong> — sin memoria. Cada request es independiente. El servidor no sabe quién eres entre peticiones. Por eso necesitamos tokens de autenticación en <em>cada</em> request.
+    </div>
+
+    <div class="grid-3" style="margin-top:20px;">
+      <div class="card green">
+        <span class="card-icon">📡</span>
+        <h3>HTTP/1.1</h3>
+        <p>1997. Conexiones persistentes. Un request a la vez por conexión. El estándar por ~18 años.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">⚡</span>
+        <h3>HTTP/2</h3>
+        <p>2015. Multiplexing — múltiples requests en paralelo. Compresión de headers. 50% más rápido.</p>
+      </div>
+      <div class="card amber">
+        <span class="card-icon">💨</span>
+        <h3>HTTP/3</h3>
+        <p>2022. Sobre QUIC/UDP. Latencia 30% menor. Conexión instantánea. El futuro presente.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───────── SLIDE 2: QUÉ ES UNA API ───────── -->
+  <div class="slide" id="s2">
+    <div class="eyebrow">Interfaces de programación</div>
+    <h2>¿Qué es una <span style="color:var(--accent1)">API</span>?</h2>
+    <p style="margin-top:12px; max-width:640px;"><strong>Application Programming Interface</strong> — una interfaz que permite que dos sistemas se comuniquen sin que ninguno necesite conocer la implementación interna del otro.</p>
+
+    <div class="highlight purple" style="margin-top:20px;">
+      💡 Una API <strong>no es solo para navegar internet</strong>. Es cualquier contrato de comunicación entre sistemas. Cuando creas un dispositivo electrónico nuevo (un sensor, un parlante bluetooth, un POS), defines una API para que otros lo puedan usar.
+    </div>
+
+    <div class="api-diagram" style="margin-top:24px;">
+      <div class="api-side">
+        <div class="eyebrow" style="font-size:9px;">CLIENTE / CONSUMIDOR</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div class="card green" style="padding:12px;">
+            <span style="font-size:18px;">📱</span>
+            <span style="font-size:13px; font-weight:600; margin-left:8px;">App Móvil KaledDental</span>
+          </div>
+          <div class="card" style="padding:12px;">
+            <span style="font-size:18px;">🌐</span>
+            <span style="font-size:13px; font-weight:600; margin-left:8px;">Dashboard Web</span>
+          </div>
+          <div class="card amber" style="padding:12px;">
+            <span style="font-size:18px;">🤖</span>
+            <span style="font-size:13px; font-weight:600; margin-left:8px;">Agente de IA</span>
+          </div>
+          <div class="card purple" style="padding:12px;">
+            <span style="font-size:18px;">🔌</span>
+            <span style="font-size:13px; font-weight:600; margin-left:8px;">Sistema externo (CRM)</span>
+          </div>
+        </div>
+      </div>
+      <div class="api-middle">
+        <div class="api-arrow">→</div>
+        <div class="label">API</div>
+        <div style="font-size:22px;">🔌</div>
+        <div style="font-size:10px; color:#64748b; font-family:'Space Mono',monospace;">CONTRATO</div>
+        <div class="api-arrow">←</div>
+      </div>
+      <div class="api-side">
+        <div class="eyebrow" style="font-size:9px;">SERVIDOR / PROVEEDOR</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div class="card green" style="padding:12px;">
+            <span style="font-size:18px;">💾</span>
+            <span style="font-size:13px; font-weight:600; margin-left:8px;">Base de Datos</span>
+          </div>
+          <div class="card" style="padding:12px;">
+            <span style="font-size:18px;">⚙️</span>
+            <span style="font-size:13px; font-weight:600; margin-left:8px;">Lógica de Negocio</span>
+          </div>
+          <div class="card amber" style="padding:12px;">
+            <span style="font-size:18px;">🔐</span>
+            <span style="font-size:13px; font-weight:600; margin-left:8px;">Autenticación</span>
+          </div>
+          <div class="card purple" style="padding:12px;">
+            <span style="font-size:18px;">📂</span>
+            <span style="font-size:13px; font-weight:600; margin-left:8px;">Archivos / Storage</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="eyebrow" style="margin-top:32px;">tipos de apis — más allá de la web</div>
+    <div class="grid-4">
+      <div class="card green">
+        <span class="card-icon">🌐</span>
+        <h3 style="font-size:14px;">REST API</h3>
+        <p style="font-size:12px;">HTTP + JSON. El estándar de la web. KaledDental, KaledWash, todo lo tuyo.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">📱</span>
+        <h3 style="font-size:14px;">SDK / Library API</h3>
+        <p style="font-size:12px;">Stripe SDK, Firebase SDK. Llamas funciones en tu código directamente.</p>
+      </div>
+      <div class="card amber">
+        <span class="card-icon">🔌</span>
+        <h3 style="font-size:14px;">Hardware API</h3>
+        <p style="font-size:12px;">USB, Bluetooth, GPIO. Cómo tu código habla con sensores y dispositivos físicos.</p>
+      </div>
+      <div class="card purple">
+        <span class="card-icon">🤝</span>
+        <h3 style="font-size:14px;">GraphQL / gRPC</h3>
+        <p style="font-size:12px;">Alternativas a REST para queries flexibles o comunicación ultra-rápida entre microservicios.</p>
+      </div>
+    </div>
+
+    <div class="highlight" style="margin-top:20px;">
+      <strong>Analogía concreta:</strong> Cuando Apple lanzó el primer iPhone, publicó una API (SDK). Millones de developers pudieron crear apps sin conocer cómo funciona el hardware. La API es el <em>contrato</em> que hace posible el ecosistema.
+    </div>
+  </div>
+
+  <!-- ───────── SLIDE 3: REST ───────── -->
+  <div class="slide" id="s3">
+    <div class="eyebrow">Arquitectura de software</div>
+    <h2><span style="color:var(--accent1)">REST</span> — Representational State Transfer</h2>
+
+    <div class="grid-2" style="margin-top:20px; align-items:start;">
+      <div>
+        <div class="card purple" style="margin-bottom:16px;">
+          <span class="card-icon">🎓</span>
+          <div class="year">2000 — UC Irvine, California</div>
+          <h3>Roy Fielding</h3>
+          <p style="font-size:13px;">En su disertación doctoral <em>"Architectural Styles and the Design of Network-based Software Architectures"</em> define REST. Era uno de los autores originales de HTTP/1.1. REST no es un estándar, es un <strong style="color:#a78bfa">estilo arquitectónico</strong>.</p>
+        </div>
+        <div class="highlight purple">
+          REST describe <strong>cómo usar HTTP correctamente</strong> para construir sistemas escalables, simples y predecibles.
+        </div>
+      </div>
+      <div>
+        <div class="eyebrow">Los 6 principios de REST</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div class="card" style="padding:14px 16px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:20px;">🚫🧠</span>
+              <div>
+                <div style="font-size:13px; font-weight:700;">Sin Estado (Stateless)</div>
+                <div style="font-size:12px; color:var(--muted);">Cada request tiene todo lo necesario. El servidor no guarda sesiones.</div>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="padding:14px 16px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:20px;">🔗</span>
+              <div>
+                <div style="font-size:13px; font-weight:700;">Interfaz Uniforme</div>
+                <div style="font-size:12px; color:var(--muted);">URLs para recursos, verbos HTTP para acciones.</div>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="padding:14px 16px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:20px;">💾</span>
+              <div>
+                <div style="font-size:13px; font-weight:700;">Cacheable</div>
+                <div style="font-size:12px; color:var(--muted);">Las respuestas indican si pueden guardarse en caché.</div>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="padding:14px 16px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:20px;">🏗️</span>
+              <div>
+                <div style="font-size:13px; font-weight:700;">Sistema en Capas</div>
+                <div style="font-size:12px; color:var(--muted);">Cliente no sabe si habla directo o por un proxy/balanceador.</div>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="padding:14px 16px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:20px;">🎭</span>
+              <div>
+                <div style="font-size:13px; font-weight:700;">Client-Server</div>
+                <div style="font-size:12px; color:var(--muted);">UI y lógica separadas. Frontend y backend independientes.</div>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="padding:14px 16px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:20px;">📦</span>
+              <div>
+                <div style="font-size:13px; font-weight:700;">Code on Demand (opcional)</div>
+                <div style="font-size:12px; color:var(--muted);">Servidor puede enviar código ejecutable (JavaScript).</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="eyebrow" style="margin-top:28px;">¿Por qué separar frontend y backend?</div>
+    <div class="grid-3">
+      <div class="card green">
+        <span class="card-icon">🔄</span>
+        <h3>Un backend, N frontends</h3>
+        <p style="font-size:13px;">La misma API de KaledDental sirve la app iOS, Android, web y el dashboard del odontólogo. Sin duplicar lógica.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🚀</span>
+        <h3>Deploy independiente</h3>
+        <p style="font-size:13px;">Actualizas el backend sin tocar el frontend. Puedes escalar solo el backend cuando hay pico de citas.</p>
+      </div>
+      <div class="card amber">
+        <span class="card-icon">👥</span>
+        <h3>Equipos paralelos</h3>
+        <p style="font-size:13px;">El team de iOS y el team de backend trabajan en paralelo, coordinándose solo en el contrato de la API.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───────── SLIDE 4: VERBOS HTTP ───────── -->
+  <div class="slide" id="s4">
+    <div class="eyebrow">Métodos HTTP</div>
+    <h2>Los <span style="color:var(--accent1)">Verbos</span> HTTP</h2>
+    <p style="margin-top:8px; max-width:600px;">En REST, las <strong>URLs son sustantivos</strong> y los <strong>métodos HTTP son los verbos</strong>. Interactúa con el simulador y observa qué pasa en el servidor y en la respuesta.</p>
+
+    <!-- MAIN LAYOUT -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px; align-items:start;">
+
+      <!-- LEFT: Laptop with App -->
+      <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+        <div style="position:relative; width:100%; max-width:340px;">
+          <!-- Screen bezel -->
+          <div style="background:#1a1a2e; border:2px solid #2d2d4a; border-radius:10px 10px 0 0; padding:7px 7px 0; box-shadow:0 0 30px rgba(0,0,0,0.6);">
+            <!-- Browser chrome -->
+            <div style="background:#0f0f1a; border-radius:6px 6px 0 0; padding:5px 10px; display:flex; align-items:center; gap:5px; border-bottom:1px solid #2d2d4a;">
+              <div style="width:7px;height:7px;border-radius:50%;background:#ef4444;"></div>
+              <div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;"></div>
+              <div style="width:7px;height:7px;border-radius:50%;background:#22c55e;"></div>
+              <div id="vbUrlBar" style="flex:1;background:#070711;border-radius:3px;padding:3px 8px;font-family:'DM Mono',monospace;font-size:8px;color:#64748b;border:1px solid #1e1e3a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">api.kaleddental.com/citas</div>
+              <div id="vbMethodBadge" style="background:rgba(0,245,196,0.15);border:1px solid rgba(0,245,196,0.3);border-radius:3px;padding:2px 6px;font-family:'DM Mono',monospace;font-size:8px;font-weight:700;color:#00f5c4;">GET</div>
+            </div>
+
+            <!-- App screen -->
+            <div style="background:#0a0a0f; min-height:300px; padding:12px; border-radius:0 0 6px 6px;">
+              <!-- App header -->
+              <div style="display:flex;align-items:center;gap:8px;padding-bottom:8px;border-bottom:1px solid #1e1e3a;margin-bottom:10px;">
+                <div style="width:16px;height:16px;border-radius:4px;background:linear-gradient(135deg,#7c3aed,#00f5c4);flex-shrink:0;"></div>
+                <span style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:#e2e8f0;">KaledDental</span>
+                <span style="font-size:8px;margin-left:auto;color:#64748b;font-family:'DM Mono',monospace;">Dr. Pérez</span>
+              </div>
+
+              <!-- Tabs -->
+              <div style="display:flex;gap:4px;margin-bottom:10px;">
+                <button onclick="vbSelectVerb('GET')"   id="vtGET"    class="vb-tab vb-active-get"   style="flex:1;padding:4px 0;border-radius:4px;border:1px solid rgba(0,245,196,0.3);background:rgba(0,245,196,0.12);color:#00f5c4;font-family:'DM Mono',monospace;font-size:8px;font-weight:700;cursor:pointer;">GET</button>
+                <button onclick="vbSelectVerb('POST')"  id="vtPOST"   class="vb-tab"                 style="flex:1;padding:4px 0;border-radius:4px;border:1px solid #1e1e3a;background:transparent;color:#64748b;font-family:'DM Mono',monospace;font-size:8px;font-weight:700;cursor:pointer;">POST</button>
+                <button onclick="vbSelectVerb('PUT')"   id="vtPUT"    class="vb-tab"                 style="flex:1;padding:4px 0;border-radius:4px;border:1px solid #1e1e3a;background:transparent;color:#64748b;font-family:'DM Mono',monospace;font-size:8px;font-weight:700;cursor:pointer;">PUT</button>
+                <button onclick="vbSelectVerb('PATCH')" id="vtPATCH"  class="vb-tab"                 style="flex:1;padding:4px 0;border-radius:4px;border:1px solid #1e1e3a;background:transparent;color:#64748b;font-family:'DM Mono',monospace;font-size:8px;font-weight:700;cursor:pointer;">PATCH</button>
+                <button onclick="vbSelectVerb('DELETE')" id="vtDELETE" class="vb-tab"                style="flex:1;padding:4px 0;border-radius:4px;border:1px solid #1e1e3a;background:transparent;color:#64748b;font-family:'DM Mono',monospace;font-size:8px;font-weight:700;cursor:pointer;">DEL</button>
+              </div>
+
+              <!-- Form panels (one per verb) -->
+
+              <!-- GET form -->
+              <div id="vfGET" style="display:flex;flex-direction:column;gap:7px;">
+                <div style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:#e2e8f0;">Consultar Citas del Día</div>
+                <div>
+                  <div style="font-size:7px;color:#64748b;font-family:'DM Mono',monospace;margin-bottom:2px;">Fecha</div>
+                  <input type="text" value="2024-03-15" id="vgDate" style="width:100%;background:#070711;border:1px solid #2d2d4a;border-radius:3px;padding:4px 7px;font-family:'DM Mono',monospace;font-size:8px;color:#38bdf8;outline:none;">
+                </div>
+                <div>
+                  <div style="font-size:7px;color:#64748b;font-family:'DM Mono',monospace;margin-bottom:2px;">Doctor ID</div>
+                  <input type="text" value="dr-perez-12" id="vgDoctor" style="width:100%;background:#070711;border:1px solid #2d2d4a;border-radius:3px;padding:4px 7px;font-family:'DM Mono',monospace;font-size:8px;color:#38bdf8;outline:none;">
+                </div>
+                <button onclick="vbExecute()" style="background:linear-gradient(90deg,rgba(0,245,196,0.2),rgba(0,245,196,0.1));border:1px solid rgba(0,245,196,0.4);color:#00f5c4;font-family:'DM Mono',monospace;font-size:9px;font-weight:700;padding:6px;border-radius:4px;cursor:pointer;width:100%;margin-top:2px;">GET /api/citas →</button>
+                <!-- Results list -->
+                <div id="vgResults" style="display:none;flex-direction:column;gap:4px;margin-top:2px;"></div>
+              </div>
+
+              <!-- POST form -->
+              <div id="vfPOST" style="display:none;flex-direction:column;gap:7px;">
+                <div style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:#e2e8f0;">Nueva Cita</div>
+                <div>
+                  <div style="font-size:7px;color:#64748b;font-family:'DM Mono',monospace;margin-bottom:2px;">Paciente</div>
+                  <input type="text" value="María González" id="vpPaciente" style="width:100%;background:#070711;border:1px solid #2d2d4a;border-radius:3px;padding:4px 7px;font-family:'DM Mono',monospace;font-size:8px;color:#f59e0b;outline:none;">
+                </div>
+                <div>
+                  <div style="font-size:7px;color:#64748b;font-family:'DM Mono',monospace;margin-bottom:2px;">Hora</div>
+                  <input type="text" value="10:30 AM" id="vpHora" style="width:100%;background:#070711;border:1px solid #2d2d4a;border-radius:3px;padding:4px 7px;font-family:'DM Mono',monospace;font-size:8px;color:#f59e0b;outline:none;">
+                </div>
+                <div>
+                  <div style="font-size:7px;color:#64748b;font-family:'DM Mono',monospace;margin-bottom:2px;">Tipo</div>
+                  <input type="text" value="Limpieza dental" id="vpTipo" style="width:100%;background:#070711;border:1px solid #2d2d4a;border-radius:3px;padding:4px 7px;font-family:'DM Mono',monospace;font-size:8px;color:#f59e0b;outline:none;">
+                </div>
+                <button onclick="vbExecute()" style="background:linear-gradient(90deg,rgba(245,158,11,0.2),rgba(245,158,11,0.1));border:1px solid rgba(245,158,11,0.4);color:#f59e0b;font-family:'DM Mono',monospace;font-size:9px;font-weight:700;padding:6px;border-radius:4px;cursor:pointer;width:100%;margin-top:2px;">POST /api/citas →</button>
+                <div id="vpResult" style="display:none;"></div>
+              </div>
+
+              <!-- PUT form -->
+              <div id="vfPUT" style="display:none;flex-direction:column;gap:7px;">
+                <div style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:#e2e8f0;">Reemplazar Cita #456 completa</div>
+                <div>
+                  <div style="font-size:7px;color:#64748b;font-family:'DM Mono',monospace;margin-bottom:2px;">Paciente</div>
+                  <input type="text" value="Carlos Ruiz" id="vputPac" style="width:100%;background:#070711;border:1px solid #2d2d4a;border-radius:3px;padding:4px 7px;font-family:'DM Mono',monospace;font-size:8px;color:#a78bfa;outline:none;">
+                </div>
+                <div>
+                  <div style="font-size:7px;color:#64748b;font-family:'DM Mono',monospace;margin-bottom:2px;">Hora</div>
+                  <input type="text" value="11:00 AM" id="vputHora" style="width:100%;background:#070711;border:1px solid #2d2d4a;border-radius:3px;padding:4px 7px;font-family:'DM Mono',monospace;font-size:8px;color:#a78bfa;outline:none;">
+                </div>
+                <div>
+                  <div style="font-size:7px;color:#64748b;font-family:'DM Mono',monospace;margin-bottom:2px;">Estado</div>
+                  <input type="text" value="confirmada" id="vputEstado" style="width:100%;background:#070711;border:1px solid #2d2d4a;border-radius:3px;padding:4px 7px;font-family:'DM Mono',monospace;font-size:8px;color:#a78bfa;outline:none;">
+                </div>
+                <div>
+                  <div style="font-size:7px;color:#64748b;font-family:'DM Mono',monospace;margin-bottom:2px;">Tipo</div>
+                  <input type="text" value="Ortodoncia" id="vputTipo" style="width:100%;background:#070711;border:1px solid #2d2d4a;border-radius:3px;padding:4px 7px;font-family:'DM Mono',monospace;font-size:8px;color:#a78bfa;outline:none;">
+                </div>
+                <button onclick="vbExecute()" style="background:linear-gradient(90deg,rgba(124,58,237,0.2),rgba(124,58,237,0.1));border:1px solid rgba(124,58,237,0.4);color:#a78bfa;font-family:'DM Mono',monospace;font-size:9px;font-weight:700;padding:6px;border-radius:4px;cursor:pointer;width:100%;margin-top:2px;">PUT /api/citas/456 →</button>
+                <div id="vputResult" style="display:none;"></div>
+              </div>
+
+              <!-- PATCH form -->
+              <div id="vfPATCH" style="display:none;flex-direction:column;gap:7px;">
+                <div style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:#e2e8f0;">Actualizar solo el estado</div>
+                <div style="background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.2);border-radius:4px;padding:6px 8px;font-size:8px;color:#64748b;font-family:'DM Mono',monospace;">Cita #456 — Carlos Ruiz — 11:00 AM</div>
+                <div>
+                  <div style="font-size:7px;color:#64748b;font-family:'DM Mono',monospace;margin-bottom:2px;">Solo cambia: Estado</div>
+                  <select id="vpatchEstado" style="width:100%;background:#070711;border:1px solid #2d2d4a;border-radius:3px;padding:4px 7px;font-family:'DM Mono',monospace;font-size:8px;color:#38bdf8;outline:none;">
+                    <option value="confirmada">confirmada</option>
+                    <option value="pendiente">pendiente</option>
+                    <option value="completada">completada</option>
+                  </select>
+                </div>
+                <div style="font-size:7px;color:#64748b;font-family:'DM Mono',monospace;background:rgba(0,0,0,0.3);padding:5px 7px;border-radius:3px;line-height:1.6;">No envías paciente, hora ni tipo.<br>Solo el campo que cambió.</div>
+                <button onclick="vbExecute()" style="background:linear-gradient(90deg,rgba(56,189,248,0.2),rgba(56,189,248,0.1));border:1px solid rgba(56,189,248,0.4);color:#38bdf8;font-family:'DM Mono',monospace;font-size:9px;font-weight:700;padding:6px;border-radius:4px;cursor:pointer;width:100%;margin-top:2px;">PATCH /api/citas/456 →</button>
+                <div id="vpatchResult" style="display:none;"></div>
+              </div>
+
+              <!-- DELETE form -->
+              <div id="vfDELETE" style="display:none;flex-direction:column;gap:7px;">
+                <div style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:#e2e8f0;">Cancelar Cita</div>
+                <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:4px;">
+                  <div style="font-size:8px;color:#fca5a5;font-family:'DM Mono',monospace;font-weight:700;">⚠ Esta acción no se puede deshacer</div>
+                  <div style="font-size:8px;color:#64748b;font-family:'DM Mono',monospace;">Cita #456 — Carlos Ruiz</div>
+                  <div style="font-size:8px;color:#64748b;font-family:'DM Mono',monospace;">11:00 AM — Ortodoncia</div>
+                </div>
+                <div>
+                  <div style="font-size:7px;color:#64748b;font-family:'DM Mono',monospace;margin-bottom:2px;">Confirma escribiendo el ID</div>
+                  <input type="text" value="456" id="vdelId" style="width:100%;background:#070711;border:1px solid rgba(239,68,68,0.4);border-radius:3px;padding:4px 7px;font-family:'DM Mono',monospace;font-size:8px;color:#ef4444;outline:none;">
+                </div>
+                <button onclick="vbExecute()" style="background:linear-gradient(90deg,rgba(239,68,68,0.25),rgba(239,68,68,0.1));border:1px solid rgba(239,68,68,0.5);color:#ef4444;font-family:'DM Mono',monospace;font-size:9px;font-weight:700;padding:6px;border-radius:4px;cursor:pointer;width:100%;margin-top:2px;">DELETE /api/citas/456 →</button>
+                <div id="vdelResult" style="display:none;"></div>
+              </div>
+
+            </div>
+          </div>
+          <!-- Laptop base -->
+          <div style="background:#1e1e38;height:8px;border-radius:0 0 4px 4px;border:2px solid #2d2d4a;border-top:none;"></div>
+          <div style="background:#252540;height:3px;border-radius:0 0 8px 8px;width:110%;margin-left:-5%;"></div>
+        </div>
+        <div style="font-family:'Space Mono',monospace;font-size:9px;color:#64748b;letter-spacing:0.1em;text-align:center;">CLIENTE — Navegador</div>
+      </div>
+
+      <!-- RIGHT: Info panel -->
+      <div style="display:flex;flex-direction:column;gap:12px;">
+
+        <!-- Verb explanation card -->
+        <div id="vbExplainCard" style="background:#13131f;border:1px solid #1e1e3a;border-radius:12px;overflow:hidden;">
+          <div id="vbExplainHeader" style="padding:12px 16px;border-bottom:1px solid #1e1e3a;display:flex;align-items:center;gap:10px;">
+            <span id="vbExplainBadge" class="method get">GET</span>
+            <div>
+              <div id="vbExplainTitle" style="font-size:14px;font-weight:700;">Leer / Consultar</div>
+              <div id="vbExplainSub" style="font-size:11px;color:var(--muted);margin-top:2px;">Solo lee datos, nunca los modifica</div>
+            </div>
+          </div>
+          <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
+            <div id="vbExplainDetail" style="font-size:12px;color:#94a3b8;line-height:1.7;"></div>
+            <div id="vbExplainCode" style="background:#070711;border:1px solid #1e1e3a;border-radius:6px;padding:10px 12px;font-family:'DM Mono',monospace;font-size:11px;line-height:1.8;"></div>
+          </div>
+        </div>
+
+        <!-- Request being sent (live) -->
+        <div id="vbRequestBox" style="background:#070711;border:1px solid #1e1e3a;border-radius:10px;overflow:hidden;display:none;">
+          <div style="padding:8px 14px;border-bottom:1px solid #1e1e3a;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#f59e0b;text-transform:uppercase;">📤 Request enviado</div>
+          <pre id="vbRequestPre" style="padding:10px 14px;font-family:'DM Mono',monospace;font-size:11px;line-height:1.8;margin:0;white-space:pre-wrap;word-break:break-all;"></pre>
+        </div>
+
+        <!-- Response received (live) -->
+        <div id="vbResponseBox" style="background:#070711;border:1px solid #1e1e3a;border-radius:10px;overflow:hidden;display:none;">
+          <div style="padding:8px 14px;border-bottom:1px solid #1e1e3a;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.12em;color:var(--accent1);text-transform:uppercase;">📥 Response del servidor</div>
+          <pre id="vbResponsePre" style="padding:10px 14px;font-family:'DM Mono',monospace;font-size:11px;line-height:1.8;margin:0;white-space:pre-wrap;word-break:break-all;"></pre>
+        </div>
+
+        <!-- Idempotency note -->
+        <div id="vbIdempNote" style="font-size:11px;color:#64748b;font-family:'DM Mono',monospace;background:rgba(0,0,0,0.2);border-radius:6px;padding:8px 12px;line-height:1.7;"></div>
+
+      </div>
+    </div>
+
+    <div class="highlight amber" style="margin-top:16px;">
+      ⚠ <strong>Anti-patrón</strong>: <code style="font-family:'DM Mono',monospace;background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:3px;">POST /api/cancelarCita</code> — Las URLs son sustantivos, los verbos HTTP hacen la acción.
+    </div>
+
+    <script>
+    var VB_CURRENT = 'GET';
+
+    var VB_CONFIG = {
+      GET: {
+        color: '#00f5c4', border: 'rgba(0,245,196,0.3)', bg: 'rgba(0,245,196,0.12)',
+        badgeClass: 'method get',
+        title: 'Leer / Consultar',
+        sub: 'Solo lee datos — nunca modifica. Seguro e idempotente.',
+        detail: 'GET trae información del servidor sin ningún efecto secundario. Puedes llamarlo 100 veces y el estado del servidor no cambia. Los navegadores pueden cachear las respuestas GET automáticamente.',
+        urlBar: 'api.kaleddental.com/citas?fecha=2024-03-15',
+        note: 'Idempotente: llamarlo N veces = mismo resultado. Seguro: no modifica datos. Cacheable: el browser puede guardar la respuesta.',
+        idempColor: '#00f5c4'
+      },
+      POST: {
+        color: '#f59e0b', border: 'rgba(245,158,11,0.3)', bg: 'rgba(245,158,11,0.12)',
+        badgeClass: 'method post',
+        title: 'Crear un nuevo recurso',
+        sub: 'Crea algo nuevo. NO idempotente.',
+        detail: 'POST crea un recurso nuevo en el servidor. Cada llamada crea una nueva entidad con su propio ID. Si lo llamas dos veces con los mismos datos, obtienes DOS citas distintas — por eso los sistemas de pago necesitan control de duplicados.',
+        urlBar: 'api.kaleddental.com/citas',
+        note: 'NO Idempotente: llamarlo 2 veces crea 2 citas diferentes. Siempre retorna 201 Created con el nuevo recurso en el body.',
+        idempColor: '#f59e0b'
+      },
+      PUT: {
+        color: '#a78bfa', border: 'rgba(124,58,237,0.3)', bg: 'rgba(124,58,237,0.12)',
+        badgeClass: 'method put',
+        title: 'Reemplazar completamente',
+        sub: 'Reemplaza el recurso completo. Idempotente.',
+        detail: 'PUT reemplaza el recurso COMPLETO. Debes enviar todos los campos, no solo los que cambiaron. Si omites un campo, queda vacío. Llamarlo 5 veces con los mismos datos produce el mismo resultado que llamarlo 1 vez.',
+        urlBar: 'api.kaleddental.com/citas/456',
+        note: 'Idempotente: llamarlo N veces con los mismos datos = mismo resultado. Debes enviar el objeto COMPLETO, no solo los campos modificados.',
+        idempColor: '#a78bfa'
+      },
+      PATCH: {
+        color: '#38bdf8', border: 'rgba(56,189,248,0.3)', bg: 'rgba(56,189,248,0.12)',
+        badgeClass: 'method patch',
+        title: 'Modificación parcial',
+        sub: 'Solo envía los campos que cambian. Más eficiente.',
+        detail: 'PATCH actualiza solo los campos que envías. Si la cita tiene 8 campos y solo cambias el estado, envías solo { estado: "confirmada" }. Mucho más eficiente que PUT para cambios pequeños.',
+        urlBar: 'api.kaleddental.com/citas/456',
+        note: 'Más eficiente que PUT para cambios pequeños. Solo envías lo que cambia. El servidor fusiona los campos recibidos con los existentes.',
+        idempColor: '#38bdf8'
+      },
+      DELETE: {
+        color: '#ef4444', border: 'rgba(239,68,68,0.3)', bg: 'rgba(239,68,68,0.12)',
+        badgeClass: 'method delete',
+        title: 'Eliminar un recurso',
+        sub: 'Elimina el recurso. Idempotente.',
+        detail: 'DELETE elimina el recurso. Si lo llamas una segunda vez, el servidor retorna 404 (ya no existe), pero el EFECTO es el mismo: el recurso no existe. Por eso se considera idempotente. Retorna 204 No Content (sin body).',
+        urlBar: 'api.kaleddental.com/citas/456',
+        note: 'Idempotente: el resultado final es el mismo (recurso eliminado), aunque la segunda llamada retorne 404. Típicamente retorna 204 No Content.',
+        idempColor: '#ef4444'
+      }
+    };
+
+    function vbSelectVerb(verb) {
+      VB_CURRENT = verb;
+      var tabs = {GET:'vtGET',POST:'vtPOST',PUT:'vtPUT',PATCH:'vtPATCH',DELETE:'vtDELETE'};
+      var colors = {GET:'#00f5c4',POST:'#f59e0b',PUT:'#a78bfa',PATCH:'#38bdf8',DELETE:'#ef4444'};
+      var borders = {GET:'rgba(0,245,196,0.3)',POST:'rgba(245,158,11,0.3)',PUT:'rgba(124,58,237,0.3)',PATCH:'rgba(56,189,248,0.3)',DELETE:'rgba(239,68,68,0.3)'};
+      var bgs = {GET:'rgba(0,245,196,0.12)',POST:'rgba(245,158,11,0.12)',PUT:'rgba(124,58,237,0.12)',PATCH:'rgba(56,189,248,0.12)',DELETE:'rgba(239,68,68,0.12)'};
+
+      // Reset all tabs
+      Object.keys(tabs).forEach(function(v) {
+        var t = document.getElementById(tabs[v]);
+        if (!t) return;
+        t.style.background = 'transparent';
+        t.style.borderColor = '#1e1e3a';
+        t.style.color = '#64748b';
+      });
+      // Activate selected
+      var selTab = document.getElementById(tabs[verb]);
+      if (selTab) {
+        selTab.style.background = bgs[verb];
+        selTab.style.borderColor = borders[verb];
+        selTab.style.color = colors[verb];
+      }
+
+      // Show/hide forms
+      var forms = {GET:'vfGET',POST:'vfPOST',PUT:'vfPUT',PATCH:'vfPATCH',DELETE:'vfDELETE'};
+      Object.keys(forms).forEach(function(v) {
+        var f = document.getElementById(forms[v]);
+        if (f) f.style.display = (v === verb) ? 'flex' : 'none';
+      });
+
+      // Update method badge in URL bar
+      var badge = document.getElementById('vbMethodBadge');
+      var cfg = VB_CONFIG[verb];
+      if (badge && cfg) {
+        badge.textContent = verb;
+        badge.style.color = cfg.color;
+        badge.style.background = cfg.bg;
+        badge.style.borderColor = cfg.border;
+      }
+
+      // Update URL bar
+      var urlBar = document.getElementById('vbUrlBar');
+      if (urlBar && cfg) urlBar.textContent = cfg.urlBar;
+
+      // Update explain card
+      var header = document.getElementById('vbExplainHeader');
+      if (header && cfg) header.style.borderBottomColor = cfg.border;
+      var eB = document.getElementById('vbExplainBadge');
+      if (eB) { eB.className = cfg.badgeClass; eB.textContent = verb; }
+      var eT = document.getElementById('vbExplainTitle');
+      if (eT) eT.textContent = cfg.title;
+      var eS = document.getElementById('vbExplainSub');
+      if (eS) eS.textContent = cfg.sub;
+      var eD = document.getElementById('vbExplainDetail');
+      if (eD) eD.textContent = cfg.detail;
+      var eC = document.getElementById('vbExplainCode');
+      if (eC) { eC.textContent = ''; }
+
+      // Update idempotency note
+      var iN = document.getElementById('vbIdempNote');
+      if (iN && cfg) {
+        iN.textContent = cfg.note;
+        iN.style.borderLeft = '3px solid ' + cfg.idempColor;
+        iN.style.paddingLeft = '10px';
+      }
+
+      // Hide request/response boxes
+      document.getElementById('vbRequestBox').style.display = 'none';
+      document.getElementById('vbResponseBox').style.display = 'none';
+    }
+
+    function vbExecute() {
+      var verb = VB_CURRENT;
+      var cfg = VB_CONFIG[verb];
+      var reqText = '';
+      var resText = '';
+
+      if (verb === 'GET') {
+        var fecha = document.getElementById('vgDate').value || '2024-03-15';
+        var dr = document.getElementById('vgDoctor').value || 'dr-perez-12';
+        reqText = verb + ' /api/citas?fecha=' + fecha + '&doctor=' + dr + ' HTTP/1.1\nHost: api.kaleddental.com\nAuthorization: Bearer eyJhbGci...\nAccept: application/json';
+        resText = 'HTTP/1.1 200 OK\nContent-Type: application/json\n\n{\n  "data": [\n    { "id": 101, "paciente": "Ana López", "hora": "09:00" },\n    { "id": 102, "paciente": "Luis Mora", "hora": "10:00" },\n    { "id": 103, "paciente": "Sara Vélez", "hora": "10:30" }\n  ],\n  "total": 3\n}';
+        // Show results in laptop
+        var r = document.getElementById('vgResults');
+        if (r) {
+          r.innerHTML = '<div style="font-size:7px;color:var(--accent1);font-family:DM Mono,monospace;margin-bottom:3px;">3 citas encontradas:</div>' +
+            ['101 — Ana López — 09:00','102 — Luis Mora — 10:00','103 — Sara Vélez — 10:30'].map(function(c){
+              return '<div style="background:#070711;border:1px solid rgba(0,245,196,0.2);border-radius:3px;padding:3px 6px;font-family:DM Mono,monospace;font-size:7px;color:#94a3b8;">'+c+'</div>';
+            }).join('');
+          r.style.display = 'flex';
+        }
+      } else if (verb === 'POST') {
+        var pac = document.getElementById('vpPaciente').value;
+        var hora = document.getElementById('vpHora').value;
+        var tipo = document.getElementById('vpTipo').value;
+        reqText = 'POST /api/citas HTTP/1.1\nHost: api.kaleddental.com\nAuthorization: Bearer eyJhbGci...\nContent-Type: application/json\n\n{\n  "paciente": "' + pac + '",\n  "hora": "' + hora + '",\n  "tipo": "' + tipo + '",\n  "doctor_id": "dr-perez-12"\n}';
+        resText = 'HTTP/1.1 201 Created\nContent-Type: application/json\nLocation: /api/citas/789\n\n{\n  "id": 789,\n  "paciente": "' + pac + '",\n  "hora": "' + hora + '",\n  "tipo": "' + tipo + '",\n  "estado": "pendiente"\n}';
+        var vpr = document.getElementById('vpResult');
+        if (vpr) {
+          vpr.innerHTML = '<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:4px;padding:6px 8px;"><div style="font-size:7px;color:#f59e0b;font-family:DM Mono,monospace;">201 Created — Cita #789 creada</div><div style="font-size:8px;color:#e2e8f0;font-family:DM Mono,monospace;margin-top:2px;">' + pac + ' · ' + hora + '</div></div>';
+          vpr.style.display = 'block';
+        }
+      } else if (verb === 'PUT') {
+        var pp = document.getElementById('vputPac').value;
+        var ph = document.getElementById('vputHora').value;
+        var pe = document.getElementById('vputEstado').value;
+        var pt = document.getElementById('vputTipo').value;
+        reqText = 'PUT /api/citas/456 HTTP/1.1\nHost: api.kaleddental.com\nAuthorization: Bearer eyJhbGci...\nContent-Type: application/json\n\n{\n  "paciente": "' + pp + '",\n  "hora": "' + ph + '",\n  "estado": "' + pe + '",\n  "tipo": "' + pt + '",\n  "doctor_id": "dr-perez-12"\n}';
+        resText = 'HTTP/1.1 200 OK\nContent-Type: application/json\n\n{\n  "id": 456,\n  "paciente": "' + pp + '",\n  "hora": "' + ph + '",\n  "estado": "' + pe + '",\n  "tipo": "' + pt + '"\n}';
+        var vputR = document.getElementById('vputResult');
+        if (vputR) {
+          vputR.innerHTML = '<div style="background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.3);border-radius:4px;padding:6px 8px;"><div style="font-size:7px;color:#a78bfa;font-family:DM Mono,monospace;">200 OK — Cita #456 reemplazada</div><div style="font-size:8px;color:#e2e8f0;font-family:DM Mono,monospace;margin-top:2px;">' + pp + ' · ' + ph + ' · ' + pt + '</div></div>';
+          vputR.style.display = 'block';
+        }
+      } else if (verb === 'PATCH') {
+        var pest = document.getElementById('vpatchEstado').value;
+        reqText = 'PATCH /api/citas/456 HTTP/1.1\nHost: api.kaleddental.com\nAuthorization: Bearer eyJhbGci...\nContent-Type: application/json\n\n{\n  "estado": "' + pest + '"\n}';
+        resText = 'HTTP/1.1 200 OK\nContent-Type: application/json\n\n{\n  "id": 456,\n  "paciente": "Carlos Ruiz",\n  "hora": "11:00 AM",\n  "estado": "' + pest + '",\n  "tipo": "Ortodoncia"\n}';
+        var vpatR = document.getElementById('vpatchResult');
+        if (vpatR) {
+          vpatR.innerHTML = '<div style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.3);border-radius:4px;padding:6px 8px;"><div style="font-size:7px;color:#38bdf8;font-family:DM Mono,monospace;">200 OK — Solo estado actualizado</div><div style="font-size:8px;color:#e2e8f0;font-family:DM Mono,monospace;margin-top:2px;">estado: ' + pest + '</div></div>';
+          vpatR.style.display = 'block';
+        }
+      } else if (verb === 'DELETE') {
+        var vid = document.getElementById('vdelId').value || '456';
+        reqText = 'DELETE /api/citas/' + vid + ' HTTP/1.1\nHost: api.kaleddental.com\nAuthorization: Bearer eyJhbGci...\n\n(sin body)';
+        resText = 'HTTP/1.1 204 No Content\n\n(sin body — la cita fue eliminada)\n\n// Segunda llamada retornaría:\nHTTP/1.1 404 Not Found';
+        var vdR = document.getElementById('vdelResult');
+        if (vdR) {
+          vdR.innerHTML = '<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.35);border-radius:4px;padding:6px 8px;"><div style="font-size:7px;color:#ef4444;font-family:DM Mono,monospace;">204 No Content — Cita #' + vid + ' eliminada</div><div style="font-size:8px;color:#64748b;font-family:DM Mono,monospace;margin-top:2px;">La cita ya no existe en el sistema</div></div>';
+          vdR.style.display = 'block';
+        }
+      }
+
+      // Show request box with typing animation
+      var reqBox = document.getElementById('vbRequestBox');
+      var reqPre = document.getElementById('vbRequestPre');
+      if (reqBox && reqPre && cfg) {
+        reqBox.style.display = 'block';
+        reqBox.style.borderColor = cfg.border;
+        reqPre.textContent = '';
+        reqPre.style.color = cfg.color;
+        // Type it out
+        var i = 0;
+        var typingInterval = setInterval(function() {
+          reqPre.textContent += reqText[i];
+          i++;
+          if (i >= reqText.length) {
+            clearInterval(typingInterval);
+            // After typing done, show response
+            setTimeout(function() {
+              var resBox = document.getElementById('vbResponseBox');
+              var resPre = document.getElementById('vbResponsePre');
+              if (resBox && resPre && cfg) {
+                resBox.style.display = 'block';
+                resBox.style.borderColor = cfg.border;
+                resPre.textContent = '';
+                resPre.style.color = cfg.color;
+                var j = 0;
+                var resInterval = setInterval(function() {
+                  resPre.textContent += resText[j];
+                  j++;
+                  if (j >= resText.length) clearInterval(resInterval);
+                }, 10);
+              }
+            }, 400);
+          }
+        }, 12);
+      }
+    }
+
+    // Init on load
+    vbSelectVerb('GET');
+    </script>
+
+  </div>
+
+    <!-- ───────── SLIDE 5: CÓDIGOS DE ESTADO ───────── -->
+  <div class="slide" id="s5">
+    <div class="eyebrow">Sistema de señales</div>
+    <h2>Códigos de <span style="color:var(--accent1)">Estado</span> HTTP</h2>
+    <p style="margin-top:10px; max-width:600px;">Los códigos de estado son el sistema de señales de la web. Con solo el número, puedes diagnosticar qué pasó. Un buen developer lee logs y ve el código antes que el mensaje.</p>
+
+    <div class="grid-2" style="margin-top:24px; align-items:start;">
+      <div>
+        <div class="eyebrow">2xx — éxito ✅</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span class="status s2xx">
+              <span class="status-dot"></span>
+              <strong>200 OK</strong>
+            </span>
+            <span style="font-size:13px; color:var(--muted);">Todo bien, aquí están tus datos</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span class="status s2xx">
+              <span class="status-dot"></span>
+              <strong>201 Created</strong>
+            </span>
+            <span style="font-size:13px; color:var(--muted);">Recurso creado exitosamente</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span class="status s2xx">
+              <span class="status-dot"></span>
+              <strong>204 No Content</strong>
+            </span>
+            <span style="font-size:13px; color:var(--muted);">Éxito, sin body (DELETE típico)</span>
+          </div>
+        </div>
+
+        <div class="eyebrow" style="margin-top:20px;">3xx — redirección 🔀</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span class="status s3xx">
+              <span class="status-dot"></span>
+              <strong>301 Moved</strong>
+            </span>
+            <span style="font-size:13px; color:var(--muted);">URL cambió permanentemente</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span class="status s3xx">
+              <span class="status-dot"></span>
+              <strong>304 Not Modified</strong>
+            </span>
+            <span style="font-size:13px; color:var(--muted);">Datos sin cambios, usa tu caché</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="eyebrow">4xx — error del cliente ❌</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; align-items:start; gap:12px;">
+            <span class="status s4xx" style="flex-shrink:0">
+              <span class="status-dot"></span>
+              <strong>400 Bad Request</strong>
+            </span>
+            <span style="font-size:13px; color:var(--muted);">Tu request está malformado o faltan datos</span>
+          </div>
+          <div style="display:flex; align-items:start; gap:12px;">
+            <span class="status s4xx" style="flex-shrink:0">
+              <span class="status-dot"></span>
+              <strong>401 Unauthorized</strong>
+            </span>
+            <span style="font-size:13px; color:var(--muted);">"No sé quién eres" — falta autenticación</span>
+          </div>
+          <div style="display:flex; align-items:start; gap:12px;">
+            <span class="status s4xx" style="flex-shrink:0">
+              <span class="status-dot"></span>
+              <strong>403 Forbidden</strong>
+            </span>
+            <span style="font-size:13px; color:var(--muted);">"Sé quién eres, pero no puedes" — sin permiso</span>
+          </div>
+          <div style="display:flex; align-items:start; gap:12px;">
+            <span class="status s4xx" style="flex-shrink:0">
+              <span class="status-dot"></span>
+              <strong>404 Not Found</strong>
+            </span>
+            <span style="font-size:13px; color:var(--muted);">El recurso no existe en esa URL</span>
+          </div>
+          <div style="display:flex; align-items:start; gap:12px;">
+            <span class="status s4xx" style="flex-shrink:0">
+              <span class="status-dot"></span>
+              <strong>422 Unprocessable</strong>
+            </span>
+            <span style="font-size:13px; color:var(--muted);">Formato correcto pero datos inválidos</span>
+          </div>
+          <div style="display:flex; align-items:start; gap:12px;">
+            <span class="status s4xx" style="flex-shrink:0">
+              <span class="status-dot"></span>
+              <strong>429 Too Many Reqs</strong>
+            </span>
+            <span style="font-size:13px; color:var(--muted);">Rate limiting — estás enviando muy rápido</span>
+          </div>
+        </div>
+
+        <div class="eyebrow" style="margin-top:20px;">5xx — error del servidor 💥</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span class="status s5xx">
+              <span class="status-dot"></span>
+              <strong>500 Internal Error</strong>
+            </span>
+            <span style="font-size:13px; color:var(--muted);">"Nuestro error" — bug en el servidor</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span class="status s5xx">
+              <span class="status-dot"></span>
+              <strong>502 Bad Gateway</strong>
+            </span>
+            <span style="font-size:13px; color:var(--muted);">Proxy recibió respuesta inválida del backend</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span class="status s5xx">
+              <span class="status-dot"></span>
+              <strong>503 Unavailable</strong>
+            </span>
+            <span style="font-size:13px; color:var(--muted);">Servidor caído o sobrecargado</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="highlight" style="margin-top:20px;">
+      <strong>Regla de oro:</strong> 4xx = error del cliente (tú mandaste algo mal). 5xx = error del servidor (nosotros fallamos). Cuando un usuario llama a soporte, lo primero que haces es revisar qué código regresó.
+    </div>
+  </div>
+
+  <!-- ───────── SLIDE 6: HEADERS ───────── -->
+  <div class="slide" id="s6">
+    <div class="eyebrow">Metadatos de cada request</div>
+    <h2>HTTP <span style="color:var(--accent1)">Headers</span></h2>
+    <p style="margin-top:10px; max-width:600px;">Los headers son pares clave-valor que viajan con cada request y response. Contienen instrucciones, credenciales, formatos y contexto. Un senior developer lee headers instintivamente.</p>
+
+    <div class="eyebrow" style="margin-top:24px;">headers de request más importantes</div>
+    <div style="display:flex; flex-direction:column;">
+      <div class="header-row">
+        <span class="header-key">Authorization: Bearer eyJhbGci...</span>
+        <span class="header-val">JWT token de autenticación</span>
+        <span class="header-desc">👤 Quién eres</span>
+      </div>
+      <div class="header-row">
+        <span class="header-key">Content-Type: application/json</span>
+        <span class="header-val">Formato del body que envías</span>
+        <span class="header-desc">📄 Qué formato mandas</span>
+      </div>
+      <div class="header-row">
+        <span class="header-key">Accept: application/json</span>
+        <span class="header-val">Formato que aceptas en respuesta</span>
+        <span class="header-desc">📥 Qué formato quieres recibir</span>
+      </div>
+      <div class="header-row">
+        <span class="header-key">Cache-Control: no-store</span>
+        <span class="header-val">No guardes esta respuesta en caché</span>
+        <span class="header-desc">🔒 Crítico para datos médicos</span>
+      </div>
+      <div class="header-row">
+        <span class="header-key">X-Request-Id: abc-123-xyz</span>
+        <span class="header-val">ID único para rastrear el request</span>
+        <span class="header-desc">🔍 Trazabilidad en logs</span>
+      </div>
+      <div class="header-row">
+        <span class="header-key">Origin: https://app.kaleddental.com</span>
+        <span class="header-val">De dónde viene el request (CORS)</span>
+        <span class="header-desc">🌐 Seguridad cross-origin</span>
+      </div>
+    </div>
+
+    <div class="eyebrow" style="margin-top:24px;">headers de response más importantes</div>
+    <div style="display:flex; flex-direction:column;">
+      <div class="header-row">
+        <span class="header-key">Content-Type: application/json</span>
+        <span class="header-val">Formato del body que te devuelvo</span>
+        <span class="header-desc">📤 Qué formato recibes</span>
+      </div>
+      <div class="header-row">
+        <span class="header-key">Cache-Control: max-age=3600</span>
+        <span class="header-val">Puedes cachear esto por 1 hora</span>
+        <span class="header-desc">⚡ Optimización de velocidad</span>
+      </div>
+      <div class="header-row">
+        <span class="header-key">Access-Control-Allow-Origin: *</span>
+        <span class="header-val">Cualquier dominio puede usar esta API</span>
+        <span class="header-desc">🌍 CORS policy</span>
+      </div>
+      <div class="header-row">
+        <span class="header-key">Retry-After: 60</span>
+        <span class="header-val">Vuelve a intentar en 60 segundos</span>
+        <span class="header-desc">⏱️ Rate limiting feedback</span>
+      </div>
+      <div class="header-row">
+        <span class="header-key">Set-Cookie: session=abc; HttpOnly</span>
+        <span class="header-val">Guarda esta cookie (solo HTTP, no JS)</span>
+        <span class="header-desc">🍪 Sesión segura</span>
+      </div>
+    </div>
+
+    <div class="code-block" style="margin-top:20px;">
+<span class="c">// Request completo real hacia KaledDental</span>
+<span class="k">POST</span> <span class="s">/api/v1/citas</span> <span class="n">HTTP/2</span>
+<span class="v">Host:</span>          <span class="s">api.kaleddental.com</span>
+<span class="v">Authorization:</span> <span class="s">Bearer eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJkci1wZXJlei0xMjMi...</span>
+<span class="v">Content-Type:</span>  <span class="s">application/json</span>
+<span class="v">Accept:</span>        <span class="s">application/json</span>
+<span class="v">X-Request-Id:</span>  <span class="s">550e8400-e29b-41d4-a716-446655440000</span>
+<span class="v">X-App-Version:</span> <span class="s">2.4.1</span>
+
+{ <span class="v">"paciente_id":</span> <span class="n">789</span>, <span class="v">"dr_id":</span> <span class="n">12</span>, <span class="v">"fecha":</span> <span class="s">"2024-03-20T10:00:00Z"</span>, <span class="v">"tipo":</span> <span class="s">"limpieza"</span> }
+    </div>
+  </div>
+
+  <!-- ───────── SLIDE 7: IDEMPOTENCIA ───────── -->
+  <div class="slide" id="s7">
+    <div class="eyebrow">Propiedad matemática en HTTP</div>
+    <h2><span style="color:var(--accent1)">Idempotencia</span></h2>
+    <p style="margin-top:10px; max-width:640px;">Una operación es idempotente si ejecutarla múltiples veces produce el <strong>mismo resultado</strong> que ejecutarla una sola vez. Concepto clave para sistemas de pago y operaciones críticas.</p>
+
+    <div class="highlight purple" style="margin-top:20px;">
+      <strong>Definición formal:</strong> f(f(x)) = f(x). En HTTP: hacer el request N veces tiene el mismo efecto en el sistema que hacerlo 1 vez.
+    </div>
+
+    <div style="margin-top:24px;">
+      <div class="idemp-row" style="border-bottom: none; padding-bottom:0;">
+        <div style="font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); text-transform:uppercase;">MÉTODO</div>
+        <div style="font-size:11px; font-family:'Space Mono',monospace; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em;">DESCRIPCIÓN</div>
+        <div style="font-size:11px; font-family:'Space Mono',monospace; color:var(--muted); text-transform:uppercase; text-align:center;">IDEMPOTENTE</div>
+      </div>
+      <div class="idemp-row">
+        <span class="method get">GET</span>
+        <span style="font-size:13px; color:#94a3b8;">Leer datos del servidor. No modifica nada. Puedes llamarlo 100 veces, el estado no cambia.</span>
+        <span class="check" style="text-align:center; font-size:20px;">✓</span>
+      </div>
+      <div class="idemp-row">
+        <span class="method put">PUT</span>
+        <span style="font-size:13px; color:#94a3b8;">Reemplaza el recurso completo. Llamarlo 5 veces con los mismos datos = mismo resultado que 1 vez.</span>
+        <span class="check" style="text-align:center; font-size:20px;">✓</span>
+      </div>
+      <div class="idemp-row">
+        <span class="method delete">DELETE</span>
+        <span style="font-size:13px; color:#94a3b8;">Elimina el recurso. Llamarlo una segunda vez retorna 404, pero el estado del sistema es el mismo.</span>
+        <span class="check" style="text-align:center; font-size:20px;">✓</span>
+      </div>
+      <div class="idemp-row">
+        <span class="method patch">PATCH</span>
+        <span style="font-size:13px; color:#94a3b8;">Depende de la implementación. Puede o no ser idempotente según cómo definas la lógica.</span>
+        <span style="text-align:center; font-size:20px; color:var(--accent3);">~</span>
+      </div>
+      <div class="idemp-row" style="border-bottom:none;">
+        <span class="method post">POST</span>
+        <span style="font-size:13px; color:#94a3b8;">Crear recurso. Llamarlo 2 veces crea 2 recursos. NO es idempotente.</span>
+        <span class="cross" style="text-align:center; font-size:20px;">✗</span>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px;">
+      <div class="card red">
+        <span class="card-icon">💳</span>
+        <h3>El problema del doble cobro</h3>
+        <p style="font-size:13px;">Usuario paga en KaledPark. La app tiene error de red y reintenta. Si POST no tiene control de duplicados → <strong style="color:var(--accent4)">cobras dos veces</strong>. Esto destruye la confianza del usuario.</p>
+      </div>
+      <div class="card green">
+        <span class="card-icon">🔑</span>
+        <h3>Idempotency Key</h3>
+        <p style="font-size:13px;">Solución: enviar un UUID único en el header <code style="font-family:'DM Mono',monospace">Idempotency-Key</code>. Si el servidor ya procesó ese key, retorna la respuesta original sin cobrar de nuevo. Stripe lo usa así.</p>
+        <div class="code-block" style="margin-top:10px; padding:8px 12px; font-size:12px;">
+<span class="k">POST</span> <span class="s">/api/pagos</span>
+<span class="v">Idempotency-Key:</span> <span class="s">pay-uuid-abc-123</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───────── SLIDE 8: DISEÑO DE APIs ───────── -->
+  <div class="slide" id="s8">
+    <div class="eyebrow">Buenas prácticas</div>
+    <h2>Diseñar una <span style="color:var(--accent1)">API REST</span> profesional</h2>
+
+    <div class="grid-2" style="margin-top:20px; align-items:start;">
+      <div>
+        <div class="eyebrow">Estructura de rutas</div>
+        <div class="code-block">
+<span class="c">// ✅ CORRECTO — sustantivos, plural, jerárquico</span>
+<span class="k">GET</span>    <span class="s">/api/v1/clientes</span>           <span class="c">→ listar</span>
+<span class="k">POST</span>   <span class="s">/api/v1/clientes</span>           <span class="c">→ crear</span>
+<span class="k">GET</span>    <span class="s">/api/v1/clientes/123</span>        <span class="c">→ uno</span>
+<span class="k">PUT</span>    <span class="s">/api/v1/clientes/123</span>        <span class="c">→ reemplazar</span>
+<span class="k">PATCH</span>  <span class="s">/api/v1/clientes/123</span>        <span class="c">→ actualizar</span>
+<span class="k">DELETE</span> <span class="s">/api/v1/clientes/123</span>        <span class="c">→ eliminar</span>
+
+<span class="c">// Relaciones anidadas</span>
+<span class="k">GET</span>    <span class="s">/api/v1/clientes/123/citas</span>  <span class="c">→ citas del cliente</span>
+<span class="k">POST</span>   <span class="s">/api/v1/clientes/123/citas</span>  <span class="c">→ crear cita al cliente</span>
+
+<span class="c">// ❌ INCORRECTO</span>
+<span class="k">POST</span>   <span class="s">/api/crearCliente</span>
+<span class="k">GET</span>    <span class="s">/api/getClientes</span>
+<span class="k">POST</span>   <span class="s">/api/cliente/delete/123</span>
+        </div>
+      </div>
+      <div>
+        <div class="eyebrow">Respuestas consistentes</div>
+        <div class="code-block">
+<span class="c">// Éxito en lista</span>
+{
+  <span class="v">"data":</span> [...],
+  <span class="v">"meta":</span> {
+    <span class="v">"total":</span> <span class="n">247</span>,
+    <span class="v">"page":</span> <span class="n">1</span>,
+    <span class="v">"per_page":</span> <span class="n">20</span>
+  }
+}
+
+<span class="c">// Error siempre en mismo formato</span>
+{
+  <span class="v">"error":</span> {
+    <span class="v">"code":</span> <span class="s">"VALIDATION_ERROR"</span>,
+    <span class="v">"message":</span> <span class="s">"El campo email es requerido"</span>,
+    <span class="v">"field":</span> <span class="s">"email"</span>,
+    <span class="v">"request_id":</span> <span class="s">"abc-123"</span>
+  }
+}
+        </div>
+      </div>
+    </div>
+
+    <div class="eyebrow" style="margin-top:24px;">reglas de oro del diseño</div>
+    <div class="grid-3">
+      <div class="card green">
+        <span class="card-icon">📌</span>
+        <h3>Versionado</h3>
+        <p style="font-size:13px;">Siempre <code style="font-family:'DM Mono',monospace">/api/v1/</code>. Cuando hagas cambios breaking, crea <code style="font-family:'DM Mono',monospace">/api/v2/</code> sin romper los clientes actuales.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🔍</span>
+        <h3>Filtros y Paginación</h3>
+        <p style="font-size:13px;"><code style="font-family:'DM Mono',monospace">?page=2&per_page=20&status=activo</code>. Nunca retornes 10,000 registros sin paginar.</p>
+      </div>
+      <div class="card amber">
+        <span class="card-icon">🔒</span>
+        <h3>Seguridad por defecto</h3>
+        <p style="font-size:13px;">HTTPS siempre. JWT en headers, no en query params. Rate limiting. Validar y sanitizar todos los inputs.</p>
+      </div>
+    </div>
+
+    <div class="highlight" style="margin-top:16px;">
+      <strong>KaledSoft standard:</strong> Todas las APIs de KaledDental, KaledWash y KaledPark siguen la misma estructura. Un developer que aprende una, ya sabe cómo funciona la otra.
+    </div>
+  </div>
+
+  <!-- ───────── SLIDE 9: MCP ───────── -->
+  <div class="slide" id="s9">
+    <div class="eyebrow">El futuro es ahora</div>
+    <h2>MCP — El <span style="color:var(--accent1)">TCP/IP</span> de la IA</h2>
+    <p style="margin-top:10px; max-width:640px;">En 2024, Anthropic publicó el <strong>Model Context Protocol</strong>. La misma necesidad de 1974: que los sistemas se comuniquen con un estándar común. Ahora, los agentes de IA.</p>
+
+    <div class="highlight purple" style="margin-top:20px;">
+      <strong>Historia se repite:</strong> En 1974, cada computadora tenía su propio protocolo propietario. Cerf y Kahn crearon TCP/IP para estandarizar. En 2024, cada AI tool tenía su propia integración custom. Anthropic creó MCP para estandarizar.
+    </div>
+
+    <div style="margin-top:24px;">
+      <div class="eyebrow">arquitectura MCP</div>
+      <div class="mcp-flow">
+        <div class="mcp-node">
+          <span class="icon">🤖</span>
+          <div class="name">Claude / GPT</div>
+          <div class="sub">MCP Client</div>
+        </div>
+        <div class="mcp-arrow">→</div>
+        <div class="mcp-node" style="border-color:var(--accent1); background:rgba(0,245,196,0.05);">
+          <span class="icon">🔌</span>
+          <div class="name">MCP Protocol</div>
+          <div class="sub">JSON-RPC 2.0</div>
+        </div>
+        <div class="mcp-arrow">→</div>
+        <div class="mcp-node">
+          <span class="icon">🗄️</span>
+          <div class="name">MCP Server</div>
+          <div class="sub">Tool exposer</div>
+        </div>
+        <div class="mcp-arrow">→</div>
+        <div class="mcp-node">
+          <span class="icon">🔧</span>
+          <div class="name">Tools</div>
+          <div class="sub">Externas</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px; align-items:start;">
+      <div>
+        <div class="eyebrow">¿Qué puede hacer un agente con MCP?</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div class="card green" style="padding:12px 16px; display:flex; align-items:center; gap:10px;">
+            <span style="font-size:20px;">📅</span>
+            <span style="font-size:13px;">Leer y crear citas en Google Calendar</span>
+          </div>
+          <div class="card" style="padding:12px 16px; display:flex; align-items:center; gap:10px;">
+            <span style="font-size:20px;">📧</span>
+            <span style="font-size:13px;">Enviar emails de confirmación de KaledDental</span>
+          </div>
+          <div class="card amber" style="padding:12px 16px; display:flex; align-items:center; gap:10px;">
+            <span style="font-size:20px;">💾</span>
+            <span style="font-size:13px;">Consultar la DB de KaledPark y liberar espacios</span>
+          </div>
+          <div class="card purple" style="padding:12px 16px; display:flex; align-items:center; gap:10px;">
+            <span style="font-size:20px;">💳</span>
+            <span style="font-size:13px;">Procesar pagos en Stripe sin salir del chat</span>
+          </div>
+          <div class="card red" style="padding:12px 16px; display:flex; align-items:center; gap:10px;">
+            <span style="font-size:20px;">🌐</span>
+            <span style="font-size:13px;">Buscar en internet y traer resultados en tiempo real</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="eyebrow">MCP vs REST — similitudes</div>
+        <table class="rest-table">
+          <thead>
+            <tr>
+              <th>REST API</th>
+              <th>MCP</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tag green">Endpoint URL</span></td>
+              <td><span class="tag">Tool name</span></td>
+            </tr>
+            <tr>
+              <td><span class="tag green">GET/POST/PUT</span></td>
+              <td><span class="tag">tools/call</span></td>
+            </tr>
+            <tr>
+              <td><span class="tag green">JSON Body</span></td>
+              <td><span class="tag">arguments: {}</span></td>
+            </tr>
+            <tr>
+              <td><span class="tag green">Response 200</span></td>
+              <td><span class="tag">CallToolResult</span></td>
+            </tr>
+            <tr>
+              <td><span class="tag green">API docs</span></td>
+              <td><span class="tag">tools/list schema</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="code-block" style="margin-top:12px; font-size:12px;">
+<span class="c">// MCP tool call — igual que un POST HTTP</span>
+{
+  <span class="v">"method":</span> <span class="s">"tools/call"</span>,
+  <span class="v">"params":</span> {
+    <span class="v">"name":</span> <span class="s">"create_appointment"</span>,
+    <span class="v">"arguments":</span> {
+      <span class="v">"patient_id":</span> <span class="n">789</span>,
+      <span class="v">"date":</span> <span class="s">"2024-03-20T10:00:00Z"</span>
+    }
+  }
+}
+        </div>
+      </div>
+    </div>
+
+    <div class="highlight amber" style="margin-top:20px;">
+      🚀 <strong>Por qué importa para KaledSoft:</strong> En el futuro próximo, KaledDental tendrá un asistente de IA que programa citas, recuerda pacientes, procesa pagos y genera reportes — todo conversacionalmente, todo usando las APIs REST que estás aprendiendo hoy como backend para los MCP servers.
+    </div>
+  </div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<div id="bottom-nav">
+  <button class="btn-nav" id="btn-prev" onclick="prev()">← Anterior</button>
+  <div id="progress-dots"></div>
+  <button class="btn-nav" id="btn-next" onclick="next()">Siguiente →</button>
+</div>
+
+<script>
+  const TOTAL = 10;
+  let current = 0;
+
+  // Build dots
+  const dotsEl = document.getElementById('progress-dots');
+  for (let i = 0; i < TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  }
+
+  function goTo(n) {
+    document.getElementById('s' + current).classList.remove('active');
+    document.querySelectorAll('.nav-tab')[current].classList.remove('active');
+    dotsEl.children[current].classList.remove('active');
+
+    current = n;
+
+    document.getElementById('s' + current).classList.add('active');
+    document.querySelectorAll('.nav-tab')[current].classList.add('active');
+    dotsEl.children[current].classList.add('active');
+
+    document.getElementById('btn-prev').disabled = current === 0;
+    document.getElementById('btn-next').disabled = current === TOTAL - 1;
+
+    // Trigger timeline animation on slide 0
+    if (current === 0) animateTimeline();
+
+    // Scroll slide to top
+    document.getElementById('s' + current).scrollTop = 0;
+  }
+
+  function next() { if (current < TOTAL - 1) goTo(current + 1); }
+  function prev() { if (current > 0) goTo(current - 1); }
+
+  // Keyboard nav
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prev();
+  });
+
+  // Timeline animation
+  function animateTimeline() {
+    const items = document.querySelectorAll('.tl-item');
+    items.forEach((item, i) => {
+      item.classList.remove('visible');
+      setTimeout(() => item.classList.add('visible'), 100 + i * 120);
+    });
+  }
+
+  // Init
+  document.getElementById('btn-prev').disabled = true;
+  animateTimeline();
+</script>
+</body>
+</html>

@@ -24,6 +24,12 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { KaledChat } from "./KaledChat";
 import { CodeReviewPanel } from "./CodeReviewPanel";
+import { InteractiveLessonShell } from "./interactive-lessons/InteractiveLessonShell";
+import {
+  InteractiveLessonRenderer,
+  isRegisteredInteractiveSlug,
+  warnUnknownInteractiveSlug,
+} from "./interactive-lessons/registry";
 
 // ── Tipos ──────────────────────────────────────────────────
 interface ConceptItem {
@@ -91,6 +97,12 @@ export interface LessonViewProps {
     cralChallenges: CRALChallenge[];
     quizzes: QuizData[];
     deliverable: DeliverableData | null;
+    interactiveAnimation?: {
+      id: string;
+      slug: string;
+      title: string;
+      description?: string | null;
+    } | null;
   };
   isCompleted: boolean;
   videoProgress: number;
@@ -629,74 +641,133 @@ export function LessonView({
             </div>
           )}
 
-          {/* VIDEO */}
-          {lesson.videoUrl && (() => {
+          {/* Animación interactiva (catálogo) y/o video */}
+          {(() => {
+            const animSlug = lesson.interactiveAnimation?.slug;
+
             const getYoutubeId = (url: string) => {
-              const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+              const m = url.match(
+                /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/
+              );
               return m?.[1] ?? null;
             };
-            const videoId = getYoutubeId(lesson.videoUrl);
-            return (
-              <div>
-                <h2 className="text-[13px] font-bold text-white mb-3">📺 Video recomendado por Kaled</h2>
-                {videoId ? (
-                  <div className="academy-card-dark rounded-xl sm:rounded-2xl overflow-hidden border border-white/[0.08]">
-                    <div className="relative w-full aspect-video max-w-4xl mx-auto">
-                      <iframe
-                        src={`https://www.youtube.com/embed/${videoId}?rel=0`}
-                        title={lesson.videoTitle ?? "Video de la sesión"}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        className="absolute inset-0 w-full h-full"
-                      />
+
+            const renderVideoBlock = () => {
+              if (!lesson.videoUrl) return null;
+              const videoId = getYoutubeId(lesson.videoUrl);
+              return (
+                <div>
+                  <h2 className="mb-3 text-[13px] font-bold text-white">
+                    📺 Video recomendado por Kaled
+                  </h2>
+                  {videoId ? (
+                    <div className="academy-card-dark overflow-hidden rounded-xl border border-white/[0.08] sm:rounded-2xl">
+                      <div className="relative mx-auto aspect-video w-full max-w-4xl">
+                        <iframe
+                          src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+                          title={lesson.videoTitle ?? "Video de la sesión"}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="absolute inset-0 h-full w-full"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between border-t border-white/[0.05] px-5 py-3 text-[11px]">
+                        <span className="text-slate-500">
+                          {lesson.videoTitle ?? "Video de la sesión"}
+                        </span>
+                        <a
+                          href={lesson.videoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-cyan-400 hover:underline"
+                        >
+                          Abrir en YouTube <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
                     </div>
-                    <div className="px-5 py-3 border-t border-white/[0.05] flex items-center justify-between text-[11px]">
-                      <span className="text-slate-500">{lesson.videoTitle ?? "Video de la sesión"}</span>
+                  ) : (
+                    <a
+                      href={lesson.videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group academy-card-dark block overflow-hidden rounded-xl border border-white/[0.08] transition-all hover:border-cyan-500/30 sm:rounded-2xl"
+                      style={{ background: "linear-gradient(135deg, #0d1b33, #1a2a50)" }}
+                    >
+                      <div className="flex items-center gap-4 p-5">
+                        <div
+                          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition-transform group-hover:scale-105"
+                          style={{ background: "#2563eb" }}
+                        >
+                          <Play className="ml-0.5 h-5 w-5 fill-white text-white" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-0.5 truncate text-[13px] font-semibold text-white">
+                            {lesson.videoTitle ?? "Ver video de la sesión"}
+                          </div>
+                          <div className="text-[11px] text-slate-500">
+                            YouTube · Recomendado por Kaled
+                          </div>
+                        </div>
+                        <span className="shrink-0 rounded bg-red-600/80 px-2 py-1 text-[8px] font-bold text-white">
+                          YouTube
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between border-t border-white/[0.05] px-5 py-2.5 text-[10px]">
+                        <span className="text-slate-600">🎯 Ver antes de la práctica</span>
+                        <span className="flex items-center gap-1 text-cyan-400">
+                          Abrir en YouTube <ExternalLink className="h-3 w-3" />
+                        </span>
+                      </div>
+                    </a>
+                  )}
+                </div>
+              );
+            };
+
+            if (animSlug && isRegisteredInteractiveSlug(animSlug)) {
+              return (
+                <div className="space-y-4">
+                  <div>
+                    <h2 className="mb-3 text-[13px] font-bold text-white">
+                      ✨ {lesson.interactiveAnimation?.title ?? "Animación interactiva"}
+                    </h2>
+                    {lesson.interactiveAnimation?.description ? (
+                      <p className="mb-3 text-[12px] text-slate-500">
+                        {lesson.interactiveAnimation.description}
+                      </p>
+                    ) : null}
+                    <InteractiveLessonShell>
+                      <InteractiveLessonRenderer
+                        slug={animSlug}
+                        embedded
+                        titleFromLesson={lesson.title}
+                      />
+                    </InteractiveLessonShell>
+                  </div>
+                  {lesson.videoUrl ? (
+                    <div className="border-t border-white/[0.06] pt-4">
+                      <p className="mb-2 text-[11px] text-slate-500">
+                        También puedes ver el video complementario:
+                      </p>
                       <a
                         href={lesson.videoUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-cyan-400 flex items-center gap-1 hover:underline"
+                        className="inline-flex items-center gap-1 text-[12px] text-cyan-400 hover:underline"
                       >
-                        Abrir en YouTube <ExternalLink className="w-3 h-3" />
+                        Abrir en YouTube <ExternalLink className="h-3 w-3" />
                       </a>
                     </div>
-                  </div>
-                ) : (
-                  <a
-                    href={lesson.videoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block academy-card-dark rounded-xl sm:rounded-2xl overflow-hidden border border-white/[0.08] hover:border-cyan-500/30 transition-all group"
-                    style={{ background: "linear-gradient(135deg, #0d1b33, #1a2a50)" }}
-                  >
-                    <div className="p-5 flex items-center gap-4">
-                      <div
-                        className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
-                        style={{ background: "#2563eb" }}
-                      >
-                        <Play className="w-5 h-5 text-white fill-white ml-0.5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[13px] font-semibold text-white truncate mb-0.5">
-                          {lesson.videoTitle ?? "Ver video de la sesión"}
-                        </div>
-                        <div className="text-[11px] text-slate-500">YouTube · Recomendado por Kaled</div>
-                      </div>
-                      <span className="shrink-0 text-[8px] bg-red-600/80 text-white font-bold px-2 py-1 rounded">
-                        YouTube
-                      </span>
-                    </div>
-                    <div className="px-5 py-2.5 border-t border-white/[0.05] flex items-center justify-between text-[10px]">
-                      <span className="text-slate-600">🎯 Ver antes de la práctica</span>
-                      <span className="text-cyan-400 flex items-center gap-1">
-                        Abrir en YouTube <ExternalLink className="w-3 h-3" />
-                      </span>
-                    </div>
-                  </a>
-                )}
-              </div>
-            );
+                  ) : null}
+                </div>
+              );
+            }
+
+            if (animSlug) {
+              warnUnknownInteractiveSlug(animSlug);
+            }
+
+            return renderVideoBlock();
           })()}
 
           {/* CRAL */}

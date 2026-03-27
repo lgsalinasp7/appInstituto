@@ -19,6 +19,119 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+/** Catálogo de animaciones interactivas (slug = clave del registry en frontend). */
+const INTERACTIVE_ANIMATIONS_SEED: Array<{
+  slug: string;
+  title: string;
+  description?: string;
+  sourceDocHint: string;
+  sortOrder: number;
+}> = [
+  {
+    slug: "viaje_url",
+    title: "El viaje de una URL",
+    description: "Desde la IP en tu PC hasta el render en el navegador.",
+    sourceDocHint: "docs/Temas/tema_1_viaje_url.html",
+    sortOrder: 1,
+  },
+  {
+    slug: "http_cliente_servidor",
+    title: "HTTP y el modelo cliente-servidor",
+    description: "Navegación por slides interactivos.",
+    sourceDocHint: "docs/Temas/tema_2_clase_.html",
+    sortOrder: 2,
+  },
+  {
+    slug: "lenguajes_ide",
+    title: "Lenguajes de programación e IDEs",
+    description: "Secciones interactivas sobre lenguajes y entornos.",
+    sourceDocHint: "docs/Temas/tema_3_lenguajes-ide.html",
+    sortOrder: 3,
+  },
+];
+
+async function ensureAcademyInteractiveAnimations(prisma: PrismaClient, tenantId: string) {
+  for (const row of INTERACTIVE_ANIMATIONS_SEED) {
+    await prisma.academyInteractiveAnimation.upsert({
+      where: { tenantId_slug: { tenantId, slug: row.slug } },
+      create: {
+        tenantId,
+        slug: row.slug,
+        title: row.title,
+        description: row.description,
+        sourceDocHint: row.sourceDocHint,
+        sortOrder: row.sortOrder,
+        isActive: true,
+      },
+      update: {
+        title: row.title,
+        description: row.description,
+        sourceDocHint: row.sourceDocHint,
+        sortOrder: row.sortOrder,
+        isActive: true,
+      },
+    });
+  }
+}
+
+/** Vincula la lección “El viaje de una URL…” al catálogo viaje_url. */
+async function linkViajeUrlInteractiveLesson(
+  prisma: PrismaClient,
+  tenantId: string,
+  courseId: string
+) {
+  const viaje = await prisma.academyInteractiveAnimation.findUnique({
+    where: { tenantId_slug: { tenantId, slug: "viaje_url" } },
+  });
+  if (!viaje) return;
+
+  const lesson = await prisma.academyLesson.findFirst({
+    where: {
+      title: { contains: "El viaje de una URL", mode: "insensitive" },
+      module: { courseId },
+    },
+    select: { id: true },
+  });
+  if (!lesson) return;
+
+  await prisma.academyLessonMeta.update({
+    where: { lessonId: lesson.id },
+    data: { interactiveAnimationId: viaje.id },
+  });
+}
+
+/** Enlaza una lección del módulo (por orden de módulo y orden de lección) a una animación del catálogo. */
+async function linkInteractiveLessonByModuleOrder(
+  prisma: PrismaClient,
+  tenantId: string,
+  courseId: string,
+  moduleOrder: number,
+  lessonOrder: number,
+  slug: string
+) {
+  const courseModule = await prisma.academyModule.findFirst({
+    where: { courseId, isActive: true, order: moduleOrder },
+    select: { id: true },
+  });
+  if (!courseModule) return;
+
+  const anim = await prisma.academyInteractiveAnimation.findUnique({
+    where: { tenantId_slug: { tenantId, slug } },
+  });
+  if (!anim) return;
+
+  const lesson = await prisma.academyLesson.findFirst({
+    where: { moduleId: courseModule.id, order: lessonOrder, isActive: true },
+    select: { id: true },
+  });
+  if (!lesson) return;
+
+  await prisma.academyLessonMeta.update({
+    where: { lessonId: lesson.id },
+    data: { interactiveAnimationId: anim.id },
+  });
+}
+
 type SessionData = {
   orden: number;
   semana: number;
@@ -267,6 +380,31 @@ async function mainContentOnly() {
     total += lessonIds.length;
   }
 
+  try {
+    await ensureAcademyInteractiveAnimations(prisma, tenant.id);
+    await linkViajeUrlInteractiveLesson(prisma, tenant.id, course.id);
+    await linkInteractiveLessonByModuleOrder(
+      prisma,
+      tenant.id,
+      course.id,
+      1,
+      2,
+      "http_cliente_servidor"
+    );
+    await linkInteractiveLessonByModuleOrder(prisma, tenant.id, course.id, 1, 3, "lenguajes_ide");
+    console.log(
+      "  ✓ Catálogo AcademyInteractiveAnimation + vínculos viaje_url, http_cliente_servidor, lenguajes_ide"
+    );
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2021") {
+      console.warn(
+        "\n⚠️  Tablas de animaciones interactivas no existen: ejecuta migraciones (AcademyInteractiveAnimation) y vuelve a correr el seed.\n"
+      );
+    } else {
+      throw e;
+    }
+  }
+
   await prisma.agentMemory.deleteMany({ where: { agentType: "KALED", tenantId: tenant.id } });
   const memorias = [
     { category: "empresa_referencia", content: "KaledSoft Technologies es una empresa colombiana que construye aplicaciones web para negocios. Sus productos: KaledDental (clínicas odontológicas), KaledWash (lavaderos de autos), KaledPark (parqueaderos), KaledSchool (academias). Los estudiantes aprenden construyendo algo similar a estos productos.", score: 100 },
@@ -496,6 +634,31 @@ async function main() {
   await seedModulo2(prisma, course.id, tenant.id);
   await seedModulo3(prisma, course.id, tenant.id);
   await seedModulo4(prisma, course.id, tenant.id);
+
+  try {
+    await ensureAcademyInteractiveAnimations(prisma, tenant.id);
+    await linkViajeUrlInteractiveLesson(prisma, tenant.id, course.id);
+    await linkInteractiveLessonByModuleOrder(
+      prisma,
+      tenant.id,
+      course.id,
+      1,
+      2,
+      "http_cliente_servidor"
+    );
+    await linkInteractiveLessonByModuleOrder(prisma, tenant.id, course.id, 1, 3, "lenguajes_ide");
+    console.log(
+      "  ✓ Catálogo AcademyInteractiveAnimation + vínculos viaje_url, http_cliente_servidor, lenguajes_ide"
+    );
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2021") {
+      console.warn(
+        "\n⚠️  Tablas de animaciones interactivas no existen: ejecuta migraciones y vuelve a correr el seed.\n"
+      );
+    } else {
+      throw e;
+    }
+  }
 
   // ── Memoria inicial de Kaled ─────────────────────────────
   const memorias = [
@@ -739,139 +902,106 @@ Escribe en tu cuaderno cómo lo explicaste y qué preguntas te hizo esa persona.
   // ── SESIÓN 2 ─────────────────────────────────────────────
   await crearSesion(prisma, mod.id, tenantId, {
     orden: 2, semana: 1, dia: "MIERCOLES",
-    sessionType: "PRACTICA", duracion: 180,
-    titulo: "Las herramientas del desarrollador y tu primera página",
-    descripcion: "Explora las herramientas del navegador, entiende qué es el código fuente de una página, y crea tu primer archivo HTML.",
-    video: { url: "https://www.youtube.com/watch?v=WTRiv7r5lXY", titulo: "Herramientas del desarrollador de Chrome" },
+    sessionType: "TEORIA", duracion: 180,
+    titulo: "HTTP y el modelo cliente-servidor: cómo se hablan en la web",
+    descripcion:
+      "Entiende el rol del navegador y del servidor, qué es HTTP, y cómo encajan la petición y la respuesta en el viaje que ya conoces desde la URL.",
+    video: {
+      url: "https://www.youtube.com/watch?v=iYM2zFP3Zn0",
+      titulo: "HTTP y HTTPS explicado (conceptos generales)",
+    },
 
-    historia: `Cuando Tim Berners-Lee creó la primera página web, la escribió en un archivo de texto plano. Sin programas especiales, sin interfaces gráficas. Solo texto, con unos símbolos especiales que el navegador entendía.
+    historia: `Después de ARPANET y TCP/IP, la web necesitaba un idioma simple para que un programa en tu computadora pidiera un documento y otra computadora en internet respondiera. Tim Berners-Lee definió HTTP junto con HTML y las URLs.
 
-Ese archivo de texto todavía es la base de todo lo que ves en internet hoy. Cada página web, por compleja que parezca, empieza siendo un archivo de texto que alguien escribió.
+Hoy cada clic en un enlace o cada barra de direcciones que cargas sigue ese mismo patón: alguien pide, alguien responde. Los detalles técnicos crecieron (versiones de HTTP, cifrado, caché), pero la imagen mental sigue siendo la misma.`,
 
-Los navegadores modernos tienen herramientas que te permiten ver ese texto oculto detrás de cualquier página. Hoy vas a usarlas por primera vez.`,
+    kaledIntro: `En la sesión anterior recorriste el viaje de una URL: DNS, red, servidor. Hoy cerramos el círculo con **HTTP**: el formato de la conversación entre tu navegador (**cliente**) y la máquina que entrega la página (**servidor**).
 
-    kaledIntro: `En la sesión anterior entendiste el viaje de una página web. Hoy vas a ver por dentro cómo está hecha.
+Usa la animación interactiva para ver la línea del tiempo, los paquetes, el modelo cliente-servidor y un ciclo de petición/respuesta. No necesitas memorizar siglas: necesitas la **foto mental** correcta.`,
 
-Todos los sitios web que usas tienen su código visible. Cualquier persona puede verlo. Eso es una de las cosas más poderosas de la web: es abierta por diseño.
+    analogia: `HTTP es como el formulario y la ventanilla de una ventanilla única.
 
-Hoy vas a abrir ese código, entenderlo por primera vez, y crear tu propio archivo de página web desde cero. Sin herramientas complicadas — solo un editor de texto y tu navegador.`,
-
-    analogia: `El código fuente de una página web es como la receta de un plato de comida en un restaurante.
-
-El comensal ve el plato terminado: presentación bonita, colores, todo listo para comer. Pero detrás existe una receta escrita con ingredientes y pasos específicos que el cocinero siguió.
-
-El navegador es el cocinero: toma la receta (el código) y la convierte en el plato (la página visual). Las herramientas del desarrollador te permiten ver esa receta mientras observas el plato terminado.`,
+Tú (el cliente) entregas una solicitud concreta con un formato que todos acordaron. La persona del otro lado (el servidor) la lee, hace lo que corresponde y te devuelve un comprobante o el documento. Si el formato no es el esperado o falta información, la respuesta te lo dice con un código que reconocerás más adelante.`,
 
     conceptos: [
       {
-        key: "codigo-fuente",
-        titulo: "Código fuente — La receta de una página web",
-        cuerpo: `El código fuente es el texto con instrucciones que el navegador usa para construir la página que ves.
+        key: "cliente-servidor",
+        titulo: "Cliente y servidor — Dos papeles, no dos marcas de PC",
+        cuerpo: `**Cliente** es quien inicia la petición: casi siempre tu navegador. **Servidor** es un programa en otra máquina que escucha en la red y responde.
 
-Para verlo en cualquier página: haz clic derecho sobre la página y selecciona "Ver código fuente" o "Ver código de página". Se abrirá una ventana llena de texto con símbolos como < y >.
-
-Ese texto es lo que el servidor le envió a tu navegador. El navegador lo leyó y construyó la página visual a partir de esas instrucciones.
-
-Puedes ver el código fuente de cualquier página web del mundo. Todo es público y visible.`,
+La misma persona puede usar un navegador (cliente) y más adelante, en otros contextos, ejecutar un servidor en su computadora. Lo que importa es el **rol en cada conversación**.`,
       },
       {
-        key: "editor-texto",
-        titulo: "Editor de texto — Tu herramienta de trabajo",
-        cuerpo: `Un editor de texto es el programa donde escribirás tu código. No es como Word o Google Docs — no tiene botones de negrita ni tamaño de letra. Solo muestra texto plano.
+        key: "http-basico",
+        titulo: "HTTP — El convenio de la web",
+        cuerpo: `HTTP define cómo se ve un **pedido** y una **respuesta** en la web: qué recurso pides, con qué intención (por ejemplo “obtener”), y qué contesta el servidor (éxito, error, redirección).
 
-El editor que usaremos se llama Visual Studio Code (VS Code). Es gratuito, lo usan millones de desarrolladores en el mundo, y tiene muchas funciones que te ayudarán a medida que aprendas.
-
-Por ahora, piensa en VS Code como el cuaderno donde escribirás tus páginas web. Lo que escribas ahí, el navegador lo convertirá en páginas visuales.
-
-Descárgalo gratis en: code.visualstudio.com`,
+No tienes que saber aún todos los códigos ni las cabeceras. Basta con recordar: **petición → procesamiento → respuesta**.`,
       },
       {
-        key: "archivo-html",
-        titulo: "El archivo .html — Donde vive tu página",
-        cuerpo: `Una página web es un archivo guardado en tu computadora con la extensión .html al final del nombre.
+        key: "metodos-superficie",
+        titulo: "Más que “abrir la página”",
+        cuerpo: `Además de **obtener** algo (lo que verás como GET en la animación), existen otras intenciones habituales: enviar un formulario, actualizar o borrar información. En el bootcamp las usarás con calma cuando trabajes con datos reales.
 
-Cuando creas un archivo llamado "index.html" y lo abres con tu navegador, el navegador lo lee y muestra la página que escribiste.
-
-Por convención, la página principal de cualquier sitio web siempre se llama "index.html". Es la primera página que el servidor busca cuando alguien visita el sitio.
-
-Puedes crear tantos archivos .html como quieras. Cada uno puede ser una página diferente de tu sitio.`,
+Por ahora, reconoce que **la misma dirección puede usarse con intenciones distintas** según el método.`,
       },
     ],
 
     cral: [
       {
         phase: "CONSTRUIR",
-        titulo: "Crea tu primer archivo HTML",
-        descripcion: `Instala VS Code si no lo tienes (code.visualstudio.com). Abre VS Code y crea un archivo nuevo. Guárdalo con el nombre "mi-primera-pagina.html" en una carpeta que puedas encontrar fácilmente.
+        titulo: "Dibuja el ciclo en papel",
+        descripcion: `Sin mirar notas, dibuja en una hoja: navegador → red → servidor → vuelta con la respuesta. Marca dónde encaja la palabra "HTTP".
 
-Escribe exactamente esto en el archivo:
-
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Mi primera página</title>
-  </head>
-  <body>
-    <h1>Hola, soy [tu nombre]</h1>
-    <p>Esta es mi primera página web.</p>
-  </body>
-</html>
-
-Guarda el archivo. Luego búscalo en tu computadora y ábrelo con tu navegador haciendo doble clic o arrastrándolo al navegador. ¿Qué ves?`,
+Compara tu dibujo con la animación de la lección. ¿Qué parte te costó más? Ajusta el dibujo una vez.`,
       },
       {
         phase: "ROMPER",
-        titulo: "¿Qué pasa si cierras una etiqueta mal?",
-        descripcion: `En tu archivo "mi-primera-pagina.html", elimina el símbolo "/" del cierre de una etiqueta. Por ejemplo, cambia "</h1>" por "<h1>".
+        titulo: "¿Qué pasa si el servidor está apagado?",
+        descripcion: `Piensa en una página que visitas a menudo. Si el DNS resolvió bien pero el servidor no responde, ¿en qué parte del viaje falló?
 
-Guarda y recarga en el navegador. ¿Qué pasó? ¿El navegador muestra un error o intenta mostrarlo de todas formas?
-
-Vuelve a corregir el archivo. Ahora prueba eliminar una etiqueta de apertura completa — por ejemplo, borra el "<body>" de apertura. ¿Qué pasa esta vez?`,
+Escribe una frase en lenguaje cotidiano (sin jerga nueva) explicándoselo a un familiar.`,
       },
       {
         phase: "AUDITAR",
-        titulo: "Ver el código de una página real",
-        descripcion: `Entra a una página web real que uses frecuentemente. Haz clic derecho sobre la página y selecciona "Ver código fuente".
+        titulo: "Inspecciona solo la pestaña Red (sin instalar nada)",
+        descripcion: `Abre una página estática simple (por ejemplo la de un periódico o una landing). Abre las herramientas del navegador (F12 o clic derecho → Inspeccionar) y busca la pestaña "Red" / "Network".
 
-Busca en ese código las letras "h1" o "title". ¿Las encuentras? ¿Qué texto aparece entre esas etiquetas?
-
-Ahora compara ese código con el archivo que tú escribiste. ¿Qué similitudes encuentras? ¿Qué cosas nuevas ves que todavía no entiendes?
-
-Escribe tus observaciones en el cuaderno.`,
+Recarga la página. Identifica **una** fila que sea el documento principal (suele ser el primero o el de tipo "document"). ¿Qué código de estado ves (200, 304, etc.)? Anótalo; en módulos posteriores lo interpretaremos.`,
       },
       {
         phase: "LANZAR",
-        titulo: "Muestra tu primera página",
-        descripcion: `Toma una captura de pantalla de tu primera página web funcionando en el navegador.
+        titulo: "Comparte tu esquema",
+        descripcion: `Sube una foto de tu dibujo del ciclo cliente-servidor + HTTP al canal del bootcamp o compártela con tu instructor.
 
-Compártela en el grupo de WhatsApp o el canal de comunicación del bootcamp con el mensaje: "Primera página web creada. [Tu nombre]."
-
-Es el primer paso de muchos. Guarda también el archivo .html en una carpeta organizada — lo vas a necesitar en las próximas sesiones.`,
+Frase obligatoria en el mensaje: "Cliente-servidor + HTTP — [tu nombre]".`,
       },
     ],
 
     quiz: {
-      pregunta: `Camilo guardó su página web con el nombre "pagina.txt" y la abrió con el navegador. El navegador mostró el texto del código en lugar de la página visual. ¿Por qué?`,
+      pregunta: `¿Cuál de estas frases describe mejor el papel de HTTP en la web?`,
       opciones: [
         {
           label: "A", esCorrecta: false,
-          texto: "El navegador de Camilo está desactualizado.",
-          feedback: "El navegador no es el problema. Los navegadores modernos funcionan igual con archivos .html. El problema está en el nombre del archivo.",
+          texto: "HTTP es el programa que dibuja los botones en la pantalla.",
+          feedback:
+            "Eso lo hace el navegador con HTML, CSS y JavaScript. HTTP es el convenio de mensajes entre cliente y servidor.",
         },
         {
-          label: "B", esCorrecta: false,
-          texto: "Camilo cometió un error en el código HTML.",
-          feedback: "El código puede estar perfecto, pero si el archivo tiene extensión .txt, el navegador lo trata como texto plano y muestra el contenido sin interpretarlo como HTML.",
+          label: "B", esCorrecta: true,
+          texto: "HTTP es el idioma estándar con el que el cliente pide un recurso y el servidor responde.",
+          feedback:
+            "Correcto. HTTP estructura la petición y la respuesta; el cuerpo de la respuesta a menudo trae HTML, pero HTTP no es “el diseño” de la página.",
         },
         {
-          label: "C", esCorrecta: true,
-          texto: "El archivo tiene extensión .txt en lugar de .html, por eso el navegador no sabe que debe interpretarlo como una página web.",
-          feedback: "¡Correcto! La extensión del archivo le dice al sistema operativo y al navegador qué tipo de archivo es. Con .txt, el navegador lo abre como texto plano. Con .html, lo interpreta como una página web y la muestra visualmente.",
+          label: "C", esCorrecta: false,
+          texto: "HTTP solo sirve para enviar correos electrónicos.",
+          feedback: "El correo usa otros protocolos. HTTP es el eje de la web (páginas y recursos asociados).",
         },
         {
           label: "D", esCorrecta: false,
-          texto: "El código necesita estar en un servidor para funcionar.",
-          feedback: "No es necesario un servidor para ver una página web localmente. Puedes abrir un archivo .html directamente desde tu computadora con el navegador y funcionará.",
+          texto: "HTTP reemplaza al DNS.",
+          feedback: "DNS y HTTP son capas distintas: el DNS traduce nombres a direcciones; HTTP gobierna el intercambio de mensajes después.",
         },
       ],
     },
@@ -880,188 +1010,139 @@ Es el primer paso de muchos. Guarda también el archivo .html en una carpeta org
   // ── SESIÓN 3 ─────────────────────────────────────────────
   await crearSesion(prisma, mod.id, tenantId, {
     orden: 3, semana: 1, dia: "VIERNES",
-    sessionType: "ENTREGABLE", duracion: 180,
-    titulo: "HTML: la estructura de toda página web",
-    descripcion: "Aprende las etiquetas HTML fundamentales y construye la estructura de una página web completa para presentarte al mundo.",
-    video: { url: "https://www.youtube.com/watch?v=MJkdaVFHrto", titulo: "HTML desde cero — Aprende las etiquetas básicas" },
+    sessionType: "PRACTICA", duracion: 180,
+    titulo: "Del mapa de lenguajes a tu taller: VS Code y tu primer HTML",
+    descripcion:
+      "Entiende qué es un lenguaje de programación, dónde encaja JavaScript frente a otros lenguajes, qué es un IDE y por qué usamos VS Code; cierra creando un index.html mínimo listo para la semana de Git.",
+    video: {
+      url: "https://www.youtube.com/watch?v=MJkdaVFHrto",
+      titulo: "HTML desde cero — repaso de etiquetas básicas (complemento)",
+    },
 
-    historia: `HTML fue inventado por Tim Berners-Lee en 1991 para compartir documentos científicos entre investigadores. La idea era simple: un documento de texto con marcas especiales que cualquier computadora pudiera leer e interpretar.
+    historia: `Los primeros programadores escribían instrucciones directamente en ceros y unos. Con el tiempo aparecieron lenguajes más cercanos al lenguaje humano: Fortran, C, Python, JavaScript… Cada uno nació para resolver problemas distintos: cálculo científico, sistemas operativos, automatización, la web.
 
-Esas "marcas" eran etiquetas entre los símbolos menor-que y mayor-que. Por ejemplo, para indicar un título, se usaba una etiqueta especial. Para un párrafo, otra etiqueta diferente.
+Hoy nadie aprende “todos los lenguajes” de memoria. Los profesionales aprenden a **leer el mapa**: para qué sirve cada familia de lenguaje, dónde corre el código (navegador, servidor, móvil) y qué herramienta usa el equipo. El bootcamp te llevará de HTML/CSS/JS a un stack moderno paso a paso.`,
 
-Treinta años después, esas mismas etiquetas siguen siendo la base de todo lo que ves en internet. Instagram, Twitter, Wikipedia, las páginas del gobierno — todo está construido sobre HTML.`,
+    kaledIntro: `Ya sabes cómo viaja una página y cómo hablan cliente y servidor con HTTP. Hoy respondemos: **¿con qué lenguajes y con qué programa en la pantalla voy a escribir eso?**
 
-    kaledIntro: `En las dos sesiones anteriores entendiste cómo funciona internet y creaste tu primer archivo HTML. Ahora vas a aprender las etiquetas que necesitas para construir páginas reales.
+La animación te muestra un mapa didáctico: historia breve, tipos de lenguajes, JavaScript en el navegador, un vistazo a Python (sin instalar nada aún), qué es un IDE y por qué VS Code es tu taller. Al final **crearás un index.html mínimo** en VS Code: lo necesitarás intacto para la sesión de Git de la semana 2.`,
 
-HTML es el lenguaje de la estructura. No se ocupa de los colores ni del diseño visual — eso lo aprenderás después. HTML solo define qué es cada cosa: este es un título, esto es un párrafo, esto es una imagen, esto es un enlace.
+    analogia: `Un **lenguaje de programación** es como un idioma extranjero con reglas de gramática: sirve para dar instrucciones a la máquina.
 
-Es como el esqueleto de una persona. Sin esqueleto no hay estructura. Sin HTML no hay página web.`,
-
-    analogia: `Piensa en un periódico impreso.
-
-Un periódico tiene partes claramente diferenciadas: el nombre del periódico arriba (la cabecera), artículos con títulos grandes, párrafos de texto, imágenes con pie de foto, publicidad a los lados.
-
-HTML hace exactamente lo mismo con las páginas web. Le dice al navegador: esto es el encabezado de la página, esto es un título de artículo, esto es un párrafo de texto, esto es una imagen, esto es un pie de página.
-
-El navegador usa esa información para organizar y mostrar el contenido de forma apropiada para cada tipo de elemento.`,
+Un **IDE** (entorno de desarrollo integrado) es como un **taller de mecánica** bien equipado: mesa de trabajo, caja de herramientas, elevador y manual a mano. Puedes arreglar un carro en la calle con una llave suelta, pero en el taller terminas más rápido y con menos errores. VS Code es tu taller en el bootcamp.`,
 
     conceptos: [
       {
-        key: "etiquetas",
-        titulo: "Etiquetas HTML — Cómo marcar el contenido",
-        cuerpo: `Las etiquetas HTML son los símbolos especiales que le dicen al navegador qué tipo de contenido es cada cosa.
+        key: "lenguaje-para-que",
+        titulo: "Lenguaje de programación — instrucciones para la máquina",
+        cuerpo: `Un lenguaje tiene **sintaxis** (cómo escribir) y **semántica** (qué significa cada construcción). El computador no “adivina”: si te equivocas en un símbolo, te lo dirá con un error.
 
-Casi todas las etiquetas vienen en pareja: una de apertura y una de cierre. La de cierre tiene una barra "/" antes del nombre.
-
-Por ejemplo: <h1>Este es un título principal</h1>
-
-El texto entre las dos etiquetas es el contenido. Las etiquetas le dicen al navegador cómo tratar ese contenido.
-
-Las etiquetas más usadas:
-— h1 a h6: títulos (h1 es el más grande, h6 el más pequeño)
-— p: párrafo de texto
-— img: imagen
-— a: enlace a otra página
-— div: agrupador de contenido`,
+No existe “el mejor lenguaje del mundo”: existe el adecuado para el problema y el ecosistema donde trabajas.`,
       },
       {
-        key: "estructura-html",
-        titulo: "La estructura obligatoria de todo archivo HTML",
-        cuerpo: `Todo archivo HTML debe tener una estructura básica que el navegador espera encontrar:
+        key: "js-navegador",
+        titulo: "JavaScript — el lenguaje que entiende el navegador",
+        cuerpo: `HTML estructura, CSS estiliza, **JavaScript agrega comportamiento** en la página: validar un formulario, abrir un menú, pedir datos sin recargar toda la vista.
 
-<!DOCTYPE html>
-Esta línea le dice al navegador que el archivo es HTML moderno.
-
-<html>
-El contenedor de toda la página.
-
-<head>
-La sección invisible de la página. Aquí va información sobre la página que el navegador necesita pero que el usuario no ve directamente: el título de la pestaña, el idioma, instrucciones de visualización.
-
-<body>
-Todo lo que el usuario ve en la página va aquí: títulos, párrafos, imágenes, botones, todo.
-
-Sin esta estructura, el navegador puede tener problemas para mostrar la página correctamente.`,
+En el módulo 1 lo usarás poco a poco. Más adelante verás también JavaScript fuera del navegador (Node) cuando construyas lógica de servidor.`,
       },
       {
-        key: "semantica",
-        titulo: "HTML semántico — Significado, no solo presentación",
-        cuerpo: `"Semántico" significa que cada etiqueta tiene un significado específico que va más allá de cómo se ve.
+        key: "python-vistazo",
+        titulo: "Python — otro mundo, misma disciplina",
+        cuerpo: `Python es muy usado en ciencia de datos, automatización e **inteligencia artificial**. No compite con JavaScript en el navegador: cada uno brilla en su entorno.
 
-Por ejemplo, h1 no significa "texto grande". Significa "este es el título principal de esta página". El navegador lo muestra grande por defecto, pero su significado real es de jerarquía.
-
-¿Por qué importa esto? Porque los motores de búsqueda como Google leen el HTML para entender de qué trata tu página. Si usas h1 para el título principal, Google entiende que ese es el tema central.
-
-También importa para las personas que usan lectores de pantalla por discapacidad visual. El lector anuncia los títulos diferente a los párrafos porque entiende la semántica.`,
+En este bootcamp lo encontrarás cuando hablemos de IA y herramientas; no necesitas dominarlo hoy.`,
       },
       {
-        key: "atributos",
-        titulo: "Atributos — Información adicional de las etiquetas",
-        cuerpo: `Los atributos son información adicional que se pone dentro de la etiqueta de apertura. Le dan más detalles al navegador sobre ese elemento.
+        key: "ide-vscode",
+        titulo: "IDE y VS Code — tu mesa de trabajo",
+        cuerpo: `Un IDE agrupa editor, resaltado de sintaxis, terminal integrada, extensiones y depuración. **Visual Studio Code** es gratuito, multiplataforma y el estándar de facto para web.
 
-Por ejemplo, la etiqueta de imagen necesita un atributo que indique dónde está la imagen:
-<img src="foto.jpg" alt="Mi foto de perfil">
-
-— src indica la ubicación de la imagen (source = fuente)
-— alt es el texto alternativo que aparece si la imagen no carga, y que leen los lectores de pantalla
-
-La etiqueta de enlace necesita saber a dónde va:
-<a href="https://kaledsoft.tech">Visitar KaledSoft</a>
-
-— href indica la dirección a la que lleva el enlace`,
+Instálalo desde code.visualstudio.com si aún no lo tienes. También existen “forks” (Cursor, Windsurf, VSCodium) basados en el mismo núcleo: el flujo es parecido.`,
       },
     ],
 
     cral: [
       {
         phase: "CONSTRUIR",
-        titulo: "Página de presentación personal",
-        descripcion: `Crea un archivo nuevo llamado "index.html". Esta será tu página de presentación personal.
+        titulo: "Instala VS Code y crea tu carpeta del bootcamp",
+        descripcion: `Crea una carpeta en tu disco, por ejemplo "kaled-bootcamp". Ábrela con VS Code (Archivo → Abrir carpeta).
 
-La página debe tener:
-— Un título principal con tu nombre (usa h1)
-— Un subtítulo que diga qué eres o qué estudias (usa h2)
-— Un párrafo corto presentándote (usa p)
-— Al menos un enlace a una red social que uses (usa a con href)
-— Una lista de 3 cosas que te interesan o tus hobbies
+Crea un archivo **index.html** y pega esta plantilla mínima, cambiando el texto entre etiquetas por tu nombre:
 
-Recuerda la estructura obligatoria: DOCTYPE, html, head con title, y body con todo el contenido.`,
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mi página — [tu nombre]</title>
+</head>
+<body>
+  <h1>Hola, soy [tu nombre]</h1>
+  <p>Estoy en el bootcamp KaledAcademy.</p>
+</body>
+</html>
+
+Guarda. Ábrelo con el navegador (doble clic o arrastrar al Chrome/Edge/Firefox). ¿Se ve tu nombre?`,
       },
       {
         phase: "ROMPER",
-        titulo: "¿Qué pasa si usas h1 múltiples veces?",
-        descripcion: `En tu página, agrega tres etiquetas h1 con textos diferentes. Guarda y mira cómo queda.
+        titulo: "Rompe el charset o el título",
+        descripcion: `Borra la línea <meta charset="UTF-8"> o cambia mal el cierre de </title>. Guarda y recarga.
 
-¿El navegador muestra error? ¿Funciona de todas formas? ¿Cómo se ve visualmente?
-
-Ahora piensa: ¿por qué crees que se recomienda usar solo un h1 por página? (Pista: piensa en lo que aprendiste sobre semántica y el significado de h1 como "título principal").`,
+¿La página sigue mostrando algo útil o ves símbolos raros? Vuelve a dejar el archivo correcto antes de seguir.`,
       },
       {
         phase: "AUDITAR",
-        titulo: "Busca errores comunes en código generado",
-        descripcion: `Pídele a Kaled que te muestre el HTML de una página de presentación personal.
+        titulo: "Comprueba la extensión y la ruta",
+        descripcion: `En el explorador de archivos, verifica que el archivo sea **index.html** y no index.html.txt (Windows a veces oculta extensiones).
 
-Cuando te responda, revisa:
-— ¿Tiene la estructura obligatoria completa (DOCTYPE, html, head, body)?
-— ¿Usa más de un h1?
-— ¿Las imágenes tienen atributo alt?
-— ¿Los enlaces tienen atributo href?
-— ¿Todas las etiquetas están correctamente cerradas?
-
-Escribe qué encontraste bien y qué mejorarías.`,
+Si ves .txt al final, renómbralo. Anota en una frase por qué la extensión importa para el navegador.`,
       },
       {
         phase: "LANZAR",
-        titulo: "Entregable semana 1: tu página personal",
-        descripcion: `Tu página "index.html" debe estar lista con todo el contenido de presentación personal.
+        titulo: "Deja listo tu index para Git",
+        descripcion: `Tu index.html mínimo debe vivir en la carpeta que usarás la próxima semana con Git.
 
-Comparte el archivo en el canal del bootcamp o envíalo al instructor. Asegúrate de que:
-— Se puede abrir con el navegador sin errores
-— Tiene tu nombre, una descripción, y al menos un enlace
-— Tiene la estructura HTML completa y correcta
-
-Esta es la base de todo lo que construirás durante el bootcamp.`,
+Comparte captura de VS Code + navegador mostrando tu nombre en el canal del bootcamp con el texto: "index.html listo — [tu nombre]".`,
       },
     ],
 
     quiz: {
-      pregunta: `Luisa está construyendo su página personal. Quiere agregar un enlace que lleve a su perfil de LinkedIn. ¿Cuál de estas opciones es correcta?`,
+      pregunta: `¿Cuál es la afirmación más precisa sobre JavaScript en el contexto del navegador?`,
       opciones: [
         {
           label: "A", esCorrecta: false,
-          texto: "<a>https://linkedin.com/in/luisa</a>",
-          feedback: "Esta etiqueta no tiene el atributo href que le dice al navegador a dónde va el enlace. Sin href, el texto aparece pero no funciona como enlace.",
+          texto: "JavaScript reemplaza a HTML: ya no hace falta escribir etiquetas.",
+          feedback: "HTML sigue siendo el esqueleto. JavaScript añade comportamiento; no sustituye la estructura.",
         },
         {
           label: "B", esCorrecta: true,
-          texto: '<a href="https://linkedin.com/in/luisa">Mi LinkedIn</a>',
-          feedback: "¡Correcto! El atributo href indica la dirección a la que lleva el enlace. El texto entre las etiquetas (Mi LinkedIn) es lo que el usuario ve y puede hacer clic.",
+          texto: "JavaScript permite programar comportamiento en la página que el usuario ve en el navegador.",
+          feedback: "Correcto. HTML estructura, CSS estiliza, JS reacciona y automatiza en el cliente.",
         },
         {
           label: "C", esCorrecta: false,
-          texto: "<enlace>https://linkedin.com/in/luisa</enlace>",
-          feedback: 'En HTML, la etiqueta para crear enlaces es "a", no "enlace". HTML tiene etiquetas predefinidas y cada una tiene un nombre específico que el navegador reconoce.',
+          texto: "JavaScript solo sirve para bases de datos.",
+          feedback: "Las bases de datos son otro tema. En el navegador, JS vive junto al HTML/CSS.",
         },
         {
           label: "D", esCorrecta: false,
-          texto: '<a href>https://linkedin.com/in/luisa</a>',
-          feedback: "El atributo href necesita tener el valor de la dirección. Escribir solo href sin el valor (= y la dirección) no funciona correctamente.",
+          texto: "VS Code es obligatorio para que JavaScript funcione en el navegador.",
+          feedback: "El navegador ejecuta JS del sitio; VS Code es tu editor local. Podrías escribir en otro editor, pero VS Code es el recomendado en el bootcamp.",
         },
       ],
     },
 
     entregable: {
-      titulo: "Página de presentación personal en HTML",
-      descripcion: "Tu primera página web construida desde cero con HTML. Debe presentarte al mundo con tu nombre, una descripción, y al menos un enlace.",
+      titulo: "index.html mínimo en tu carpeta del bootcamp",
+      descripcion:
+        "Un solo archivo HTML válido con tu nombre, listo para versionar con Git la semana siguiente.",
       esFinal: false,
       items: [
-        "El archivo se llama index.html y abre correctamente en el navegador",
-        "Tiene la estructura HTML completa: DOCTYPE, html, head con title, y body",
-        "Tiene un h1 con tu nombre completo",
-        "Tiene al menos un párrafo (p) presentándote",
-        "Tiene al menos un enlace (a) funcionando con href",
-        "Tiene al menos una lista con 3 elementos",
-        "Puedes explicar qué hace cada etiqueta que usaste",
+        "Archivo index.html (extensión correcta, no .txt)",
+        "DOCTYPE, html, head con charset UTF-8 y title, body con h1 y al menos un p",
+        "Se abre en el navegador y muestra tu nombre",
+        "Vive en la carpeta que usarás para el módulo de Git",
       ],
     },
   }, getLid());
