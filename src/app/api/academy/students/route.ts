@@ -3,7 +3,7 @@ import { withAcademyAuth } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 import { AcademyCohortLifecycleService } from "@/modules/academia/services/academy-cohort-lifecycle.service";
 
-const selectUser = {
+const selectUserAdminDefault = {
   id: true,
   name: true,
   email: true,
@@ -16,9 +16,37 @@ const selectUser = {
   },
 } as const;
 
+function selectUserWithCohortEnrollments(effectiveCohortIds: string[]) {
+  return {
+    id: true,
+    name: true,
+    email: true,
+    platformRole: true,
+    createdAt: true,
+    academyEnrollments: {
+      where: {
+        status: "ACTIVE",
+        OR: [
+          { isTrial: true },
+          { cohortId: { in: effectiveCohortIds } },
+        ],
+      },
+      select: {
+        id: true,
+        isTrial: true,
+        cohortId: true,
+        cohort: { select: { name: true } },
+        course: { select: { title: true } },
+      },
+    },
+  } as const;
+}
+
 export const GET = withAcademyAuth(
   ["ACADEMY_TEACHER", "ACADEMY_ADMIN"],
-  async (_request, user, tenantId) => {
+  async (request, user, tenantId) => {
+    const cohortIdParam = request.nextUrl.searchParams.get("cohortId");
+
     const roleRow = await prisma.user.findUnique({
       where: { id: user.id },
       select: { platformRole: true },
@@ -32,6 +60,16 @@ export const GET = withAcademyAuth(
       if (cohortIds.length === 0) {
         return NextResponse.json({ success: true, data: [] });
       }
+
+      if (cohortIdParam && !cohortIds.includes(cohortIdParam)) {
+        return NextResponse.json(
+          { success: false, error: "No tienes acceso a este cohorte" },
+          { status: 403 }
+        );
+      }
+
+      const effectiveCohortIds = cohortIdParam ? [cohortIdParam] : cohortIds;
+
       const users = await prisma.user.findMany({
         where: {
           tenantId,
@@ -39,12 +77,39 @@ export const GET = withAcademyAuth(
           isActive: true,
           academyEnrollments: {
             some: {
-              cohortId: { in: cohortIds },
+              cohortId: { in: effectiveCohortIds },
               status: "ACTIVE",
             },
           },
         },
-        select: selectUser,
+        select: selectUserWithCohortEnrollments(effectiveCohortIds),
+      });
+      return NextResponse.json({ success: true, data: users });
+    }
+
+    // ACADEMY_ADMIN
+    if (cohortIdParam) {
+      const cohort = await prisma.academyCohort.findFirst({
+        where: { id: cohortIdParam, tenantId },
+        select: { id: true },
+      });
+      if (!cohort) {
+        return NextResponse.json({ success: false, error: "Cohorte no encontrado" }, { status: 404 });
+      }
+
+      const users = await prisma.user.findMany({
+        where: {
+          tenantId,
+          platformRole: "ACADEMY_STUDENT",
+          isActive: true,
+          academyEnrollments: {
+            some: {
+              cohortId: cohort.id,
+              status: "ACTIVE",
+            },
+          },
+        },
+        select: selectUserWithCohortEnrollments([cohort.id]),
       });
       return NextResponse.json({ success: true, data: users });
     }
@@ -55,7 +120,7 @@ export const GET = withAcademyAuth(
         platformRole: { in: ["ACADEMY_STUDENT", "ACADEMY_TEACHER", "ACADEMY_ADMIN"] },
         isActive: true,
       },
-      select: selectUser,
+      select: selectUserAdminDefault,
     });
     return NextResponse.json({ success: true, data: users });
   }

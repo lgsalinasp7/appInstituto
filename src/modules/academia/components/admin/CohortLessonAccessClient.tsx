@@ -23,6 +23,8 @@ interface ModuleRow {
 
 interface AccessPayload {
   cohortId: string;
+  cohortName: string;
+  courseTitle: string;
   lessonGatingEnabled: boolean;
   timezone: string | null;
   releasedLessonIds: string[];
@@ -82,9 +84,10 @@ export function CohortLessonAccessClient() {
         setAccess(null);
         return;
       }
-      setAccess(aJson.data);
-      setGatingEnabled(aJson.data.lessonGatingEnabled);
-      setReleased(new Set(aJson.data.releasedLessonIds as string[]));
+      const payload = aJson.data as AccessPayload;
+      setAccess(payload);
+      setGatingEnabled(payload.lessonGatingEnabled);
+      setReleased(new Set(payload.releasedLessonIds));
       if (eRes.ok && eJson.success) {
         setEvents(eJson.data as CohortEventRow[]);
       } else {
@@ -186,16 +189,22 @@ export function CohortLessonAccessClient() {
     <div className="space-y-8 max-w-4xl">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-cyan-400/90 mb-1">
+            Cohorte actual
+          </p>
           <h1 className="text-2xl font-black text-white font-display tracking-tight">
-            Lecciones por cohorte
+            {access.cohortName}
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Activa el control por cohorte y marca qué lecciones están liberadas. Las marcadas como
-            pre-cohorte en el curso son siempre visibles cuando el gating está activo.
+          <p className="text-sm text-slate-300 mt-0.5">{access.courseTitle}</p>
+          <p className="text-sm text-slate-400 mt-3">
+            <span className="text-white/90 font-medium">Lecciones y calendario:</span> activa la
+            liberación progresiva y marca qué lecciones están liberadas para este cohorte. Las
+            marcadas como pre-cohorte en el curso siguen visibles para los estudiantes cuando el
+            gating está activo.
           </p>
         </div>
-        <Link href="/academia/admin/cohorts" className="text-sm text-cyan-400 hover:underline">
-          ← Volver
+        <Link href="/academia/admin/cohorts" className="text-sm text-cyan-400 hover:underline shrink-0">
+          ← Volver a cohortes
         </Link>
       </div>
 
