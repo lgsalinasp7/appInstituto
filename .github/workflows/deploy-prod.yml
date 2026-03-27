@@ -18,6 +18,7 @@ jobs:
 
       - run: npm ci
 
+      # Neon puede estar suspendido: P1001 en el primer intento; reintentamos.
       - name: Run migrations en producción
         run: |
           set -e
@@ -29,7 +30,21 @@ jobs:
           fi
           export DATABASE_URL="$DB"
           export DIRECT_URL="$DB"
-          npx prisma migrate deploy
+          max=5
+          i=1
+          while [ "$i" -le "$max" ]; do
+            if npx prisma migrate deploy; then
+              echo "migrate deploy OK (intento $i)"
+              exit 0
+            fi
+            if [ "$i" -eq "$max" ]; then
+              echo "::error::migrate deploy falló tras $max intentos. Revisa Neon y ?sslmode=require en el secreto."
+              exit 1
+            fi
+            echo "Intento $i falló. Esperando 20s (Neon cold start)…"
+            sleep 20
+            i=$((i + 1))
+          done
         env:
           DIRECT_DATABASE_URL_PROD: ${{ secrets.DIRECT_DATABASE_URL_PROD }}
           DATABASE_URL_PROD: ${{ secrets.DATABASE_URL_PROD }}

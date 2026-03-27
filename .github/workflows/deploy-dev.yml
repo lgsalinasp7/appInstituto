@@ -20,6 +20,7 @@ jobs:
 
       # Prisma exige DATABASE_URL y DIRECT_URL no vacíos. Usa DIRECT_DATABASE_URL_DEV
       # (recomendado: URL sin pooler para migraciones) o, si no existe, DATABASE_URL_DEV.
+      # Neon suele suspender el compute: el primer intento puede dar P1001; reintentamos con espera.
       - name: Run migrations en develop
         run: |
           set -e
@@ -31,7 +32,21 @@ jobs:
           fi
           export DATABASE_URL="$DB"
           export DIRECT_URL="$DB"
-          npx prisma migrate deploy
+          max=5
+          i=1
+          while [ "$i" -le "$max" ]; do
+            if npx prisma migrate deploy; then
+              echo "migrate deploy OK (intento $i)"
+              exit 0
+            fi
+            if [ "$i" -eq "$max" ]; then
+              echo "::error::migrate deploy falló tras $max intentos. Revisa Neon (rama activa, URL en secretos) y que la cadena incluya ?sslmode=require"
+              exit 1
+            fi
+            echo "Intento $i falló (p. ej. P1001 compute dormido en Neon). Esperando 20s…"
+            sleep 20
+            i=$((i + 1))
+          done
         env:
           DIRECT_DATABASE_URL_DEV: ${{ secrets.DIRECT_DATABASE_URL_DEV }}
           DATABASE_URL_DEV: ${{ secrets.DATABASE_URL_DEV }}
