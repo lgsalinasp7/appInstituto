@@ -58,15 +58,27 @@ export const createCohortSchema = z.object({
   kind: z.enum(["ACADEMIC", "PROMOTIONAL"]).optional().default("ACADEMIC"),
   promoPreset: z.enum(["DAYS_3", "DAYS_7", "CUSTOM"]).optional().nullable(),
   campaignLabel: z.string().optional().nullable(),
+  lessonGatingEnabled: z.boolean().optional(),
+  timezone: z.string().optional().nullable(),
 });
 
 export const createCohortEventSchema = z.object({
   title: z.string().min(1),
   type: z.string().min(1),
-  dayOfWeek: z.number().int().min(0).max(6).optional(),
-  startTime: z.string().optional(),
-  endTime: z.string().optional(),
-  scheduledAt: z.coerce.date().optional(),
+  dayOfWeek: z.number().int().min(0).max(6).optional().nullable(),
+  startTime: z.string().optional().nullable(),
+  endTime: z.string().optional().nullable(),
+  scheduledAt: z.coerce.date().optional().nullable(),
+  lessonId: z.string().cuid().optional().nullable(),
+  sessionOrder: z.number().int().min(0).optional(),
+  cancelled: z.boolean().optional(),
+});
+
+export const patchCohortEventSchema = createCohortEventSchema.partial();
+
+export const patchCohortLessonAccessSchema = z.object({
+  lessonGatingEnabled: z.boolean().optional(),
+  releasedLessonIds: z.array(z.string().cuid()).optional(),
 });
 
 export const createAssessmentSchema = z.object({

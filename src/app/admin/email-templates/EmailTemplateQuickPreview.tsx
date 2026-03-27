@@ -1,6 +1,6 @@
 'use client';
 
-import { KaledEmailTemplate } from '@prisma/client';
+import type { KaledEmailTemplate } from '@prisma/client';
 import {
   sanitizeEmailPreviewHtml,
   sanitizeEmailPreviewSubject,

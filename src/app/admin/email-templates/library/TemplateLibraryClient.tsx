@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { KaledEmailTemplate } from '@prisma/client';
+import type { KaledEmailTemplate } from '@prisma/client';
 import { EmailTemplateQuickPreview } from '../EmailTemplateQuickPreview';
 import { useRouter } from 'next/navigation';
 import { tenantFetch } from '@/lib/tenant-fetch';

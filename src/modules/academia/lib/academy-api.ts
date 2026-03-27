@@ -27,7 +27,9 @@ export async function fetchLesson(lessonId: string) {
     } catch {
       // usar mensaje por defecto
     }
-    throw new Error(message);
+    const err = new Error(message) as Error & { status?: number };
+    err.status = res.status;
+    throw err;
   }
   return res.json();
 }

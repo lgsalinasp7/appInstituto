@@ -27,9 +27,12 @@ function badRequest(message: string) {
   return NextResponse.json({ error: message }, { status: 400 });
 }
 
-const TRIAL_ERROR_MESSAGES = [
+const LESSON_ACCESS_DENIED_MESSAGES = [
   "Esta lección no está incluida en tu acceso de prueba",
   "Tu acceso de prueba ha expirado",
+  "Esta lección aún no está habilitada para tu cohorte",
+  "No estás matriculado en este curso",
+  "No tienes asignación de profesor en este curso",
 ] as const;
 
 function serverError(err: unknown) {
@@ -38,7 +41,7 @@ function serverError(err: unknown) {
   if (message === "UNAUTHORIZED") {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
-  if (TRIAL_ERROR_MESSAGES.some((m) => message.includes(m) || m.includes(message))) {
+  if (LESSON_ACCESS_DENIED_MESSAGES.some((m) => message.includes(m))) {
     return NextResponse.json({ error: message }, { status: 403 });
   }
   return NextResponse.json(
@@ -81,7 +84,8 @@ export async function GET_courseSidebar(
     const modules = await courseService.getSidebarModules(
       courseId,
       user.id,
-      tenantId
+      tenantId,
+      user.platformRole ?? null
     );
     return NextResponse.json(modules);
   } catch (err) {
@@ -105,7 +109,8 @@ export async function GET_lesson(
     const data = await courseService.getLessonWithProgress(
       lessonId,
       tenantId,
-      user.id
+      user.id,
+      { platformRole: user.platformRole ?? null }
     );
     // Log trial activity (fire-and-forget)
     prisma.academyEnrollment

@@ -5,6 +5,7 @@ export * from "./services/academy-course.service";
 export * from "./services/academy-enrollment.service";
 export * from "./services/academy-progress.service";
 export * from "./services/academy-cohort.service";
+export * from "./services/academy-cohort-lesson-access.service";
 export * from "./services/academy-cohort-lifecycle.service";
 export * from "./services/academy-leaderboard.service";
 export * from "./types";
