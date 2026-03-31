@@ -14,6 +14,7 @@ import {
   SESIONES_MODULO_3,
   SESIONES_MODULO_4,
 } from "./seed-kaledacademy-v2-data";
+import { BOOTCAMP_COURSE_ID } from "./seed-academy-ensure";
 
 const prisma = new PrismaClient();
 
@@ -35,7 +36,7 @@ async function main() {
   }
 
   const course = await prisma.academyCourse.findFirst({
-    where: { id: "kaledacademy-bootcamp-2025", tenantId: tenant.id },
+    where: { id: BOOTCAMP_COURSE_ID, tenantId: tenant.id },
     include: {
       modules: {
         orderBy: { order: "asc" },
@@ -44,11 +45,20 @@ async function main() {
     },
   });
   if (!course) {
-    throw new Error("Curso kaledacademy-bootcamp-2025 no existe. Ejecuta primero db:seed-kaledacademy.");
+    throw new Error(`Curso ${BOOTCAMP_COURSE_ID} no existe. Ejecuta primero db:seed-kaledacademy o db:seed-kaledacademy-v3.`);
   }
 
-  if (course.modules.length !== 4) {
-    console.warn(`⚠️  Se esperaban 4 módulos, hay ${course.modules.length}. Continuando...`);
+  const modulesUnique: typeof course.modules = [];
+  const ordersSeen = new Set<number>();
+  for (const m of course.modules) {
+    if (ordersSeen.has(m.order)) continue;
+    ordersSeen.add(m.order);
+    modulesUnique.push(m);
+  }
+  if (modulesUnique.length !== 4) {
+    console.warn(
+      `⚠️  Se esperaban 4 módulos únicos por orden, hay ${modulesUnique.length} (total filas: ${course.modules.length}). Continuando...`
+    );
   }
 
   const sesionesPorModulo: Record<number, unknown[]> = {
@@ -59,7 +69,7 @@ async function main() {
   };
 
   let totalActualizadas = 0;
-  for (const mod of course.modules) {
+  for (const mod of modulesUnique) {
     const sesiones = sesionesPorModulo[mod.order] as any[];
     if (!sesiones || sesiones.length === 0) continue;
 
