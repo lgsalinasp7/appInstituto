@@ -199,7 +199,9 @@ export async function POST_videoProgress(
 // ============================================================
 // POST /api/academy/quizzes/[quizId]/answer
 // ============================================================
-const quizAnswerSchema = z.object({ selectedOptionId: z.string().cuid() });
+const quizAnswerSchema = z.object({
+  selectedOptionId: z.union([z.string().cuid(), z.string().uuid()]),
+});
 
 export async function POST_quizAnswer(
   req: NextRequest,

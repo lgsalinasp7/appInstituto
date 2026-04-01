@@ -7,6 +7,7 @@
 
 import { PrismaClient, BadgeCondition, SessionType, DayOfWeek, CRALPhase, Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { BOOTCAMP_COURSE_ID, ensureAcademyModule, purgeDuplicateModules } from "./seed-academy-ensure";
 
 const prisma = new PrismaClient();
 
@@ -110,9 +111,9 @@ async function main() {
   // ── 4. CURSO PRINCIPAL ────────────────────────────────────
   console.log("📚 Creando el bootcamp AI SaaS Engineering...");
   const course = await prisma.academyCourse.upsert({
-    where: { id: "kaledacademy-bootcamp-2025" },
+    where: { id: BOOTCAMP_COURSE_ID },
     create: {
-      id: "kaledacademy-bootcamp-2025",
+      id: BOOTCAMP_COURSE_ID,
       title: "AI SaaS Engineering Bootcamp",
       description: "Construye, lanza y monetiza tu propio SaaS usando IA como asistente estratégico. No es un curso de programación — es una fábrica de fundadores tecnológicos.",
       description2: "Metodología: Construir · Romper · Auditar · Lanzar. 4 meses, Lunes/Miércoles/Viernes, 3h por sesión. Nivel: Base → Intermedio.",
@@ -187,11 +188,20 @@ async function main() {
   console.log(`   ✓ ${badgeData.length} badges creados\n`);
 
   // ── 8. MÓDULOS Y SESIONES ─────────────────────────────────
-  console.log("🏗️  Creando los 4 módulos con 48 sesiones...\n");
-  await seedModulo1(prisma, course.id, tenant.id);
-  await seedModulo2(prisma, course.id, tenant.id);
-  await seedModulo3(prisma, course.id, tenant.id);
-  await seedModulo4(prisma, course.id, tenant.id);
+  await purgeDuplicateModules(prisma, course.id);
+  const existingModuleCount = await prisma.academyModule.count({ where: { courseId: course.id } });
+  if (existingModuleCount > 0) {
+    console.log(
+      `🏗️  El curso ya tiene ${existingModuleCount} módulo(s). Se omite la creación de módulos/lecciones para evitar duplicados.`
+    );
+    console.log("    Para actualizar contenido: npm run db:seed-kaledacademy-v3 o db:seed-kaledacademy-v2\n");
+  } else {
+    console.log("🏗️  Creando los 4 módulos con 48 sesiones...\n");
+    await seedModulo1(prisma, course.id, tenant.id);
+    await seedModulo2(prisma, course.id, tenant.id);
+    await seedModulo3(prisma, course.id, tenant.id);
+    await seedModulo4(prisma, course.id, tenant.id);
+  }
 
   // ── 9. MEMORIA INICIAL DE KALED ───────────────────────────
   console.log("\n🤖 Configurando memoria inicial del agente Kaled...");
@@ -222,6 +232,13 @@ async function main() {
       score: 97,
     },
   ];
+  await prisma.agentMemory.deleteMany({
+    where: {
+      agentType: "KALED",
+      tenantId: tenant.id,
+      metadata: { path: ["source"], equals: "seed_inicial" },
+    },
+  });
   for (const mem of kaledMemories) {
     await prisma.agentMemory.create({
       data: { agentType: "KALED", tenantId: tenant.id, ...mem, metadata: { source: "seed_inicial" } },
@@ -240,14 +257,9 @@ async function main() {
 // ============================================================
 async function seedModulo1(prisma: PrismaClient, courseId: string, tenantId: string) {
   console.log("  📦 Módulo 1 — Fundamentos de Arquitectura Digital");
-  const mod = await prisma.academyModule.create({
-    data: {
-      title: "Módulo 1 — Fundamentos de Arquitectura Digital",
-      description: 'Aprende a pensar antes de programar. Internet, Git, HTML, CSS y JavaScript — con comprensión real, no magia.',
-      order: 1,
-      isActive: true,
-      courseId,
-    },
+  const mod = await ensureAcademyModule(prisma, courseId, 1, {
+    title: "Módulo 1 — Fundamentos de Arquitectura Digital",
+    description: "Aprende a pensar antes de programar. Internet, Git, HTML, CSS y JavaScript — con comprensión real, no magia.",
   });
 
   const sesiones = [
@@ -591,8 +603,9 @@ async function seedModulo1(prisma: PrismaClient, courseId: string, tenantId: str
 // ============================================================
 async function seedModulo2(prisma: PrismaClient, courseId: string, tenantId: string) {
   console.log("  ⚛️  Módulo 2 — Frontend Profesional con Next.js");
-  const mod = await prisma.academyModule.create({
-    data: { title: "Módulo 2 — Frontend Profesional con Next.js", description: "Interfaces modernas que escalan — componentes, estado y arquitectura con React + Next.js + Tailwind.", order: 2, isActive: true, courseId },
+  const mod = await ensureAcademyModule(prisma, courseId, 2, {
+    title: "Módulo 2 — Frontend Profesional con Next.js",
+    description: "Interfaces modernas que escalan — componentes, estado y arquitectura con React + Next.js + Tailwind.",
   });
 
   const sesiones = [
@@ -619,8 +632,9 @@ async function seedModulo2(prisma: PrismaClient, courseId: string, tenantId: str
 // ============================================================
 async function seedModulo3(prisma: PrismaClient, courseId: string, tenantId: string) {
   console.log("  ⚙️  Módulo 3 — Backend y Base de Datos Real");
-  const mod = await prisma.academyModule.create({
-    data: { title: "Módulo 3 — Backend y Base de Datos Real", description: "Aquí nace el verdadero SaaS. Prisma, PostgreSQL, API Routes, Server Actions y autenticación con Clerk.", order: 3, isActive: true, courseId },
+  const mod = await ensureAcademyModule(prisma, courseId, 3, {
+    title: "Módulo 3 — Backend y Base de Datos Real",
+    description: "Aquí nace el verdadero SaaS. Prisma, PostgreSQL, API Routes, Server Actions y autenticación con Clerk.",
   });
 
   const sesiones = [
@@ -647,8 +661,9 @@ async function seedModulo3(prisma: PrismaClient, courseId: string, tenantId: str
 // ============================================================
 async function seedModulo4(prisma: PrismaClient, courseId: string, tenantId: string) {
   console.log("  🤖 Módulo 4 — IA, Monetización y Lanzamiento Real");
-  const mod = await prisma.academyModule.create({
-    data: { title: "Módulo 4 — IA, Monetización y Lanzamiento Real", description: "Integra IA, cobra desde el día 1 y lanza tu SaaS al mercado. El módulo que separa developers de fundadores.", order: 4, isActive: true, courseId },
+  const mod = await ensureAcademyModule(prisma, courseId, 4, {
+    title: "Módulo 4 — IA, Monetización y Lanzamiento Real",
+    description: "Integra IA, cobra desde el día 1 y lanza tu SaaS al mercado. El módulo que separa developers de fundadores.",
   });
 
   const sesiones = [
@@ -696,8 +711,13 @@ async function crearSesiones(
   tenantId: string,
   sesiones: SesionSeed[]
 ) {
+  const existingCount = await prisma.academyLesson.count({ where: { moduleId } });
+  if (existingCount > 0) {
+    console.log(`     ⏭  Módulo ${moduleId} ya tiene ${existingCount} lecciones, se omite creación.`);
+    return;
+  }
+
   for (const s of sesiones) {
-    // 1. AcademyLesson (modelo existente)
     const lesson = await prisma.academyLesson.create({
       data: {
         title: s.titulo,

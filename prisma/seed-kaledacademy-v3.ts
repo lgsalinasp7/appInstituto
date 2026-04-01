@@ -22,6 +22,7 @@ import path from "node:path";
 import { config as loadEnv } from "dotenv";
 import { PrismaClient, Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { BOOTCAMP_COURSE_ID, ensureAcademyModule, purgeDuplicateModules } from "./seed-academy-ensure";
 
 const root = process.cwd();
 loadEnv({ path: path.join(root, ".env") });
@@ -57,6 +58,27 @@ const INTERACTIVE_ANIMATIONS_SEED: Array<{
     description: "Secciones interactivas sobre lenguajes y entornos.",
     sourceDocHint: "docs/Temas/tema_3_lenguajes-ide.html",
     sortOrder: 3,
+  },
+  {
+    slug: "git_control_versiones",
+    title: "Git: Control de Versiones",
+    description: "Presentación interactiva con slides sobre Git, commits, ramas y GitHub.",
+    sourceDocHint: "docs/git_control_versiones.html",
+    sortOrder: 4,
+  },
+  {
+    slug: "git_ramas_pr",
+    title: "Git: Ramas, PRs y Colaboración",
+    description: "Presentación interactiva sobre ramas, Pull Requests, merge conflicts y flujo profesional.",
+    sourceDocHint: "docs/Temas/tema_5_git_ramas_pr.html",
+    sortOrder: 5,
+  },
+  {
+    slug: "git_con_ia",
+    title: "Git con IA: criterio técnico",
+    description: "Slides sobre IA como par de programación, comandos peligrosos, checklist y git blame/stash.",
+    sourceDocHint: "docs/Temas/tema_6_git_con_ia.html",
+    sortOrder: 6,
   },
 ];
 
@@ -121,6 +143,7 @@ async function linkInteractiveLessonByModuleOrder(
 ) {
   const courseModule = await prisma.academyModule.findFirst({
     where: { courseId, isActive: true, order: moduleOrder },
+    orderBy: { createdAt: "asc" },
     select: { id: true },
   });
   if (!courseModule) return;
@@ -361,8 +384,10 @@ async function mainContentOnly() {
   const tenant = await prisma.tenant.findUnique({ where: { slug: "kaledacademy" } });
   if (!tenant) throw new Error("Tenant kaledacademy no existe. Ejecuta primero el seed completo.");
 
+  await purgeDuplicateModules(prisma, BOOTCAMP_COURSE_ID);
+
   const course = await prisma.academyCourse.findFirst({
-    where: { tenantId: tenant.id },
+    where: { tenantId: tenant.id, id: BOOTCAMP_COURSE_ID },
     include: {
       modules: {
         orderBy: { order: "asc" },
@@ -370,15 +395,24 @@ async function mainContentOnly() {
       },
     },
   });
-  if (!course) throw new Error("Curso no existe. Ejecuta primero el seed completo.");
+  if (!course) throw new Error(`Curso ${BOOTCAMP_COURSE_ID} no existe. Ejecuta primero el seed completo.`);
 
-  if (course.modules.length < 4) {
-    throw new Error(`Se esperaban 4 módulos, hay ${course.modules.length}. Ejecuta primero el seed completo.`);
+  const byOrder = new Map<number, (typeof course.modules)[0]>();
+  for (const m of course.modules) {
+    if (!byOrder.has(m.order)) byOrder.set(m.order, m);
+  }
+  const orderedMods = [1, 2, 3, 4]
+    .map((o) => byOrder.get(o))
+    .filter((m): m is (typeof course.modules)[0] => m != null);
+  if (orderedMods.length < 4) {
+    throw new Error(
+      `Se esperaban 4 módulos (órdenes 1–4), hay ${orderedMods.length} únicos (${course.modules.length} filas). Ejecuta primero el seed completo.`
+    );
   }
 
   let total = 0;
   for (let i = 0; i < 4; i++) {
-    const mod = course.modules[i];
+    const mod = orderedMods[i];
     const lessonIds = mod.lessons.map((l) => l.id);
     if (lessonIds.length === 0) continue;
     console.log(`  📦 Módulo ${i + 1}: ${lessonIds.length} lecciones`);
@@ -402,8 +436,11 @@ async function mainContentOnly() {
       "http_cliente_servidor"
     );
     await linkInteractiveLessonByModuleOrder(prisma, tenant.id, course.id, 1, 3, "lenguajes_ide");
+    await linkInteractiveLessonByModuleOrder(prisma, tenant.id, course.id, 1, 4, "git_control_versiones");
+    await linkInteractiveLessonByModuleOrder(prisma, tenant.id, course.id, 1, 5, "git_ramas_pr");
+    await linkInteractiveLessonByModuleOrder(prisma, tenant.id, course.id, 1, 6, "git_con_ia");
     console.log(
-      "  ✓ Catálogo AcademyInteractiveAnimation + vínculos viaje_url, http_cliente_servidor, lenguajes_ide"
+      "  ✓ Catálogo AcademyInteractiveAnimation + vínculos viaje_url, http_cliente_servidor, lenguajes_ide, git_control_versiones, git_ramas_pr, git_con_ia"
     );
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2021") {
@@ -499,9 +536,9 @@ async function main() {
 
   // ── Curso ────────────────────────────────────────────────
   const course = await prisma.academyCourse.upsert({
-    where: { id: "kaledacademy-bootcamp-2025" },
+    where: { id: BOOTCAMP_COURSE_ID },
     create: {
-      id: "kaledacademy-bootcamp-2025",
+      id: BOOTCAMP_COURSE_ID,
       title: "AI SaaS Engineering Bootcamp",
       description: "Construye, lanza y monetiza tu propio SaaS. No eres un coder — eres un arquitecto de sistemas.",
       category: "Desarrollo Web · IA · SaaS",
@@ -511,6 +548,8 @@ async function main() {
     },
     update: { isActive: true },
   });
+
+  await purgeDuplicateModules(prisma, course.id);
 
   // ── Cohorte y matrículas ─────────────────────────────────
   const cohort = await prisma.academyCohort.upsert({
@@ -657,8 +696,11 @@ async function main() {
       "http_cliente_servidor"
     );
     await linkInteractiveLessonByModuleOrder(prisma, tenant.id, course.id, 1, 3, "lenguajes_ide");
+    await linkInteractiveLessonByModuleOrder(prisma, tenant.id, course.id, 1, 4, "git_control_versiones");
+    await linkInteractiveLessonByModuleOrder(prisma, tenant.id, course.id, 1, 5, "git_ramas_pr");
+    await linkInteractiveLessonByModuleOrder(prisma, tenant.id, course.id, 1, 6, "git_con_ia");
     console.log(
-      "  ✓ Catálogo AcademyInteractiveAnimation + vínculos viaje_url, http_cliente_servidor, lenguajes_ide"
+      "  ✓ Catálogo AcademyInteractiveAnimation + vínculos viaje_url, http_cliente_servidor, lenguajes_ide, git_control_versiones, git_ramas_pr, git_con_ia"
     );
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2021") {
@@ -670,7 +712,14 @@ async function main() {
     }
   }
 
-  // ── Memoria inicial de Kaled ─────────────────────────────
+  // ── Memoria inicial de Kaled (reemplaza solo filas de este seed) ─
+  await prisma.agentMemory.deleteMany({
+    where: {
+      agentType: "KALED",
+      tenantId: tenant.id,
+      metadata: { path: ["source"], equals: "seed_v3" },
+    },
+  });
   const memorias = [
     { category: "empresa_referencia", content: "KaledSoft Technologies es una empresa colombiana que construye aplicaciones web para negocios. Sus productos: KaledDental (clínicas odontológicas), KaledWash (lavaderos de autos), KaledPark (parqueaderos), KaledSchool (academias). Los estudiantes aprenden construyendo algo similar a estos productos.", score: 100 },
     { category: "pedagogia_progresiva", content: "REGLA ABSOLUTA: Kaled nunca menciona un concepto que no haya sido enseñado en sesiones previas. En el Módulo 1 no se menciona React, Next.js, Prisma, npm ni node_modules. Solo se habla de lo que el estudiante ya vio.", score: 100 },
@@ -713,17 +762,16 @@ async function seedModulo1(
 ) {
   console.log("  📦 Módulo 1 — Fundamentos de la web");
 
-  const mod = existingModule
-    ? { id: existingModule.id }
-    : await prisma.academyModule.create({
-        data: {
-          title: "Módulo 1 — Cómo funciona la web",
-          description: "Aprende cómo funciona internet, cómo guardar tu código profesionalmente con Git, y cómo construir páginas web con HTML, CSS y JavaScript.",
-          order: 1, isActive: true, courseId,
-        },
-      });
+  const moduleRow =
+    existingModule ??
+    (await ensureAcademyModule(prisma, courseId, 1, {
+      title: "Módulo 1 — Cómo funciona la web",
+      description:
+        "Aprende cómo funciona internet, cómo guardar tu código profesionalmente con Git, y cómo construir páginas web con HTML, CSS y JavaScript.",
+    }));
+  const mod = { id: moduleRow.id };
   let _sessionIdx = 0;
-  const getLid = () => existingModule?.lessons[_sessionIdx++]?.id;
+  const getLid = () => moduleRow.lessons[_sessionIdx++]?.id;
 
   // ── SESIÓN 1 ─────────────────────────────────────────────
   await crearSesion(prisma, mod.id, tenantId, {
@@ -1671,7 +1719,7 @@ La página debe verse visualmente diferente a texto negro sobre fondo blanco —
   });
 
   console.log(`     ✓ Módulo 1 Semanas 1-2: 6 sesiones con contenido completo`);
-  await seedModulo1Semanas3y4(prisma, mod.id, tenantId, existingModule?.lessons.slice(6).map((l) => l.id));
+  await seedModulo1Semanas3y4(prisma, mod.id, tenantId, moduleRow.lessons.slice(6).map((l) => l.id));
 }
 
 async function seedModulo1Semanas3y4(
@@ -2691,15 +2739,14 @@ async function seedModulo2(
 ) {
   console.log("  ⚛️  Módulo 2 — React y construcción de interfaces");
 
-  const mod = existingModule
-    ? { id: existingModule.id }
-    : await prisma.academyModule.create({
-        data: {
-          title: "Módulo 2 — Frontend con React",
-          description: "Aprende React para construir interfaces web modernas con componentes reutilizables, manejo de estado, y consumo de datos externos.",
-          order: 2, isActive: true, courseId,
-        },
-      });
+  const moduleRow =
+    existingModule ??
+    (await ensureAcademyModule(prisma, courseId, 2, {
+      title: "Módulo 2 — Frontend con React",
+      description:
+        "Aprende React para construir interfaces web modernas con componentes reutilizables, manejo de estado, y consumo de datos externos.",
+    }));
+  const mod = { id: moduleRow.id };
 
   // Sesiones 13-24 con contenido progresivo
   // Vocabulario nuevo que se introduce: npm, node, componente, props, estado, hook
@@ -2764,7 +2811,7 @@ async function seedModulo2(
           ],
         },
       } : {}),
-    }, existingModule?.lessons[s.orden - 1]?.id);
+    }, moduleRow.lessons[s.orden - 1]?.id);
   }
 
   console.log(`     ✓ Módulo 2: 12 sesiones creadas`);
@@ -2778,15 +2825,14 @@ async function seedModulo3(
 ) {
   console.log("  ⚙️  Módulo 3 — Backend, APIs y Base de Datos");
 
-  const mod = existingModule
-    ? { id: existingModule.id }
-    : await prisma.academyModule.create({
-        data: {
-          title: "Módulo 3 — Backend y Base de Datos",
-          description: "Aprende a construir el backend de una aplicación: APIs, base de datos, autenticación y seguridad.",
-          order: 3, isActive: true, courseId,
-        },
-      });
+  const moduleRow =
+    existingModule ??
+    (await ensureAcademyModule(prisma, courseId, 3, {
+      title: "Módulo 3 — Backend y Base de Datos",
+      description:
+        "Aprende a construir el backend de una aplicación: APIs, base de datos, autenticación y seguridad.",
+    }));
+  const mod = { id: moduleRow.id };
 
   const sesionesMod3 = [
     { orden: 1, semana: 9, dia: "LUNES" as const, titulo: "¿Qué es el backend y por qué lo necesitas?", descripcion: "Entiende la diferencia entre frontend y backend, qué hace un servidor, y por qué las aplicaciones necesitan las dos partes." },
@@ -2848,7 +2894,7 @@ async function seedModulo3(
           ],
         },
       } : {}),
-    }, existingModule?.lessons[s.orden - 1]?.id);
+    }, moduleRow.lessons[s.orden - 1]?.id);
   }
 
   console.log(`     ✓ Módulo 3: 12 sesiones creadas`);
@@ -2862,15 +2908,14 @@ async function seedModulo4(
 ) {
   console.log("  🤖 Módulo 4 — IA, Pagos y Lanzamiento");
 
-  const mod = existingModule
-    ? { id: existingModule.id }
-    : await prisma.academyModule.create({
-        data: {
-          title: "Módulo 4 — IA, Monetización y Lanzamiento",
-          description: "Integra inteligencia artificial, implementa pagos reales, y lanza tu SaaS al mercado con usuarios reales.",
-          order: 4, isActive: true, courseId,
-        },
-      });
+  const moduleRow =
+    existingModule ??
+    (await ensureAcademyModule(prisma, courseId, 4, {
+      title: "Módulo 4 — IA, Monetización y Lanzamiento",
+      description:
+        "Integra inteligencia artificial, implementa pagos reales, y lanza tu SaaS al mercado con usuarios reales.",
+    }));
+  const mod = { id: moduleRow.id };
 
   const sesionesMod4 = [
     { orden: 1, semana: 13, dia: "LUNES" as const, titulo: "Inteligencia artificial en tu aplicación: cuándo y cómo", descripcion: "Aprende cuándo tiene sentido integrar IA en una aplicación y cómo conectarte a las APIs de OpenAI y Anthropic." },
@@ -2932,7 +2977,7 @@ async function seedModulo4(
           ],
         },
       } : {}),
-    }, existingModule?.lessons[s.orden - 1]?.id);
+    }, moduleRow.lessons[s.orden - 1]?.id);
   }
 
   console.log(`     ✓ Módulo 4: 12 sesiones creadas`);

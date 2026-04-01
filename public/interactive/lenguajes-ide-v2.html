@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lenguajes de Programación & IDEs</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080b14;
+      --surface: #0e1220;
+      --surface2: #151a2e;
+      --border: #1e2a45;
+      --accent: #00d4ff;
+      --accent2: #7c3aed;
+      --accent3: #f59e0b;
+      --accent4: #10b981;
+      --text: #e2e8f0;
+      --text-muted: #64748b;
+      --js: #f7df1e;
+      --py: #3776ab;
+      --ts: #3178c6;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+    .main-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      background: rgba(8,11,20,0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1rem;
+      display: flex; align-items: center;
+      height: 56px; overflow-x: auto;
+      gap: 0;
+    }
+    .nav-logo {
+      font-family: 'Space Mono', monospace;
+      font-size: .75rem;
+      color: var(--accent);
+      letter-spacing: 2px;
+      margin-right: 1rem;
+      white-space: nowrap;
+    }
+    .nav-btn {
+      background: none; border: none;
+      color: var(--text-muted);
+      font-size: .75rem;
+      height: 56px;
+      padding: 0 .85rem;
+      cursor: pointer;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: .2s;
+    }
+    .nav-btn:hover { color: var(--text); }
+    .nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .section {
+      display: none;
+      min-height: 100vh;
+      padding: 80px 1.2rem 3rem;
+    }
+    .section.active { display: block; }
+
+    #hero {
+      display: none;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    #hero.active { display: flex; }
+
+    .hero-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,212,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: gridDrift 20s linear infinite;
+    }
+    @keyframes gridDrift {
+      from { transform: translateY(0); }
+      to { transform: translateY(60px); }
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 980px; }
+    .hero-tag {
+      display: inline-block;
+      font-family: 'Space Mono', monospace;
+      font-size: .7rem;
+      letter-spacing: 3px;
+      color: var(--accent);
+      border: 1px solid rgba(0,212,255,.3);
+      background: rgba(0,212,255,.1);
+      padding: 6px 14px;
+      margin-bottom: 1.2rem;
+      border-radius: 4px;
+    }
+    .hero-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      line-height: 1.05;
+      font-size: clamp(2.1rem, 5vw, 4.8rem);
+    }
+    .hero-title span { color: var(--accent); }
+    .hero-sub {
+      max-width: 780px;
+      margin: 1rem auto 2rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      font-size: 1rem;
+    }
+    .hero-cards {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: .8rem;
+    }
+    .hero-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      min-width: 128px;
+      padding: .95rem 1rem;
+      cursor: pointer;
+      transition: .25s;
+    }
+    .hero-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-4px);
+      background: rgba(0,212,255,.06);
+    }
+    .hero-card-icon { font-size: 1.35rem; margin-bottom: .35rem; }
+    .hero-card-label { font-family: 'Space Mono', monospace; font-size: .68rem; color: var(--text-muted); }
+
+    .section-header { text-align: center; margin-bottom: 2.2rem; }
+    .section-tag {
+      display: inline-block;
+      font-family: 'Space Mono', monospace;
+      font-size: .66rem;
+      letter-spacing: 2px;
+      color: var(--accent);
+      border: 1px solid rgba(0,212,255,.25);
+      background: rgba(0,212,255,.08);
+      border-radius: 3px;
+      padding: 4px 12px;
+      margin-bottom: .8rem;
+    }
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.7rem, 4vw, 3rem);
+      line-height: 1.1;
+      font-weight: 800;
+    }
+    .section-title span { color: var(--accent); }
+    .section-desc {
+      color: var(--text-muted);
+      max-width: 780px;
+      margin: .7rem auto 0;
+      line-height: 1.6;
+      font-size: .95rem;
+    }
+
+    .highlight-box {
+      max-width: 1050px;
+      margin: 0 auto 1.5rem;
+      border-radius: 14px;
+      padding: 1.2rem 1.3rem;
+      border: 1px solid rgba(0,212,255,.2);
+      background: rgba(0,212,255,.05);
+    }
+    .highlight-box h3 {
+      font-family: 'Syne', sans-serif;
+      color: var(--accent);
+      margin-bottom: .45rem;
+      font-size: 1.05rem;
+    }
+    .highlight-box p { color: var(--text-muted); font-size: .9rem; line-height: 1.7; }
+
+    .card-grid {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem 1.1rem;
+      transition: .25s;
+    }
+    .card:hover { border-color: var(--accent); transform: translateY(-4px); }
+    .card h4 {
+      font-family: 'Syne', sans-serif;
+      margin-bottom: .35rem;
+      font-size: 1.03rem;
+    }
+    .card .meta {
+      font-family: 'Space Mono', monospace;
+      font-size: .66rem;
+      letter-spacing: 1px;
+      color: var(--accent);
+      margin-bottom: .5rem;
+    }
+    .card p { color: var(--text-muted); font-size: .86rem; line-height: 1.6; }
+    .lang-pills {
+      display: flex; flex-wrap: wrap; gap: .35rem;
+      margin-top: .7rem;
+    }
+    .lang-pill {
+      font-family: 'Space Mono', monospace;
+      font-size: .66rem;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+
+    .code-block {
+      margin-top: .75rem;
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .8rem .9rem;
+      overflow-x: auto;
+      font-family: 'Space Mono', monospace;
+      font-size: .72rem;
+      line-height: 1.65;
+      color: #d4d4d4;
+    }
+    .c-keyword { color: #ff79c6; }
+    .c-func { color: #8be9fd; }
+    .c-string { color: #f1fa8c; }
+    .c-comment { color: #6272a4; }
+    .c-num { color: #bd93f9; }
+    .c-var { color: #50fa7b; }
+
+    .compare-wrap { max-width: 1100px; margin: 0 auto; overflow-x: auto; }
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+      font-size: .83rem;
+    }
+    .compare-table th {
+      text-align: left;
+      padding: .8rem .95rem;
+      font-family: 'Space Mono', monospace;
+      color: var(--accent);
+      border-bottom: 2px solid var(--border);
+      background: var(--surface2);
+      font-size: .68rem;
+      letter-spacing: 1px;
+    }
+    .compare-table td {
+      padding: .75rem .95rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    .compare-table tr:hover td { background: var(--surface); }
+    .td-name { color: var(--text); font-family: 'Syne', sans-serif; font-weight: 700; }
+    .check { color: var(--accent4); }
+    .cross { color: #ef4444; }
+
+    .particles {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      font-family: 'Space Mono', monospace;
+      color: rgba(0,212,255,0.07);
+      font-size: .65rem;
+      animation: particleFall linear infinite;
+      white-space: nowrap;
+    }
+    @keyframes particleFall {
+      from { transform: translateY(-60px); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      to { transform: translateY(110vh); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="particles" id="particles"></div>
+
+  <nav class="main-nav">
+    <div class="nav-logo">DEV.EDU</div>
+    <button class="nav-btn active" onclick="showSection('hero')">🏠 Inicio</button>
+    <button class="nav-btn" onclick="showSection('arquitecturas')">⚙️ Arquitecturas</button>
+    <button class="nav-btn" onclick="showSection('historia')">📅 Historia</button>
+    <button class="nav-btn" onclick="showSection('tipos')">🗂 Tipos</button>
+    <button class="nav-btn" onclick="showSection('javascript')">⚡ JavaScript</button>
+    <button class="nav-btn" onclick="showSection('python')">🐍 Python & IA</button>
+    <button class="nav-btn" onclick="showSection('ides')">🖥 IDEs</button>
+    <button class="nav-btn" onclick="showSection('vscode')">💙 VSCode & Forks</button>
+    <button class="nav-btn" onclick="showSection('ai-ides')">🤖 IA en IDEs</button>
+  </nav>
+
+  <section id="hero" class="section active">
+    <div class="hero-grid"></div>
+    <div class="hero-content">
+      <div class="hero-tag">CURSO COMPLETO</div>
+      <h1 class="hero-title">Lenguajes de<br><span>Programación</span> & IDEs</h1>
+      <p class="hero-sub">De las primeras líneas de código en los años 50 hasta la era de la Inteligencia Artificial. Entiende cómo funciona el mundo del desarrollo moderno.</p>
+      <div class="hero-cards">
+        <div class="hero-card" onclick="showSection('arquitecturas')"><div class="hero-card-icon">⚙️</div><div class="hero-card-label">ARQUITECTURAS</div></div>
+        <div class="hero-card" onclick="showSection('historia')"><div class="hero-card-icon">📅</div><div class="hero-card-label">HISTORIA</div></div>
+        <div class="hero-card" onclick="showSection('tipos')"><div class="hero-card-icon">🗂</div><div class="hero-card-label">TIPOS</div></div>
+        <div class="hero-card" onclick="showSection('javascript')"><div class="hero-card-icon">⚡</div><div class="hero-card-label">JAVASCRIPT</div></div>
+        <div class="hero-card" onclick="showSection('python')"><div class="hero-card-icon">🐍</div><div class="hero-card-label">PYTHON & IA</div></div>
+        <div class="hero-card" onclick="showSection('ides')"><div class="hero-card-icon">🖥</div><div class="hero-card-label">IDEs</div></div>
+        <div class="hero-card" onclick="showSection('vscode')"><div class="hero-card-icon">💙</div><div class="hero-card-label">VSCODE FORKS</div></div>
+        <div class="hero-card" onclick="showSection('ai-ides')"><div class="hero-card-icon">🤖</div><div class="hero-card-label">IA EN IDEs</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="arquitecturas" class="section">
+    <div class="section-header">
+      <div class="section-tag">MÓDULO 01-A</div>
+      <h2 class="section-title">Arquitecturas de <span>Hardware</span></h2>
+      <p class="section-desc">La guerra de chips que dictó qué lenguajes existirían: IBM, Intel, Apple, ARM.</p>
+    </div>
+    <div class="highlight-box">
+      <h3>¿Por qué importa el hardware?</h3>
+      <p>Cada lenguaje existe porque hay un procesador que lo ejecuta. Entender arquitectura te ayuda a entender por qué un lenguaje nació y para qué problema era útil.</p>
+    </div>
+    <div class="card-grid">
+      <article class="card">
+        <div class="meta">IBM · 1954</div>
+        <h4>FORTRAN y Mainframes</h4>
+        <p>IBM 704 populariza el cómputo científico y abre la puerta a lenguajes de alto nivel.</p>
+        <div class="lang-pills"><span class="lang-pill">FORTRAN</span><span class="lang-pill">COBOL</span></div>
+      </article>
+      <article class="card">
+        <div class="meta">Intel · 1978</div>
+        <h4>8086 y arquitectura x86</h4>
+        <p>La base de los PCs modernos y del ecosistema empresarial por décadas.</p>
+        <div class="lang-pills"><span class="lang-pill">C</span><span class="lang-pill">ASM x86</span><span class="lang-pill">Pascal</span></div>
+      </article>
+      <article class="card">
+        <div class="meta">Apple · 2020</div>
+        <h4>Apple Silicon (ARM)</h4>
+        <p>ARM demuestra que puede dominar desktop por rendimiento y eficiencia energética.</p>
+        <div class="lang-pills"><span class="lang-pill">Swift</span><span class="lang-pill">Objective-C</span><span class="lang-pill">Rust</span></div>
+      </article>
+    </div>
+  </section>
+
+  <section id="historia" class="section">
+    <div class="section-header">
+      <div class="section-tag">MÓDULO 02</div>
+      <h2 class="section-title">Historia de los <span>Lenguajes</span></h2>
+      <p class="section-desc">De lenguaje máquina a LLMs en producción.</p>
+    </div>
+    <div class="card-grid">
+      <article class="card"><div class="meta">1954</div><h4>FORTRAN</h4><p>Primer lenguaje de alto nivel para cálculo científico.</p></article>
+      <article class="card"><div class="meta">1972</div><h4>C</h4><p>La base de muchísimos lenguajes modernos y sistemas operativos.</p></article>
+      <article class="card"><div class="meta">1991–1995</div><h4>Python & JavaScript</h4><p>Legibilidad + web interactiva marcan una nueva era.</p></article>
+      <article class="card"><div class="meta">2012+</div><h4>TypeScript</h4><p>Tipado estático sobre JavaScript para proyectos grandes.</p></article>
+      <article class="card"><div class="meta">2023+</div><h4>IA generativa</h4><p>SDKs de OpenAI, agentes y copilotos cambian el flujo de desarrollo.</p></article>
+    </div>
+  </section>
+
+  <section id="tipos" class="section">
+    <div class="section-header">
+      <div class="section-tag">MÓDULO 03</div>
+      <h2 class="section-title">Tipos de <span>Lenguajes</span></h2>
+      <p class="section-desc">No es una competencia: son dimensiones diferentes.</p>
+    </div>
+    <div class="card-grid">
+      <article class="card">
+        <div class="meta">POR NIVEL</div>
+        <h4>Bajo, Medio, Alto</h4>
+        <p>Control vs productividad.</p>
+        <div class="lang-pills"><span class="lang-pill">ASM</span><span class="lang-pill">C/C++</span><span class="lang-pill">Python/JS</span></div>
+      </article>
+      <article class="card">
+        <div class="meta">POR PARADIGMA</div>
+        <h4>POO, Funcional, Declarativo</h4>
+        <p>Organización y estilo de pensamiento.</p>
+        <div class="lang-pills"><span class="lang-pill">Java</span><span class="lang-pill">Haskell</span><span class="lang-pill">SQL</span></div>
+      </article>
+      <article class="card">
+        <div class="meta">POR TIPADO</div>
+        <h4>Estático vs Dinámico</h4>
+        <p>Errores temprano vs flexibilidad.</p>
+        <div class="lang-pills"><span class="lang-pill">TS/Java</span><span class="lang-pill">JS/Python</span></div>
+      </article>
+      <article class="card">
+        <div class="meta">POR EJECUCIÓN</div>
+        <h4>Compilado, Interpretado, JIT</h4>
+        <p>Cómo llega tu código a ejecutarse.</p>
+        <div class="lang-pills"><span class="lang-pill">Rust</span><span class="lang-pill">Python</span><span class="lang-pill">V8</span></div>
+      </article>
+    </div>
+  </section>
+
+  <section id="javascript" class="section">
+    <div class="section-header">
+      <div class="section-tag">MÓDULO 04</div>
+      <h2 class="section-title">La Historia de <span>JavaScript</span></h2>
+      <p class="section-desc">De 10 días de desarrollo a dominar frontend y backend.</p>
+    </div>
+    <div class="card-grid">
+      <article class="card"><div class="meta">1995</div><h4>Nace JavaScript</h4><p>Brendan Eich lo crea para interacción en navegador.</p></article>
+      <article class="card"><div class="meta">2008</div><h4>V8 de Google</h4><p>JIT acelera JS y cambia su reputación de rendimiento.</p></article>
+      <article class="card"><div class="meta">2009</div><h4>Node.js</h4><p>JavaScript llega al servidor y habilita full-stack.</p></article>
+      <article class="card"><div class="meta">2016+</div><h4>Next.js</h4><p>SSR/SSG/API Routes para apps web modernas.</p></article>
+    </div>
+    <div class="code-block" style="max-width:1050px;margin:1rem auto 0;">
+<span class="c-comment">// Next.js + IA (ejemplo)</span><br>
+<span class="c-keyword">import</span> { useChat } <span class="c-keyword">from</span> <span class="c-string">'ai/react'</span>;<br>
+<span class="c-keyword">export default function</span> <span class="c-func">Chat</span>() {<br>
+&nbsp;&nbsp;<span class="c-keyword">const</span> { messages, input } = <span class="c-func">useChat</span>();<br>
+}
+    </div>
+  </section>
+
+  <section id="python" class="section">
+    <div class="section-header">
+      <div class="section-tag">MÓDULO 05</div>
+      <h2 class="section-title"><span>Python</span> & la Era de la IA</h2>
+      <p class="section-desc">Legibilidad, ecosistema científico y dominio en ML/LLMs.</p>
+    </div>
+    <div class="card-grid">
+      <article class="card"><div class="meta">1991</div><h4>Nace Python</h4><p>Diseñado para ser claro y legible.</p></article>
+      <article class="card"><div class="meta">2006+</div><h4>NumPy / SciPy / Pandas</h4><p>La base del cálculo y datos modernos.</p></article>
+      <article class="card"><div class="meta">2015+</div><h4>TensorFlow / PyTorch</h4><p>Deep learning para investigación y producción.</p></article>
+      <article class="card"><div class="meta">2023+</div><h4>LLMs</h4><p>OpenAI SDK, LangChain y agentes en Python.</p></article>
+    </div>
+  </section>
+
+  <section id="ides" class="section">
+    <div class="section-header">
+      <div class="section-tag">MÓDULO 06</div>
+      <h2 class="section-title">Historia de los <span>IDEs</span></h2>
+      <p class="section-desc">De editores básicos a asistentes inteligentes.</p>
+    </div>
+    <div class="card-grid">
+      <article class="card"><div class="meta">1976</div><h4>Vi / Emacs</h4><p>El origen del flujo de edición poderoso.</p></article>
+      <article class="card"><div class="meta">1991</div><h4>Turbo Pascal</h4><p>Uno de los primeros IDEs modernos integrados.</p></article>
+      <article class="card"><div class="meta">2015</div><h4>VS Code</h4><p>Ligero, extensible y open source.</p></article>
+      <article class="card"><div class="meta">2021+</div><h4>Copilot/Agentes</h4><p>La IA pasa de sugerir a ejecutar tareas completas.</p></article>
+    </div>
+  </section>
+
+  <section id="vscode" class="section">
+    <div class="section-header">
+      <div class="section-tag">MÓDULO 07</div>
+      <h2 class="section-title">VSCode y sus <span>Forks</span></h2>
+      <p class="section-desc">Una base común para nuevas experiencias de desarrollo.</p>
+    </div>
+    <div class="card-grid">
+      <article class="card"><div class="meta">FORK</div><h4>Cursor</h4><p>IA integrada al flujo diario con contexto del proyecto.</p></article>
+      <article class="card"><div class="meta">FORK</div><h4>Windsurf</h4><p>Experiencia agentic para ejecutar tareas multiarchivo.</p></article>
+      <article class="card"><div class="meta">PRIVACY</div><h4>VSCodium</h4><p>Experiencia VS Code sin telemetría propietaria.</p></article>
+      <article class="card"><div class="meta">CLOUD</div><h4>Gitpod</h4><p>Entorno listo desde navegador en segundos.</p></article>
+    </div>
+  </section>
+
+  <section id="ai-ides" class="section">
+    <div class="section-header">
+      <div class="section-tag">MÓDULO 08</div>
+      <h2 class="section-title">IDEs de <span>IA Pura</span></h2>
+      <p class="section-desc">Cuando la IA no es plugin: es el núcleo del producto.</p>
+    </div>
+    <div class="card-grid">
+      <article class="card"><div class="meta">CLI</div><h4>Claude Code</h4><p>Agente de terminal para tareas complejas y refactors.</p></article>
+      <article class="card"><div class="meta">CLI</div><h4>Aider</h4><p>Pair programming con IA y commits asistidos.</p></article>
+      <article class="card"><div class="meta">IDE+AGENT</div><h4>Copilot Agent</h4><p>Modo autónomo dentro del workspace.</p></article>
+      <article class="card"><div class="meta">AUTÓNOMO</div><h4>OpenHands / Devin</h4><p>Flujos end-to-end con ejecución de tareas.</p></article>
+    </div>
+
+    <div style="max-width:1100px;margin:2rem auto 0;">
+      <div class="compare-wrap">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Herramienta</th>
+              <th>Tipo</th>
+              <th>Interfaz Visual</th>
+              <th>Ideal Para</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="td-name">VS Code + Copilot</td><td>IDE + plugin</td><td class="check">✓ Sí</td><td>Flujo tradicional con IA</td></tr>
+            <tr><td class="td-name">Cursor</td><td>IDE (fork)</td><td class="check">✓ Sí</td><td>IA central en el IDE</td></tr>
+            <tr><td class="td-name">Windsurf</td><td>IDE (fork)</td><td class="check">✓ Sí</td><td>Agentic con UI</td></tr>
+            <tr><td class="td-name">Claude Code</td><td>CLI agente</td><td class="cross">✗ No</td><td>Tareas complejas autónomas</td></tr>
+            <tr><td class="td-name">Aider</td><td>CLI agente</td><td class="cross">✗ No</td><td>Pair programming rápido</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      const sec = document.getElementById(id);
+      if (sec) sec.classList.add('active');
+      document.querySelectorAll('.nav-btn').forEach(b => {
+        const onclick = b.getAttribute('onclick') || '';
+        if (onclick.includes("'" + id + "'")) b.classList.add('active');
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    const codeSnippets = ['const','function','return','import','class','async','await','def','print()','=>','{}','[]','===','npm','git','node','python','react','next','AI','LLM','API'];
+    const particleHost = document.getElementById('particles');
+    for (let i = 0; i < 24; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.textContent = codeSnippets[Math.floor(Math.random() * codeSnippets.length)];
+      p.style.left = (Math.random() * 100) + '%';
+      p.style.animationDuration = (12 + Math.random() * 20) + 's';
+      p.style.animationDelay = (Math.random() * 10) + 's';
+      particleHost.appendChild(p);
+    }
+  </script>
+</body>
+</html>

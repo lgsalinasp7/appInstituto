@@ -9,6 +9,60 @@ import {
   isLessonPrecohortMeta,
 } from "./academy-cohort-lesson-access.service";
 
+/**
+ * Varios registros `AcademyModule` con el mismo `order` (p. ej. seed duplicado) provocaban
+ * secciones repetidas "Módulo 1" en admin y lecciones huérfanas en la vista estudiante.
+ * Fusiona por `order`: une títulos y deduplica lecciones por `id`.
+ */
+function mergeAcademyModulesByOrder<
+  TModule extends {
+    id: string;
+    title: string;
+    order: number;
+    lessons: TLesson[];
+  },
+  TLesson extends { id: string; order: number },
+>(modules: TModule[]): TModule[] {
+  const sorted = [...modules].sort(
+    (a, b) => a.order - b.order || a.id.localeCompare(b.id)
+  );
+  type Acc = { headId: string; titles: string[]; lessonMap: Map<string, TLesson> };
+  const byOrder = new Map<number, Acc>();
+
+  for (const mod of sorted) {
+    let acc = byOrder.get(mod.order);
+    if (!acc) {
+      acc = { headId: mod.id, titles: [mod.title], lessonMap: new Map() };
+      byOrder.set(mod.order, acc);
+    } else if (!acc.titles.includes(mod.title)) {
+      acc.titles.push(mod.title);
+    }
+    for (const l of mod.lessons) {
+      if (!acc.lessonMap.has(l.id)) {
+        acc.lessonMap.set(l.id, l);
+      }
+    }
+  }
+
+  return Array.from(byOrder.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([order, acc]) => {
+      const template = sorted.find((m) => m.id === acc.headId)!;
+      const mergedTitle =
+        acc.titles.length > 1 ? acc.titles.join(" · ") : acc.titles[0] ?? template.title;
+      const mergedLessons = Array.from(acc.lessonMap.values()).sort(
+        (x, y) => x.order - y.order || x.id.localeCompare(y.id)
+      ) as TModule["lessons"];
+      return {
+        ...template,
+        id: acc.headId,
+        title: mergedTitle,
+        order,
+        lessons: mergedLessons,
+      };
+    });
+}
+
 export class AcademyCohortService {
   static async listByTenant(tenantId: string) {
     return prisma.academyCohort.findMany({
@@ -183,19 +237,7 @@ export class AcademyCohortService {
       return null;
     }
 
-    // Deduplicar módulos por id y order (evita duplicados en la vista)
-    const rawModules = cohort.course.modules;
-    const seenIds = new Set<string>();
-    const seenOrders = new Set<number>();
-    const uniqueModules = rawModules
-      .filter((mod) => {
-        if (seenIds.has(mod.id)) return false;
-        if (seenOrders.has(mod.order)) return false;
-        seenIds.add(mod.id);
-        seenOrders.add(mod.order);
-        return true;
-      })
-      .sort((a, b) => a.order - b.order);
+    const mergedModules = mergeAcademyModulesByOrder(cohort.course.modules);
 
     const releasedSet = cohort.lessonGatingEnabled
       ? await AcademyCohortLessonAccessService.getReleasedLessonIds(cohort.id)
@@ -209,7 +251,7 @@ export class AcademyCohortService {
 
     const courseWithUniqueModules = {
       ...cohort.course,
-      modules: uniqueModules.map((mod) => ({
+      modules: mergedModules.map((mod) => ({
         ...mod,
         lessons: mod.lessons.map((l) => ({
           ...l,
@@ -228,7 +270,7 @@ export class AcademyCohortService {
       })),
     };
 
-    const lessonIds = uniqueModules.flatMap((m) => m.lessons.map((l) => l.id));
+    const lessonIds = mergedModules.flatMap((m) => m.lessons.map((l) => l.id));
     const progressRecords = await prisma.academyStudentProgress.findMany({
       where: { userId, lessonId: { in: lessonIds }, completed: true },
       select: { lessonId: true },
@@ -399,12 +441,15 @@ export class AcademyCohortService {
       where: { cohortId },
       select: { lessonId: true },
     });
+    const modules = mergeAcademyModulesByOrder(cohort.course.modules);
     return {
       cohortId: cohort.id,
+      cohortName: cohort.name,
+      courseTitle: cohort.course.title,
       lessonGatingEnabled: cohort.lessonGatingEnabled,
       timezone: cohort.timezone,
       releasedLessonIds: releases.map((r) => r.lessonId),
-      modules: cohort.course.modules,
+      modules,
     };
   }
 

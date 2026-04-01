@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git con IA — KaledSoft Academy</title>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111520;
+    --surface2: #161b27;
+    --border: #1e2536;
+    --accent: #f0a500;
+    --accent2: #e05c3a;
+    --danger: #e03a3a;
+    --safe: #3ae07f;
+    --warn: #e0a53a;
+    --text: #dde3f0;
+    --muted: #6b7590;
+    --code-bg: #0d1117;
+    --code-border: #1e2a3a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Courier New', 'Lucida Console', monospace;
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 48px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 100;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .topbar-left .brand {
+    color: var(--accent);
+    font-weight: bold;
+    font-size: 13px;
+    letter-spacing: 2px;
+  }
+
+  .topbar-left .sep { color: var(--border); }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .slide-counter {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'Courier New', monospace;
+  }
+
+  .slide-counter span { color: var(--accent); }
+
+  /* DOTS */
+  .dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .dot.active { background: var(--accent); transform: scale(1.4); }
+  .dot:hover { background: var(--muted); }
+
+  /* SLIDES CONTAINER */
+  .slides {
+    position: fixed;
+    top: 48px; bottom: 56px;
+    left: 0; right: 0;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    padding: 40px 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    opacity: 0;
+    transform: translateX(60px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events: none;
+    overflow-y: auto;
+  }
+
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+  }
+
+  .slide.exit {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+
+  /* SLIDE HEADER */
+  .slide-num {
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .slide-title {
+    font-size: 28px;
+    font-weight: bold;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 6px;
+    font-family: 'Courier New', monospace;
+  }
+
+  .slide-title .hl { color: var(--accent); }
+  .slide-title .hl2 { color: var(--accent2); }
+
+  .slide-subtitle {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 32px;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* GRID LAYOUTS */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    position: relative;
+  }
+
+  .card.danger { border-color: #3a1a1a; background: #120808; }
+  .card.safe { border-color: #1a3a2a; background: #081208; }
+  .card.warn { border-color: #3a2a1a; background: #120c08; }
+  .card.info { border-color: #1a2540; background: #080e20; }
+
+  .card-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .card-label.danger { color: var(--danger); }
+  .card-label.safe { color: var(--safe); }
+  .card-label.warn { color: var(--warn); }
+  .card-label.info { color: #5a8fe0; }
+
+  .card-title {
+    font-size: 15px;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .card-body {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* CODE BLOCKS */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-size: 13px;
+    font-family: 'Courier New', monospace;
+    margin: 10px 0;
+    position: relative;
+    overflow-x: auto;
+  }
+
+  .code-block .cmd { color: #79b8ff; }
+  .code-block .flag { color: var(--warn); }
+  .code-block .comment { color: var(--muted); }
+  .code-block .danger-cmd { color: var(--danger); }
+  .code-block .safe-cmd { color: var(--safe); }
+  .code-block .output { color: #6ee7b7; }
+
+  .code-badge {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    text-transform: uppercase;
+  }
+
+  .badge-danger { background: #3a0808; color: var(--danger); }
+  .badge-safe { background: #083a18; color: var(--safe); }
+  .badge-neutral { background: #1a2030; color: var(--muted); }
+
+  /* TERMINAL */
+  .terminal {
+    background: #050810;
+    border: 1px solid #1a2040;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 12px 0;
+  }
+
+  .terminal-header {
+    background: #0d1020;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-bottom: 1px solid #1a2040;
+  }
+
+  .terminal-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+
+  .terminal-dot:nth-child(1) { background: #e03a3a; }
+  .terminal-dot:nth-child(2) { background: var(--warn); }
+  .terminal-dot:nth-child(3) { background: var(--safe); }
+
+  .terminal-title {
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: 6px;
+    letter-spacing: 1px;
+  }
+
+  .terminal-body {
+    padding: 14px 16px;
+    font-size: 13px;
+    font-family: 'Courier New', monospace;
+    line-height: 1.8;
+  }
+
+  .t-prompt { color: var(--safe); }
+  .t-cmd { color: #fff; }
+  .t-danger { color: var(--danger); }
+  .t-warn { color: var(--warn); }
+  .t-ok { color: var(--safe); }
+  .t-muted { color: var(--muted); }
+  .t-info { color: #79b8ff; }
+
+  /* BIG STATEMENT */
+  .big-statement {
+    background: linear-gradient(135deg, #0d1020, #120820);
+    border: 1px solid #2a1a40;
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin: 16px 0;
+  }
+
+  .big-statement p {
+    font-size: 18px;
+    line-height: 1.6;
+    color: #c0cae0;
+  }
+
+  .big-statement p strong { color: var(--accent); }
+  .big-statement p .danger-txt { color: var(--danger); }
+
+  /* FLOW DIAGRAM */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+
+  .flow-step {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 12px;
+    text-align: center;
+    min-width: 110px;
+  }
+
+  .flow-step .step-icon { font-size: 18px; margin-bottom: 4px; }
+  .flow-step .step-text { color: var(--muted); }
+  .flow-arrow { color: var(--accent); font-size: 18px; }
+
+  /* COMPARISON TABLE */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 12px;
+  }
+
+  .compare-table th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .compare-table th:nth-child(1) { color: var(--muted); }
+  .compare-table th:nth-child(2) { color: var(--danger); }
+  .compare-table th:nth-child(3) { color: var(--safe); }
+
+  .compare-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #111520;
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  .compare-table td:nth-child(1) { color: #fff; font-weight: bold; }
+  .compare-table td:nth-child(2) { color: #e07070; }
+  .compare-table td:nth-child(3) { color: #70e090; }
+
+  .compare-table tr:hover td { background: #111520; }
+
+  /* KALEDSOFT TAG */
+  .ks-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #0d1525;
+    border: 1px solid #1e3055;
+    border-radius: 4px;
+    padding: 2px 10px;
+    font-size: 11px;
+    color: #5a8fe0;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  /* STEPS LIST */
+  .steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .step-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  .step-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #000;
+    font-size: 11px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .step-num.danger-num { background: var(--danger); }
+  .step-num.safe-num { background: var(--safe); }
+
+  .step-content { flex: 1; }
+  .step-content strong { color: #fff; display: block; margin-bottom: 4px; font-size: 13px; }
+  .step-content span { color: var(--muted); font-size: 12px; line-height: 1.5; }
+
+  /* PILL TAGS */
+  .pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    margin: 2px;
+  }
+
+  .pill-danger { background: #3a0808; color: var(--danger); border: 1px solid #5a1010; }
+  .pill-safe { background: #083a18; color: var(--safe); border: 1px solid #105a28; }
+  .pill-warn { background: #3a2808; color: var(--warn); border: 1px solid #5a4010; }
+
+  /* INTERACTIVE DEMO */
+  .demo-panel {
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 16px;
+  }
+
+  .demo-header {
+    padding: 10px 16px;
+    background: #0d1117;
+    border-bottom: 1px solid var(--code-border);
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .demo-options {
+    display: flex;
+    gap: 8px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #1a2030;
+    flex-wrap: wrap;
+  }
+
+  .demo-btn {
+    padding: 6px 14px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .demo-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .demo-btn.danger-btn:hover { border-color: var(--danger); color: var(--danger); }
+  .demo-btn.safe-btn:hover { border-color: var(--safe); color: var(--safe); }
+
+  .demo-output {
+    padding: 14px 16px;
+    min-height: 100px;
+    font-size: 13px;
+    font-family: 'Courier New', monospace;
+    line-height: 1.7;
+  }
+
+  /* BLAME VISUALIZATION */
+  .blame-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+  }
+
+  .blame-table tr { border-bottom: 1px solid #0d1520; }
+  .blame-table tr:hover { background: #0d1520; }
+
+  .blame-commit { color: var(--accent); width: 80px; padding: 5px 10px; }
+  .blame-author { color: #79b8ff; width: 120px; padding: 5px 10px; }
+  .blame-date { color: var(--muted); width: 100px; padding: 5px 10px; }
+  .blame-line { color: var(--muted); width: 30px; padding: 5px 8px; text-align: right; }
+  .blame-code { color: var(--text); padding: 5px 10px; }
+  .blame-code .blame-hl { background: #2a1a0a; color: var(--warn); padding: 0 2px; }
+  .blame-code .blame-bug { background: #2a0808; color: var(--danger); padding: 0 2px; }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 56px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+  }
+
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 13px;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .nav-btn:disabled:hover { border-color: var(--border); color: var(--muted); }
+
+  .nav-hint {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  /* SCROLLBAR */
+  .slide::-webkit-scrollbar { width: 4px; }
+  .slide::-webkit-scrollbar-track { background: transparent; }
+  .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* SECTION DIVIDER */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 20px 0;
+  }
+
+  /* FADE IN ANIMATION */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide.active .card,
+  .slide.active .big-statement,
+  .slide.active .terminal,
+  .slide.active .step-item,
+  .slide.active .code-block {
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .slide.active .card:nth-child(1) { animation-delay: 0.05s; }
+  .slide.active .card:nth-child(2) { animation-delay: 0.12s; }
+  .slide.active .card:nth-child(3) { animation-delay: 0.19s; }
+  .slide.active .step-item:nth-child(1) { animation-delay: 0.05s; }
+  .slide.active .step-item:nth-child(2) { animation-delay: 0.1s; }
+  .slide.active .step-item:nth-child(3) { animation-delay: 0.15s; }
+  .slide.active .step-item:nth-child(4) { animation-delay: 0.2s; }
+  .slide.active .step-item:nth-child(5) { animation-delay: 0.25s; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="brand">AMAXOFT</span>
+    <span class="sep">│</span>
+    <span>git + ia</span>
+    <span class="sep">│</span>
+    <span>KaledSoft Academy</span>
+  </div>
+  <div class="topbar-right">
+    <div class="dots" id="dots"></div>
+    <div class="slide-counter">slide <span id="cnum">1</span> / <span id="ctotal">10</span></div>
+  </div>
+</div>
+
+<!-- SLIDES -->
+<div class="slides" id="slides">
+
+  <!-- SLIDE 1: PORTADA -->
+  <div class="slide active" data-slide="0">
+    <div class="slide-num">// tema 05</div>
+    <div class="slide-title"><span class="hl">Git</span> con <span class="hl2">IA</span></div>
+    <div class="slide-subtitle">Criterio técnico sobre las sugerencias — la IA es una herramienta, no el piloto.</div>
+
+    <div class="big-statement">
+      <p>La IA puede sugerirte <strong>comandos que destruyen el historial</strong> de un repositorio compartido
+      con total confianza y sin ninguna advertencia.<br><br>
+      Un <strong>git push --force origin main</strong> sugerido sin que tú entiendas las consecuencias
+      puede borrar el trabajo de todo el equipo de <strong class="danger-txt">KaledSoft</strong> de una semana.
+      <br><br>
+      <strong>El criterio técnico es tuyo. La IA es solo una herramienta.</strong></p>
+    </div>
+
+    <div class="grid-3" style="margin-top:20px">
+      <div class="card info">
+        <div class="card-label info">📌 lo que aprenderás</div>
+        <div class="card-body">Cuándo confiar en la IA y cuándo no con Git</div>
+      </div>
+      <div class="card danger">
+        <div class="card-label danger">⚠ peligros reales</div>
+        <div class="card-body">Comandos destructivos que la IA sugiere sin aviso</div>
+      </div>
+      <div class="card safe">
+        <div class="card-label safe">✓ soluciones</div>
+        <div class="card-body">Cómo revertir errores y mantener el control total</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2: LA IA COMO PAR DE PROGRAMACIÓN -->
+  <div class="slide" data-slide="1">
+    <div class="slide-num">// 01 — concepto base</div>
+    <div class="slide-title">La IA como <span class="hl">par de programación</span></div>
+    <div class="slide-subtitle">No como reemplazo del juicio. No como el experto final.</div>
+
+    <div class="grid-2">
+      <div>
+        <div class="card safe" style="margin-bottom:14px">
+          <div class="card-label safe">✓ en qué sí ayuda la IA</div>
+          <div class="card-title">Tareas donde brilla</div>
+          <div class="card-body">
+            — Entender mensajes de error confusos de merge<br>
+            — Generar borradores de mensajes de commit<br>
+            — Explicar qué hace un diff grande<br>
+            — Sugerir el comando para una acción específica<br>
+            — Traducir errores crípticos de Git al español
+          </div>
+        </div>
+        <div class="card danger">
+          <div class="card-label danger">⚠ en qué falla la IA</div>
+          <div class="card-title">Tareas donde debes tener cuidado</div>
+          <div class="card-body">
+            — No conoce el estado actual de tu repositorio<br>
+            — No sabe si hay compañeros trabajando en la misma rama<br>
+            — Puede sugerir soluciones que funcionan en su contexto imaginado pero destruyen el tuyo<br>
+            — Presenta comandos destructivos con el mismo tono que los seguros
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card info">
+          <div class="card-label info">💡 el modelo mental correcto</div>
+          <div class="card-title">La IA es un junior muy listo</div>
+          <div class="card-body" style="line-height:1.8">
+            Imagina que tienes un compañero nuevo en KaledSoft que sabe
+            mucho de Git en teoría, pero no conoce el proyecto, no sabe
+            qué ramas están en producción, ni quién está trabajando en qué.<br><br>
+            Le puedes pedir sugerencias. Pero tú eres quien decide si ejecutar
+            el comando o no. Tú eres el senior. La IA es el junior.
+          </div>
+        </div>
+        <div class="terminal" style="margin-top:14px">
+          <div class="terminal-header">
+            <div class="terminal-dot"></div><div class="terminal-dot"></div><div class="terminal-dot"></div>
+            <div class="terminal-title">flujo recomendado con IA</div>
+          </div>
+          <div class="terminal-body">
+            <span class="t-muted">1.</span> <span class="t-info">Describe el problema a la IA</span><br>
+            <span class="t-muted">2.</span> <span class="t-warn">Lee el comando sugerido</span><br>
+            <span class="t-muted">3.</span> <span class="t-ok">Entiéndelo antes de ejecutarlo</span><br>
+            <span class="t-muted">4.</span> <span class="t-ok">Verifica que aplica a tu caso</span><br>
+            <span class="t-muted">5.</span> <span class="t-info">Ejecuta con criterio</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: COMANDOS PELIGROSOS -->
+  <div class="slide" data-slide="2">
+    <div class="slide-num">// 02 — zona de peligro</div>
+    <div class="slide-title">Comandos <span class="hl2">peligrosos</span> que la IA sugiere</div>
+    <div class="slide-subtitle">Estos tres pueden destruir trabajo. Nunca los ejecutes sin entender exactamente qué hacen.</div>
+
+    <div class="steps-list">
+      <div class="step-item">
+        <div class="step-num danger-num">!</div>
+        <div class="step-content">
+          <div class="code-block" style="margin:0 0 8px 0">
+            <span class="danger-cmd">git push --force origin main</span>
+            <span class="code-badge badge-danger">destruye historial remoto</span>
+          </div>
+          <span>Sobreescribe el historial del repositorio remoto con tu versión local.
+          Si hay 5 personas en KaledSoft que hicieron commits esta semana y tú tienes una versión vieja localmente,
+          con este comando <strong style="color:var(--danger)">borras el trabajo de todos</strong>.
+          Git no pregunta. No hay confirmación. No hay papelera de reciclaje.</span>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-num danger-num">!</div>
+        <div class="step-content">
+          <div class="code-block" style="margin:0 0 8px 0">
+            <span class="danger-cmd">git reset --hard HEAD~5</span>
+            <span class="code-badge badge-danger">elimina 5 commits locales</span>
+          </div>
+          <span>Elimina los últimos 5 commits de tu historial local sin posibilidad de recuperación simple.
+          Todo el código que escribiste en esos commits desaparece del árbol de trabajo.
+          La IA suele sugerir esto para "limpiar" el historial, sin aclarar que es irreversible si no tienes un reflog activo.</span>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-num danger-num">!</div>
+        <div class="step-content">
+          <div class="code-block" style="margin:0 0 8px 0">
+            <span class="danger-cmd">git clean -fd</span>
+            <span class="code-badge badge-danger">borra archivos no rastreados</span>
+          </div>
+          <span>Elimina permanentemente todos los archivos que Git no está rastreando.
+          Si tienes archivos nuevos que creaste pero aún no hiciste <code style="color:var(--safe)">git add</code>,
+          este comando los borra del disco para siempre. No van a la papelera. Desaparecen.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card warn" style="margin-top:16px; padding: 14px 20px">
+      <div class="card-label warn">🔑 regla de oro</div>
+      <div class="card-body">Si un comando sugerido por la IA contiene <code style="color:var(--danger)">--force</code>, <code style="color:var(--danger)">--hard</code>, o <code style="color:var(--danger)">-f</code>,
+      detente. Busca qué hace exactamente. Pregúntale a la IA que te explique las consecuencias antes de ejecutarlo.</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: PROBLEMAS QUE GENERA LA IA CON GIT -->
+  <div class="slide" data-slide="3">
+    <div class="slide-num">// 03 — problemas frecuentes</div>
+    <div class="slide-title">Los <span class="hl">6 problemas</span> más comunes que genera la IA con Git</div>
+    <div class="slide-subtitle">Patrones reales que aparecen cuando usas IA para resolver problemas de Git sin supervisión.</div>
+
+    <div class="grid-2">
+      <div class="card danger">
+        <div class="card-label danger">⚠ problema 1</div>
+        <div class="card-title">Contexto imaginado</div>
+        <div class="card-body">La IA no tiene acceso a tu repositorio. Asume un estado que no existe.
+        Puede sugerirte un merge estrategia basada en una rama que en tu repo tiene un nombre diferente
+        o ya fue eliminada.</div>
+      </div>
+      <div class="card danger">
+        <div class="card-label danger">⚠ problema 2</div>
+        <div class="card-title">Confianza uniforme</div>
+        <div class="card-body">La IA presenta <code style="color:var(--safe)">git status</code> y
+        <code style="color:var(--danger)">git push --force</code> con el mismo tono tranquilo y profesional.
+        No hay señales de alerta. Tú eres quien debe reconocer la diferencia.</div>
+      </div>
+      <div class="card warn">
+        <div class="card-label warn">⚠ problema 3</div>
+        <div class="card-title">Soluciones de Stack Overflow antiguas</div>
+        <div class="card-body">La IA fue entrenada con código y respuestas de internet que pueden tener
+        años. Puede sugerir workflows de Git obsoletos que el equipo de KaledSoft ya no usa.</div>
+      </div>
+      <div class="card warn">
+        <div class="card-label warn">⚠ problema 4</div>
+        <div class="card-title">Conflictos de merge mal resueltos</div>
+        <div class="card-body">Si le pegas un diff a la IA y le pides que resuelva el conflicto,
+        puede elegir la versión equivocada sin entender la lógica de negocio de KaledDental.
+        La IA elige sintácticamente, no semánticamente.</div>
+      </div>
+      <div class="card warn">
+        <div class="card-label warn">⚠ problema 5</div>
+        <div class="card-title">Commits demasiado grandes</div>
+        <div class="card-body">La IA suele sugerir mensajes de commit genéricos que agrupan demasiados cambios.
+        "fix: multiple issues" no le dice nada a nadie en una revisión de código seis meses después.</div>
+      </div>
+      <div class="card danger">
+        <div class="card-label danger">⚠ problema 6</div>
+        <div class="card-title">Historial reescrito en rama compartida</div>
+        <div class="card-body">Si la IA sugiere <code style="color:var(--danger)">git rebase</code> o
+        <code style="color:var(--danger)">git commit --amend</code> en una rama que ya está en el remoto
+        y que otros usan, estás reescribiendo historial compartido. Catástrofe garantizada.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: SUPERVISIÓN — ANTES DE EJECUTAR -->
+  <div class="slide" data-slide="4">
+    <div class="slide-num">// 04 — supervisión</div>
+    <div class="slide-title">El <span class="hl">checklist</span> antes de ejecutar cualquier comando sugerido por IA</div>
+    <div class="slide-subtitle">5 preguntas que deben responderse antes de presionar Enter.</div>
+
+    <div class="steps-list">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <strong>¿Entiendo exactamente qué hace este comando?</strong>
+          <span>Si no puedes explicarlo en una oración, no lo ejecutes. Pídele a la IA que te lo explique paso a paso primero.</span>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <strong>¿Este comando modifica el historial remoto?</strong>
+          <span>Cualquier cosa que toque el repositorio remoto afecta a todos en KaledSoft. Busca si hay <code style="color:var(--warn)">origin</code>, <code style="color:var(--warn)">remote</code>, o <code style="color:var(--danger)">--force</code> en el comando.</span>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <strong>¿Hay compañeros trabajando en esta rama ahora mismo?</strong>
+          <span>Revisa con tu equipo antes de hacer operaciones destructivas en ramas compartidas. Un mensaje en Slack puede salvarte.</span>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <strong>¿Tengo un punto de regreso seguro?</strong>
+          <span>Antes de cualquier operación riesgosa, crea una rama de respaldo: <code style="color:var(--safe)">git branch backup-$(date +%Y%m%d)</code>. Costo: 2 segundos. Valor: tu trabajo.</span>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <strong>¿Puedo probarlo en seco primero?</strong>
+          <span>Muchos comandos de Git tienen la opción <code style="color:var(--safe)">--dry-run</code> o <code style="color:var(--safe)">-n</code> que te muestra qué haría sin hacerlo. Úsala siempre que exista.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: CÓMO USAR LA IA BIEN — PROMPTS CORRECTOS -->
+  <div class="slide" data-slide="5">
+    <div class="slide-num">// 05 — uso correcto</div>
+    <div class="slide-title">Cómo pedirle <span class="hl">bien a la IA</span> sobre Git</div>
+    <div class="slide-subtitle">La calidad de lo que obtienes depende de cómo preguntas. Aquí la diferencia.</div>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>caso de uso</th>
+          <th>❌ prompt malo</th>
+          <th>✓ prompt bueno</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Error de merge</td>
+          <td>"cómo soluciono este error de git"</td>
+          <td>"Tengo este error de merge en Git en la rama feature/kaled-dental-billing. Explícame qué significa cada parte del conflicto antes de darme la solución"</td>
+        </tr>
+        <tr>
+          <td>Mensaje de commit</td>
+          <td>"genera un mensaje de commit"</td>
+          <td>"Estos son los cambios que hice: [pega el diff]. Genera 3 opciones de mensaje de commit siguiendo Conventional Commits. Explica por qué elegiste cada verbo"</td>
+        </tr>
+        <tr>
+          <td>Revertir cambios</td>
+          <td>"cómo revierto mis cambios"</td>
+          <td>"Quiero deshacer mi último commit pero SIN eliminar los archivos del disco. ¿Qué comando uso? ¿Hay riesgo si ya hice push de esa rama?"</td>
+        </tr>
+        <tr>
+          <td>Revisar un diff</td>
+          <td>"revisa este código"</td>
+          <td>"Este es el diff de un PR en KaledWash. Explícame qué cambió, si hay algo potencialmente peligroso, y si los cambios son coherentes con el mensaje del commit"</td>
+        </tr>
+        <tr>
+          <td>Resolver conflicto</td>
+          <td>"soluciona este conflicto"</td>
+          <td>"Tengo este conflicto de merge. La función en HEAD calcula precios con IVA, la de la rama nueva los calcula sin IVA. ¿Cuál debo conservar y por qué? No me des el código aún."</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="card info" style="margin-top:16px">
+      <div class="card-label info">💡 patrón general</div>
+      <div class="card-body">Dale contexto → pide explicación antes que solución → especifica las restricciones → valida antes de ejecutar.</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: REVERTIR ERRORES -->
+  <div class="slide" data-slide="6">
+    <div class="slide-num">// 06 — recuperación</div>
+    <div class="slide-title">Cómo <span class="hl">revertir errores</span> — el kit de supervivencia</div>
+    <div class="slide-subtitle">Cuando algo sale mal, Git casi siempre tiene una salida. Aquí las principales.</div>
+
+    <div class="grid-2">
+      <div>
+        <div class="card info" style="margin-bottom:12px">
+          <div class="card-label info">🔧 herramienta 1</div>
+          <div class="card-title">git revert — la forma segura</div>
+          <div class="code-block">
+            <span class="safe-cmd">git revert abc1234</span>
+            <span class="code-badge badge-safe">seguro en ramas compartidas</span>
+          </div>
+          <div class="card-body">Crea un <em>nuevo</em> commit que deshace los cambios del commit indicado.
+          No reescribe el historial. Perfecto para ramas que ya están en el remoto y que otros usan.</div>
+        </div>
+
+        <div class="card warn">
+          <div class="card-label warn">🔧 herramienta 2</div>
+          <div class="card-title">git reflog — la máquina del tiempo</div>
+          <div class="code-block">
+            <span class="safe-cmd">git reflog</span><br>
+            <span class="comment"># muestra TODO lo que hiciste</span><br>
+            <span class="safe-cmd">git reset --hard HEAD@{3}</span>
+          </div>
+          <div class="card-body">Git guarda un log de todos tus movimientos por ~90 días.
+          Incluso si hiciste <code style="color:var(--danger)">reset --hard</code>,
+          el reflog puede rescatarte. Es la red de seguridad oculta de Git.</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card info" style="margin-bottom:12px">
+          <div class="card-label info">🔧 herramienta 3</div>
+          <div class="card-title">git reset --soft — volver sin perder código</div>
+          <div class="code-block">
+            <span class="safe-cmd">git reset --soft HEAD~1</span>
+            <span class="code-badge badge-safe">código intacto</span>
+          </div>
+          <div class="card-body">Deshace el último commit pero deja todos los archivos modificados
+          en el staging area. Es como "descomprometer" sin perder el trabajo.
+          Diferente a <code style="color:var(--danger)">--hard</code> que borra todo.</div>
+        </div>
+
+        <div class="card warn">
+          <div class="card-label warn">🔧 herramienta 4</div>
+          <div class="card-title">git stash — guardar y salir limpio</div>
+          <div class="code-block">
+            <span class="safe-cmd">git stash</span>
+            <span class="code-badge badge-safe">temporal</span>
+            <br>
+            <span class="safe-cmd">git stash pop</span>
+            <span class="comment">    # recuperar</span><br>
+            <span class="safe-cmd">git stash list</span>
+            <span class="comment">   # ver todos</span>
+          </div>
+          <div class="card-body">Guarda cambios no committeados en un cajón temporal.
+          Útil cuando necesitas cambiar de rama urgentemente en KaledSoft sin commitear trabajo incompleto.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: GIT BLAME — ARQUEOLOGÍA -->
+  <div class="slide" data-slide="7">
+    <div class="slide-num">// 07 — arqueología de código</div>
+    <div class="slide-title"><span class="hl">git blame</span> — entender el pasado</div>
+    <div class="slide-subtitle">Cuando encuentras un bug en KaledDental, git blame te dice quién escribió esa línea y en qué contexto.</div>
+
+    <div class="ks-tag">⬡ KaledDental — archivo: src/billing/calculateTax.ts</div>
+
+    <div class="terminal">
+      <div class="terminal-header">
+        <div class="terminal-dot"></div><div class="terminal-dot"></div><div class="terminal-dot"></div>
+        <div class="terminal-title">$ git blame src/billing/calculateTax.ts</div>
+      </div>
+      <div class="terminal-body">
+        <table class="blame-table">
+          <tr>
+            <td class="blame-commit">a3f9c21</td>
+            <td class="blame-author">carlos.m</td>
+            <td class="blame-date">2024-03-12</td>
+            <td class="blame-line">1</td>
+            <td class="blame-code">export function calculateTax(amount: number) {</td>
+          </tr>
+          <tr>
+            <td class="blame-commit">a3f9c21</td>
+            <td class="blame-author">carlos.m</td>
+            <td class="blame-date">2024-03-12</td>
+            <td class="blame-line">2</td>
+            <td class="blame-code">  const TAX_RATE = 0.19;</td>
+          </tr>
+          <tr>
+            <td class="blame-commit" style="color:var(--warn)">f2b8e55</td>
+            <td class="blame-author" style="color:var(--warn)">sofia.r</td>
+            <td class="blame-date">2024-07-08</td>
+            <td class="blame-line">3</td>
+            <td class="blame-code">  <span class="blame-bug">const TAX_RATE = 0.08;</span> <span style="color:var(--muted)">// ← bug introducido aquí</span></td>
+          </tr>
+          <tr>
+            <td class="blame-commit">a3f9c21</td>
+            <td class="blame-author">carlos.m</td>
+            <td class="blame-date">2024-03-12</td>
+            <td class="blame-line">4</td>
+            <td class="blame-code">  return amount * TAX_RATE;</td>
+          </tr>
+          <tr>
+            <td class="blame-commit">a3f9c21</td>
+            <td class="blame-author">carlos.m</td>
+            <td class="blame-date">2024-03-12</td>
+            <td class="blame-line">5</td>
+            <td class="blame-code">}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:14px">
+      <div class="card info">
+        <div class="card-label info">💡 lo que git blame te dice</div>
+        <div class="card-body">
+          — El commit exacto que introdujo esa línea (<code style="color:var(--accent)">f2b8e55</code>)<br>
+          — Quién hizo el cambio (<code style="color:var(--accent)">sofia.r</code>)<br>
+          — Cuándo fue (<code style="color:var(--accent)">2024-07-08</code>)<br>
+          — Luego puedes ver el PR completo con <code style="color:var(--safe)">git show f2b8e55</code>
+        </div>
+      </div>
+      <div class="card safe">
+        <div class="card-label safe">✓ no es para culpar</div>
+        <div class="card-body">
+          El nombre del comando es desafortunado. <strong>git blame no es para culpar a nadie</strong> —
+          es para entender el contexto histórico. Sofia pudo haber cambiado el rate por un requerimiento
+          del cliente que luego cambió de nuevo. El historial cuenta la historia completa.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: MENSAJES DE COMMIT CON IA -->
+  <div class="slide" data-slide="8">
+    <div class="slide-num">// 08 — mensajes de commit</div>
+    <div class="slide-title">Generar <span class="hl">mensajes de commit</span> con IA — bien hecho</div>
+    <div class="slide-subtitle">La IA puede ayudarte a escribir mensajes claros. Pero tú validas que sean precisos.</div>
+
+    <div class="grid-2">
+      <div>
+        <div class="card danger">
+          <div class="card-label danger">❌ mensajes malos (IA sin guía)</div>
+          <div class="code-block">
+            <span class="danger-cmd">git commit -m "fix"</span><br>
+            <span class="danger-cmd">git commit -m "changes"</span><br>
+            <span class="danger-cmd">git commit -m "update code"</span><br>
+            <span class="danger-cmd">git commit -m "fix: multiple issues"</span>
+          </div>
+          <div class="card-body">No dicen qué se arregló, qué cambió, ni por qué. En 6 meses nadie
+          en KaledSoft podrá entender el historial del proyecto.</div>
+        </div>
+      </div>
+      <div>
+        <div class="card safe">
+          <div class="card-label safe">✓ mensajes buenos (Conventional Commits)</div>
+          <div class="code-block">
+            <span class="safe-cmd">feat(billing): add IVA calculation for KaledDental</span><br><br>
+            <span class="safe-cmd">fix(auth): resolve token expiry on KaledWash login</span><br><br>
+            <span class="safe-cmd">refactor(parking): extract slot availability logic</span><br><br>
+            <span class="safe-cmd">docs(api): update endpoint docs for KaledPark</span>
+          </div>
+          <div class="card-body">Formato: <code style="color:var(--accent)">tipo(scope): descripción corta</code>. Claro, buscable, y genera changelogs automáticamente.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card info" style="margin-top:14px">
+      <div class="card-label info">💬 prompt para pedirle a la IA un buen mensaje de commit</div>
+      <div class="code-block" style="margin-top:8px">
+        <span class="comment"># Copia el diff de tus cambios y usa este prompt:</span><br><br>
+        <span class="t-info">"Estos son mis cambios en Git: [diff]. Genera 3 mensajes de commit</span><br>
+        <span class="t-info">siguiendo Conventional Commits. El proyecto se llama KaledDental.</span><br>
+        <span class="t-info">Explica brevemente por qué elegiste el tipo para cada uno."</span>
+      </div>
+      <div class="card-body" style="margin-top:8px">
+        Así la IA te da opciones y te explica su razonamiento. Tú eliges la más precisa para lo que realmente hiciste.
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: RESUMEN -->
+  <div class="slide" data-slide="9">
+    <div class="slide-num">// 09 — resumen</div>
+    <div class="slide-title">Lo que debes <span class="hl">llevarte</span></div>
+    <div class="slide-subtitle">Git con IA — el balance entre velocidad y criterio técnico.</div>
+
+    <div class="grid-2">
+      <div>
+        <div class="card safe" style="margin-bottom:14px">
+          <div class="card-label safe">✓ úsala para</div>
+          <div class="card-body" style="line-height:2">
+            <span class="pill pill-safe">entender errores</span>
+            <span class="pill pill-safe">generar commit msgs</span>
+            <span class="pill pill-safe">revisar diffs</span>
+            <span class="pill pill-safe">explicar comandos</span>
+            <span class="pill pill-safe">resolver merge (con supervisión)</span>
+            <span class="pill pill-safe">encontrar el comando correcto</span>
+          </div>
+        </div>
+        <div class="card danger">
+          <div class="card-label danger">⚠ siempre verifica</div>
+          <div class="card-body" style="line-height:2">
+            <span class="pill pill-danger">git push --force</span>
+            <span class="pill pill-danger">reset --hard</span>
+            <span class="pill pill-danger">git clean -fd</span>
+            <span class="pill pill-danger">rebase en rama compartida</span>
+            <span class="pill pill-danger">commit --amend tras push</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="steps-list">
+          <div class="step-item">
+            <div class="step-num safe-num">1</div>
+            <div class="step-content">
+              <strong>La IA no conoce tu repo</strong>
+              <span>Siempre dale contexto. Describe el estado actual, la rama, y qué pasó.</span>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num safe-num">2</div>
+            <div class="step-content">
+              <strong>El reflog es tu red de seguridad</strong>
+              <span><code style="color:var(--safe)">git reflog</code> guarda ~90 días de historial. Casi siempre hay regreso.</span>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num safe-num">3</div>
+            <div class="step-content">
+              <strong>git revert es el camino seguro</strong>
+              <span>Para deshacer en ramas compartidas, siempre <code style="color:var(--safe)">revert</code> sobre <code style="color:var(--danger)">reset</code>.</span>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num safe-num">4</div>
+            <div class="step-content">
+              <strong>El criterio es tuyo</strong>
+              <span>La IA es rápida. Tú eres preciso. Juntos son poderosos. Separados, peligrosos.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="big-statement" style="margin-top:20px; padding:20px 24px">
+      <p style="font-size:15px">En KaledSoft, el historial de Git es la memoria del equipo. La IA puede ayudarte a escribirla más rápido —
+      pero <strong>tú eres el guardián de que sea correcta.</strong></p>
+    </div>
+  </div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="nav-btn" id="prevBtn" onclick="navigate(-1)" disabled>← anterior</button>
+  <div class="nav-hint">← → teclado o botones</div>
+  <button class="nav-btn" id="nextBtn" onclick="navigate(1)">siguiente →</button>
+</div>
+
+<script>
+var current = 0;
+var slides = document.querySelectorAll('.slide');
+var total = slides.length;
+
+document.getElementById('ctotal').textContent = total;
+
+// Build dots
+var dotsContainer = document.getElementById('dots');
+for (var i = 0; i < total; i++) {
+  var d = document.createElement('div');
+  d.className = 'dot' + (i === 0 ? ' active' : '');
+  d.setAttribute('data-i', i);
+  d.onclick = (function(idx) { return function() { goTo(idx); }; })(i);
+  dotsContainer.appendChild(d);
+}
+
+function goTo(idx) {
+  if (idx < 0 || idx >= total) return;
+  slides[current].classList.remove('active');
+  slides[current].classList.add('exit');
+  var prev = current;
+  current = idx;
+  setTimeout(function() {
+    slides[prev].classList.remove('exit');
+  }, 400);
+  slides[current].classList.add('active');
+  document.querySelectorAll('.dot').forEach(function(d, i) {
+    d.classList.toggle('active', i === current);
+  });
+  document.getElementById('cnum').textContent = current + 1;
+  document.getElementById('prevBtn').disabled = current === 0;
+  document.getElementById('nextBtn').disabled = current === total - 1;
+}
+
+function navigate(dir) { goTo(current + dir); }
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') navigate(1);
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') navigate(-1);
+});
+</script>
+</body>
+</html>

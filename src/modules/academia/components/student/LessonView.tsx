@@ -168,6 +168,9 @@ export function LessonView({
   const router = useRouter();
   const mc = MODULE_COLOR[lesson.moduleOrder] ?? "#38bdf8";
   const sessionBadge = SESSION_BADGE[lesson.sessionType] ?? SESSION_BADGE.TEORIA;
+  const enforceQuizMastery = lesson.moduleOrder === 1;
+  const sequentialMasteryMode = enforceQuizMastery && lesson.quizzes.length >= 5;
+  const masteryPassThreshold = sequentialMasteryMode ? Math.max(5, lesson.quizzes.length) : 1;
 
   const [activeConcept, setActiveConcept] = useState<string | null>(null);
   const [quizState, setQuizState] = useState<
@@ -175,7 +178,20 @@ export function LessonView({
       string,
       { selected: string | null; answered: boolean; correct: boolean; feedback?: string }
     >
-  >({});
+  >(() =>
+    Object.fromEntries(
+      lesson.quizzes
+        .filter((q) => q.result != null)
+        .map((q) => [
+          q.id,
+          {
+            selected: q.result?.selectedOptionId ?? null,
+            answered: true,
+            correct: q.result?.isCorrect ?? false,
+          },
+        ])
+    )
+  );
   const [cralDone, setCralDone] = useState<Record<string, boolean>>(
     Object.fromEntries(lesson.cralChallenges.map((c) => [c.id, c.isDone]))
   );
@@ -190,10 +206,42 @@ export function LessonView({
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [kaledOpen, setKaledOpen] = useState(false);
   const [codeReviewOpen, setCodeReviewOpen] = useState(false);
+  const showCodeReviewCTA = !(lesson.moduleOrder === 1 && lesson.weekNumber === 1);
+  /** Semana 2+ del módulo 1 = Git/GitHub en el currículo; módulos 2+ siempre asumen repo remoto. */
+  const deliverableExpectsGithubRepo =
+    lesson.moduleOrder > 1 || (lesson.moduleOrder === 1 && lesson.weekNumber >= 2);
+  const totalQuizQuestions = lesson.quizzes.length;
+  const answeredQuizCount = lesson.quizzes.reduce(
+    (acc, q) => acc + (quizState[q.id]?.answered ? 1 : 0),
+    0
+  );
+  const correctQuizCount = lesson.quizzes.reduce(
+    (acc, q) => acc + (quizState[q.id]?.correct ? 1 : 0),
+    0
+  );
+  const allQuizzesAnswered = totalQuizQuestions > 0 && answeredQuizCount === totalQuizQuestions;
+  const allQuizzesApproved =
+    totalQuizQuestions === 0 ||
+    (sequentialMasteryMode
+      ? allQuizzesAnswered && correctQuizCount >= masteryPassThreshold
+      : lesson.quizzes.every((q) => {
+          const local = quizState[q.id];
+          if (local) return local.correct;
+          return q.result?.isCorrect === true;
+        }));
+  const firstPendingQuizIndex = lesson.quizzes.findIndex((q) => !quizState[q.id]?.answered);
+  const activeQuizIndex =
+    firstPendingQuizIndex === -1 ? Math.max(0, totalQuizQuestions - 1) : firstPendingQuizIndex;
 
   const lessonUrl = (lid: string) => `/academia/student/courses/${courseId}/lesson/${lid}`;
 
   const markCompleted = useCallback(async () => {
+    if (enforceQuizMastery && !allQuizzesApproved) {
+      toast.error("Debes aprobar el quiz para completar la sesión.", {
+        description: "Responde correctamente las preguntas de comprensión.",
+      });
+      return;
+    }
     const res = await fetch(`${BASE}/lessons/${lesson.id}/complete`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -206,29 +254,75 @@ export function LessonView({
       });
       router.refresh();
     }
-  }, [lesson.id, router]);
+  }, [lesson.id, router, enforceQuizMastery, allQuizzesApproved]);
 
   const answerQuiz = useCallback(
-    async (
-      quizId: string,
-      optionId: string,
-      isCorrect: boolean,
-      feedback?: string
-    ) => {
+    async (quizId: string, optionId: string, quizIndex: number) => {
       if (quizState[quizId]?.answered) return;
-      await fetch(`${BASE}/quizzes/${quizId}/answer`, {
+      if (sequentialMasteryMode && quizIndex !== activeQuizIndex) return;
+
+      const res = await fetch(`${BASE}/quizzes/${quizId}/answer`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ selectedOptionId: optionId }),
       });
+      if (!res.ok) {
+        toast.error("No pudimos registrar tu respuesta", {
+          description: "Intenta nuevamente en unos segundos.",
+        });
+        return;
+      }
+
+      const payload = (await res.json()) as {
+        isCorrect?: boolean;
+        feedback?: string;
+        result?: { isCorrect?: boolean; selectedOptionId?: string | null };
+      };
+      const isCorrect = payload?.result?.isCorrect ?? payload?.isCorrect ?? false;
+      const selected = payload?.result?.selectedOptionId ?? optionId;
+      const feedback = payload?.feedback;
+
       setQuizState((p) => ({
         ...p,
-        [quizId]: { selected: optionId, answered: true, correct: isCorrect, feedback },
+        [quizId]: { selected, answered: true, correct: isCorrect, feedback },
       }));
-      if (isCorrect) toast.success("¡Correcto! 🎯", { description: "Kaled está orgulloso de ti." });
-      else toast.error("Incorrecto", { description: "Revisa el concepto e intenta de nuevo." });
+
+      if (sequentialMasteryMode) {
+        const isLastQuestion = quizIndex === totalQuizQuestions - 1;
+        if (!isLastQuestion) {
+          toast.success("Respuesta guardada", {
+            description: `Continúa con la pregunta ${quizIndex + 2} de ${totalQuizQuestions}.`,
+          });
+        }
+        return;
+      }
+
+      if (enforceQuizMastery) {
+        if (isCorrect) {
+          toast.success("¡Correcto! 🎯", {
+            description: "Excelente. Esta pregunta ya quedó aprobada.",
+          });
+        } else {
+          toast.error("Incorrecto", {
+            description: "Puedes volver a intentarlo hasta acertar.",
+          });
+          setQuizState((p) => ({
+            ...p,
+            [quizId]: { selected, answered: false, correct: false, feedback },
+          }));
+        }
+      } else {
+        if (isCorrect) toast.success("¡Correcto! 🎯", { description: "Kaled está orgulloso de ti." });
+        else toast.error("Incorrecto", { description: "Revisa el concepto e intenta de nuevo." });
+      }
     },
-    [quizState]
+    [
+      quizState,
+      enforceQuizMastery,
+      sequentialMasteryMode,
+      activeQuizIndex,
+      totalQuizQuestions,
+    ]
   );
 
   const completeCRAL = useCallback(async (challengeId: string) => {
@@ -245,11 +339,43 @@ export function LessonView({
 
   const submitDeliverable = useCallback(async () => {
     if (!lesson.deliverable) return;
+    const githubTrimmed = githubUrl.trim();
+    const deployTrimmed = deployUrl.trim();
+
+    const isValidHttpUrl = (value: string) => {
+      try {
+        const parsed = new URL(value);
+        return parsed.protocol === "http:" || parsed.protocol === "https:";
+      } catch {
+        return false;
+      }
+    };
+
+    if (githubTrimmed && !isValidHttpUrl(githubTrimmed)) {
+      toast.error("El enlace de evidencia no es valido", {
+        description: "Si agregas un enlace, usa formato completo: https://...",
+      });
+      return;
+    }
+
+    if (deployTrimmed && !isValidHttpUrl(deployTrimmed)) {
+      toast.error("El segundo enlace no es valido", {
+        description: "Si agregas un enlace, usa formato completo: https://...",
+      });
+      return;
+    }
+
+    const payload: { checkedItems: string[]; githubUrl?: string; deployUrl?: string } = {
+      checkedItems: [...checkedItems],
+    };
+    if (githubTrimmed) payload.githubUrl = githubTrimmed;
+    if (deployTrimmed) payload.deployUrl = deployTrimmed;
+
     setSubmitting(true);
     const res = await fetch(`${BASE}/deliverables/${lesson.deliverable.id}/submit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ githubUrl, deployUrl, checkedItems: [...checkedItems] }),
+      body: JSON.stringify(payload),
     });
     setSubmitting(false);
     if (res.ok) {
@@ -744,21 +870,6 @@ export function LessonView({
                       />
                     </InteractiveLessonShell>
                   </div>
-                  {lesson.videoUrl ? (
-                    <div className="border-t border-white/[0.06] pt-4">
-                      <p className="mb-2 text-[11px] text-slate-500">
-                        También puedes ver el video complementario:
-                      </p>
-                      <a
-                        href={lesson.videoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[12px] text-cyan-400 hover:underline"
-                      >
-                        Abrir en YouTube <ExternalLink className="h-3 w-3" />
-                      </a>
-                    </div>
-                  ) : null}
                 </div>
               );
             }
@@ -841,97 +952,308 @@ export function LessonView({
                   );
                 })}
               </div>
-              <div className="mt-3">
-                <button
-                  type="button"
-                  onClick={() => setCodeReviewOpen(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold text-cyan-400 border border-cyan-500/30 bg-cyan-500/10 hover:bg-cyan-500/20 transition-colors"
-                >
-                  <Code2 className="w-4 h-4" />
-                  Kaled revisa mi código
-                </button>
-              </div>
+              {showCodeReviewCTA && (
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={() => setCodeReviewOpen(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold text-cyan-400 border border-cyan-500/30 bg-cyan-500/10 hover:bg-cyan-500/20 transition-colors"
+                  >
+                    <Code2 className="w-4 h-4" />
+                    Kaled revisa mi código
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
           {/* QUIZ */}
-          {lesson.quizzes.map((quiz) => {
-            const state = quizState[quiz.id];
-            const answered = quiz.result != null || !!state?.answered;
-            const correct = state?.correct ?? quiz.result?.isCorrect;
+          {lesson.quizzes.length > 0 && (
+            <div className="academy-card-dark rounded-xl sm:rounded-2xl p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+                <h2 className="text-[13px] font-bold text-white">🧠 Verifica tu comprensión</h2>
+                <div className="text-[11px] text-slate-500">
+                  {sequentialMasteryMode
+                    ? `Pregunta ${Math.min(activeQuizIndex + 1, totalQuizQuestions)} de ${totalQuizQuestions}`
+                    : `${correctQuizCount}/${totalQuizQuestions} correctas`}
+                </div>
+              </div>
 
-            return (
-              <div key={quiz.id} className="academy-card-dark rounded-xl sm:rounded-2xl p-5 sm:p-6">
-                <h2 className="text-[13px] font-bold text-white mb-4">🧠 Verifica tu comprensión</h2>
-                <p className="text-[13px] text-white font-medium leading-relaxed mb-4">
-                  {quiz.question}
-                </p>
-                <div className="space-y-2.5">
-                  {quiz.options.map((opt) => {
-                    const isSelected =
-                      state?.selected === opt.id || quiz.result?.selectedOptionId === opt.id;
-                    return (
-                      <button
-                        key={opt.id}
-                        disabled={!!answered}
-                        onClick={() => answerQuiz(quiz.id, opt.id, opt.isCorrect, opt.feedback)}
-                        className={`w-full text-left px-4 py-3 rounded-xl border text-[12px] transition-all flex items-center gap-3 ${
-                          !answered
-                            ? "border-white/[0.08] text-slate-400 hover:border-cyan-500/30 hover:text-white cursor-pointer"
-                            : isSelected && opt.isCorrect
-                              ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
-                              : isSelected && !opt.isCorrect
-                                ? "border-red-500/40 bg-red-500/10 text-red-400"
-                                : "border-white/[0.05] text-slate-600 cursor-not-allowed opacity-50"
-                        }`}
-                      >
-                        <span
-                          className="w-6 h-6 rounded-full border flex items-center justify-center text-[10px] font-bold shrink-0"
+              {sequentialMasteryMode && (
+                <div className="mb-4">
+                  <div className="h-2 w-full rounded-full bg-white/[0.08] overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${totalQuizQuestions === 0 ? 0 : (answeredQuizCount / totalQuizQuestions) * 100}%`,
+                        background: "linear-gradient(135deg, #00ff88, #34d399)",
+                      }}
+                    />
+                  </div>
+                  <p className="mt-2 text-[11px] text-slate-500">
+                    Responde una por una. Necesitas {masteryPassThreshold}/{totalQuizQuestions} para completar la sesión.
+                  </p>
+                </div>
+              )}
+
+              {sequentialMasteryMode ? (
+                <>
+                  <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+                    {lesson.quizzes.map((quiz, quizIndex) => {
+                      const state = quizState[quiz.id];
+                      const isCurrent = quizIndex === activeQuizIndex && !allQuizzesAnswered;
+                      const answered = !!state?.answered;
+                      const correct = state?.correct;
+                      return (
+                        <div
+                          key={quiz.id}
+                          className="w-7 h-7 rounded-full border text-[10px] font-bold flex items-center justify-center shrink-0"
                           style={{
-                            borderColor:
-                              answered && isSelected
-                                ? opt.isCorrect
-                                  ? "#34d399"
-                                  : "#f87171"
-                                : "rgba(255,255,255,0.1)",
+                            borderColor: isCurrent
+                              ? "#38bdf8"
+                              : answered
+                                ? correct
+                                  ? "rgba(52,211,153,0.4)"
+                                  : "rgba(248,113,113,0.4)"
+                                : "rgba(255,255,255,0.14)",
+                            background: isCurrent
+                              ? "rgba(56,189,248,0.15)"
+                              : answered
+                                ? correct
+                                  ? "rgba(52,211,153,0.12)"
+                                  : "rgba(248,113,113,0.12)"
+                                : "rgba(255,255,255,0.03)",
+                            color: isCurrent ? "#7dd3fc" : answered ? (correct ? "#34d399" : "#f87171") : "#94a3b8",
                           }}
                         >
-                          {opt.label}
-                        </span>
-                        <span className="flex-1">{opt.text}</span>
-                        {answered && isSelected && (
-                          <span>{opt.isCorrect ? "✅" : "❌"}</span>
+                          {quizIndex + 1}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {!allQuizzesAnswered && (() => {
+                    const quiz = lesson.quizzes[activeQuizIndex];
+                    const state = quizState[quiz.id];
+                    const answered = !!state?.answered;
+                    const correct = state?.correct;
+
+                    return (
+                      <div
+                        className="rounded-xl border p-4"
+                        style={{
+                          borderColor: "rgba(56,189,248,0.28)",
+                          background: "rgba(56,189,248,0.04)",
+                        }}
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">
+                            Pregunta {activeQuizIndex + 1}
+                          </p>
+                          {answered && (
+                            <span
+                              className="text-[10px] font-bold px-2 py-1 rounded-full border"
+                              style={{
+                                color: correct ? "#34d399" : "#f87171",
+                                borderColor: correct
+                                  ? "rgba(52,211,153,0.35)"
+                                  : "rgba(248,113,113,0.35)",
+                                background: correct
+                                  ? "rgba(52,211,153,0.08)"
+                                  : "rgba(248,113,113,0.08)",
+                              }}
+                            >
+                              {correct ? "Correcta" : "Incorrecta"}
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-[13px] text-white font-medium leading-relaxed mb-3">
+                          {quiz.question}
+                        </p>
+                        <div className="space-y-2.5">
+                          {quiz.options.map((opt) => {
+                            const isSelected = state?.selected === opt.id;
+                            return (
+                              <button
+                                key={opt.id}
+                                disabled={answered}
+                                onClick={() => answerQuiz(quiz.id, opt.id, activeQuizIndex)}
+                                className={`w-full text-left px-4 py-3 rounded-xl border text-[12px] transition-all flex items-center gap-3 ${
+                                  !answered
+                                    ? "border-white/[0.08] text-slate-300 hover:border-cyan-500/30 hover:text-white cursor-pointer"
+                                    : isSelected && opt.isCorrect
+                                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                                      : isSelected && !opt.isCorrect
+                                        ? "border-red-500/40 bg-red-500/10 text-red-400"
+                                        : "border-white/[0.05] text-slate-600 cursor-not-allowed opacity-60"
+                                }`}
+                              >
+                                <span
+                                  className="w-6 h-6 rounded-full border flex items-center justify-center text-[10px] font-bold shrink-0"
+                                  style={{
+                                    borderColor:
+                                      answered && isSelected
+                                        ? opt.isCorrect
+                                          ? "#34d399"
+                                          : "#f87171"
+                                        : "rgba(255,255,255,0.1)",
+                                  }}
+                                >
+                                  {opt.label}
+                                </span>
+                                <span className="flex-1">{opt.text}</span>
+                                {answered && isSelected && <span>{opt.isCorrect ? "✅" : "❌"}</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {state?.feedback && (
+                          <div
+                            className="mt-3 p-3 rounded-xl border text-[12px] leading-relaxed"
+                            style={{
+                              background: correct
+                                ? "rgba(52,211,153,0.08)"
+                                : "rgba(248,113,113,0.08)",
+                              borderColor: correct
+                                ? "rgba(52,211,153,0.3)"
+                                : "rgba(248,113,113,0.3)",
+                              color: correct ? "#34d399" : "#f87171",
+                            }}
+                          >
+                            {state.feedback}
+                          </div>
                         )}
-                      </button>
+                      </div>
+                    );
+                  })()}
+                </>
+              ) : (
+                <div className="space-y-5">
+                  {lesson.quizzes.map((quiz, quizIndex) => {
+                    const state = quizState[quiz.id];
+                    const answered = !!state?.answered;
+                    const correct = state?.correct;
+                    return (
+                      <div
+                        key={quiz.id}
+                        className="rounded-xl border p-4"
+                        style={{
+                          borderColor: "rgba(255,255,255,0.06)",
+                          background: "rgba(255,255,255,0.01)",
+                        }}
+                      >
+                        <p className="text-[13px] text-white font-medium leading-relaxed mb-3">
+                          {quiz.question}
+                        </p>
+                        <div className="space-y-2.5">
+                          {quiz.options.map((opt) => {
+                            const isSelected = state?.selected === opt.id;
+                            return (
+                              <button
+                                key={opt.id}
+                                disabled={answered}
+                                onClick={() => answerQuiz(quiz.id, opt.id, quizIndex)}
+                                className={`w-full text-left px-4 py-3 rounded-xl border text-[12px] transition-all flex items-center gap-3 ${
+                                  !answered
+                                    ? "border-white/[0.08] text-slate-300 hover:border-cyan-500/30 hover:text-white cursor-pointer"
+                                    : isSelected && opt.isCorrect
+                                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                                      : isSelected && !opt.isCorrect
+                                        ? "border-red-500/40 bg-red-500/10 text-red-400"
+                                        : "border-white/[0.05] text-slate-600 cursor-not-allowed opacity-60"
+                                }`}
+                              >
+                                <span
+                                  className="w-6 h-6 rounded-full border flex items-center justify-center text-[10px] font-bold shrink-0"
+                                  style={{
+                                    borderColor:
+                                      answered && isSelected
+                                        ? opt.isCorrect
+                                          ? "#34d399"
+                                          : "#f87171"
+                                        : "rgba(255,255,255,0.1)",
+                                  }}
+                                >
+                                  {opt.label}
+                                </span>
+                                <span className="flex-1">{opt.text}</span>
+                                {answered && isSelected && <span>{opt.isCorrect ? "✅" : "❌"}</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {state?.feedback && (
+                          <div
+                            className="mt-3 p-3 rounded-xl border text-[12px] leading-relaxed"
+                            style={{
+                              background: correct
+                                ? "rgba(52,211,153,0.08)"
+                                : "rgba(248,113,113,0.08)",
+                              borderColor: correct
+                                ? "rgba(52,211,153,0.3)"
+                                : "rgba(248,113,113,0.3)",
+                              color: correct ? "#34d399" : "#f87171",
+                            }}
+                          >
+                            {state.feedback}
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
-                <AnimatePresence>
-                  {(state?.feedback || quiz.result) && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="mt-4 p-4 rounded-xl border text-[12px] leading-relaxed"
-                      style={{
-                        background: correct
-                          ? "rgba(52,211,153,0.08)"
-                          : "rgba(248,113,113,0.08)",
-                        borderColor: correct
-                          ? "rgba(52,211,153,0.3)"
-                          : "rgba(248,113,113,0.3)",
-                        color: correct ? "#34d399" : "#f87171",
-                      }}
-                    >
-                      {state?.feedback ??
-                        (correct
-                          ? "¡Respuesta correcta! Kaled está orgulloso 🎯"
-                          : "Respuesta incorrecta. Revisa el concepto e intenta de nuevo.")}
-                    </motion.div>
+              )}
+
+              {sequentialMasteryMode && allQuizzesAnswered && (
+                <div
+                  className="mt-5 rounded-xl border p-4"
+                  style={{
+                    borderColor: allQuizzesApproved
+                      ? "rgba(52,211,153,0.35)"
+                      : "rgba(248,113,113,0.35)",
+                    background: allQuizzesApproved
+                      ? "rgba(52,211,153,0.08)"
+                      : "rgba(248,113,113,0.08)",
+                  }}
+                >
+                  {allQuizzesApproved ? (
+                    <>
+                      <p className="text-[13px] font-bold text-emerald-300 mb-1">
+                        ¡Felicitaciones, arquitecto! 🎉
+                      </p>
+                      <p className="text-[12px] text-slate-300 leading-relaxed">
+                        Lograste {correctQuizCount}/{totalQuizQuestions}. Reforzaste{" "}
+                        {lesson.concepts.slice(0, 3).map((c) => c.title).join(", ")}. Continúa el viaje y marca la sesión como completada.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-[13px] font-bold text-red-300 mb-1">
+                        Aún no está aprobado
+                      </p>
+                      <p className="text-[12px] text-slate-300 leading-relaxed mb-3">
+                        Obtuviste {correctQuizCount}/{totalQuizQuestions}. Para pasar necesitas {masteryPassThreshold}/{totalQuizQuestions}. Repite el quiz para consolidar el tema.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setQuizState({})}
+                        className="px-4 py-2 rounded-lg text-[12px] font-semibold text-white border border-white/[0.15] hover:bg-white/[0.06] transition-colors"
+                      >
+                        Repetir quiz
+                      </button>
+                    </>
                   )}
-                </AnimatePresence>
-              </div>
-            );
-          })}
+                </div>
+              )}
+
+              {enforceQuizMastery && (
+                <p className="mt-4 text-[11px] text-slate-500">
+                  Debes aprobar el quiz para habilitar "Sesión completada".
+                </p>
+              )}
+            </div>
+          )}
 
           {/* ENTREGABLE */}
           {lesson.deliverable && (
@@ -1002,24 +1324,54 @@ export function LessonView({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                 <div>
-                  <label className="text-[10px] text-slate-600 mb-1 block">GitHub URL</label>
+                  <label className="text-[10px] text-slate-600 mb-1 block">
+                    {deliverableExpectsGithubRepo
+                      ? "Repositorio GitHub (recomendado)"
+                      : "Enlace de evidencia (opcional)"}
+                  </label>
                   <input
                     value={githubUrl}
                     onChange={(e) => setGithubUrl(e.target.value)}
-                    placeholder="https://github.com/user/proyecto"
+                    placeholder={
+                      deliverableExpectsGithubRepo
+                        ? "https://github.com/tu-usuario/tu-repo"
+                        : "https://drive.google.com/... o https://notion.so/..."
+                    }
                     className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2 text-[12px] text-white placeholder:text-slate-700 outline-none focus:border-cyan-500/40 transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-600 mb-1 block">Deploy URL</label>
+                  <label className="text-[10px] text-slate-600 mb-1 block">
+                    {deliverableExpectsGithubRepo
+                      ? "Otro enlace (opcional)"
+                      : "Segundo enlace (opcional)"}
+                  </label>
                   <input
                     value={deployUrl}
                     onChange={(e) => setDeployUrl(e.target.value)}
-                    placeholder="https://proyecto.vercel.app"
+                    placeholder={
+                      deliverableExpectsGithubRepo
+                        ? "Demo, Loom, YouTube, Drive..."
+                        : "https://youtube.com/... o https://loom.com/..."
+                    }
                     className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2 text-[12px] text-white placeholder:text-slate-700 outline-none focus:border-cyan-500/40 transition-colors"
                   />
                 </div>
               </div>
+              <p className="mb-4 text-[11px] text-slate-500">
+                {deliverableExpectsGithubRepo ? (
+                  <>
+                    Pega la URL pública de tu repositorio en GitHub para que el instructor revise el código
+                    y el historial de commits. Si aún no subes a GitHub, puedes entregar solo con el
+                    checklist; el segundo campo sirve para demo, video o documentación extra.
+                  </>
+                ) : (
+                  <>
+                    Si aún no has visto GitHub, puedes entregar solo con el checklist marcado. Los enlaces
+                    son opcionales.
+                  </>
+                )}
+              </p>
 
               <button
                 onClick={submitDeliverable}
@@ -1056,7 +1408,7 @@ export function LessonView({
 
             <button
               onClick={markCompleted}
-              disabled={completed}
+              disabled={completed || (enforceQuizMastery && !allQuizzesApproved)}
               className="px-6 py-2.5 rounded-xl text-[13px] font-bold text-white transition-all hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
               style={
                 completed
@@ -1065,10 +1417,20 @@ export function LessonView({
                       color: "#34d399",
                       border: "1px solid rgba(52,211,153,0.3)",
                     }
+                  : enforceQuizMastery && !allQuizzesApproved
+                    ? {
+                        background: "rgba(148,163,184,0.2)",
+                        color: "#94a3b8",
+                        border: "1px solid rgba(148,163,184,0.3)",
+                      }
                   : { background: `linear-gradient(135deg, ${mc}cc, ${mc}88)` }
               }
             >
-              {completed ? "✓ Sesión completada" : "Marcar como visto →"}
+              {completed
+                ? "✓ Sesión completada"
+                : enforceQuizMastery && !allQuizzesApproved
+                  ? "Aprueba el quiz para completar"
+                  : "Marcar como visto →"}
             </button>
 
             {nextLessonId && (

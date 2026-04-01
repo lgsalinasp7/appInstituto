@@ -21,10 +21,31 @@ const LenguajesIdeAnimation = lazy(() =>
   }))
 );
 
+const GitControlVersionesAnimation = lazy(() =>
+  import("./git-control-versiones/GitControlVersionesAnimation").then((m) => ({
+    default: m.GitControlVersionesAnimation,
+  }))
+);
+
+const GitRamasPrAnimation = lazy(() =>
+  import("./git-ramas-pr/GitRamasPrAnimation").then((m) => ({
+    default: m.GitRamasPrAnimation,
+  }))
+);
+
+const GitConIaAnimation = lazy(() =>
+  import("./git-con-ia/GitConIaAnimation").then((m) => ({
+    default: m.GitConIaAnimation,
+  }))
+);
+
 const REGISTRY = {
   viaje_url: ViajeUrlAnimation,
   http_cliente_servidor: HttpClienteServidorAnimation,
   lenguajes_ide: LenguajesIdeAnimation,
+  git_control_versiones: GitControlVersionesAnimation,
+  git_ramas_pr: GitRamasPrAnimation,
+  git_con_ia: GitConIaAnimation,
 } satisfies Record<string, LazyInteractive>;
 
 export type InteractiveAnimationSlug = keyof typeof REGISTRY;

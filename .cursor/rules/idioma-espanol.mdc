@@ -1,0 +1,9 @@
+---
+description: Siempre responder en español al usuario
+globs:
+alwaysApply: true
+---
+
+# Idioma de comunicacion
+
+Siempre responder al usuario en **español**. Todos los mensajes, explicaciones, reportes y planes deben estar en español. El codigo y los nombres de variables/funciones pueden permanecer en ingles segun las convenciones del proyecto.

@@ -60,7 +60,7 @@ export default async function proxy(req: NextRequest) {
         // Rutas que no requieren autenticación
         const publicAdminPaths = ['/login', '/forgot-password', '/reset-password', '/api-docs', '/api/openapi'];
         const isPublicPath = publicAdminPaths.some(path => pathname.startsWith(path));
-        const isStaticAsset = /\.(png|jpg|jpeg|gif|svg|ico|webp)(\?|$)/i.test(pathname);
+        const isStaticAsset = /\.(png|jpg|jpeg|gif|svg|ico|webp|html)(\?|$)/i.test(pathname);
         const isAdminPath = pathname.startsWith('/admin');
         const isApiPath = pathname.startsWith('/api');
         const isInternalNextPath = pathname.startsWith('/_next');
@@ -110,7 +110,7 @@ export default async function proxy(req: NextRequest) {
         const isPublicPath = publicTenantPaths.some(path => pathname.startsWith(path));
 
         // Assets estáticos (logos, imágenes) deben ser accesibles sin sesión para que el login muestre el logo
-        const isStaticAsset = /\.(png|jpg|jpeg|gif|svg|ico|webp)(\?|$)/i.test(pathname);
+        const isStaticAsset = /\.(png|jpg|jpeg|gif|svg|ico|webp|html)(\?|$)/i.test(pathname);
 
         // Kaled Academy solo permite acceso por invitacion (sin registro publico)
         if (isAcademyTenant && (pathname === '/register' || pathname === '/auth/register')) {

@@ -79,12 +79,20 @@ export function CohortsManagement() {
                 >
                   {c.status}
                 </span>
-                <Link
-                  href={`/academia/admin/cohorts/${c.id}/access`}
-                  className="text-xs font-semibold text-cyan-400 hover:text-cyan-300"
-                >
-                  Lecciones y calendario
-                </Link>
+                <div className="flex flex-col items-end gap-1.5">
+                  <Link
+                    href={`/academia/admin/cohorts/${c.id}/students`}
+                    className="text-xs font-semibold text-cyan-400 hover:text-cyan-300"
+                  >
+                    Estudiantes
+                  </Link>
+                  <Link
+                    href={`/academia/admin/cohorts/${c.id}/access`}
+                    className="text-xs font-semibold text-cyan-400 hover:text-cyan-300"
+                  >
+                    Lecciones y calendario
+                  </Link>
+                </div>
               </div>
             </div>
           ))}

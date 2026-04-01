@@ -47,21 +47,31 @@ export function InteractiveLessonShell({ children, className }: InteractiveLesso
   return (
     <>
       <div
-        ref={wrapRef}
-        className={`relative overflow-hidden rounded-xl border border-white/[0.08] bg-slate-950/40 ${className ?? ""}`}
+        className={`rounded-2xl bg-gradient-to-br from-cyan-500/[0.12] via-white/[0.04] to-violet-600/[0.1] p-[1px] shadow-lg shadow-black/20 ${className ?? ""}`}
       >
-        <div className="absolute right-2 top-2 z-20 flex gap-1">
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.12] bg-slate-900/90 text-slate-200 shadow-sm backdrop-blur hover:bg-slate-800"
-            title={fullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
-            aria-label={fullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
-          >
-            {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-          </button>
+        <div
+          ref={wrapRef}
+          className="relative overflow-hidden rounded-[15px] border border-white/[0.06] bg-slate-950/95 ring-1 ring-inset ring-white/[0.04]"
+        >
+          <div
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(34,211,238,0.08),transparent)]"
+            aria-hidden
+          />
+          <div className="absolute right-2 top-2 z-20 flex gap-1">
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.12] bg-slate-950/90 text-slate-200 shadow-md backdrop-blur-md transition-colors hover:border-cyan-500/25 hover:bg-slate-900 hover:text-cyan-100"
+              title={fullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+              aria-label={fullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+            >
+              {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </button>
+          </div>
+          <div className="relative max-h-[min(80vh,860px)] overflow-y-auto overflow-x-hidden">
+            {children}
+          </div>
         </div>
-        <div className="max-h-[min(85vh,900px)] overflow-y-auto overflow-x-hidden">{children}</div>
       </div>
 
       <Dialog open={fallbackOpen} onOpenChange={setFallbackOpen}>

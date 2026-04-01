@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { UserPlus, Mail, Trash2, Loader2, Sparkles } from "lucide-react";
+import { UserPlus, Trash2, Loader2 } from "lucide-react";
 import { InviteUserModal } from "@/modules/config/components/InviteUserModal";
 import { InviteTrialModal } from "@/modules/academia/components/InviteTrialModal";
 import { useAuthStore } from "@/lib/store/auth-store";
@@ -11,12 +11,47 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
+type EnrollmentRow =
+  | { id: string }
+  | {
+      id: string;
+      isTrial: boolean;
+      cohortId: string | null;
+      cohort: { name: string } | null;
+      course: { title: string } | null;
+    };
+
 interface User {
   id: string;
   name: string | null;
   email: string;
   platformRole: string | null;
-  academyEnrollments?: { id: string }[];
+  academyEnrollments?: EnrollmentRow[];
+}
+
+function userHasTrialBadge(u: User): boolean {
+  const en = u.academyEnrollments;
+  if (!en?.length) return false;
+  const first = en[0];
+  if ("isTrial" in first) {
+    return en.some((e) => "isTrial" in e && e.isTrial === true);
+  }
+  return true;
+}
+
+function cohortLabelsForUser(u: User): string[] {
+  const en = u.academyEnrollments;
+  if (!en?.length) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const e of en) {
+    if (!("cohortId" in e) || !e.cohortId || !e.cohort?.name) continue;
+    if (seen.has(e.cohortId)) continue;
+    seen.add(e.cohortId);
+    const coursePart = e.course?.title ? ` · ${e.course.title}` : "";
+    out.push(`${e.cohort.name}${coursePart}`);
+  }
+  return out;
 }
 
 export function StudentsManagement() {
@@ -24,7 +59,11 @@ export function StudentsManagement() {
   const [loading, setLoading] = useState(true);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isTrialModalOpen, setIsTrialModalOpen] = useState(false);
+  const [cohortFilter, setCohortFilter] = useState<string>("ALL");
+  const [teacherCohorts, setTeacherCohorts] = useState<{ id: string; name: string }[]>([]);
   const { user } = useAuthStore();
+  const isTeacher = user?.platformRole === "ACADEMY_TEACHER";
+
   // Pueden invitar: Super Admin, Admin de Academia, o Administrador del tenant. Los profesores (ACADEMY_TEACHER) no pueden invitar.
   const tenantRole = user?.role?.name?.trim().toUpperCase() ?? "";
   const canInvite =
@@ -33,15 +72,35 @@ export function StudentsManagement() {
     user?.platformRole === "SUPER_ADMIN" ||
     user?.platformRole === "ACADEMY_ADMIN";
 
+  useEffect(() => {
+    if (!isTeacher) return;
+    fetch("/api/academy/cohorts")
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.success && Array.isArray(res.data)) {
+          setTeacherCohorts(
+            res.data.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name }))
+          );
+        }
+      })
+      .catch(() => {});
+  }, [isTeacher]);
+
   const fetchStudents = useCallback(() => {
-    fetch("/api/academy/students")
+    setLoading(true);
+    const url =
+      isTeacher && cohortFilter !== "ALL"
+        ? `/api/academy/students?cohortId=${encodeURIComponent(cohortFilter)}`
+        : "/api/academy/students";
+    fetch(url)
       .then((r) => r.json())
       .then((res) => {
         if (res.success) setUsers(res.data);
+        else if (res.error) toast.error(res.error);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, []);
+  }, [isTeacher, cohortFilter]);
 
   useEffect(() => {
     fetchStudents();
@@ -74,21 +133,54 @@ export function StudentsManagement() {
         )}
       </div>
       <div className="academy-card-dark p-6 flex flex-col gap-6 rounded-xl border border-white/[0.08] shadow-none">
-        <div>
-          <h2 className="text-lg font-bold text-white font-display">Lista de estudiantes</h2>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-white font-display">Lista de estudiantes</h2>
+          </div>
+          {isTeacher && teacherCohorts.length > 0 ? (
+            <label className="flex flex-col gap-1.5 text-xs text-slate-400 shrink-0">
+              <span className="font-medium text-slate-300">Filtrar por cohorte</span>
+              <select
+                value={cohortFilter}
+                onChange={(e) => setCohortFilter(e.target.value)}
+                className="rounded-lg border border-white/[0.12] bg-white/[0.06] text-white text-sm px-3 py-2 min-w-[200px] focus:outline-none focus:ring-2 focus:ring-cyan-500/40"
+              >
+                <option value="ALL">Todos mis cohortes</option>
+                {teacherCohorts.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
         </div>
         <div className="space-y-2">
-          {users.map((u) => (
+          {users.map((u) => {
+            const cohortLabels = isTeacher ? cohortLabelsForUser(u) : [];
+            return (
             <div
               key={u.id}
-              className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-white/[0.02]"
+              className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-3 rounded-xl border border-white/[0.06] bg-white/[0.02]"
             >
-              <div>
+              <div className="min-w-0">
                 <p className="font-semibold text-white">{u.name || u.email}</p>
                 <p className="text-sm text-slate-400">{u.email}</p>
+                {cohortLabels.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {cohortLabels.map((label, idx) => (
+                      <span
+                        key={`${u.id}-cohort-${idx}`}
+                        className="text-[10px] font-medium px-2 py-0.5 rounded-md border border-cyan-500/25 bg-cyan-500/10 text-cyan-300"
+                      >
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
-              <div className="flex items-center gap-2">
-                {u.academyEnrollments?.length ? (
+              <div className="flex items-center gap-2 shrink-0">
+                {userHasTrialBadge(u) ? (
                   <Badge variant="secondary" className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px]">
                     Prueba
                   </Badge>
@@ -98,7 +190,8 @@ export function StudentsManagement() {
                 </span>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
         {users.length === 0 && (
           <p className="text-slate-500">No hay estudiantes.</p>

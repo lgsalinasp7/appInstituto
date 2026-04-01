@@ -1,22 +1,22 @@
 "use client";
 
-export type LenguajesIdeAnimationProps = {
+export type GitControlVersionesAnimationProps = {
   embedded?: boolean;
   titleFromLesson?: string;
   className?: string;
 };
 
-export function LenguajesIdeAnimation({
+export function GitControlVersionesAnimation({
   embedded,
   titleFromLesson: _titleFromLesson,
   className,
-}: LenguajesIdeAnimationProps) {
+}: GitControlVersionesAnimationProps) {
   const frameHeight = embedded ? "min(85vh, 900px)" : "calc(100vh - 160px)";
   return (
     <div className={`relative w-full ${className ?? ""}`}>
       <iframe
-        title="Lenguajes de Programacion e IDEs"
-        src="/interactive/lenguajes-ide-v2.html"
+        title="Git: Control de Versiones"
+        src="/interactive/git-control-versiones.html"
         className="w-full rounded-xl border border-white/10 bg-slate-950"
         style={{ height: frameHeight }}
       />
