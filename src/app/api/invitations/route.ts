@@ -278,13 +278,17 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
         where: {
           id: academyCohortId,
           tenantId,
-          status: "ACTIVE",
+          status: { in: ["ACTIVE", "DRAFT"] },
         },
         select: { id: true, name: true },
       });
       if (!cohortRow) {
         return NextResponse.json(
-          { success: false, error: "El cohorte seleccionado no existe o no está activo en este instituto" },
+          {
+            success: false,
+            error:
+              "El cohorte seleccionado no existe o no está disponible para matrícula (debe estar activo o en borrador).",
+          },
           { status: 400 }
         );
       }

@@ -288,7 +288,7 @@ export function AdminCourseManageView({ courseId }: { courseId: string }) {
         (form.elements.namedItem("maxStudents") as HTMLInputElement).value || "9999",
         10
       ),
-      status: (form.elements.namedItem("status") as HTMLSelectElement)?.value || "DRAFT",
+      status: (form.elements.namedItem("status") as HTMLSelectElement)?.value || "ACTIVE",
       kind,
     };
     if (kind === "PROMOTIONAL") {
@@ -312,7 +312,6 @@ export function AdminCourseManageView({ courseId }: { courseId: string }) {
             body: JSON.stringify({
               ...payload,
               courseId,
-              status: "DRAFT",
               schedule: {},
             }),
           });
@@ -853,21 +852,24 @@ export function AdminCourseManageView({ courseId }: { courseId: string }) {
               />
               <p className="text-[11px] text-slate-500 mt-1">Por defecto alto; cupos estrictos en una fase posterior.</p>
             </div>
-            {cohortModal.editing && (
-              <div>
-                <Label className="text-slate-300">Estado</Label>
-                <select
-                  name="status"
-                  defaultValue={cohortModal.editing.status}
-                  className="mt-1 w-full rounded-lg bg-slate-800 border border-white/10 text-white px-3 py-2"
-                >
-                  <option value="DRAFT">Borrador</option>
-                  <option value="ACTIVE">Activo</option>
-                  <option value="COMPLETED">Completado</option>
-                  <option value="CANCELLED">Cancelado</option>
-                </select>
-              </div>
-            )}
+            <div>
+              <Label className="text-slate-300">Estado</Label>
+              <select
+                name="status"
+                defaultValue={cohortModal.editing?.status ?? "ACTIVE"}
+                className="mt-1 w-full rounded-lg bg-slate-800 border border-white/10 text-white px-3 py-2"
+              >
+                <option value="DRAFT">Borrador</option>
+                <option value="ACTIVE">Activo</option>
+                <option value="COMPLETED">Completado</option>
+                <option value="CANCELLED">Cancelado</option>
+              </select>
+              {!cohortModal.editing && (
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Activo permite invitar estudiantes al cohorte de inmediato; borrador también admite invitaciones.
+                </p>
+              )}
+            </div>
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setCohortModal({ open: false })}>
                 Cancelar

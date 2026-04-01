@@ -199,13 +199,17 @@ export const POST = withCSRF(
           where: {
             id: academyCohortId,
             tenantId: tenant.id,
-            status: "ACTIVE",
+            status: { in: ["ACTIVE", "DRAFT"] },
           },
           select: { id: true, name: true },
         });
         if (!cohortRow) {
           return NextResponse.json(
-            { success: false, error: "El cohorte seleccionado no existe o no está activo" },
+            {
+              success: false,
+              error:
+                "El cohorte seleccionado no existe o no está disponible para matrícula (debe estar activo o en borrador).",
+            },
             { status: 400 }
           );
         }

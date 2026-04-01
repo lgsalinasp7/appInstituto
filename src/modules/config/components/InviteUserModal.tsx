@@ -34,6 +34,7 @@ interface CohortInviteOption {
     id: string;
     name: string;
     courseTitle: string;
+    status?: string;
 }
 
 export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAdmin = false, defaultAcademyRole }: InviteUserModalProps) {
@@ -108,10 +109,14 @@ export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAd
                     setInviteCohorts(res.data);
                 } else {
                     setInviteCohorts([]);
+                    toast.error(res.error || "No se pudieron cargar los cohortes");
                 }
             })
             .catch(() => {
-                if (!cancelled) setInviteCohorts([]);
+                if (!cancelled) {
+                    setInviteCohorts([]);
+                    toast.error("Error al cargar los cohortes");
+                }
             })
             .finally(() => {
                 if (!cancelled) setCohortsLoading(false);
@@ -288,17 +293,18 @@ export function InviteUserModal({ open, onOpenChange, onInviteSuccess, isSuperAd
                                             className="flex h-10 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/40 disabled:cursor-not-allowed disabled:opacity-50"
                                             required
                                         >
-                                            <option value="">— Selecciona cohorte activo —</option>
+                                            <option value="">— Selecciona cohorte —</option>
                                             {inviteCohorts.map((c) => (
                                                 <option key={c.id} value={c.id}>
                                                     {c.name} · {c.courseTitle}
+                                                    {c.status === "DRAFT" ? " (borrador)" : ""}
                                                 </option>
                                             ))}
                                         </select>
                                     )}
                                     {inviteCohorts.length === 0 && !cohortsLoading && (
                                         <p className="text-[11px] text-amber-200/90">
-                                            Crea un cohorte activo en la gestión del curso antes de invitar estudiantes.
+                                            Crea un cohorte en la gestión del curso (activo o borrador) antes de invitar estudiantes.
                                         </p>
                                     )}
                                 </div>

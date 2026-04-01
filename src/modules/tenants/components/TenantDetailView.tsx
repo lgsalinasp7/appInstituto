@@ -664,7 +664,9 @@ function UsersTab({
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"ACADEMY_STUDENT" | "ACADEMY_TEACHER" | "ACADEMY_ADMIN">("ACADEMY_STUDENT");
   const [inviteCohortId, setInviteCohortId] = useState("");
-  const [inviteCohorts, setInviteCohorts] = useState<Array<{ id: string; name: string; courseTitle: string }>>([]);
+  const [inviteCohorts, setInviteCohorts] = useState<
+    Array<{ id: string; name: string; courseTitle: string; status?: string }>
+  >([]);
   const [inviteCohortsLoading, setInviteCohortsLoading] = useState(false);
   const [inviteLoading, setInviteLoading] = useState(false);
 
@@ -689,10 +691,16 @@ function UsersTab({
       .then((res) => {
         if (cancelled) return;
         if (res.success && Array.isArray(res.data)) setInviteCohorts(res.data);
-        else setInviteCohorts([]);
+        else {
+          setInviteCohorts([]);
+          toast.error(res.error || "No se pudieron cargar los cohortes");
+        }
       })
       .catch(() => {
-        if (!cancelled) setInviteCohorts([]);
+        if (!cancelled) {
+          setInviteCohorts([]);
+          toast.error("Error al cargar los cohortes");
+        }
       })
       .finally(() => {
         if (!cancelled) setInviteCohortsLoading(false);
@@ -831,16 +839,19 @@ function UsersTab({
                     className="mt-1.5 w-full h-10 rounded-lg bg-slate-800 border border-slate-700 text-white px-3"
                     required
                   >
-                    <option value="">— Cohorte activo —</option>
+                    <option value="">— Selecciona cohorte —</option>
                     {inviteCohorts.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name} · {c.courseTitle}
+                        {c.status === "DRAFT" ? " (borrador)" : ""}
                       </option>
                     ))}
                   </select>
                 )}
                 {inviteCohorts.length === 0 && !inviteCohortsLoading && (
-                  <p className="mt-1 text-xs text-amber-200/90">Crea un cohorte activo en el curso antes de invitar.</p>
+                  <p className="mt-1 text-xs text-amber-200/90">
+                    Crea un cohorte en el curso (activo o borrador) antes de invitar.
+                  </p>
                 )}
               </div>
             )}
