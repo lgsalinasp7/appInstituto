@@ -20,6 +20,7 @@ interface CohortOption {
   name: string;
   courseTitle: string;
   kind: string;
+  status?: string;
 }
 
 interface InviteTrialModalProps {
@@ -87,7 +88,7 @@ export function InviteTrialModal({
       return;
     }
     if (!academyCohortId) {
-      toast.error("Selecciona el cohorte de prueba (debe existir y estar activo)");
+      toast.error("Selecciona el cohorte de prueba (activo o en borrador)");
       return;
     }
     if (!trialNextCohortDate) {
@@ -213,13 +214,14 @@ export function InviteTrialModal({
                 {cohorts.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name} · {c.courseTitle}
+                    {c.status === "DRAFT" ? " (borrador)" : ""}
                   </option>
                 ))}
               </select>
             )}
             {cohorts.length === 0 && !cohortsLoading && (
               <p className="text-xs text-amber-200/80">
-                No hay cohortes activos. Crea uno en la gestión del curso antes de invitar.
+                No hay cohortes disponibles (activo o borrador). Crea uno en la gestión del curso antes de invitar.
               </p>
             )}
           </div>

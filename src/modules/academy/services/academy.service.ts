@@ -259,6 +259,38 @@ export const courseService = {
     return { lesson, progress, quizResults, cralCompletions, deliverySubmission };
   },
 
+  /** Lección completa para edición admin (sin progreso ni resultados del actor). */
+  async getLessonForAdminEdit(lessonId: string, tenantId: string) {
+    const lesson = await prisma.academyLesson.findFirst({
+      where: {
+        id: lessonId,
+        module: { course: { tenantId } },
+      },
+      include: {
+        meta: {
+          include: {
+            interactiveAnimation: {
+              select: {
+                id: true,
+                slug: true,
+                title: true,
+                description: true,
+              },
+            },
+          },
+        },
+        module: { include: { course: true } },
+        quizzes: { include: { options: true }, orderBy: { order: "asc" } },
+        cralChallenges: { orderBy: { order: "asc" } },
+        deliverables: {
+          include: { checkItems: { orderBy: { order: "asc" } } },
+        },
+      },
+    });
+    if (!lesson) throw new Error("Lección no encontrada");
+    return { lesson };
+  },
+
   async getSidebarModules(
     courseId: string,
     userId: string,
@@ -1233,6 +1265,93 @@ export const analyticsService = {
           ? Math.round((quizStats.correct / quizStats._count.id) * 100)
           : 0,
       topEngagedLessons: topLessons,
+    };
+  },
+
+  /** Resumen agregado del tenant para el dashboard admin (sin N+1 HTTP). */
+  async getTenantOverview(tenantId: string) {
+    const [
+      openCohortsCount,
+      totalActiveEnrollments,
+      trialStudents,
+      globalAvgProgress,
+      cohortsBase,
+      pendingInvitations,
+    ] = await Promise.all([
+      prisma.academyCohort.count({
+        where: { tenantId, status: { in: ["ACTIVE", "DRAFT"] } },
+      }),
+      prisma.academyEnrollment.count({
+        where: { status: "ACTIVE", cohort: { tenantId } },
+      }),
+      prisma.academyEnrollment.count({
+        where: { isTrial: true, cohort: { tenantId } },
+      }),
+      prisma.academyStudentSnapshot.aggregate({
+        where: { cohort: { tenantId } },
+        _avg: { overallProgress: true },
+      }),
+      prisma.academyCohort.findMany({
+        where: { tenantId },
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          course: { select: { title: true } },
+        },
+        orderBy: { startDate: "desc" },
+        take: 50,
+      }),
+      prisma.invitation.count({
+        where: { tenantId, status: "PENDING" },
+      }),
+    ]);
+
+    const cohortIds = cohortsBase.map((c) => c.id);
+    const enrollmentByCohort: Record<string, number> = {};
+    const snapshotAvgByCohort: Record<string, number> = {};
+
+    if (cohortIds.length > 0) {
+      const [enrollGroups, snapGroups] = await Promise.all([
+        prisma.academyEnrollment.groupBy({
+          by: ["cohortId"],
+          where: { cohortId: { in: cohortIds }, status: "ACTIVE" },
+          _count: true,
+        }),
+        prisma.academyStudentSnapshot.groupBy({
+          by: ["cohortId"],
+          where: { cohortId: { in: cohortIds } },
+          _avg: { overallProgress: true },
+        }),
+      ]);
+      for (const row of enrollGroups) {
+        if (row.cohortId) enrollmentByCohort[row.cohortId] = row._count;
+      }
+      for (const row of snapGroups) {
+        if (row.cohortId) {
+          snapshotAvgByCohort[row.cohortId] = Number(row._avg.overallProgress ?? 0);
+        }
+      }
+    }
+
+    const cohortSummaries = cohortsBase.map((c) => ({
+      id: c.id,
+      name: c.name,
+      status: c.status,
+      courseTitle: c.course.title,
+      activeStudents: enrollmentByCohort[c.id] ?? 0,
+      avgProgress: snapshotAvgByCohort[c.id] != null
+        ? snapshotAvgByCohort[c.id].toFixed(1)
+        : "0.0",
+    }));
+
+    return {
+      openCohortsCount,
+      totalActiveEnrollments,
+      trialStudents,
+      avgProgressGlobal: Number(globalAvgProgress._avg.overallProgress ?? 0).toFixed(1),
+      pendingInvitations,
+      cohortSummaries,
     };
   },
 };

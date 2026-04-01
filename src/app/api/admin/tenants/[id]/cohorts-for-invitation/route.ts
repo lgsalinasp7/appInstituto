@@ -1,5 +1,5 @@
 /**
- * Lista cohortes activos de un tenant Academia (super admin, sin contexto de subdominio).
+ * Lista cohortes activos o en borrador de un tenant Academia (super admin, sin contexto de subdominio).
  */
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
@@ -30,12 +30,13 @@ export const GET = withPlatformAdmin(
       }
 
       const cohorts = await prisma.academyCohort.findMany({
-        where: { tenantId: tenant.id, status: "ACTIVE" },
+        where: { tenantId: tenant.id, status: { in: ["ACTIVE", "DRAFT"] } },
         orderBy: [{ startDate: "desc" }, { name: "asc" }],
         select: {
           id: true,
           name: true,
           kind: true,
+          status: true,
           courseId: true,
           course: { select: { title: true } },
         },
@@ -47,6 +48,7 @@ export const GET = withPlatformAdmin(
           id: c.id,
           name: c.name,
           kind: c.kind,
+          status: c.status,
           courseId: c.courseId,
           courseTitle: c.course.title,
         })),

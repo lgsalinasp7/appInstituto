@@ -65,13 +65,9 @@ export default async function StudentLayout({
   return (
     <div className="academy-shell-dark w-full h-screen flex font-sans relative overflow-hidden">
       <StudentSidebar
-        userName={dbUser.name ?? "Estudiante"}
-        userEmail={dbUser.email ?? ""}
-        userImage={dbUser.image ?? undefined}
         progress={progress}
         lessonsCompleted={snapshot?.lessonsCompleted ?? 0}
         lessonsTotal={snapshot?.lessonsTotal ?? 48}
-        cohortName={enrollment?.cohort?.name ?? "Cohorte"}
       />
 
       <div className="w-full flex flex-col min-w-0 min-h-0 lg:pl-[260px]">

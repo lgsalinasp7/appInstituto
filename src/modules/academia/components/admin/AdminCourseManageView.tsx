@@ -29,12 +29,11 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { AdminLessonEditorDialog } from "./AdminLessonEditorDialog";
 
 interface Lesson {
   id: string;
   title: string;
-  description?: string | null;
-  content?: string;
   duration: number;
   order: number;
 }
@@ -75,9 +74,13 @@ export function AdminCourseManageView({ courseId }: { courseId: string }) {
   const [tab, setTab] = useState<"contenido" | "cohortes">("contenido");
 
   const [moduleModal, setModuleModal] = useState<{ open: boolean; editing?: Module }>({ open: false });
-  const [lessonModal, setLessonModal] = useState<{ open: boolean; moduleId: string; editing?: Lesson }>({
+  const [lessonCreateModal, setLessonCreateModal] = useState<{ open: boolean; moduleId: string }>({
     open: false,
     moduleId: "",
+  });
+  const [lessonEditor, setLessonEditor] = useState<{ open: boolean; lessonId: string }>({
+    open: false,
+    lessonId: "",
   });
   const [cohortModal, setCohortModal] = useState<{ open: boolean; editing?: Cohort }>({ open: false });
   const [moveModal, setMoveModal] = useState<{ open: boolean; source: Cohort | null }>({
@@ -193,14 +196,14 @@ export function AdminCourseManageView({ courseId }: { courseId: string }) {
   const handleCreateLesson = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
-    const module = course?.modules.find((m) => m.id === lessonModal.moduleId);
+    const module = course?.modules.find((m) => m.id === lessonCreateModal.moduleId);
     const order = module?.lessons.length ?? 0;
     try {
       const res = await fetch("/api/academy/lessons", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          moduleId: lessonModal.moduleId,
+          moduleId: lessonCreateModal.moduleId,
           title: (form.elements.namedItem("title") as HTMLInputElement).value,
           description: "",
           content: (form.elements.namedItem("content") as HTMLTextAreaElement).value || "<p></p>",
@@ -211,39 +214,13 @@ export function AdminCourseManageView({ courseId }: { courseId: string }) {
       const json = await res.json();
       if (json.success) {
         toast.success("Lección creada");
-        setLessonModal({ open: false, moduleId: "" });
+        setLessonCreateModal({ open: false, moduleId: "" });
         loadCourse();
       } else {
         toast.error(json.error || "Error al crear lección");
       }
     } catch {
       toast.error("Error al crear lección");
-    }
-  };
-
-  const handleUpdateLesson = async (e: React.FormEvent<HTMLFormElement>, lessonId: string) => {
-    e.preventDefault();
-    const form = e.currentTarget;
-    try {
-      const res = await fetch(`/api/academy/lessons/${lessonId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: (form.elements.namedItem("title") as HTMLInputElement).value,
-          content: (form.elements.namedItem("content") as HTMLTextAreaElement).value || "<p></p>",
-          duration: parseInt((form.elements.namedItem("duration") as HTMLInputElement).value || "0", 10),
-        }),
-      });
-      const json = await res.json();
-      if (json.success) {
-        toast.success("Lección actualizada");
-        setLessonModal({ open: false, moduleId: "" });
-        loadCourse();
-      } else {
-        toast.error(json.error || "Error al actualizar");
-      }
-    } catch {
-      toast.error("Error al actualizar lección");
     }
   };
 
@@ -288,7 +265,7 @@ export function AdminCourseManageView({ courseId }: { courseId: string }) {
         (form.elements.namedItem("maxStudents") as HTMLInputElement).value || "9999",
         10
       ),
-      status: (form.elements.namedItem("status") as HTMLSelectElement)?.value || "DRAFT",
+      status: (form.elements.namedItem("status") as HTMLSelectElement)?.value || "ACTIVE",
       kind,
     };
     if (kind === "PROMOTIONAL") {
@@ -312,7 +289,6 @@ export function AdminCourseManageView({ courseId }: { courseId: string }) {
             body: JSON.stringify({
               ...payload,
               courseId,
-              status: "DRAFT",
               schedule: {},
             }),
           });
@@ -529,7 +505,7 @@ export function AdminCourseManageView({ courseId }: { courseId: string }) {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => setLessonModal({ open: true, moduleId: module.id })}
+                          onClick={() => setLessonCreateModal({ open: true, moduleId: module.id })}
                           className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 text-xs"
                         >
                           <Plus className="w-3 h-3 mr-1" />
@@ -549,7 +525,7 @@ export function AdminCourseManageView({ courseId }: { courseId: string }) {
                           <div className="flex gap-1">
                             <button
                               type="button"
-                              onClick={() => setLessonModal({ open: true, moduleId: module.id, editing: lesson })}
+                              onClick={() => setLessonEditor({ open: true, lessonId: lesson.id })}
                               className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-white/5"
                             >
                               <Pencil className="w-3.5 h-3.5" />
@@ -713,25 +689,29 @@ export function AdminCourseManageView({ courseId }: { courseId: string }) {
         </DialogContent>
       </Dialog>
 
-      {/* Lección modal */}
-      <Dialog open={lessonModal.open} onOpenChange={(open) => setLessonModal({ ...lessonModal, open })}>
-        <DialogContent className="academy-card-dark border-white/10 bg-slate-900 max-w-md">
+      <AdminLessonEditorDialog
+        open={lessonEditor.open}
+        onOpenChange={(o) =>
+          setLessonEditor((s) => ({ open: o, lessonId: o ? s.lessonId : "" }))
+        }
+        lessonId={lessonEditor.lessonId}
+        onSaved={loadCourse}
+      />
+
+      {/* Nueva lección (tras crear, edición completa en el editor) */}
+      <Dialog
+        open={lessonCreateModal.open}
+        onOpenChange={(open) => setLessonCreateModal((s) => ({ ...s, open }))}
+      >
+        <DialogContent className="academy-card-dark border-white/10 bg-slate-900 max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-white">
-              {lessonModal.editing ? "Editar lección" : "Nueva lección"}
-            </DialogTitle>
+            <DialogTitle className="text-white">Nueva lección</DialogTitle>
           </DialogHeader>
-          <form
-            onSubmit={(e) =>
-              lessonModal.editing ? handleUpdateLesson(e, lessonModal.editing.id) : handleCreateLesson(e)
-            }
-            className="space-y-4"
-          >
+          <form onSubmit={handleCreateLesson} className="space-y-4">
             <div>
               <Label className="text-slate-300">Título</Label>
               <Input
                 name="title"
-                defaultValue={lessonModal.editing?.title}
                 className="mt-1 bg-slate-800 border-white/10 text-white"
                 required
               />
@@ -742,7 +722,7 @@ export function AdminCourseManageView({ courseId }: { courseId: string }) {
                 name="duration"
                 type="number"
                 min={0}
-                defaultValue={lessonModal.editing?.duration ?? 30}
+                defaultValue={30}
                 className="mt-1 bg-slate-800 border-white/10 text-white"
               />
             </div>
@@ -750,17 +730,21 @@ export function AdminCourseManageView({ courseId }: { courseId: string }) {
               <Label className="text-slate-300">Contenido (HTML)</Label>
               <Textarea
                 name="content"
-                defaultValue={lessonModal.editing?.content ?? "<p></p>"}
-                className="mt-1 bg-slate-800 border-white/10 text-white font-mono text-sm"
-                rows={4}
+                defaultValue="<p></p>"
+                className="mt-1 bg-slate-800 border-white/10 text-white font-mono text-sm min-h-[200px]"
+                rows={12}
               />
             </div>
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setLessonModal({ open: false, moduleId: "" })}>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setLessonCreateModal({ open: false, moduleId: "" })}
+              >
                 Cancelar
               </Button>
               <Button type="submit" className="bg-cyan-600 hover:bg-cyan-500">
-                {lessonModal.editing ? "Guardar" : "Crear"}
+                Crear
               </Button>
             </DialogFooter>
           </form>
@@ -853,21 +837,24 @@ export function AdminCourseManageView({ courseId }: { courseId: string }) {
               />
               <p className="text-[11px] text-slate-500 mt-1">Por defecto alto; cupos estrictos en una fase posterior.</p>
             </div>
-            {cohortModal.editing && (
-              <div>
-                <Label className="text-slate-300">Estado</Label>
-                <select
-                  name="status"
-                  defaultValue={cohortModal.editing.status}
-                  className="mt-1 w-full rounded-lg bg-slate-800 border border-white/10 text-white px-3 py-2"
-                >
-                  <option value="DRAFT">Borrador</option>
-                  <option value="ACTIVE">Activo</option>
-                  <option value="COMPLETED">Completado</option>
-                  <option value="CANCELLED">Cancelado</option>
-                </select>
-              </div>
-            )}
+            <div>
+              <Label className="text-slate-300">Estado</Label>
+              <select
+                name="status"
+                defaultValue={cohortModal.editing?.status ?? "ACTIVE"}
+                className="mt-1 w-full rounded-lg bg-slate-800 border border-white/10 text-white px-3 py-2"
+              >
+                <option value="DRAFT">Borrador</option>
+                <option value="ACTIVE">Activo</option>
+                <option value="COMPLETED">Completado</option>
+                <option value="CANCELLED">Cancelado</option>
+              </select>
+              {!cohortModal.editing && (
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Activo permite invitar estudiantes al cohorte de inmediato; borrador también admite invitaciones.
+                </p>
+              )}
+            </div>
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setCohortModal({ open: false })}>
                 Cancelar
