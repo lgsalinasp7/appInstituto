@@ -17,20 +17,58 @@ export const SESIONES_MODULO_1 = [
         { key: "cdn", title: "CDN — Contenido distribuido globalmente", body: "Vercel usa una CDN global. El HTML estático de KaledSoft se sirve desde el servidor más cercano al usuario — un odontólogo en Bogotá no espera que la respuesta viaje a Bogotá y de regreso." },
       ],
       cral: [
-        { phase: "CONSTRUIR", title: "Mide el viaje de kaledsoft.tech", desc: "Instala `curl` si no lo tienes. Ejecuta: `curl -w 'DNS: %{time_namelookup}s\\nTCP: %{time_connect}s\\nTLS: %{time_appconnect}s\\nPrimer byte: %{time_starttransfer}s\\nTotal: %{time_total}s\\n' -o /dev/null -s https://kaledsoft.tech`. Documenta los tiempos de cada capa. ¿Cuál consume más tiempo?" },
-        { phase: "ROMPER", title: "¿Qué pasa sin DNS?", desc: "Ejecuta `ping kaledsoft.tech` (con DNS). Luego busca la IP real con `nslookup kaledsoft.tech` e intenta `ping [IP directa]`. Luego usa `curl --resolve kaledsoft.tech:443:1.2.3.4 https://kaledsoft.tech` con una IP falsa. ¿Qué error obtienes? ¿Por qué TLS falla incluso si TCP conecta?" },
-        { phase: "AUDITAR", title: "Evalúa la respuesta de Kaled sobre DNS poisoning", desc: "Pregúntale a Kaled: '¿Qué es un ataque de DNS poisoning y cómo protegería los datos de los clientes de KaledDental?' Evalúa: ¿Mencionó DNSSEC? ¿Mencionó HTTPS como segunda línea de defensa? ¿La solución es práctica para una startup colombiana?" },
-        { phase: "LANZAR", title: "Diagrama de arquitectura en GitHub", desc: "Publica en tu GitHub un archivo `ARQUITECTURA-WEB.md` con: diagrama ASCII del viaje completo (navegador → DNS → CDN → servidor → BD), los tiempos medidos con curl, y una sección 'Implicaciones para mi SaaS' de mínimo 100 palabras propias." },
+        { phase: "CONSTRUIR", title: "Observa el viaje en tu navegador", desc: "Abre `kaledsoft.tech` en tu navegador. Presiona F12, entra a la pestaña Red/Network y recarga la página. Identifica una petición de tipo `document` y anota: URL, estado (ej. 200) y tiempo total. Si no entiendes una parte, pregúntale a Kaled: 'Explícame esto como principiante'." },
+        { phase: "ROMPER", title: "Simula una caída de internet", desc: "Desactiva el WiFi (o activa modo avión), intenta abrir una página nueva y anota el mensaje del navegador. Vuelve a activar internet y compara qué cambió. Escribe en una frase: ¿falló DNS, conexión o servidor? Si tienes duda, pide ayuda a Kaled." },
+        { phase: "AUDITAR", title: "Audita una explicación sencilla de DNS", desc: "Pregúntale a Kaled: 'Explícame DNS como si yo estuviera empezando en tecnología'. Evalúa si la explicación incluye: dominio, traducción a IP y por qué sin DNS no se carga una web por nombre. Si falta algo, pídele que lo mejore con un ejemplo cotidiano." },
+        { phase: "LANZAR", title: "Presenta tu mapa del viaje web", desc: "Crea un archivo `MI-VIAJE-WEB.md` en tu computador con un diagrama simple: navegador -> DNS -> servidor -> respuesta. Agrega 3 aprendizajes propios de la clase y compártelo en clase con tu instructor o equipo. No necesitas GitHub todavía." },
       ],
-      quiz: {
-        question: "KaledWash (lavadero de autos) está en producción. Un cliente reporta que el sistema carga muy lento solo para usuarios de Cali pero rápido en Bogotá. ¿Qué componente del viaje DNS→HTTP sospecharías primero?",
-        options: [
-          { label: "A", text: "El código JavaScript tiene un bug que solo afecta a Chrome", isCorrect: false, feedback: "El problema es geográfico (Cali vs Bogotá), no del navegador. Un bug de JS afectaría a todos los usuarios por igual, no solo a los de una región." },
-          { label: "B", text: "La CDN no tiene un punto de presencia cerca de Cali — el contenido estático viaja lejos", isCorrect: true, feedback: "✅ ¡Arquitecto correcto! Si la CDN de Vercel no tiene servidor en Cali, el HTML/JS/CSS estático viaja desde el servidor más cercano (posiblemente São Paulo o Miami), añadiendo 200-400ms. La solución: configurar reglas de caché más agresivas en la CDN. Kaled está orgulloso 🎯" },
-          { label: "C", text: "El DNS de Cloudflare está caído para Colombia", isCorrect: false, feedback: "Si Cloudflare estuviera caído, el problema afectaría a TODOS los usuarios, no solo a los de Cali. Cloudflare también tiene 99.99% uptime — rara vez falla." },
-          { label: "D", text: "La base de datos PostgreSQL en Neon está congestionada", isCorrect: false, feedback: "La BD en Neon está en us-east-1 y responde igual para todos. El problema geográfico apunta a la capa de distribución de contenido (CDN), no a la BD." },
-        ],
-      },
+      quizzes: [
+        {
+          question: "KaledWash está lento para usuarios de Cali pero rápido en Bogotá. ¿Qué capa revisarías primero?",
+          options: [
+            { label: "A", text: "CDN y cercanía del punto de presencia", isCorrect: true, feedback: "✅ Correcto: cuando el problema depende de la ciudad, primero revisa distribución y caché en CDN." },
+            { label: "B", text: "Formato del botón en el frontend", isCorrect: false, feedback: "No es lo primero: el síntoma es geográfico, no visual." },
+            { label: "C", text: "Color del tema oscuro", isCorrect: false, feedback: "El color no afecta latencia de red." },
+            { label: "D", text: "Nombre de la rama Git", isCorrect: false, feedback: "Git no explica lentitud por región en tiempo real." },
+          ],
+        },
+        {
+          question: "Si escribes `kaledsoft.tech` en el navegador, ¿qué hace DNS?",
+          options: [
+            { label: "A", text: "Convierte el dominio en una dirección IP", isCorrect: true, feedback: "✅ Exacto: DNS traduce nombres legibles a IPs." },
+            { label: "B", text: "Cifra todo el tráfico automáticamente", isCorrect: false, feedback: "Eso corresponde a TLS/HTTPS, no a DNS." },
+            { label: "C", text: "Guarda usuarios en la base de datos", isCorrect: false, feedback: "Esa tarea es de la base de datos." },
+            { label: "D", text: "Diseña la interfaz del dashboard", isCorrect: false, feedback: "La interfaz la renderiza frontend, no DNS." },
+          ],
+        },
+        {
+          question: "¿Cuál es la función principal de TLS en el viaje web?",
+          options: [
+            { label: "A", text: "Ordenar tarjetas en pantalla", isCorrect: false, feedback: "No: TLS no organiza UI." },
+            { label: "B", text: "Cifrar la comunicación para proteger datos", isCorrect: true, feedback: "✅ Correcto: TLS protege datos sensibles en tránsito." },
+            { label: "C", text: "Crear tablas en PostgreSQL", isCorrect: false, feedback: "Eso no lo hace TLS." },
+            { label: "D", text: "Cambiar de HTTP GET a POST", isCorrect: false, feedback: "Método HTTP y cifrado son conceptos distintos." },
+          ],
+        },
+        {
+          question: "¿Qué ventaja da HTTP/2 frente a HTTP/1.1 en un dashboard con muchos recursos?",
+          options: [
+            { label: "A", text: "Permite pedir varios recursos en la misma conexión", isCorrect: true, feedback: "✅ Bien: reduce esperas usando multiplexación." },
+            { label: "B", text: "Reemplaza la base de datos", isCorrect: false, feedback: "HTTP no reemplaza almacenamiento." },
+            { label: "C", text: "Evita escribir CSS", isCorrect: false, feedback: "No tiene relación." },
+            { label: "D", text: "Elimina la necesidad de DNS", isCorrect: false, feedback: "DNS sigue siendo necesario." },
+          ],
+        },
+        {
+          question: "Si se cae internet local, ¿qué síntoma verías primero al abrir una web?",
+          options: [
+            { label: "A", text: "Error de conexión / no se puede acceder al sitio", isCorrect: true, feedback: "✅ Correcto: sin conectividad no completas el viaje web." },
+            { label: "B", text: "Aparece automáticamente el dashboard completo", isCorrect: false, feedback: "No: sin red no se carga contenido nuevo." },
+            { label: "C", text: "La web mejora su velocidad", isCorrect: false, feedback: "No es posible sin conexión." },
+            { label: "D", text: "Se corrigen errores de backend", isCorrect: false, feedback: "No hay relación directa." },
+          ],
+        },
+      ],
     },
 
     {
@@ -48,62 +86,138 @@ export const SESIONES_MODULO_1 = [
         { key: "api-design", title: "Diseño de APIs REST profesional", body: "`GET /api/clientes` (listar). `POST /api/clientes` (crear). `GET /api/clientes/123` (obtener uno). `PUT /api/clientes/123` (actualizar). `DELETE /api/clientes/123` (eliminar). Las URLs son sustantivos, los métodos HTTP son los verbos." },
       ],
       cral: [
-        { phase: "CONSTRUIR", title: "Primera API call a KaledSoft", desc: "Instala Thunder Client en VS Code. Haz una petición GET a `https://api.github.com/users/tu-usuario`. Luego a `https://jsonplaceholder.typicode.com/posts`. Examina los headers de respuesta completos. ¿Qué dice `Content-Type`? ¿Hay `Cache-Control`? ¿Cuántos ms tardó?" },
-        { phase: "ROMPER", title: "Rompe el rate limiting de la API", desc: "Ejecuta la misma petición a la API de GitHub 60 veces seguidas con un script o manualmente rápido. ¿Qué código de estado recibes después de superar el límite? Lee el header `X-RateLimit-Remaining`. ¿Qué dice? ¿Cómo impacta esto al diseño de KaledDental si un odontólogo hace muchas peticiones?" },
-        { phase: "AUDITAR", title: "Audita esta API de KaledWash", desc: "Analiza este endpoint: `GET /api/ordenes?usuario=123&secreto=abc123`. Problemas: (1) secreto en URL queda en logs del servidor, (2) cualquier usuario puede cambiar el número 123 por otro (IDOR), (3) GET con datos sensibles en query params viola REST. Reescríbelo correctamente con autenticación por header." },
-        { phase: "LANZAR", title: "Documenta tu primera API call", desc: "Captura de pantalla de tu petición más interesante en Thunder Client. Publica en GitHub con explicación de cada header que recibiste y por qué importa para un SaaS como KaledSoft." },
+        { phase: "CONSTRUIR", title: "Haz tu primera petición GET", desc: "Desde el navegador abre `https://jsonplaceholder.typicode.com/posts/1`. Identifica que ves un JSON. Luego abre DevTools y revisa el estado HTTP de la petición. Escribe qué entiendes por petición y respuesta. Si te bloqueas, pídele a Kaled un ejemplo paso a paso." },
+        { phase: "ROMPER", title: "Diferencia entre éxito y error", desc: "Prueba dos URLs: una válida (`/posts/1`) y otra que no exista (`/posts/999999`). Compara códigos y respuesta. Explica con tus palabras qué significa cuando una API responde 'no encontrado'." },
+        { phase: "AUDITAR", title: "Revisa seguridad básica en una URL", desc: "Mira este ejemplo: `GET /api/ordenes?usuario=123&secreto=abc123`. Detecta al menos 2 riesgos (por ejemplo, secreto en URL y cambio manual de usuario). Luego pregunta a Kaled cómo lo mejoraría para alguien que está empezando." },
+        { phase: "LANZAR", title: "Presenta tu primera evidencia HTTP", desc: "Crea en tu computador un archivo `MI-PRIMERA-API.md` con: URL usada, método, código de estado y qué aprendiste. Incluye una captura de Network o del navegador y muéstralo en la sesión. No necesitas GitHub todavía." },
       ],
-      quiz: {
-        question: "KaledPark procesa pagos de parqueadero. Un usuario reporta que se le cobró dos veces. El desarrollador dice 'el frontend envió el mismo POST dos veces por error de red'. ¿Quién tiene razón sobre dónde está el bug real?",
-        options: [
-          { label: "A", text: "El frontend — debería deshabilitar el botón de pago inmediatamente al hacer clic", isCorrect: false, feedback: "El frontend debe deshabilitar el botón, sí, pero eso solo es la primera línea de defensa. Un usuario puede hacer la petición directamente con curl o Postman sin pasar por el botón." },
-          { label: "B", text: "El backend — debe ser idempotente: el mismo pago enviado dos veces solo debe cobrarse una vez", isCorrect: true, feedback: "✅ ¡Correcto! El backend debe generar un `idempotency_key` único por transacción y verificarlo antes de procesar. Si ya existe esa clave, retorna el resultado anterior sin cobrar de nuevo. Así funcionan Stripe, MercadoPago y Wompi internamente. 🎯" },
-          { label: "C", text: "La red — el ISP debe filtrar requests duplicados", isCorrect: false, feedback: "El ISP no entiende la lógica de negocio. No puede saber que dos peticiones idénticas son un duplicado de pago — podrían ser dos clientes diferentes pagando lo mismo." },
-          { label: "D", text: "El banco — debe detectar cargos duplicados automáticamente", isCorrect: false, feedback: "Los bancos tienen protecciones contra duplicados, pero ocurren a nivel de transacción bancaria, no a nivel de lógica de tu SaaS. No puedes depender del banco para tu lógica de negocio." },
-        ],
-      },
+      quizzes: [
+        {
+          question: "En una API REST, ¿qué método usarías para obtener datos sin modificar nada?",
+          options: [
+            { label: "A", text: "GET", isCorrect: true, feedback: "✅ Correcto: GET consulta información." },
+            { label: "B", text: "POST", isCorrect: false, feedback: "POST se usa para crear recursos." },
+            { label: "C", text: "DELETE", isCorrect: false, feedback: "DELETE elimina recursos." },
+            { label: "D", text: "PUT", isCorrect: false, feedback: "PUT actualiza recursos." },
+          ],
+        },
+        {
+          question: "¿Qué código de estado indica creación exitosa de un recurso?",
+          options: [
+            { label: "A", text: "200", isCorrect: false, feedback: "200 es éxito general, pero no el más específico para creación." },
+            { label: "B", text: "201", isCorrect: true, feedback: "✅ Correcto: 201 = creado exitosamente." },
+            { label: "C", text: "404", isCorrect: false, feedback: "404 significa no encontrado." },
+            { label: "D", text: "500", isCorrect: false, feedback: "500 indica error interno del servidor." },
+          ],
+        },
+        {
+          question: "Si una operación de pago se envía dos veces por error de red, ¿qué práctica debe aplicar el backend?",
+          options: [
+            { label: "A", text: "Idempotencia en el endpoint", isCorrect: true, feedback: "✅ Correcto: evita cobros duplicados ante reintentos." },
+            { label: "B", text: "Confiar solo en el botón deshabilitado del frontend", isCorrect: false, feedback: "No basta: el backend debe proteger la lógica crítica." },
+            { label: "C", text: "Ignorar pagos repetidos sin revisar", isCorrect: false, feedback: "Se necesita validación explícita y controlada." },
+            { label: "D", text: "Cambiar siempre a método GET", isCorrect: false, feedback: "GET no es para registrar pagos." },
+          ],
+        },
+        {
+          question: "¿Qué header suele enviar un token de autenticación en APIs?",
+          options: [
+            { label: "A", text: "Content-Length", isCorrect: false, feedback: "Ese header indica tamaño del cuerpo." },
+            { label: "B", text: "Authorization", isCorrect: true, feedback: "✅ Correcto: `Authorization: Bearer ...`." },
+            { label: "C", text: "Cache-Control", isCorrect: false, feedback: "Ese header controla caché." },
+            { label: "D", text: "Accept-Language", isCorrect: false, feedback: "Ese header indica idioma preferido." },
+          ],
+        },
+        {
+          question: "¿Cuál afirmación describe mejor el modelo cliente-servidor?",
+          options: [
+            { label: "A", text: "El cliente solicita y el servidor responde", isCorrect: true, feedback: "✅ Exacto: cliente pide, servidor procesa y responde." },
+            { label: "B", text: "El servidor depende del navegador para guardar datos", isCorrect: false, feedback: "Los datos críticos se manejan en backend/DB." },
+            { label: "C", text: "Cliente y servidor son siempre el mismo proceso", isCorrect: false, feedback: "Pueden estar desacoplados." },
+            { label: "D", text: "Solo funciona con aplicaciones móviles", isCorrect: false, feedback: "Aplica también a web y otros clientes." },
+          ],
+        },
+      ],
     },
 
     {
       orden: 3, semana: 1, dia: "VIERNES",
-      titulo: "Arquitectura de sistemas: KaledSoft como caso real",
-      descripcion: "Monolito vs microservicios. Frontend/backend/base de datos. KaledSoft construye SaaS para odontología, lavaderos y parqueaderos — ¿cómo diseñarías ese sistema?",
+      titulo: "Lenguajes de Programación e IDEs: tu primer taller real",
+      descripcion: "Sesión práctica para entender tipos de lenguajes, cómo se ejecuta el código y cómo usar VS Code/IDEs para comenzar a programar con una rutina clara.",
       duracion: 180, sessionType: "ENTREGABLE",
-      video: { url: "https://www.youtube.com/watch?v=B_X4T1bQS5M", title: "Arquitectura de Software — Monolito vs Microservicios" },
-      kaledIntro: "Esta es la sesión más importante del módulo. **Hoy vas a diseñar sistemas, no páginas web.** KaledSoft Technologies tiene un reto real: construir una plataforma donde un mismo código base atiende a un odontólogo, un lavadero de autos y un parqueadero — cada uno con sus propias reglas de negocio, datos y usuarios. Eso se llama **multi-tenancy** y es el corazón de cualquier SaaS empresarial.",
-      analogia: "KaledSoft es como un edificio de apartamentos. El edificio (la plataforma) es uno solo — misma estructura, mismos servicios de electricidad y agua. Pero cada apartamento (tenant) tiene sus propios muebles (datos), su propia llave (autenticación) y sus propias reglas (lógica de negocio). El odontólogo del 301 no puede entrar al lavadero del 402. **Multi-tenancy es arquitectura de edificio, no de casas unifamiliares.**",
+      video: { url: "https://www.youtube.com/watch?v=7iobxzd_2wY", title: "Introducción a lenguajes e IDEs para desarrollo web" },
+      kaledIntro: "Hoy aterrizamos lo más importante de esta etapa: **qué es un lenguaje de programación y cómo trabajar en un IDE real**. No vamos a construir arquitectura avanzada todavía; vamos a dominar base técnica con práctica guiada para que puedas programar con confianza.",
+      analogia: "Aprender lenguajes e IDEs es como aprender a cocinar: primero entiendes ingredientes y herramientas (lenguaje + editor), luego practicas recetas pequeñas (ejercicios), y después pasas a platos complejos (proyectos).",
       concepts: [
-        { key: "multitenant", title: "Multi-tenancy — Un sistema para muchos clientes", body: "KaledSoft usa row-level multi-tenancy: todas las clínicas dentales están en la misma tabla `citas` pero cada registro tiene un `tenantId` que las aísla. Alternativa más cara: una BD por cliente (isolation más fuerte pero 100x más costoso)." },
-        { key: "monolito", title: "Monolito modular — La arquitectura correcta para KaledSoft", body: "Un solo repositorio Next.js que contiene el frontend, las API Routes (backend) y la lógica de negocio de todos los productos: KaledDental, KaledWash, KaledPark. Simple de desplegar, fácil de compartir código, suficiente para un equipo pequeño." },
-        { key: "separacion", title: "Cuándo extraer un microservicio", body: "Cuando el pain lo justifica: KaledSoft podría extraer las notificaciones de WhatsApp a un microservicio separado cuando se vuelvan tan complejas que afecten al resto del sistema. Regla: extrae cuando el módulo tiene su propio ciclo de deploy y su propio equipo." },
-        { key: "bd-compartida", title: "Base de datos compartida vs separada", body: "KaledSoft tiene una sola BD PostgreSQL en Neon con todas las tablas. Es más barato y simple. Si un cliente de KaledDental tiene datos muy sensibles (HIPAA), podría necesitar su propia BD. Por ahora, row-level isolation con `tenantId` es suficiente." },
+        { key: "niveles", title: "Lenguajes por nivel: bajo, medio y alto", body: "Bajo nivel (ensamblador) da control extremo, pero es lento para negocio. Medio nivel (C/C++) balancea control y desempeño. Alto nivel (JavaScript, Python) acelera la construcción de productos SaaS en etapas tempranas." },
+        { key: "tipado", title: "Tipado estático vs dinámico", body: "Tipado estático (TypeScript, Java) detecta errores antes de ejecutar. Tipado dinámico (JavaScript, Python) te da velocidad de prototipado. Para bootcamp SaaS, TypeScript en frontend/backend ayuda a escalar sin caos." },
+        { key: "ejecucion", title: "Compilado, interpretado y JIT", body: "Compilado: máximo rendimiento previo. Interpretado: velocidad para iterar. JIT (como V8 en JavaScript): equilibrio potente para apps web modernas. Entender esto evita decisiones por moda." },
+        { key: "ide", title: "IDE como multiplicador de productividad", body: "Un IDE integra editor, terminal, depuración y extensiones. VS Code destaca por velocidad y ecosistema. Cursor/Windsurf agregan IA para acelerar tareas repetitivas, pero el criterio técnico sigue siendo humano." },
       ],
       cral: [
-        { phase: "CONSTRUIR", title: "Diseña la arquitectura de KaledWash", desc: "En papel o Excalidraw, diseña el sistema completo de KaledWash (lavadero de autos). Incluye: app web para el dueño del lavadero, app móvil para el cliente, servidor (Next.js), BD (Neon), integración con WhatsApp para notificaciones, pasarela de pago (Wompi). ¿Qué tablas tiene la BD? ¿Dónde están los tenantIds? ¿Cómo escala si KaledSoft consigue 50 lavaderos como clientes?" },
-        { phase: "ROMPER", title: "¿Qué pasa si un lavadero ve datos de otro?", desc: "Diseña el escenario de fallo: un developer olvidó el filtro `tenantId` en la query de órdenes de KaledWash. ¿Qué datos quedan expuestos? ¿Qué impacto legal tiene? ¿Cómo detectarías este bug en producción antes de que un cliente lo reporte? ¿Qué test automatizado prevendría esto?" },
-        { phase: "AUDITAR", title: "Evalúa la arquitectura que proponga Kaled", desc: "Pídele a Kaled que diseñe la arquitectura de KaledPark (parqueadero). Evalúa su propuesta: ¿Propone microservicios innecesarios? ¿Considera el costo mensual en Vercel y Neon? ¿Menciona el tenantId? ¿La solución es viable para un equipo de 2 personas en Colombia?" },
-        { phase: "LANZAR", title: "Diagrama de arquitectura en GitHub", desc: "Sube a GitHub el diagrama de arquitectura de KaledWash con: todas las capas del sistema, flujo de datos entre componentes, tablas de la BD con tenantId marcado, y sección 'Decisiones' justificando por qué monolito y no microservicios para este momento." },
+        { phase: "CONSTRUIR", title: "Instala y configura VS Code", desc: "Instala VS Code (o confirma que ya lo tienes), crea una carpeta `clase-lenguajes-ides` y abre esa carpeta desde el IDE. Crea un archivo `index.html` y escribe un título y un párrafo con tu nombre. Guarda evidencia con una captura del editor abierto." },
+        { phase: "ROMPER", title: "Provoca y corrige un error simple", desc: "En tu `index.html`, deja una etiqueta sin cerrar (por ejemplo `<h1>` sin `</h1>`) y observa qué pasa en la vista. Luego corrígelo y anota en 2 líneas qué aprendiste sobre errores de sintaxis básicos." },
+        { phase: "AUDITAR", title: "Compara lenguajes con criterio inicial", desc: "Con apoyo de Kaled, llena una mini tabla con 3 columnas: Lenguaje, Dónde se usa, Dificultad inicial. Incluye al menos JavaScript y Python. El objetivo es entender diferencias, no elegir arquitectura todavía." },
+        { phase: "LANZAR", title: "Muestra tu primer entorno funcionando", desc: "Presenta tu carpeta de práctica con `index.html` funcionando y comparte 3 aprendizajes de la sesión: (1) qué es un lenguaje, (2) qué hace un IDE, (3) diferencia básica entre compilado e interpretado." },
       ],
-      quiz: {
-        question: "KaledSoft tiene 5 clientes de KaledDental. Un odontólogo de Barranquilla puede ver las citas de una clínica de Medellín en el sistema. ¿Cuál fue el error de arquitectura?",
-        options: [
-          { label: "A", text: "El sistema no tiene autenticación — cualquiera puede entrar", isCorrect: false, feedback: "El enunciado dice que el odontólogo está logueado en el sistema, no que entró sin autenticación. El problema es de autorización, no de autenticación." },
-          { label: "B", text: "La query de citas no filtra por tenantId — cualquier usuario autenticado ve todos los datos", isCorrect: true, feedback: "✅ ¡Exacto! Esto se llama vulnerabilidad IDOR (Insecure Direct Object Reference). El developer hizo: `prisma.citas.findMany({ where: { odontologoId: user.id } })` pero olvidó: `AND tenantId = user.tenantId`. En producción esto es una violación de datos con consecuencias legales. 🎯" },
-          { label: "C", text: "Cada cliente debería tener su propia base de datos separada", isCorrect: false, feedback: "Una BD por cliente resolvería el aislamiento pero es 50x más costoso de operar. El row-level multi-tenancy con tenantId correcto es la solución estándar para la mayoría de SaaS." },
-          { label: "D", text: "El sistema necesita un firewall entre las clínicas", isCorrect: false, feedback: "Un firewall opera a nivel de red, no de lógica de aplicación. No puede entender que dos requests HTTP autenticados pertenecen a clientes diferentes. El tenantId en la query es la solución correcta." },
-        ],
-      },
+      quizzes: [
+        {
+          question: "¿Qué afirmación describe mejor la diferencia entre lenguaje compilado e interpretado?",
+          options: [
+            { label: "A", text: "Compilado traduce antes de ejecutar; interpretado ejecuta instrucción por instrucción", isCorrect: true, feedback: "✅ Correcto: esa es la diferencia base que vimos en clase." },
+            { label: "B", text: "Ambos son exactamente lo mismo, solo cambia el nombre", isCorrect: false, feedback: "No: hay diferencias en el proceso de ejecución." },
+            { label: "C", text: "Interpretado siempre es más rápido que compilado", isCorrect: false, feedback: "No es una regla general; depende del runtime y del caso." },
+            { label: "D", text: "Compilado solo se usa para diseño de interfaces", isCorrect: false, feedback: "No: compilado se usa en muchos tipos de software." },
+          ],
+        },
+        {
+          question: "En tipado estático (como TypeScript), ¿qué ventaja principal se obtiene al crecer el proyecto?",
+          options: [
+            { label: "A", text: "Detectar incompatibilidades de datos antes de ejecutar", isCorrect: true, feedback: "✅ Correcto: reduce errores antes de llegar al usuario final." },
+            { label: "B", text: "Eliminar por completo la necesidad de pruebas", isCorrect: false, feedback: "Las pruebas siguen siendo necesarias." },
+            { label: "C", text: "Hacer que CSS funcione sin HTML", isCorrect: false, feedback: "No tiene relación con tipado." },
+            { label: "D", text: "Evitar el uso de APIs", isCorrect: false, feedback: "Puedes usar APIs igualmente." },
+          ],
+        },
+        {
+          question: "¿Cuál combinación representa correctamente los roles HTML, CSS y JavaScript en web?",
+          options: [
+            { label: "A", text: "HTML comportamiento, CSS lógica, JS estructura", isCorrect: false, feedback: "Esa relación está invertida." },
+            { label: "B", text: "HTML estructura, CSS presentación, JS comportamiento", isCorrect: true, feedback: "✅ Correcto: es la base del desarrollo frontend." },
+            { label: "C", text: "Solo JavaScript hace todo en producción", isCorrect: false, feedback: "Aunque JS es poderoso, cada capa tiene su rol." },
+            { label: "D", text: "CSS y JS son opcionales siempre", isCorrect: false, feedback: "Dependen del proyecto, pero en apps modernas son claves." },
+          ],
+        },
+        {
+          question: "¿Qué es un IDE y por qué acelera el trabajo del desarrollador?",
+          options: [
+            { label: "A", text: "Es solo un bloc de notas sin herramientas adicionales", isCorrect: false, feedback: "Un IDE integra varias herramientas clave." },
+            { label: "B", text: "Integra editor, terminal, depuración y extensiones en un mismo entorno", isCorrect: true, feedback: "✅ Correcto: por eso VS Code y similares son tan usados." },
+            { label: "C", text: "Es únicamente para diseñadores gráficos", isCorrect: false, feedback: "No: está orientado a desarrollo de software." },
+            { label: "D", text: "Reemplaza por completo el lenguaje de programación", isCorrect: false, feedback: "El IDE ayuda, pero no reemplaza el lenguaje." },
+          ],
+        },
+        {
+          question: "Según la clase, ¿qué enfoque es más realista para iniciar en programación de productos?",
+          options: [
+            { label: "A", text: "Empezar con lenguajes y herramientas que te permitan practicar y entregar rápido", isCorrect: true, feedback: "✅ Correcto: aprendizaje + práctica + entregables reales." },
+            { label: "B", text: "Saltar directo a arquitecturas avanzadas sin dominar fundamentos", isCorrect: false, feedback: "Sin bases sólidas, esa complejidad te frena." },
+            { label: "C", text: "Evitar HTML/CSS/JS porque ya no se usan", isCorrect: false, feedback: "Siguen siendo fundamentales en desarrollo web." },
+            { label: "D", text: "Usar cualquier herramienta sin entender para qué sirve", isCorrect: false, feedback: "La herramienta debe tener propósito claro en tu flujo." },
+          ],
+        },
+      ],
       entregable: {
-        title: "Diagrama de arquitectura completo — Semana 1",
-        desc: "Diagrama en Excalidraw del sistema KaledWash con todas las capas: cliente web, CDN, servidor Next.js, API Routes, BD Neon, integraciones externas. README explicando cada decisión de arquitectura.",
+        title: "Entorno base de programación — Lenguajes e IDEs",
+        desc: "Evidencia práctica de instalación y uso inicial del IDE, más un ejercicio básico en HTML/JS orientado a consolidar fundamentos vistos en clase.",
         isFinal: false,
         items: [
-          "Diagrama con todas las capas del sistema (cliente, servidor, BD, externos)",
-          "Flujo de datos para el caso: cliente paga lavado → sistema registra → WhatsApp notifica",
-          "Tablas de BD con tenantId marcado explícitamente",
-          "Sección 'Decisiones': por qué monolito y no microservicios",
-          "Sección 'Riesgos': qué pasaría si falla cada componente",
-          "Repositorio en GitHub con al menos 2 commits semánticos",
+          "Captura de VS Code (o IDE equivalente) mostrando la carpeta `clase-lenguajes-ides` abierta",
+          "Archivo `index.html` con estructura mínima válida (`html`, `head`, `body`)",
+          "Un título (`h1`) y un párrafo (`p`) en `index.html` con contenido escrito por ti",
+          "Una línea de JavaScript simple en archivo aparte o dentro del HTML (por ejemplo, `console.log`)",
+          "Nota breve (5-8 líneas): qué entendiste de lenguaje compilado vs interpretado",
+          "Nota breve (5-8 líneas): por qué un IDE te ayuda más que un editor plano al iniciar",
         ],
       },
     },

@@ -91,6 +91,24 @@ async function attachInteractiveAnimationFallbackIfMissing(
       "lenguajes_ide",
       "Lenguajes, IDE y primer HTML"
     );
+    return;
+  }
+
+  if (t.includes("ramas") && (t.includes("pull request") || t.includes("pr") || t.includes("colaboraci"))) {
+    lesson.meta.interactiveAnimation = await loadInteractiveOrFallback(
+      tenantId,
+      "git_ramas_pr",
+      "Git: Ramas, PRs y Colaboración"
+    );
+    return;
+  }
+
+  if (t.includes("git con ia") || (t.includes("git") && t.includes("ia") && t.includes("criterio"))) {
+    lesson.meta.interactiveAnimation = await loadInteractiveOrFallback(
+      tenantId,
+      "git_con_ia",
+      "Git con IA: criterio técnico sobre las sugerencias"
+    );
   }
 }
 
@@ -541,25 +559,26 @@ export const quizService = {
     selectedOptionId: string,
     tenantId: string
   ) {
-    const existing = await prisma.academyQuizResult.findUnique({
-      where: { userId_quizId: { userId, quizId } },
-    });
-    if (existing) return { alreadyAnswered: true, result: existing };
-
     const option = await prisma.academyQuizOption.findUnique({
       where: { id: selectedOptionId },
       include: { quiz: true },
     });
     if (!option || option.quizId !== quizId) throw new Error("Opción inválida");
 
-    const result = await prisma.academyQuizResult.create({
-      data: {
+    const result = await prisma.academyQuizResult.upsert({
+      where: { userId_quizId: { userId, quizId } },
+      create: {
         userId,
         quizId,
         selectedOptionId,
         isCorrect: option.isCorrect,
         answeredAt: new Date(),
         tenantId: option.quiz.tenantId,
+      },
+      update: {
+        selectedOptionId,
+        isCorrect: option.isCorrect,
+        answeredAt: new Date(),
       },
     });
 

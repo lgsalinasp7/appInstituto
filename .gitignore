@@ -68,3 +68,4 @@ next-env.d.ts
 
 # build log local
 build-out.txt
+.vercel

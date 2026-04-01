@@ -59,6 +59,27 @@ const INTERACTIVE_ANIMATIONS_SEED: Array<{
     sourceDocHint: "docs/Temas/tema_3_lenguajes-ide.html",
     sortOrder: 3,
   },
+  {
+    slug: "git_control_versiones",
+    title: "Git: Control de Versiones",
+    description: "Presentación interactiva con slides sobre Git, commits, ramas y GitHub.",
+    sourceDocHint: "docs/git_control_versiones.html",
+    sortOrder: 4,
+  },
+  {
+    slug: "git_ramas_pr",
+    title: "Git: Ramas, PRs y Colaboración",
+    description: "Presentación interactiva sobre ramas, Pull Requests, merge conflicts y flujo profesional.",
+    sourceDocHint: "docs/Temas/tema_5_git_ramas_pr.html",
+    sortOrder: 5,
+  },
+  {
+    slug: "git_con_ia",
+    title: "Git con IA: criterio técnico",
+    description: "Slides sobre IA como par de programación, comandos peligrosos, checklist y git blame/stash.",
+    sourceDocHint: "docs/Temas/tema_6_git_con_ia.html",
+    sortOrder: 6,
+  },
 ];
 
 async function ensureAcademyInteractiveAnimations(prisma: PrismaClient, tenantId: string) {
@@ -380,7 +401,9 @@ async function mainContentOnly() {
   for (const m of course.modules) {
     if (!byOrder.has(m.order)) byOrder.set(m.order, m);
   }
-  const orderedMods = [1, 2, 3, 4].map((o) => byOrder.get(o)).filter(Boolean) as (typeof course.modules)[];
+  const orderedMods = [1, 2, 3, 4]
+    .map((o) => byOrder.get(o))
+    .filter((m): m is (typeof course.modules)[0] => m != null);
   if (orderedMods.length < 4) {
     throw new Error(
       `Se esperaban 4 módulos (órdenes 1–4), hay ${orderedMods.length} únicos (${course.modules.length} filas). Ejecuta primero el seed completo.`
@@ -413,8 +436,11 @@ async function mainContentOnly() {
       "http_cliente_servidor"
     );
     await linkInteractiveLessonByModuleOrder(prisma, tenant.id, course.id, 1, 3, "lenguajes_ide");
+    await linkInteractiveLessonByModuleOrder(prisma, tenant.id, course.id, 1, 4, "git_control_versiones");
+    await linkInteractiveLessonByModuleOrder(prisma, tenant.id, course.id, 1, 5, "git_ramas_pr");
+    await linkInteractiveLessonByModuleOrder(prisma, tenant.id, course.id, 1, 6, "git_con_ia");
     console.log(
-      "  ✓ Catálogo AcademyInteractiveAnimation + vínculos viaje_url, http_cliente_servidor, lenguajes_ide"
+      "  ✓ Catálogo AcademyInteractiveAnimation + vínculos viaje_url, http_cliente_servidor, lenguajes_ide, git_control_versiones, git_ramas_pr, git_con_ia"
     );
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2021") {
@@ -670,8 +696,11 @@ async function main() {
       "http_cliente_servidor"
     );
     await linkInteractiveLessonByModuleOrder(prisma, tenant.id, course.id, 1, 3, "lenguajes_ide");
+    await linkInteractiveLessonByModuleOrder(prisma, tenant.id, course.id, 1, 4, "git_control_versiones");
+    await linkInteractiveLessonByModuleOrder(prisma, tenant.id, course.id, 1, 5, "git_ramas_pr");
+    await linkInteractiveLessonByModuleOrder(prisma, tenant.id, course.id, 1, 6, "git_con_ia");
     console.log(
-      "  ✓ Catálogo AcademyInteractiveAnimation + vínculos viaje_url, http_cliente_servidor, lenguajes_ide"
+      "  ✓ Catálogo AcademyInteractiveAnimation + vínculos viaje_url, http_cliente_servidor, lenguajes_ide, git_control_versiones, git_ramas_pr, git_con_ia"
     );
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2021") {

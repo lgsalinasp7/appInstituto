@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm run test:run && prisma generate && next build",
+    "build": "npm run test:run && node scripts/prisma-generate-retry.mjs && next build",
     "build:vercel": "prisma generate && npx tsx prisma/ensure-kaled-tables.ts && next build",
     "start": "next start",
     "lint": "eslint",

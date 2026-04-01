@@ -13,12 +13,8 @@ import {
   Play,
   Target,
   Clock,
-  Code2,
-  Brain,
   Video,
   MessageCircle,
-  Check,
-  RefreshCw,
 } from "lucide-react";
 
 const MODULE_META: Record<number, { color: string; bg: string; border: string; label: string }> = {
@@ -50,15 +46,27 @@ interface Props {
   nextLessons: Array<{
     id: string;
     title: string;
+    lessonOrder: number;
     weekNumber: number;
     dayOfWeek: string;
     sessionType: string;
     moduleOrder: number;
     moduleTitle: string;
   }>;
+  resumeLesson: {
+    id: string;
+    title: string;
+    lessonOrder: number;
+    moduleOrder: number;
+  } | null;
   badges: Array<{ name: string; icon: string; earnedAt: string }>;
   cohortName: string;
+  cohortStatus: string;
+  cohortScheduleLabel: string;
   courseId: string;
+  totalBootcampWeeks: number;
+  academicWeekCurrent: number;
+  deliverablesPending: number;
   errorSummary?: string;
   nextLessonPhase?: string;
 }
@@ -85,18 +93,35 @@ export function StudentDashboardClient({
   cralCompleted,
   modules,
   nextLessons,
+  resumeLesson,
   badges,
   cohortName,
+  cohortStatus,
+  cohortScheduleLabel,
   courseId,
+  totalBootcampWeeks,
+  academicWeekCurrent,
+  deliverablesPending,
   errorSummary = "",
   nextLessonPhase,
 }: Props) {
   const [kaledOpen, setKaledOpen] = useState(false);
-  const activeModule = Math.min(4, Math.ceil((progress / 100) * 4) + 1);
+  const modulesByOrder = [...modules].sort((a, b) => a.order - b.order);
+  const firstIncompleteModule = modulesByOrder.find((m) => m.progress < 100);
+  const activeModule =
+    firstIncompleteModule?.order ??
+    modulesByOrder[modulesByOrder.length - 1]?.order ??
+    1;
   const mc = MODULE_META[activeModule] || MODULE_META[1];
   const activePhase = (nextLessonPhase && CRAL[nextLessonPhase]) ? nextLessonPhase : getActivePhase(cralCompleted);
   const cral = CRAL[activePhase];
-  const weekCurrent = Math.ceil((lessonsCompleted / lessonsTotal) * 16) || 1;
+  const cohortStatusLabel: Record<string, string> = {
+    ACTIVE: "Activa",
+    DRAFT: "Borrador",
+    COMPLETED: "Finalizada",
+    CANCELLED: "Cancelada",
+  };
+  const activeTopic = resumeLesson?.title?.trim() || "Sin tema activo";
 
   return (
     <motion.div
@@ -110,17 +135,17 @@ export function StudentDashboardClient({
         <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight font-display mb-1">
           Hola de nuevo, {userName.split(" ")[0]} 👋
         </h1>
-        <p className="text-slate-500 text-sm">{cohortName} · Lun/Mié/Vie 6:00 PM COT</p>
+        <p className="text-slate-500 text-sm">{cohortName}{cohortScheduleLabel ? ` · ${cohortScheduleLabel}` : ""}</p>
       </motion.div>
 
       {/* Summary cards */}
       <motion.div variants={fadeUp} className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
-          { label: "Cohorte", value: cohortName.split(/[\s·]/)[0]?.slice(0, 12) ?? "—", sub: "activa", icon: BookOpen, color: "#38bdf8" },
+          { label: "Cohorte", value: cohortName ?? "—", sub: cohortStatusLabel[cohortStatus] ?? cohortStatus, icon: BookOpen, color: "#38bdf8" },
           { label: "Sesiones", value: `${lessonsCompleted}/${lessonsTotal}`, sub: `${lessonsTotal ? Math.round((lessonsCompleted / lessonsTotal) * 100) : 0}% del bootcamp`,
             icon: Target, color: "#a78bfa" },
-          { label: "Semana", value: `${weekCurrent}`, sub: "de 16", icon: Clock, color: "#34d399" },
-          { label: "Entregables", value: deliverablesApproved, sub: "pendientes", icon: CheckCircle, color: "#fbbf24" },
+          { label: "Semana", value: `${academicWeekCurrent}`, sub: `de ${totalBootcampWeeks}`, icon: Clock, color: "#34d399" },
+          { label: "Entregables", value: deliverablesPending, sub: "pendientes", icon: CheckCircle, color: "#fbbf24" },
         ].map((s) => (
           <div key={s.label} className="academy-card-dark rounded-xl sm:rounded-2xl p-4 sm:p-5 min-w-0">
             <div className="flex items-center gap-2 mb-2">
@@ -161,16 +186,17 @@ export function StudentDashboardClient({
                       {Math.round(progress)}%
                     </span>
                     <span
-                      className="text-[11px] font-bold px-2.5 py-1 rounded-full border"
+                      className="text-[11px] font-bold px-2.5 py-1 rounded-full border max-w-[360px] truncate"
                       style={{ color: cral.color, borderColor: `${cral.color}40`, background: `${cral.color}15` }}
+                      title={`Tema: ${activeTopic}`}
                     >
-                      Fase: {cral.label}
+                      Tema: {activeTopic}
                     </span>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-sm text-slate-500">{lessonsCompleted}/{lessonsTotal} sesiones</div>
-                  <div className="text-sm text-slate-500">Semana {weekCurrent} de 16</div>
+                  <div className="text-sm text-slate-500">Semana {academicWeekCurrent} de {totalBootcampWeeks}</div>
                 </div>
               </div>
 
@@ -184,113 +210,18 @@ export function StudentDashboardClient({
                 />
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-5">
-                {Object.entries(CRAL).map(([key, cfg]) => {
-                  const count = cralCompleted[key] ?? 0;
-                  const isActive = key === activePhase;
-                  const phaseOrder = ["CONSTRUIR", "ROMPER", "AUDITAR", "LANZAR"];
-                  const idx = phaseOrder.indexOf(key);
-                  const isCompleted = idx < phaseOrder.indexOf(activePhase);
-                  const isLocked = idx > phaseOrder.indexOf(activePhase) + 1;
-                  return (
-                    <div
-                      key={key}
-                      className="rounded-xl p-2.5 sm:p-3 border text-center transition-all"
-                      style={{
-                        background: isActive ? `${cfg.color}15` : isCompleted ? `${cfg.color}08` : "rgba(255,255,255,0.02)",
-                        borderColor: isActive ? `${cfg.color}40` : "rgba(255,255,255,0.06)",
-                      }}
-                    >
-                      <div className="flex justify-center mb-1">
-                        {isCompleted ? (
-                          <Check className="w-4 h-4" style={{ color: cfg.color }} />
-                        ) : isActive ? (
-                          <RefreshCw className="w-4 h-4" style={{ color: cfg.color }} />
-                        ) : (
-                          <Lock className="w-4 h-4 text-slate-600" />
-                        )}
-                      </div>
-                      <div className="text-[9px] sm:text-[10px] font-bold" style={{ color: cfg.color }}>
-                        {cfg.label}
-                      </div>
-                      <div className="text-[8px] text-slate-600 mt-0.5">
-                        {isCompleted ? "Completado" : isActive ? "En progreso" : "Bloqueado"}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {nextLessons[0] ? (
+              {resumeLesson ? (
                 <Link
-                  href={`/academia/student/courses/${courseId}/lesson/${nextLessons[0].id}`}
+                  href={`/academia/student/courses/${courseId}/lesson/${resumeLesson.id}`}
                   className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90"
                   style={{ background: `linear-gradient(135deg, ${mc.color}cc, ${mc.color}88)` }}
                 >
                   <Play className="w-4 h-4 fill-white shrink-0" />
-                  Continuar Fase: {cral.label} →
+                  {`Continuar Módulo ${resumeLesson.moduleOrder} · Tema ${resumeLesson.lessonOrder} →`}
                 </Link>
               ) : null}
             </div>
           </motion.div>
-
-          {/* Project progress card */}
-          <motion.div variants={fadeUp} className="academy-card-dark rounded-xl sm:rounded-2xl p-4 sm:p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Proyecto</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/20">
-                En construcción
-              </span>
-            </div>
-            <div className="text-sm font-bold text-white mb-2">SaaS MVP Builder</div>
-            <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden mb-2">
-              <motion.div
-                className="h-full rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.min(progress + 20, 100)}%` }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                style={{ background: "linear-gradient(90deg, #0891b2, #2563eb)" }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-[11px] text-slate-500">
-              <span>Progreso general {Math.round(Math.min(progress + 20, 100))}%</span>
-              <span>Activo hace 2h</span>
-            </div>
-            <Link
-              href={`/academia/student/courses/${courseId}`}
-              className="mt-3 block text-[11px] text-cyan-400 hover:underline font-medium"
-            >
-              Ir al proyecto →
-            </Link>
-          </motion.div>
-
-          {/* Current lesson card */}
-          {nextLessons[0] && (
-            <motion.div variants={fadeUp} className="academy-card-dark rounded-xl sm:rounded-2xl p-4 sm:p-5">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div
-                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex flex-col items-center justify-center shrink-0 border"
-                    style={{ background: MODULE_META[nextLessons[0].moduleOrder]?.bg ?? mc.bg, borderColor: MODULE_META[nextLessons[0].moduleOrder]?.border ?? mc.border }}
-                  >
-                    <Clock className="w-4 h-4 text-slate-400 mb-0.5" />
-                    <span className="text-[10px] font-bold text-slate-500">3h</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs text-slate-500 mb-0.5">Próxima clase</div>
-                    <div className="text-sm sm:text-base font-bold text-white truncate">{nextLessons[0].title}</div>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Siguiente lección en tu ruta.</p>
-                  </div>
-                </div>
-                <Link
-                  href={`/academia/student/courses/${courseId}/lesson/${nextLessons[0].id}`}
-                  className="academy-btn-vermas-dark px-4 py-2 text-xs sm:text-sm font-semibold shrink-0 w-full sm:w-auto text-center"
-                >
-                  Continuar clase
-                </Link>
-              </div>
-            </motion.div>
-          )}
 
           <motion.div variants={fadeUp} className="academy-card-dark rounded-xl sm:rounded-2xl p-4 sm:p-5">
             <div className="flex items-center justify-between mb-4">
@@ -353,6 +284,23 @@ export function StudentDashboardClient({
               })}
             </div>
           </motion.div>
+
+          <motion.div variants={fadeUp}>
+            <Link
+              href={`/academia/student/courses/${courseId}`}
+              className="academy-card-dark rounded-xl sm:rounded-2xl p-4 sm:p-5 flex items-start gap-4 hover:border-amber-500/20 transition-colors group"
+            >
+              <div className="px-2.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 shrink-0">
+                <Video className="w-5 h-5 text-amber-400" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors">
+                  Ver Grabaciones
+                </div>
+                <p className="text-[11px] text-slate-500 mt-0.5">Repasa sesiones anteriores</p>
+              </div>
+            </Link>
+          </motion.div>
         </div>
 
         <div className="space-y-6">
@@ -399,20 +347,6 @@ export function StudentDashboardClient({
               >
                 Abrir chat
               </button>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                <button
-                  onClick={() => setKaledOpen(true)}
-                  className="academy-btn-vermas-dark py-1.5 text-[10px]"
-                >
-                  Solicitar pista
-                </button>
-                <button
-                  type="button"
-                  className="academy-btn-vermas-dark py-1.5 text-[10px] text-slate-500"
-                >
-                  Ignorar
-                </button>
-              </div>
             </div>
           </motion.div>
 
@@ -484,66 +418,21 @@ export function StudentDashboardClient({
 
           <motion.div variants={fadeUp} className="academy-card-dark rounded-xl sm:rounded-2xl p-4">
             <h3 className="text-sm font-bold text-white mb-3">Comunidad</h3>
-            <div className="space-y-2">
-              <a
-                href="https://discord.gg/kaledacademy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-white transition-colors"
-              >
-                <span className="text-[#5865F2]">◆</span> Discord del Bootcamp
-              </a>
-              <Link
-                href="/academia/student/courses"
-                className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-white transition-colors"
-              >
-                <MessageCircle className="w-3.5 h-3.5 text-emerald-400" /> Foro de Dudas
-              </Link>
+            <div className="space-y-2.5">
+              <div className="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/10 border border-amber-500/20">
+                Próximamente
+              </div>
+              <p className="text-[12px] text-slate-400 leading-relaxed">
+                Estamos preparando los espacios de comunidad para estudiantes. Pronto habilitaremos Discord y el foro de dudas.
+              </p>
+              <div className="flex items-center gap-2 text-[12px] text-slate-500">
+                <MessageCircle className="w-3.5 h-3.5 text-slate-600" />
+                Funcionalidad en preparación
+              </div>
             </div>
           </motion.div>
         </div>
       </div>
-
-      {/* Quick actions */}
-      <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        <Link
-          href={`/academia/student/courses/${courseId}`}
-          className="academy-card-dark rounded-xl sm:rounded-2xl p-4 sm:p-5 flex items-start gap-4 hover:border-cyan-500/20 transition-colors group"
-        >
-          <div className="px-2.5 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 shrink-0">
-            <Code2 className="w-5 h-5 text-cyan-400" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-sm font-bold text-white group-hover:text-cyan-400 transition-colors">Abrir Workspace</div>
-            <p className="text-[11px] text-slate-500 mt-0.5">Editor y entorno de desarrollo</p>
-          </div>
-        </Link>
-        <button
-          type="button"
-          onClick={() => setKaledOpen(true)}
-          className="academy-card-dark rounded-xl sm:rounded-2xl p-4 sm:p-5 flex items-start gap-4 hover:border-violet-500/20 transition-colors group text-left w-full"
-        >
-          <div className="px-2.5 py-2 rounded-xl bg-violet-500/10 border border-violet-500/20 shrink-0">
-            <Brain className="w-5 h-5 text-violet-400" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-sm font-bold text-white group-hover:text-violet-400 transition-colors">Lab de Prompts</div>
-            <p className="text-[11px] text-slate-500 mt-0.5">Experimentación y tests IA</p>
-          </div>
-        </button>
-        <Link
-          href={`/academia/student/courses/${courseId}`}
-          className="academy-card-dark rounded-xl sm:rounded-2xl p-4 sm:p-5 flex items-start gap-4 hover:border-amber-500/20 transition-colors group"
-        >
-          <div className="px-2.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 shrink-0">
-            <Video className="w-5 h-5 text-amber-400" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors">Ver Grabaciones</div>
-            <p className="text-[11px] text-slate-500 mt-0.5">Repasa sesiones anteriores</p>
-          </div>
-        </Link>
-      </motion.div>
 
       {kaledOpen && <KaledModal onClose={() => setKaledOpen(false)} />}
     </motion.div>

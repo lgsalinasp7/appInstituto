@@ -25,7 +25,7 @@ function selectUserWithCohortEnrollments(effectiveCohortIds: string[]) {
     createdAt: true,
     academyEnrollments: {
       where: {
-        status: "ACTIVE",
+        status: "ACTIVE" as const,
         OR: [
           { isTrial: true },
           { cohortId: { in: effectiveCohortIds } },
@@ -39,7 +39,7 @@ function selectUserWithCohortEnrollments(effectiveCohortIds: string[]) {
         course: { select: { title: true } },
       },
     },
-  } as const;
+  };
 }
 
 export const GET = withAcademyAuth(

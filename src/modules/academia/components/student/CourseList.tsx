@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, Clock3, ChevronRight, Sparkles } from "lucide-react";
+import { BookOpen, Clock3, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Enrollment {
@@ -26,13 +27,20 @@ export function CourseList({ initialEnrollments: enrollments }: CourseListProps)
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8">
       <div className="academy-banner-dark p-6 md:p-8 flex flex-col sm:flex-row items-start gap-6">
-        <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center">
-          <Sparkles className="w-7 h-7 text-cyan-300" />
+        <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
+          <Image
+            src="/kaledacademy-saas-path.svg"
+            alt="Ruta para construir y lanzar tu SaaS"
+            width={56}
+            height={56}
+            className="w-full h-full object-cover"
+            priority
+          />
         </div>
         <div>
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white font-display">Elige tu camino en tecnología</h1>
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white font-display">Construye un SaaS real, no solo otro curso</h1>
           <p className="text-slate-300 mt-2 max-w-2xl text-base leading-relaxed">
-            Programas con foco en empleabilidad que se adaptan a tus necesidades.
+            Aquí aprendes a convertir una idea en producto: validación, desarrollo, IA aplicada, lanzamiento y crecimiento para tu propia SaaS.
           </p>
         </div>
       </div>

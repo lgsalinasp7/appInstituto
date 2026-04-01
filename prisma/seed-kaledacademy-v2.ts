@@ -187,12 +187,21 @@ async function actualizarLeccion(
     }
   }
 
-  // 5. Crear Quiz
-  if (isFullSession && s.quiz) {
+  // 5. Crear Quiz(es)
+  const quizList = isFullSession
+    ? Array.isArray(s.quizzes)
+      ? s.quizzes
+      : s.quiz
+        ? [s.quiz]
+        : []
+    : [];
+
+  for (let quizIndex = 0; quizIndex < quizList.length; quizIndex++) {
+    const quizData = quizList[quizIndex];
     const quiz = await prisma.academyQuiz.create({
-      data: { lessonId, tenantId, question: s.quiz.question, order: 0 },
+      data: { lessonId, tenantId, question: quizData.question, order: quizIndex },
     });
-    for (const opt of s.quiz.options) {
+    for (const opt of quizData.options ?? []) {
       await prisma.academyQuizOption.create({
         data: {
           quizId: quiz.id,
