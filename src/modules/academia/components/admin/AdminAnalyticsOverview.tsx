@@ -206,7 +206,7 @@ export function AdminAnalyticsOverview() {
                     borderRadius: 12,
                   }}
                   labelStyle={{ color: "#e2e8f0" }}
-                  formatter={(value: number) => [value, "Estudiantes"]}
+                  formatter={(value) => [value ?? 0, "Estudiantes"]}
                   labelFormatter={(_, payload) =>
                     (payload?.[0]?.payload as { fullName?: string })?.fullName ?? ""
                   }
