@@ -5,22 +5,12 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { KALED_ACADEMY_CONFIG } from "../../config/academy-tenant.config";
-import {
-  LayoutDashboard,
-  BookOpen,
-  Calendar,
-  Trophy,
-  LogOut,
-} from "lucide-react";
+import { LayoutDashboard, BookOpen, Calendar, Trophy } from "lucide-react";
 
 interface Props {
-  userName: string;
-  userEmail: string;
-  userImage?: string;
   progress: number;
   lessonsCompleted: number;
   lessonsTotal: number;
-  cohortName: string;
 }
 
 const NAV = [
@@ -30,29 +20,8 @@ const NAV = [
   { href: "/academia/student/leaderboard", label: "Leaderboard", icon: Trophy },
 ];
 
-function formatCohortDisplay(name: string) {
-  return name.replace(/\s*·\s*Montería\s*/gi, "").trim() || name;
-}
-
-function getLevel(progress: number) {
-  if (progress >= 90) return "Elite Builder";
-  if (progress >= 70) return "Senior Builder";
-  if (progress >= 50) return "Builder";
-  if (progress >= 25) return "Junior Builder";
-  return "Trainee";
-}
-
-export function StudentSidebar({
-  userName,
-  userEmail,
-  userImage,
-  progress,
-  lessonsCompleted,
-  lessonsTotal,
-  cohortName,
-}: Props) {
+export function StudentSidebar({ progress, lessonsCompleted, lessonsTotal }: Props) {
   const pathname = usePathname();
-  const displayCohort = formatCohortDisplay(cohortName);
 
   const isActive = (href: string, exact?: boolean, also?: string[]) =>
     exact
@@ -115,7 +84,7 @@ export function StudentSidebar({
           style={{ background: "rgba(8, 145, 178, 0.06)" }}
         >
           <div className="flex justify-between items-center mb-1.5">
-            <span className="text-[12px] text-slate-400">{getLevel(progress)}</span>
+            <span className="text-[12px] text-slate-400">Progreso</span>
             <span className="text-[12px] font-bold text-cyan-400">{Math.round(progress)}%</span>
           </div>
           <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden mb-1.5">
@@ -131,31 +100,6 @@ export function StudentSidebar({
             {lessonsCompleted}/{lessonsTotal} sesiones
           </div>
         </div>
-      </div>
-
-      <div className="px-4 pb-5 border-t border-white/[0.05] pt-4 flex items-center gap-3">
-        {userImage ? (
-          <img
-            src={userImage}
-            alt={userName}
-            className="w-10 h-10 rounded-full border border-white/10 shrink-0"
-          />
-        ) : (
-          <div className="w-10 h-10 rounded-full border border-cyan-500/30 bg-cyan-500/10 flex items-center justify-center text-cyan-400 text-sm font-bold shrink-0">
-            {userName[0]?.toUpperCase() ?? "A"}
-          </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <div className="text-[13px] font-semibold text-white truncate">{userName}</div>
-          <div className="text-[11px] text-slate-500 truncate">{displayCohort}</div>
-        </div>
-        <a
-          href="/auth/logout"
-          className="p-2 rounded-lg text-slate-600 hover:text-slate-300 hover:bg-white/[0.05] transition-colors"
-          title="Cerrar sesión"
-        >
-          <LogOut className="w-4 h-4" />
-        </a>
       </div>
     </aside>
   );
