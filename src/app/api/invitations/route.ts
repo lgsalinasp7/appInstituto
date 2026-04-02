@@ -196,27 +196,6 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
       );
     }
 
-    // Check invitation limit for ADMINISTRADOR (requiere query adicional que depende de inviter)
-    if (roleNameNorm === "ADMINISTRADOR") {
-      const totalOccupiedSeats = await prisma.invitation.count({
-        where: {
-          inviterId,
-          status: { in: ["PENDING", "ACCEPTED"] },
-        },
-      });
-
-      if (totalOccupiedSeats >= inviter.invitationLimit) {
-        return NextResponse.json(
-          {
-            success: false,
-            code: "LIMIT_REACHED",
-            error: "Has superado el tope de usuarios permitidos. Debe comunicarse con KaledSoft para aumentar la cantidad de usuarios.",
-          },
-          { status: 403 }
-        );
-      }
-    }
-
     if (existingInvitation) {
       return NextResponse.json(
         { success: false, error: "Ya existe una invitación pendiente para este email" },
@@ -249,6 +228,35 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
       where: { id: tenantId },
       select: { slug: true },
     });
+
+    // Cupo de invitaciones del instituto (rol tenant ADMINISTRADOR). invitationLimit 0 = sin tope configurado.
+    // En Kaled Academy, invitaciones con rol de plataforma no consumen ese cupo (el cupo del cohorte aplica aparte).
+    const instituteSeatInvite = tenant?.slug !== "kaledacademy" || !academyRole;
+    if (
+      roleNameNorm === "ADMINISTRADOR" &&
+      inviter.invitationLimit > 0 &&
+      instituteSeatInvite
+    ) {
+      const totalOccupiedSeats = await prisma.invitation.count({
+        where: {
+          inviterId,
+          status: { in: ["PENDING", "ACCEPTED"] },
+        },
+      });
+
+      if (totalOccupiedSeats >= inviter.invitationLimit) {
+        return NextResponse.json(
+          {
+            success: false,
+            code: "LIMIT_REACHED",
+            error:
+              "Has superado el tope de invitaciones de usuario del instituto configurado para tu cuenta. Para invitar estudiantes a Academia usa el flujo con rol de Academia y cohorte; si necesitas más cupo de staff, contacta a KaledSoft.",
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     if (tenant?.slug === "kaledacademy" && !isTrialInvitation && !academyRole) {
       return NextResponse.json(
         { success: false, error: "Para Kaled Academy debe seleccionar un rol de Academia (Estudiante, Profesor o Admin)" },
@@ -280,7 +288,7 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
           tenantId,
           status: { in: ["ACTIVE", "DRAFT"] },
         },
-        select: { id: true, name: true },
+        select: { id: true, name: true, maxStudents: true },
       });
       if (!cohortRow) {
         return NextResponse.json(
@@ -294,6 +302,32 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
       }
       if (isTrialInvitation) {
         resolvedTrialCohortName = resolvedTrialCohortName || cohortRow.name;
+      }
+
+      const countsTowardCohortCap =
+        academyRole === "ACADEMY_STUDENT" || isTrialInvitation;
+      if (countsTowardCohortCap && cohortRow.maxStudents > 0) {
+        const [enrolled, pendingForCohort] = await Promise.all([
+          prisma.academyEnrollment.count({
+            where: { cohortId: academyCohortId, status: "ACTIVE" },
+          }),
+          prisma.invitation.count({
+            where: {
+              tenantId,
+              academyCohortId,
+              status: "PENDING",
+            },
+          }),
+        ]);
+        if (enrolled + pendingForCohort >= cohortRow.maxStudents) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `Este cohorte ya tiene el máximo de estudiantes (${cohortRow.maxStudents}), contando matrículas activas e invitaciones pendientes. Aumenta «Máx. estudiantes» en la gestión del curso o cancela invitaciones pendientes.`,
+            },
+            { status: 400 }
+          );
+        }
       }
     }
 

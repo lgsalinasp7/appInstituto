@@ -261,9 +261,9 @@ export function AdminCourseManageView({ courseId }: { courseId: string }) {
       name: (form.elements.namedItem("name") as HTMLInputElement).value,
       startDate,
       endDate,
-      maxStudents: parseInt(
-        (form.elements.namedItem("maxStudents") as HTMLInputElement).value || "9999",
-        10
+      maxStudents: Math.max(
+        1,
+        parseInt((form.elements.namedItem("maxStudents") as HTMLInputElement).value || "40", 10) || 40
       ),
       status: (form.elements.namedItem("status") as HTMLSelectElement)?.value || "ACTIVE",
       kind,
@@ -751,111 +751,119 @@ export function AdminCourseManageView({ courseId }: { courseId: string }) {
         </DialogContent>
       </Dialog>
 
-      {/* Cohorte modal */}
+      {/* Cohorte modal: altura acotada + scroll interno para que el pie (Crear) sea siempre alcanzable */}
       <Dialog open={cohortModal.open} onOpenChange={(open) => setCohortModal({ open })}>
-        <DialogContent className="academy-card-dark border-white/10 bg-slate-900">
-          <DialogHeader>
+        <DialogContent
+          className={cn(
+            "academy-card-dark border-white/10 bg-slate-900 flex min-h-0 flex-col max-h-[min(90dvh,90vh)] gap-0 overflow-hidden p-0 sm:max-w-lg"
+          )}
+        >
+          <DialogHeader className="shrink-0 px-6 pt-6 pr-14 text-left">
             <DialogTitle className="text-white">{cohortModal.editing ? "Editar cohorte" : "Nuevo cohorte"}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSaveCohort} className="space-y-4">
-            <div>
-              <Label className="text-slate-300">Nombre</Label>
-              <Input
-                name="name"
-                defaultValue={cohortModal.editing?.name}
-                className="mt-1 bg-slate-800 border-white/10 text-white"
-                required
-                placeholder="Ej: Cohorte Enero 2026"
-              />
-            </div>
-            <div>
-              <Label className="text-slate-300">Tipo</Label>
-              <select
-                name="kind"
-                defaultValue={cohortModal.editing?.kind ?? "ACADEMIC"}
-                className="mt-1 w-full rounded-lg bg-slate-800 border border-white/10 text-white px-3 py-2"
-              >
-                <option value="ACADEMIC">Académico (bootcamp / ciclo largo)</option>
-                <option value="PROMOTIONAL">Promocional (Ads / masterclass corta)</option>
-              </select>
-              <p className="text-[11px] text-slate-500 mt-1">
-                Académico: orientación típica ~4 meses (fechas manuales). Promocional: mismo curso, acceso limitado en
-                tiempo; respeta trialAllowedLessonId en la matrícula.
-              </p>
-            </div>
-            <div>
-              <Label className="text-slate-300">Plantilla promocional</Label>
-              <select
-                name="promoPreset"
-                defaultValue={cohortModal.editing?.promoPreset ?? "CUSTOM"}
-                className="mt-1 w-full rounded-lg bg-slate-800 border border-white/10 text-white px-3 py-2"
-              >
-                <option value="DAYS_3">3 días desde inicio</option>
-                <option value="DAYS_7">7 días desde inicio</option>
-                <option value="CUSTOM">Personalizado (usar fechas abajo)</option>
-              </select>
-            </div>
-            <div>
-              <Label className="text-slate-300">Etiqueta campaña (opcional)</Label>
-              <Input
-                name="campaignLabel"
-                defaultValue={cohortModal.editing?.campaignLabel ?? ""}
-                className="mt-1 bg-slate-800 border-white/10 text-white"
-                placeholder="Ej: FB Ads marzo 2026"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSaveCohort} className="flex min-h-0 flex-1 flex-col">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overflow-x-hidden px-6 py-2 overscroll-contain">
               <div>
-                <Label className="text-slate-300">Fecha inicio</Label>
+                <Label className="text-slate-300">Nombre</Label>
                 <Input
-                  name="startDate"
-                  type="date"
-                  defaultValue={cohortModal.editing?.startDate?.slice(0, 10)}
+                  name="name"
+                  defaultValue={cohortModal.editing?.name}
                   className="mt-1 bg-slate-800 border-white/10 text-white"
                   required
+                  placeholder="Ej: Cohorte Enero 2026"
                 />
               </div>
               <div>
-                <Label className="text-slate-300">Fecha fin</Label>
-                <Input
-                  name="endDate"
-                  type="date"
-                  defaultValue={cohortModal.editing?.endDate?.slice(0, 10)}
-                  className="mt-1 bg-slate-800 border-white/10 text-white"
-                  required
-                />
-              </div>
-            </div>
-            <div>
-              <Label className="text-slate-300">Máx. estudiantes</Label>
-              <Input
-                name="maxStudents"
-                type="number"
-                min={1}
-                defaultValue={cohortModal.editing?.maxStudents ?? 9999}
-                className="mt-1 bg-slate-800 border-white/10 text-white"
-              />
-              <p className="text-[11px] text-slate-500 mt-1">Por defecto alto; cupos estrictos en una fase posterior.</p>
-            </div>
-            <div>
-              <Label className="text-slate-300">Estado</Label>
-              <select
-                name="status"
-                defaultValue={cohortModal.editing?.status ?? "ACTIVE"}
-                className="mt-1 w-full rounded-lg bg-slate-800 border border-white/10 text-white px-3 py-2"
-              >
-                <option value="DRAFT">Borrador</option>
-                <option value="ACTIVE">Activo</option>
-                <option value="COMPLETED">Completado</option>
-                <option value="CANCELLED">Cancelado</option>
-              </select>
-              {!cohortModal.editing && (
+                <Label className="text-slate-300">Tipo</Label>
+                <select
+                  name="kind"
+                  defaultValue={cohortModal.editing?.kind ?? "ACADEMIC"}
+                  className="mt-1 w-full rounded-lg bg-slate-800 border border-white/10 text-white px-3 py-2"
+                >
+                  <option value="ACADEMIC">Académico (bootcamp / ciclo largo)</option>
+                  <option value="PROMOTIONAL">Promocional (Ads / masterclass corta)</option>
+                </select>
                 <p className="text-[11px] text-slate-500 mt-1">
-                  Activo permite invitar estudiantes al cohorte de inmediato; borrador también admite invitaciones.
+                  Académico: orientación típica ~4 meses (fechas manuales). Promocional: mismo curso, acceso limitado en
+                  tiempo; respeta trialAllowedLessonId en la matrícula.
                 </p>
-              )}
+              </div>
+              <div>
+                <Label className="text-slate-300">Plantilla promocional</Label>
+                <select
+                  name="promoPreset"
+                  defaultValue={cohortModal.editing?.promoPreset ?? "CUSTOM"}
+                  className="mt-1 w-full rounded-lg bg-slate-800 border border-white/10 text-white px-3 py-2"
+                >
+                  <option value="DAYS_3">3 días desde inicio</option>
+                  <option value="DAYS_7">7 días desde inicio</option>
+                  <option value="CUSTOM">Personalizado (usar fechas abajo)</option>
+                </select>
+              </div>
+              <div>
+                <Label className="text-slate-300">Etiqueta campaña (opcional)</Label>
+                <Input
+                  name="campaignLabel"
+                  defaultValue={cohortModal.editing?.campaignLabel ?? ""}
+                  className="mt-1 bg-slate-800 border-white/10 text-white"
+                  placeholder="Ej: FB Ads marzo 2026"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-slate-300">Fecha inicio</Label>
+                  <Input
+                    name="startDate"
+                    type="date"
+                    defaultValue={cohortModal.editing?.startDate?.slice(0, 10)}
+                    className="mt-1 bg-slate-800 border-white/10 text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label className="text-slate-300">Fecha fin</Label>
+                  <Input
+                    name="endDate"
+                    type="date"
+                    defaultValue={cohortModal.editing?.endDate?.slice(0, 10)}
+                    className="mt-1 bg-slate-800 border-white/10 text-white"
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="text-slate-300">Máx. estudiantes (cupo del cohorte)</Label>
+                <Input
+                  name="maxStudents"
+                  type="number"
+                  min={1}
+                  defaultValue={cohortModal.editing?.maxStudents ?? 40}
+                  className="mt-1 bg-slate-800 border-white/10 text-white"
+                />
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Matrículas activas + invitaciones pendientes no pueden superar este número. Ajusta si necesitas más cupo.
+                </p>
+              </div>
+              <div>
+                <Label className="text-slate-300">Estado</Label>
+                <select
+                  name="status"
+                  defaultValue={cohortModal.editing?.status ?? "ACTIVE"}
+                  className="mt-1 w-full rounded-lg bg-slate-800 border border-white/10 text-white px-3 py-2"
+                >
+                  <option value="DRAFT">Borrador</option>
+                  <option value="ACTIVE">Activo</option>
+                  <option value="COMPLETED">Completado</option>
+                  <option value="CANCELLED">Cancelado</option>
+                </select>
+                {!cohortModal.editing && (
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Activo permite invitar estudiantes al cohorte de inmediato; borrador también admite invitaciones.
+                  </p>
+                )}
+              </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="shrink-0 border-t border-white/[0.08] bg-slate-900 px-6 py-4">
               <Button type="button" variant="ghost" onClick={() => setCohortModal({ open: false })}>
                 Cancelar
               </Button>

@@ -1,7 +1,7 @@
 /**
  * API Route: /api/admin/tenants/[id]/invitations
  * GET: Lista invitaciones del tenant
- * POST: Crea invitación (solo kaledacademy)
+ * POST: Crea invitaci?n (solo kaledacademy)
  * Permite a SUPER_ADMIN gestionar invitaciones sin estar en el contexto del tenant.
  * El [id] puede ser un id (cuid) o slug (ej. kaledacademy).
  */
@@ -56,7 +56,7 @@ export const GET = withPlatformAdmin(
 );
 
 const bodySchema = z.object({
-  email: z.string().email("Email inválido"),
+  email: z.string().email("Email inv?lido"),
   academyRole: z.enum(["ACADEMY_STUDENT", "ACADEMY_TEACHER", "ACADEMY_ADMIN"]).optional(),
   academyCohortId: z.string().min(1).optional(),
   isTrialInvitation: z.boolean().optional(),
@@ -69,7 +69,7 @@ const bodySchema = z.object({
     if (!data.trialNextCohortDate?.trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Para invitación de prueba indica la fecha del próximo cohorte",
+        message: "Para invitaci?n de prueba indica la fecha del pr?ximo cohorte",
         path: ["trialNextCohortDate"],
       });
     }
@@ -107,7 +107,7 @@ export const POST = withCSRF(
       const validation = bodySchema.safeParse(body);
       if (!validation.success) {
         return NextResponse.json(
-          { success: false, error: "Datos inválidos", details: validation.error.format() },
+          { success: false, error: "Datos inv?lidos", details: validation.error.format() },
           { status: 400 }
         );
       }
@@ -152,13 +152,13 @@ export const POST = withCSRF(
 
       if (existingInvitation) {
         return NextResponse.json(
-          { success: false, error: "Ya existe una invitación pendiente para este email" },
+          { success: false, error: "Ya existe una invitaci?n pendiente para este email" },
           { status: 400 }
         );
       }
       if (existingUser) {
         return NextResponse.json(
-          { success: false, error: "Este email ya está registrado en el sistema" },
+          { success: false, error: "Este email ya est? registrado en el sistema" },
           { status: 400 }
         );
       }
@@ -173,7 +173,7 @@ export const POST = withCSRF(
             : (userRole || adminRole || roles[0])?.id;
       if (!roleId) {
         return NextResponse.json(
-          { success: false, error: "No se encontró un rol válido en el tenant" },
+          { success: false, error: "No se encontr? un rol v?lido en el tenant" },
           { status: 500 }
         );
       }
@@ -187,7 +187,7 @@ export const POST = withCSRF(
           {
             success: false,
             error:
-              "Para invitar un estudiante debes indicar el cohorte (academyCohortId) donde quedará matriculado.",
+              "Para invitar un estudiante debes indicar el cohorte (academyCohortId) donde quedar? matriculado.",
           },
           { status: 400 }
         );
@@ -201,20 +201,46 @@ export const POST = withCSRF(
             tenantId: tenant.id,
             status: { in: ["ACTIVE", "DRAFT"] },
           },
-          select: { id: true, name: true },
+          select: { id: true, name: true, maxStudents: true },
         });
         if (!cohortRow) {
           return NextResponse.json(
             {
               success: false,
               error:
-                "El cohorte seleccionado no existe o no está disponible para matrícula (debe estar activo o en borrador).",
+                "El cohorte seleccionado no existe o no est? disponible para matr?cula (debe estar activo o en borrador).",
             },
             { status: 400 }
           );
         }
         if (isTrialInvitation) {
           resolvedTrialCohortName = resolvedTrialCohortName || cohortRow.name;
+        }
+
+        const countsTowardCohortCap =
+          academyRole === "ACADEMY_STUDENT" || isTrialInvitation;
+        if (countsTowardCohortCap && cohortRow.maxStudents > 0) {
+          const [enrolled, pendingForCohort] = await Promise.all([
+            prisma.academyEnrollment.count({
+              where: { cohortId: academyCohortId, status: "ACTIVE" },
+            }),
+            prisma.invitation.count({
+              where: {
+                tenantId: tenant.id,
+                academyCohortId,
+                status: "PENDING",
+              },
+            }),
+          ]);
+          if (enrolled + pendingForCohort >= cohortRow.maxStudents) {
+            return NextResponse.json(
+              {
+                success: false,
+                error: `Este cohorte ya alcanz? el m?ximo de estudiantes (${cohortRow.maxStudents}), contando matr?culas activas e invitaciones pendientes.`,
+              },
+              { status: 400 }
+            );
+          }
         }
       }
 
@@ -279,7 +305,7 @@ export const POST = withCSRF(
           academyRole: invitation.academyRole,
           isTrialInvitation: invitation.isTrialInvitation ?? false,
         },
-        message: "Invitación enviada exitosamente",
+        message: "Invitaci?n enviada exitosamente",
       });
     } catch (error) {
       // Log detallado para debugging de errores Prisma

@@ -13,7 +13,7 @@ describe("createCohortSchema", () => {
     };
     const academic = createCohortSchema.parse({ ...base, kind: "ACADEMIC" });
     expect(academic.kind).toBe("ACADEMIC");
-    expect(academic.maxStudents).toBe(9999);
+    expect(academic.maxStudents).toBe(40);
 
     const promo = createCohortSchema.parse({
       ...base,
