@@ -135,15 +135,34 @@ node_modules/
 - Cambiar a `v2` **sin** `add`; preguntar qué muestra `git diff`.
 - Luego `add` + `commit` apropiado.
 
+**Respuesta esperada (docente):**
+
+- Tras el primer commit, `app.js` en el repositorio coincide con `v1`.
+- Si cambian el archivo a `v2` sin `git add`, `git diff` (o `git diff app.js`) muestra las líneas que difieren entre el **working directory** y el **último commit** (HEAD): verán el cambio de `v1` a `v2` como contenido modificado aún no preparado para commit.
+- `git status` debe indicar `modified: app.js` y “not staged”.
+- Después de `git add app.js` y `git commit -m "feat(demo): segunda versión de app"` (o mensaje equivalente en Conventional Commits), `git diff` sin argumentos queda vacío y el historial incluye dos commits; el último refleja `v2`.
+
 ### Ejercicio 2 — Staging selectivo (~10 min)
 
 - Archivos `a.txt` y `b.txt`; modificar ambos.
 - `git add` **solo** `a.txt` y un commit; después commit de `b.txt`.
 
+**Respuesta esperada (docente):**
+
+- Con ambos archivos editados, `git status` lista `a.txt` y `b.txt` como modificados.
+- Tras `git add a.txt` solo, la zona de staging contiene **únicamente** los cambios de `a.txt`; `b.txt` sigue como “modified” sin stagear.
+- El primer commit solo graba el snapshot de `a.txt` (y el resto del repo); `b.txt` no entra en ese commit.
+- Tras ese commit, `git status` sigue mostrando `b.txt` modificado; el segundo `add` + `commit` incorpora solo `b.txt`. Mensaje clave: el staging permite **elegir** qué va en cada commit.
+
 ### Ejercicio 3 — Deshacer sin pánico (~10 min)
 
 - Cambio sin commit: `git restore archivo.txt`.
 - Archivo en staging: `git restore --staged archivo.txt`.
+
+**Respuesta esperada (docente):**
+
+- **Solo cambios en working directory (sin `add`):** `git restore archivo.txt` descarta esas ediciones y deja el archivo **igual que en el último commit** (irrecuperable salvo que el editor tenga historial local). Es la herramienta para “volver atrás” sin tocar el historial de commits.
+- **Archivo ya en staging:** `git restore --staged archivo.txt` **saca el archivo del staging**; el contenido en disco **no** se revierte por ese comando solo — siguen viendo sus ediciones en el working directory. Si además quieren deshacer el contenido: `git restore archivo.txt` después del `--staged`, o explicar el flujo en dos pasos según el objetivo pedagógico.
 
 ### Ejercicio 4 — Rama y merge local (~15 min)
 
@@ -152,9 +171,21 @@ node_modules/
 - Añadir `tareas.md`, commit `feat(demo): lista inicial`.
 - `git switch main`, `git merge feature/lista-tareas`, `git log --oneline --graph`.
 
+**Respuesta esperada (docente):**
+
+- En `feature/lista-tareas`, el nuevo commit añade `tareas.md`; `main` no lo tenía hasta el merge.
+- Tras `git switch main` y `git merge feature/lista-tareas`, Git suele hacer **fast-forward** si `main` no avanzó (historial lineal) o un **merge commit** si hubo commits en ambas ramas; en el escenario típico del ejercicio (solo avanzó la feature), a menudo es fast-forward.
+- `git log --oneline --graph` muestra la línea de commits; con fast-forward verán `main` y la feature apuntando al mismo commit o una línea simple; con merge commit verán el carácter `*` y ramas uniéndose. Lo importante: **`tareas.md` aparece en `main`** y el trabajo de la rama quedó integrado.
+
 ### Ejercicio 5 — GitHub (~15 min, opcional)
 
 - Clonar o crear repo; `push`; si la política del curso lo permite, abrir un PR de prueba.
+
+**Respuesta esperada (docente):**
+
+- **Clonar:** `git clone <url>` crea carpeta con `origin` configurado; `git push` en rama nueva requiere `git push -u origin <rama>` la primera vez.
+- **Repo local nuevo:** `git remote add origin <url>`, luego `git push -u origin main` (o la rama que usen).
+- **PR de prueba:** rama feature → `push` → en GitHub “Compare & pull request” → título y descripción breves → crear PR. Sirve para practicar revisión sin mezclar a producción si no quieren mergear; pueden cerrar el PR después.
 
 ---
 
@@ -164,6 +195,13 @@ node_modules/
 - ¿Por qué no subimos `.env`?
 - ¿Cuáles son las tres áreas y qué comando mueve al staging?
 - ¿Por qué en muchos equipos `main` está “protegida”?
+
+**Respuestas orientativas (docente):**
+
+- **`fetch` vs `pull`:** `git fetch` trae commits del remoto y actualiza referencias remotas (`origin/main`, etc.) **sin** fusionar con la rama actual. `git pull` es, en la práctica, `fetch` + integración (merge o rebase según configuración) en la rama en la que estás: actualiza tu copia local y mezcla de una vez.
+- **No subir `.env`:** contiene secretos (API keys, contraseñas, URLs con credenciales). Subirlo al repositorio los expone en el historial para siempre, incluso si luego se borra el archivo. Se usa `.env.example` sin valores sensibles.
+- **Tres áreas:** (1) **Working directory** — archivos en disco; (2) **Staging (index)** — lo que irá en el próximo commit; (3) **Repository (HEAD)** — commits guardados. El comando que mueve al staging es **`git add`** (y `git add -p` para trozos). `git commit` pasa de staging a repositorio.
+- **`main` protegida:** evita commits directos que rompan producción; obliga a pasar por **PR**, revisión y CI; mantiene historial limpio y reduce errores humanos en la rama de despliegue.
 
 ---
 
