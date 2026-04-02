@@ -11,6 +11,45 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
     {
+        slug: "anthropic-filtracion-codigo-claude-code-2026",
+        title: "Filtración de Claude Code: qué pasó en Anthropic y qué implica para quienes construyen con IA",
+        description:
+            "Un error de empaquetado en npm expuso miles de archivos TypeScript del asistente de código de Anthropic. Resumen del incidente, la respuesta de la empresa y lecciones para pipelines y propiedad intelectual.",
+        date: "2026-03-31",
+        author: "KaledSoft Lab",
+        category: "Seguridad",
+        image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&q=80&w=1200",
+        content: `
+# Cuando el mapa del bundle delata el tesoro: la filtración de Claude Code
+
+A finales de marzo de 2026, la comunidad de seguridad y desarrollo se enteró de algo poco habitual: el código fuente interno de **Claude Code**, la herramienta de programación asistida por IA de Anthropic, quedó accesible de forma accidental. No fue un ataque a la base de datos de clientes: según la propia compañía, se trató de un **fallo humano en el empaquetado** de un release.
+
+## Qué ocurrió, en términos concretos
+
+El paquete oficial de Claude Code en **npm** incluyó un **archivo de source map** pensado para depurar código empaquetado. Ese mapa apuntaba a un **ZIP con TypeScript sin ofuscar** alojado en un bucket de **Cloudflare R2** de Anthropic. Quien descargaba el paquete podía seguir la pista hasta el archivo y descomprimirlo.
+
+Según reportes de medios especializados (por ejemplo, [The Register](https://www.theregister.com/2026/03/31/anthropic_claude_code_source_code/)), el archivo contenía del orden de **1.900 archivos TypeScript** y **más de 512.000 líneas de código**, incluyendo bibliotecas de comandos con barra y herramientas integradas. El hallazgo se atribuye al investigador **Chaofan Shou**; el material se replicó rápidamente en **GitHub** (decenas de miles de forks en poco tiempo), lo que hizo prácticamente imposible “volver atrás” la difusión.
+
+## La postura de Anthropic
+
+En declaraciones recogidas por la prensa, Anthropic calificó el suceso como **problema de empaquetado por error humano**, no como una brecha de seguridad en el sentido clásico, y afirmó que **no se expusieron datos ni credenciales de clientes**. La empresa indicó que estaba aplicando medidas para evitar repeticiones.
+
+Es un recordatorio de que, para una empresa de IA líder, el riesgo no solo está en el modelo: también en **CI/CD, políticas de publicación y qué archivos nunca deben salir en un artefacto de producción**.
+
+## Contexto: esto no “inventa” el interés por el interior de Claude Code
+
+Varios proyectos ya habían **ingeniería inversa** o analizado comportamientos de Claude Code antes de este incidente; la filtración aporta sobre todo una **instantánea actualizada** del código tal como lo construye Anthropic, útil para comparar, auditar enfoques de agentes y entender decisiones de producto — siempre dentro del marco legal y ético que corresponda en cada jurisdicción.
+
+## Lección para equipos que usan IA en producción (y para nosotros en KaledSoft)
+
+1. **Source maps y paquetes públicos:** revisar \`package.json\`, \`.npmignore\` y pipelines para que los mapas y artefactos de debug no se publiquen sin querer.
+2. **Secretos y URLs en builds:** cualquier referencia a buckets, rutas internas o zips de código en configuraciones de bundler puede terminar en manos de terceros si el release no se audita.
+3. **Dependencia de proveedores:** seguir confiando en Claude u otras APIs, pero con **modelo de amenazas** claro: incidentes de cadena de suministro y filtraciones afectan reputación, cumplimiento y confianza.
+
+**Conclusión:** La noticia no invalida el valor de las herramientas de codificación con IA, pero sí refuerza que **la excelencia operativa** (releases, seguridad de empaquetado y gobernanza) es parte del producto. En KaledSoft seguimos apostando por arquitecturas con agentes y SaaS modernas — con pipelines revisados y criterio de qué exponemos al mundo exterior.
+        `
+    },
+    {
         slug: "guerra-modelos-ia-2026",
         title: "Guerra de Modelos 2026: Anthropic, OpenAI y Google en el límite",
         description: "Análisis profundo de los nuevos lanzamientos de esta semana: Claude 4, GPT-5/o2 y Gemini 2 Ultra.",
