@@ -11,6 +11,61 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
     {
+        slug: "claude-code-mejoras-recientes-2026",
+        title: "Claude Code en 2026: mejoras que sí notarás en el día a día",
+        description:
+            "Desde /powerup y el modo automático hasta rendimiento en sesiones largas, hooks avanzados y soporte Windows: un resumen de lo último en el CLI de Anthropic según sus notas de versión.",
+        date: "2026-04-02",
+        author: "KaledSoft Engineering",
+        category: "IA",
+        image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=1200",
+        content: `
+# Claude Code no para de madurar: qué trae el producto ahora
+
+Anthropic sigue iterando **Claude Code** a un ritmo muy alto. Más allá del ruido de redes, lo que importa para equipos de desarrollo está en el **changelog oficial** ([documentación de Claude Code](https://docs.anthropic.com/en/docs/claude-code/changelog)): correcciones de fricción real, seguridad en la terminal y menos tokens desperdiciados. Aquí van las líneas que más impactan si ya lo usas o estás evaluándolo.
+
+## Aprender la herramienta sin tutoriales eternos: \`/powerup\`
+
+Una de las novedades más claras para onboarding es **\`/powerup\`**: lecciones interactivas sobre funciones de Claude Code con **demos animadas**. Reduce curva de aprendizaje para el resto del equipo sin depender solo de “el que ya lo domina”.
+
+## Modo automático más usable (y más alineado con tu intención)
+
+El **modo automático** —pensado para aprobar acciones de bajo riesgo y frenar las peligrosas sin frenarte a cada rato— ha recibido matices importantes: por ejemplo, **respeta mejor límites explícitos** del usuario (“no hagas push”, “espera antes de X”). Los comandos denegados pueden **notificarse** y revisarse en **\`/permissions\`** (pestaña Reciente) para reintentar. Si tu plan no lo incluye, el mensaje ahora indica **“no disponible en tu plan”** en lugar de un aviso genérico.
+
+Para el fondo de producto y seguridad del enfoque, vale la pena leer el artículo de ingeniería de Anthropic sobre [Claude Code auto mode](https://www.anthropic.com/engineering/claude-code-auto-mode).
+
+## Rendimiento cuando el proyecto crece y la sesión se alarga
+
+Varios cambios van directo al dolor de cabeza de sesiones largas y repos grandes:
+
+- **Menos coste de CPU/memoria** en aspectos como esquemas MCP, transporte SSE con tramas grandes, y escritura de transcripciones en el SDK cuando el historial crece.
+- **\`/resume\`** más ágil: carga de sesiones por proyecto en paralelo cuando tienes muchos proyectos.
+- Ajustes en **compactación** y caché de prompt para evitar bucles que queman llamadas a la API sin avanzar.
+
+En la práctica: menos “se puso lento” y menos sorpresas al retomar trabajo del día anterior.
+
+## Hooks y automatización seria
+
+Si integras Claude Code en pipelines o flujos propios, las notas destacan capacidades como la decisión de permiso **\`defer\`** en hooks **PreToolUse** (sesiones headless que pueden pausar y reanudar con \`-p --resume\`), el hook **PermissionDenied** tras denegaciones del clasificador en auto mode (con opción de **\`retry\`**), y **PreToolUse** que puede satisfacer **AskUserQuestion** en integraciones sin UI nativa. Son señales de que Anthropic está cerrando el círculo para uso **empresarial y scriptable**.
+
+## Windows y PowerShell dejan de ser “segunda clase”
+
+Hay un hilo constante de mejoras para **Windows**: herramienta **PowerShell** (preview u opt-in según versión), correcciones de **CRLF** en Edit/Write, endurecimiento ante patrones peligrosos en PowerShell, y arreglos de **voz** o WebSocket en entornos que antes fallaban. Si tu equipo está mixto macOS/Linux/Windows, esto reduce fricción real.
+
+## MCP, VS Code y detalles que ahorran tokens
+
+- **MCP:** conexiones acotadas en tiempo, OAuth con descubrimiento más estándar, deduplicación cuando mezclas servidores locales y conectores de claude.ai, límites en descripciones para no hinchar el contexto.
+- **Extensión VS Code:** menos estados falsos de “Not responding”, mejor comportamiento para planes Max tras refresco de token.
+- **Herramienta Read:** formato más compacto y menos re-lecturas redundantes → **menos tokens** en cada turno.
+
+## Qué hacer con esto en KaledSoft
+
+Actualizar el CLI con frecuencia (\`claude --version\` vs lo que indica el changelog), probar **\`/powerup\`** con el equipo, y si usáis auto mode, revisar **\`/permissions\`** como panel de control. Para proyectos Next.js, agentes y SaaS, cada mejora de sesión larga y de hooks se traduce en **menos tiempo perdido** y **gobernanza** más clara.
+
+**Conclusión:** Claude Code dejó de ser solo “un chat en la terminal”: es un producto de **agente de código** con ciclo de release agresivo. Seguir el changelog es la forma más fiable de no quedarse atrás sin depender solo del hype.
+        `
+    },
+    {
         slug: "anthropic-filtracion-codigo-claude-code-2026",
         title: "Filtración de Claude Code: qué pasó en Anthropic y qué implica para quienes construyen con IA",
         description:
