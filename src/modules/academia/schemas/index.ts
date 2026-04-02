@@ -51,7 +51,7 @@ export const createCohortSchema = z.object({
   name: z.string().min(1),
   startDate: z.coerce.date(),
   endDate: z.coerce.date(),
-  maxStudents: z.number().int().min(1).default(9999),
+  maxStudents: z.number().int().min(1).max(50000).default(40),
   status: z.enum(["DRAFT", "ACTIVE", "COMPLETED", "CANCELLED"]),
   schedule: z.record(z.string(), z.unknown()),
   courseId: z.string().min(1),
