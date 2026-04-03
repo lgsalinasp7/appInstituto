@@ -165,6 +165,11 @@ async function linkInteractiveLessonByModuleOrder(
   });
 }
 
+type QuizBlock = {
+  pregunta: string;
+  opciones: Array<{ label: string; texto: string; esCorrecta: boolean; feedback: string }>;
+};
+
 type SessionData = {
   orden: number;
   semana: number;
@@ -179,9 +184,14 @@ type SessionData = {
   analogia: string;
   conceptos: Array<{ key: string; titulo: string; historia?: string; cuerpo: string }>;
   cral: Array<{ phase: "CONSTRUIR" | "ROMPER" | "AUDITAR" | "LANZAR"; titulo: string; descripcion: string }>;
-  quiz: { pregunta: string; opciones: Array<{ label: string; texto: string; esCorrecta: boolean; feedback: string }> };
+  /** Una pregunta o varias (orden 0, 1, 2… en BD). */
+  quiz: QuizBlock | QuizBlock[];
   entregable?: { titulo: string; descripcion: string; esFinal: boolean; items: string[] };
 };
+
+function quizzesFromSession(s: SessionData): QuizBlock[] {
+  return Array.isArray(s.quiz) ? s.quiz : [s.quiz];
+}
 
 // ── Helper principal para crear una sesión completa ─────────
 async function crearSesion(
@@ -237,25 +247,28 @@ async function crearSesion(
     });
   }
 
-  const quiz = await prisma.academyQuiz.create({
-    data: {
-      lessonId: lesson.id,
-      question: s.quiz.pregunta,
-      order: 0,
-      tenantId,
-    },
-  });
-
-  for (const op of s.quiz.opciones) {
-    await prisma.academyQuizOption.create({
+  const quizBlocks = quizzesFromSession(s);
+  for (let qi = 0; qi < quizBlocks.length; qi++) {
+    const qb = quizBlocks[qi];
+    const quiz = await prisma.academyQuiz.create({
       data: {
-        quizId: quiz.id,
-        label: op.label,
-        text: op.texto,
-        isCorrect: op.esCorrecta,
-        feedback: op.feedback,
+        lessonId: lesson.id,
+        question: qb.pregunta,
+        order: qi,
+        tenantId,
       },
     });
+    for (const op of qb.opciones) {
+      await prisma.academyQuizOption.create({
+        data: {
+          quizId: quiz.id,
+          label: op.label,
+          text: op.texto,
+          isCorrect: op.esCorrecta,
+          feedback: op.feedback,
+        },
+      });
+    }
   }
 
   if (s.entregable) {
@@ -348,13 +361,17 @@ async function actualizarSesion(
     });
   }
 
-  const quiz = await prisma.academyQuiz.create({
-    data: { lessonId, question: s.quiz.pregunta, order: 0, tenantId },
-  });
-  for (const op of s.quiz.opciones) {
-    await prisma.academyQuizOption.create({
-      data: { quizId: quiz.id, label: op.label, text: op.texto, isCorrect: op.esCorrecta, feedback: op.feedback },
+  const quizBlocks = quizzesFromSession(s);
+  for (let qi = 0; qi < quizBlocks.length; qi++) {
+    const qb = quizBlocks[qi];
+    const quiz = await prisma.academyQuiz.create({
+      data: { lessonId, question: qb.pregunta, order: qi, tenantId },
     });
+    for (const op of qb.opciones) {
+      await prisma.academyQuizOption.create({
+        data: { quizId: quiz.id, label: op.label, text: op.texto, isCorrect: op.esCorrecta, feedback: op.feedback },
+      });
+    }
   }
 
   if (s.entregable) {
@@ -1066,141 +1083,262 @@ Frase obligatoria en el mensaje: "Cliente-servidor + HTTP — [tu nombre]".`,
   }, getLid());
 
   // ── SESIÓN 3 ─────────────────────────────────────────────
+  // Alineado con contenido pedagógico en BD (DEV/PROD): lenguajes, IDEs, stack MVP y 5 quizzes.
   await crearSesion(prisma, mod.id, tenantId, {
     orden: 3, semana: 1, dia: "VIERNES",
-    sessionType: "PRACTICA", duracion: 180,
-    titulo: "Del mapa de lenguajes a tu taller: VS Code y tu primer HTML",
+    sessionType: "ENTREGABLE",
+    duracion: 180,
+    titulo: "Lenguajes de Programacion e IDEs: tu primer taller real",
     descripcion:
-      "Entiende qué es un lenguaje de programación, dónde encaja JavaScript frente a otros lenguajes, qué es un IDE y por qué usamos VS Code; cierra creando un index.html mínimo listo para la semana de Git.",
+      "Sesion practica para entender tipos de lenguajes, como se ejecuta el codigo y como usar VS Code/IDEs para comenzar a programar con una rutina clara.",
     video: {
       url: "https://www.youtube.com/watch?v=MJkdaVFHrto",
-      titulo: "HTML desde cero — repaso de etiquetas básicas (complemento)",
+      titulo: "Complemento: HTML desde cero - repaso de etiquetas basicas",
     },
 
-    historia: `Los primeros programadores escribían instrucciones directamente en ceros y unos. Con el tiempo aparecieron lenguajes más cercanos al lenguaje humano: Fortran, C, Python, JavaScript… Cada uno nació para resolver problemas distintos: cálculo científico, sistemas operativos, automatización, la web.
+    historia: `
+## Objetivo de la sesion
 
-Hoy nadie aprende “todos los lenguajes” de memoria. Los profesionales aprenden a **leer el mapa**: para qué sirve cada familia de lenguaje, dónde corre el código (navegador, servidor, móvil) y qué herramienta usa el equipo. El bootcamp te llevará de HTML/CSS/JS a un stack moderno paso a paso.`,
+Conectar lo que ya sabes del viaje de una URL y HTTP con **las herramientas reales** con las que vas a construir: lenguajes, entornos de ejecucion y tu **IDE** como taller de trabajo.
 
-    kaledIntro: `Ya sabes cómo viaja una página y cómo hablan cliente y servidor con HTTP. Hoy respondemos: **¿con qué lenguajes y con qué programa en la pantalla voy a escribir eso?**
+## Ideas clave
 
-La animación te muestra un mapa didáctico: historia breve, tipos de lenguajes, JavaScript en el navegador, un vistazo a Python (sin instalar nada aún), qué es un IDE y por qué VS Code es tu taller. Al final **crearás un index.html mínimo** en VS Code: lo necesitarás intacto para la sesión de Git de la semana 2.`,
+1. **Niveles**: desde instrucciones de maquina hasta frameworks que aceleran tu producto.
+2. **Tipado**: como el lenguaje te ayuda (o no) a detectar errores antes de produccion.
+3. **Ejecucion**: el mismo lenguaje puede vivir en contextos distintos (por ejemplo JavaScript en el navegador vs en servidor).
+4. **IDE**: editor + terminal + depuracion + extensiones; VS Code es el estandar practico del bootcamp.
 
-    analogia: `Un **lenguaje de programación** es como un idioma extranjero con reglas de gramática: sirve para dar instrucciones a la máquina.
+## Que vas a producir hoy
 
-Un **IDE** (entorno de desarrollo integrado) es como un **taller de mecánica** bien equipado: mesa de trabajo, caja de herramientas, elevador y manual a mano. Puedes arreglar un carro en la calle con una llave suelta, pero en el taller terminas más rápido y con menos errores. VS Code es tu taller en el bootcamp.`,
+- Un **mapa de stack MVP** para tu SaaS v1 (documento breve).
+- Evidencias: **STACK-SAAS-V1.md**, captura del IDE, \`index.html\` minimo, riesgos iniciales.
+- Todo alineado con CRAL (Construir -> Romper -> Auditar -> Lanzar) y listo para enlazar con **Git** en las clases 4 y 5.
+
+Al terminar, deberias poder explicar en una frase **por que** elegiste cada pieza del stack y que riesgo mitiga.
+`,
+
+    kaledIntro: `Hoy aterrizamos lo mas importante de esta etapa: que es un lenguaje de programacion y como trabajar en un IDE real. No vamos a construir arquitectura avanzada todavia; vamos a dominar base tecnica con practica guiada para que puedas programar con confianza.`,
+
+    analogia: `Aprender lenguajes e IDEs es como aprender a cocinar: primero entiendes ingredientes y herramientas (lenguaje + editor), luego practicas recetas pequenas (ejercicios), y despues pasas a platos complejos (proyectos).`,
 
     conceptos: [
       {
-        key: "lenguaje-para-que",
-        titulo: "Lenguaje de programación — instrucciones para la máquina",
-        cuerpo: `Un lenguaje tiene **sintaxis** (cómo escribir) y **semántica** (qué significa cada construcción). El computador no “adivina”: si te equivocas en un símbolo, te lo dirá con un error.
+        key: "niveles",
+        titulo: "Niveles de abstraccion",
+        cuerpo: `Arriba del todo esta tu **producto** (lo que ve el usuario). Debajo hay **librerias y frameworks** que ahorran trabajo. Mas abajo, **lenguajes** y **runtimes** (donde corre el codigo). En el fondo, el **sistema operativo** y el **hardware**.
 
-No existe “el mejor lenguaje del mundo”: existe el adecuado para el problema y el ecosistema donde trabajas.`,
+Elegir stack es decidir en **que capa** inviertes tu tiempo ahora: en el bootcamp empezamos cerca del navegador (HTML/CSS/JS) y luego subimos de nivel con herramientas que te den velocidad sin perder claridad.`,
       },
       {
-        key: "js-navegador",
-        titulo: "JavaScript — el lenguaje que entiende el navegador",
-        cuerpo: `HTML estructura, CSS estiliza, **JavaScript agrega comportamiento** en la página: validar un formulario, abrir un menú, pedir datos sin recargar toda la vista.
+        key: "tipado",
+        titulo: "Tipado: estatico vs dinamico (intuicion)",
+        cuerpo: `**Tipado estatico** (p. ej. TypeScript) marca muchos errores **antes de ejecutar**: te obliga a acordar formas de datos.
 
-En el módulo 1 lo usarás poco a poco. Más adelante verás también JavaScript fuera del navegador (Node) cuando construyas lógica de servidor.`,
+**Tipado dinamico** (JS puro en muchos contextos) es mas flexible al escribir, pero puede fallar **en tiempo de ejecucion** si no tienes disciplina.
+
+Para un MVP, TypeScript suele pagar el coste extra con **menos bugs** cuando el proyecto crece.`,
       },
       {
-        key: "python-vistazo",
-        titulo: "Python — otro mundo, misma disciplina",
-        cuerpo: `Python es muy usado en ciencia de datos, automatización e **inteligencia artificial**. No compite con JavaScript en el navegador: cada uno brilla en su entorno.
+        key: "ejecucion",
+        titulo: "Donde se ejecuta el codigo",
+        cuerpo: `El **navegador** ejecuta HTML, CSS y JavaScript del lado cliente. El **servidor** puede ejecutar otros runtimes (Node, etc.) para APIs, persistencia y logica sensible.
 
-En este bootcamp lo encontrarás cuando hablemos de IA y herramientas; no necesitas dominarlo hoy.`,
+La confusion tipica es mezclar responsabilidades: lo que debe ser **publico** vs lo que debe estar **protegido** en backend. Tu mapa de stack debe mostrar **quien ejecuta que** en tu SaaS v1.`,
       },
       {
-        key: "ide-vscode",
-        titulo: "IDE y VS Code — tu mesa de trabajo",
-        cuerpo: `Un IDE agrupa editor, resaltado de sintaxis, terminal integrada, extensiones y depuración. **Visual Studio Code** es gratuito, multiplataforma y el estándar de facto para web.
+        key: "ide",
+        titulo: "IDE y flujo de trabajo",
+        cuerpo: `Un **IDE** (entorno de desarrollo integrado) combina editor, terminal, depuracion, extensiones y a veces control de versiones integrado.
 
-Instálalo desde code.visualstudio.com si aún no lo tienes. También existen “forks” (Cursor, Windsurf, VSCodium) basados en el mismo núcleo: el flujo es parecido.`,
+**VS Code** es el referente en web: gratuito, multiplataforma y extensible. Cursor/Windsurf/VSCodium comparten ideas similares.
+
+La meta no es memorizar atajos el dia 1, sino **repetir un flujo**: editar -> probar en local -> corregir -> dejar evidencia.`,
       },
     ],
 
     cral: [
       {
         phase: "CONSTRUIR",
-        titulo: "Instala VS Code y crea tu carpeta del bootcamp",
-        descripcion: `Crea una carpeta en tu disco, por ejemplo "kaled-bootcamp". Ábrela con VS Code (Archivo → Abrir carpeta).
-
-Crea un archivo **index.html** y pega esta plantilla mínima, cambiando el texto entre etiquetas por tu nombre:
-
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Mi página — [tu nombre]</title>
-</head>
-<body>
-  <h1>Hola, soy [tu nombre]</h1>
-  <p>Estoy en el bootcamp KaledAcademy.</p>
-</body>
-</html>
-
-Guarda. Ábrelo con el navegador (doble clic o arrastrar al Chrome/Edge/Firefox). ¿Se ve tu nombre?`,
+        titulo: "Instala y configura VS Code",
+        descripcion: `Instala VS Code (o confirma que ya lo tienes), crea una carpeta \`clase-lenguajes-ides\` y abre esa carpeta desde el IDE. Crea un archivo \`index.html\` y escribe un titulo y un parrafo con tu nombre. Guarda evidencia con una captura del editor abierto.`,
       },
       {
         phase: "ROMPER",
-        titulo: "Rompe el charset o el título",
-        descripcion: `Borra la línea <meta charset="UTF-8"> o cambia mal el cierre de </title>. Guarda y recarga.
-
-¿La página sigue mostrando algo útil o ves símbolos raros? Vuelve a dejar el archivo correcto antes de seguir.`,
+        titulo: "Provoca y corrige un error simple",
+        descripcion: `En tu \`index.html\`, deja una etiqueta sin cerrar (por ejemplo \`<h1>\` sin \`</h1>\`) y observa que pasa en la vista. Luego corrigelo y anota en 2 lineas que aprendiste sobre errores de sintaxis basicos.`,
       },
       {
         phase: "AUDITAR",
-        titulo: "Comprueba la extensión y la ruta",
-        descripcion: `En el explorador de archivos, verifica que el archivo sea **index.html** y no index.html.txt (Windows a veces oculta extensiones).
-
-Si ves .txt al final, renómbralo. Anota en una frase por qué la extensión importa para el navegador.`,
+        titulo: "Compara lenguajes con criterio inicial",
+        descripcion: `Con apoyo de Kaled, llena una mini tabla con 3 columnas: Lenguaje, Donde se usa, Dificultad inicial. Incluye al menos JavaScript y Python. El objetivo es entender diferencias, no elegir arquitectura todavia.`,
       },
       {
         phase: "LANZAR",
-        titulo: "Deja listo tu index para Git",
-        descripcion: `Tu index.html mínimo debe vivir en la carpeta que usarás la próxima semana con Git.
-
-Comparte captura de VS Code + navegador mostrando tu nombre en el canal del bootcamp con el texto: "index.html listo — [tu nombre]".`,
+        titulo: "Muestra tu primer entorno funcionando",
+        descripcion: `Presenta tu carpeta de practica con \`index.html\` funcionando y comparte 3 aprendizajes de la sesion: (1) que es un lenguaje, (2) que hace un IDE, (3) diferencia basica entre compilado e interpretado.`,
       },
     ],
 
-    quiz: {
-      pregunta: `¿Cuál es la afirmación más precisa sobre JavaScript en el contexto del navegador?`,
-      opciones: [
-        {
-          label: "A", esCorrecta: false,
-          texto: "JavaScript reemplaza a HTML: ya no hace falta escribir etiquetas.",
-          feedback: "HTML sigue siendo el esqueleto. JavaScript añade comportamiento; no sustituye la estructura.",
-        },
-        {
-          label: "B", esCorrecta: true,
-          texto: "JavaScript permite programar comportamiento en la página que el usuario ve en el navegador.",
-          feedback: "Correcto. HTML estructura, CSS estiliza, JS reacciona y automatiza en el cliente.",
-        },
-        {
-          label: "C", esCorrecta: false,
-          texto: "JavaScript solo sirve para bases de datos.",
-          feedback: "Las bases de datos son otro tema. En el navegador, JS vive junto al HTML/CSS.",
-        },
-        {
-          label: "D", esCorrecta: false,
-          texto: "VS Code es obligatorio para que JavaScript funcione en el navegador.",
-          feedback: "El navegador ejecuta JS del sitio; VS Code es tu editor local. Podrías escribir en otro editor, pero VS Code es el recomendado en el bootcamp.",
-        },
-      ],
-    },
+    quiz: [
+      {
+        pregunta: "Que afirmacion describe mejor la diferencia entre lenguaje compilado e interpretado?",
+        opciones: [
+          {
+            label: "A",
+            esCorrecta: true,
+            texto: "Compilado traduce antes de ejecutar; interpretado ejecuta instruccion por instruccion.",
+            feedback: "Correcto: esa es la diferencia base que vimos en clase.",
+          },
+          {
+            label: "B",
+            esCorrecta: false,
+            texto: "Ambos son exactamente lo mismo, solo cambia el nombre.",
+            feedback: "No: hay diferencias en el proceso de ejecucion.",
+          },
+          {
+            label: "C",
+            esCorrecta: false,
+            texto: "Interpretado siempre es mas rapido que compilado.",
+            feedback: "No es una regla general; depende del runtime y del caso.",
+          },
+          {
+            label: "D",
+            esCorrecta: false,
+            texto: "Compilado solo se usa para diseno de interfaces.",
+            feedback: "No: compilado se usa en muchos tipos de software.",
+          },
+        ],
+      },
+      {
+        pregunta: "En tipado estatico (como TypeScript), que ventaja principal se obtiene al crecer el proyecto?",
+        opciones: [
+          {
+            label: "A",
+            esCorrecta: true,
+            texto: "Detectar incompatibilidades de datos antes de ejecutar.",
+            feedback: "Correcto: reduce errores antes de llegar al usuario final.",
+          },
+          {
+            label: "B",
+            esCorrecta: false,
+            texto: "Eliminar por completo la necesidad de pruebas.",
+            feedback: "Las pruebas siguen siendo necesarias.",
+          },
+          {
+            label: "C",
+            esCorrecta: false,
+            texto: "Hacer que CSS funcione sin HTML.",
+            feedback: "No tiene relacion con tipado.",
+          },
+          {
+            label: "D",
+            esCorrecta: false,
+            texto: "Evitar el uso de APIs.",
+            feedback: "Puedes usar APIs igualmente.",
+          },
+        ],
+      },
+      {
+        pregunta: "Cual combinacion representa correctamente los roles HTML, CSS y JavaScript en web?",
+        opciones: [
+          {
+            label: "A",
+            esCorrecta: false,
+            texto: "HTML comportamiento, CSS logica, JS estructura.",
+            feedback: "Esa relacion esta invertida.",
+          },
+          {
+            label: "B",
+            esCorrecta: true,
+            texto: "HTML estructura, CSS presentacion, JS comportamiento.",
+            feedback: "Correcto: es la base del desarrollo frontend.",
+          },
+          {
+            label: "C",
+            esCorrecta: false,
+            texto: "Solo JavaScript hace todo en produccion.",
+            feedback: "Aunque JS es poderoso, cada capa tiene su rol.",
+          },
+          {
+            label: "D",
+            esCorrecta: false,
+            texto: "CSS y JS son opcionales siempre.",
+            feedback: "Dependen del proyecto, pero en apps modernas son claves.",
+          },
+        ],
+      },
+      {
+        pregunta: "Que es un IDE y por que acelera el trabajo del desarrollador?",
+        opciones: [
+          {
+            label: "A",
+            esCorrecta: false,
+            texto: "Es solo un bloc de notas sin herramientas adicionales.",
+            feedback: "Un IDE integra varias herramientas clave.",
+          },
+          {
+            label: "B",
+            esCorrecta: true,
+            texto: "Integra editor, terminal, depuracion y extensiones en un mismo entorno.",
+            feedback: "Correcto: por eso VS Code y similares son tan usados.",
+          },
+          {
+            label: "C",
+            esCorrecta: false,
+            texto: "Es unicamente para disenadores graficos.",
+            feedback: "No: esta orientado a desarrollo de software.",
+          },
+          {
+            label: "D",
+            esCorrecta: false,
+            texto: "Reemplaza por completo el lenguaje de programacion.",
+            feedback: "El IDE ayuda, pero no reemplaza el lenguaje.",
+          },
+        ],
+      },
+      {
+        pregunta: "Segun la clase, que enfoque es mas realista para iniciar en programacion de productos?",
+        opciones: [
+          {
+            label: "A",
+            esCorrecta: true,
+            texto: "Empezar con lenguajes y herramientas que te permitan practicar y entregar rapido.",
+            feedback: "Correcto: aprendizaje + practica + entregables reales.",
+          },
+          {
+            label: "B",
+            esCorrecta: false,
+            texto: "Saltar directo a arquitecturas avanzadas sin dominar fundamentos.",
+            feedback: "Sin bases solidas, esa complejidad te frena.",
+          },
+          {
+            label: "C",
+            esCorrecta: false,
+            texto: "Evitar HTML/CSS/JS porque ya no se usan.",
+            feedback: "Siguen siendo fundamentales en desarrollo web.",
+          },
+          {
+            label: "D",
+            esCorrecta: false,
+            texto: "Usar cualquier herramienta sin entender para que sirve.",
+            feedback: "La herramienta debe tener proposito claro en tu flujo.",
+          },
+        ],
+      },
+    ],
 
     entregable: {
-      titulo: "index.html mínimo en tu carpeta del bootcamp",
+      titulo: "Entorno base de programacion - Lenguajes e IDEs",
       descripcion:
-        "Un solo archivo HTML válido con tu nombre, listo para versionar con Git la semana siguiente.",
+        "Evidencia practica de instalacion y uso inicial del IDE, mas un ejercicio basico en HTML/JS orientado a consolidar fundamentos vistos en clase.",
       esFinal: false,
       items: [
-        "Archivo index.html (extensión correcta, no .txt)",
-        "DOCTYPE, html, head con charset UTF-8 y title, body con h1 y al menos un p",
-        "Se abre en el navegador y muestra tu nombre",
-        "Vive en la carpeta que usarás para el módulo de Git",
+        "Captura de VS Code (o IDE equivalente) mostrando la carpeta `clase-lenguajes-ides` abierta",
+        "Archivo `index.html` con estructura minima valida (`html`, `head`, `body`)",
+        "Un titulo (`h1`) y un parrafo (`p`) en `index.html` con contenido escrito por ti",
+        "Una linea de JavaScript simple en archivo aparte o dentro del HTML (por ejemplo, `console.log`)",
+        "Nota breve (5-8 lineas): que entendiste de lenguaje compilado vs interpretado",
+        "Nota breve (5-8 lineas): por que un IDE te ayuda mas que un editor plano al iniciar",
       ],
     },
   }, getLid());
