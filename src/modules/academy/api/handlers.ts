@@ -15,6 +15,7 @@ import {
   kaledAIService,
   badgeService,
   analyticsService,
+  type DeliverableReviewQueue,
 } from "@/modules/academy/services/academy.service";
 import { prisma } from "@/lib/prisma";
 import { streamText } from "ai";
@@ -333,7 +334,7 @@ export async function POST_reviewDeliverable(
 // GET /api/academy/cohorts/[id]/deliverables/pending
 // ============================================================
 export async function GET_pendingDeliverables(
-  _req: NextRequest,
+  req: NextRequest,
   _user: AuthenticatedUser,
   tenantId: string,
   context?: AcademyContext
@@ -342,7 +343,10 @@ export async function GET_pendingDeliverables(
     const params = context ? await context.params : {};
     const cohortId = params.cohortId ?? params.id;
     if (!cohortId) return badRequest("cohortId o id requerido");
-    const pending = await deliverableService.getPendingReviews(cohortId, tenantId);
+    const q = req.nextUrl.searchParams.get("queue");
+    const queue: DeliverableReviewQueue =
+      q === "in_review" || q === "rejected_recent" ? q : "delivered";
+    const pending = await deliverableService.getPendingReviews(cohortId, tenantId, queue);
     return NextResponse.json(pending);
   } catch (err) {
     return serverError(err);

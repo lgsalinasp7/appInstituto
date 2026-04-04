@@ -35,9 +35,11 @@ export const ACADEMY_ROUTES = {
     { path: "/academia/admin/analytics", label: "Dashboard" },
     { path: "/academia/admin/courses", label: "Cursos" },
     { path: "/academia/admin/cohorts", label: "Cohortes" },
+    { path: "/academia/admin/users", label: "Usuarios" },
+    { path: "/academia/admin/operations", label: "Operación" },
+    { path: "/academia/admin/deliverables", label: "Entregables" },
     { path: "/academia/admin/calendar", label: "Calendario" },
     { path: "/academia/admin/leaderboard", label: "Leaderboard" },
-    { path: "/academia/admin/users", label: "Usuarios" },
   ],
 } as const;
 

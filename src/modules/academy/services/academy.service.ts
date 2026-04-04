@@ -738,26 +738,67 @@ export const deliverableService = {
     });
   },
 
-  async getPendingReviews(cohortId: string, _tenantId: string) {
-    return prisma.academyDeliverableSubmission.findMany({
-      where: {
-        status: "ENTREGADO",
-        deliverable: {
-          lesson: {
-            module: {
-              course: { cohorts: { some: { id: cohortId } } },
-            },
+  /**
+   * Cola de revisión por cohorte. Ver `DeliverableReviewQueue` para pestañas en UI.
+   * - delivered: esperando revisión (ENTREGADO)
+   * - in_review: marcado en revisión (EN_REVISION)
+   * - rejected_recent: rechazados en los últimos 30 días (seguimiento pedagógico)
+   */
+  async getPendingReviews(
+    cohortId: string,
+    _tenantId: string,
+    queue: DeliverableReviewQueue = "delivered"
+  ) {
+    const cohortCourseFilter = {
+      deliverable: {
+        lesson: {
+          module: {
+            course: { cohorts: { some: { id: cohortId } } },
           },
         },
+      },
+    };
+
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    if (queue === "delivered") {
+      return prisma.academyDeliverableSubmission.findMany({
+        where: { status: "ENTREGADO", ...cohortCourseFilter },
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+          deliverable: { select: { title: true, weekNumber: true } },
+        },
+        orderBy: { submittedAt: "asc" },
+      });
+    }
+
+    if (queue === "in_review") {
+      return prisma.academyDeliverableSubmission.findMany({
+        where: { status: "EN_REVISION", ...cohortCourseFilter },
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+          deliverable: { select: { title: true, weekNumber: true } },
+        },
+        orderBy: { submittedAt: "asc" },
+      });
+    }
+
+    return prisma.academyDeliverableSubmission.findMany({
+      where: {
+        status: "RECHAZADO",
+        updatedAt: { gte: thirtyDaysAgo },
+        ...cohortCourseFilter,
       },
       include: {
         user: { select: { id: true, name: true, email: true } },
         deliverable: { select: { title: true, weekNumber: true } },
       },
-      orderBy: { submittedAt: "asc" },
+      orderBy: { updatedAt: "desc" },
     });
   },
 };
+
+export type DeliverableReviewQueue = "delivered" | "in_review" | "rejected_recent";
 
 // ============================================================
 // SERVICIO 6: COHORTES Y ENROLLMENT

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +12,7 @@ export interface CohortStudentsRow {
   isTrial: boolean;
   enrolledAt: string;
   trialExpiresAt: string | null;
+  overallProgress: number | null;
 }
 
 interface CohortStudentsViewProps {
@@ -67,7 +68,7 @@ export function CohortStudentsView({
               key={row.enrollmentId}
               className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-xl border border-white/[0.06] bg-white/[0.02]"
             >
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="font-semibold text-white truncate">{row.name || row.email}</p>
                 <p className="text-sm text-slate-400 truncate">{row.email}</p>
                 <p className="text-xs text-slate-500 mt-1">
@@ -75,6 +76,11 @@ export function CohortStudentsView({
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2 shrink-0">
+                {row.overallProgress != null ? (
+                  <span className="text-xs font-medium tabular-nums text-slate-300 px-2 py-1 rounded-lg border border-white/[0.08] bg-white/[0.03]">
+                    {row.overallProgress.toFixed(0)}% progreso
+                  </span>
+                ) : null}
                 {row.isTrial ? (
                   <Badge
                     variant="secondary"
@@ -96,6 +102,13 @@ export function CohortStudentsView({
                 >
                   {row.status}
                 </span>
+                <Link
+                  href={`/academia/admin/cohorts/${cohortId}/students/${row.userId}`}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-400 hover:text-cyan-300 px-2 py-1 rounded-lg hover:bg-cyan-500/10"
+                >
+                  Ficha
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
             </div>
           ))}

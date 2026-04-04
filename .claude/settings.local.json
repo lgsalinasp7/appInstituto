@@ -48,7 +48,14 @@
       "Bash(npx prisma generate:*)",
       "Bash(node scripts/convert-images.mjs:*)",
       "WebFetch(domain:skills.sh)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(npm search:*)",
+      "mcp__chrome-devtools__list_pages",
+      "mcp__chrome-devtools__navigate_page",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__click",
+      "mcp__chrome-devtools__take_snapshot"
     ]
   }
 }

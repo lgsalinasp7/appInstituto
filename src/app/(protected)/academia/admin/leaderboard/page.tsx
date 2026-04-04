@@ -4,7 +4,11 @@ import { redirect } from "next/navigation";
 import { cohortService } from "@/modules/academy/services/academy.service";
 import { LeaderboardView } from "@/modules/academia/components/student/LeaderboardView";
 
-export default async function AcademiaAdminLeaderboardPage() {
+interface PageProps {
+  searchParams?: Promise<{ cohortId?: string }>;
+}
+
+export default async function AcademiaAdminLeaderboardPage({ searchParams }: PageProps) {
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login");
 
@@ -13,15 +17,24 @@ export default async function AcademiaAdminLeaderboardPage() {
     select: { tenantId: true },
   });
   const tenantId = dbUser?.tenantId ?? "";
+  const sp = searchParams ? await searchParams : {};
+  const requestedId = typeof sp.cohortId === "string" && sp.cohortId.length > 0 ? sp.cohortId : null;
 
-  const cohort = tenantId
-    ? await prisma.academyCohort.findFirst({
-        where: { tenantId, status: "ACTIVE" },
-        select: { id: true },
-      })
-    : null;
-
-  const cohortId = cohort?.id ?? null;
+  let cohortId: string | null = null;
+  if (tenantId && requestedId) {
+    const match = await prisma.academyCohort.findFirst({
+      where: { id: requestedId, tenantId },
+      select: { id: true },
+    });
+    cohortId = match?.id ?? null;
+  }
+  if (!cohortId && tenantId) {
+    const cohort = await prisma.academyCohort.findFirst({
+      where: { tenantId, status: "ACTIVE" },
+      select: { id: true },
+    });
+    cohortId = cohort?.id ?? null;
+  }
 
   let entries: { userId: string; name: string; image: string | null; points: number; rank: number }[] = [];
 
