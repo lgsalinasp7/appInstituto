@@ -1,41 +1,46 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, CalendarDays, Circle, CalendarCheck, CalendarClock, CalendarX2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  BookOpen,
+  CheckCircle2,
+  Unlock,
+  Ban,
+  Circle,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface CalendarEvent {
+/* ------------------------------------------------------------------ */
+/* Types                                                               */
+/* ------------------------------------------------------------------ */
+
+export interface SessionEvent {
   id: string;
-  name: string;
-  courseId: string;
+  cohortId: string;
+  cohortName: string;
   courseTitle: string;
-  startDate: string;
-  endDate: string;
-  status: string;
+  title: string;
+  type: string;
+  scheduledAt: string | null;
+  startTime: string | null;
+  lessonId: string | null;
+  lessonTitle: string | null;
+  cancelled: boolean;
+  deliveredAt: string | null;
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  DRAFT: "Borrador",
-  ACTIVE: "Activo",
-  COMPLETED: "Completado",
-  CANCELLED: "Cancelado",
-};
+export interface StudentCalendarProps {
+  events: SessionEvent[];
+  releasedByCohort: Record<string, string[]>;
+}
 
-const STATUS_COLOR: Record<string, string> = {
-  DRAFT: "bg-slate-500/20 text-slate-400 border-slate-500/30",
-  ACTIVE: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
-  COMPLETED: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-  CANCELLED: "bg-red-500/20 text-red-400 border-red-500/30",
-};
-
-const DOT_COLOR: Record<string, string> = {
-  DRAFT: "bg-slate-400",
-  ACTIVE: "bg-cyan-400",
-  COMPLETED: "bg-emerald-400",
-  CANCELLED: "bg-red-400",
-};
+/* ------------------------------------------------------------------ */
+/* Helpers                                                             */
+/* ------------------------------------------------------------------ */
 
 const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const MONTHS = [
@@ -60,20 +65,54 @@ function isSameDay(a: Date, b: Date): boolean {
   );
 }
 
-function dateIsInRange(date: Date, start: Date, end: Date): boolean {
-  const d = date.getTime();
-  return d >= new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime() &&
-    d <= new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime();
+type EventColor = "scheduled" | "delivered" | "released" | "cancelled";
+
+function getEventColor(
+  ev: SessionEvent,
+  releasedByCohort: Record<string, string[]>
+): EventColor {
+  if (ev.cancelled) return "cancelled";
+  if (ev.deliveredAt) return "delivered";
+  if (ev.lessonId && releasedByCohort[ev.cohortId]?.includes(ev.lessonId)) return "released";
+  return "scheduled";
 }
 
-interface CalendarViewProps {
-  events: CalendarEvent[];
-}
+const COLOR_DOT: Record<EventColor, string> = {
+  scheduled: "bg-blue-400",
+  delivered: "bg-emerald-400",
+  released: "bg-orange-400",
+  cancelled: "bg-slate-500",
+};
+
+const COLOR_BADGE: Record<EventColor, string> = {
+  scheduled: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+  delivered: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+  released: "bg-orange-500/20 text-orange-300 border-orange-500/30",
+  cancelled: "bg-slate-500/20 text-slate-400 border-slate-500/30",
+};
+
+const COLOR_LABEL: Record<EventColor, string> = {
+  scheduled: "Programada",
+  delivered: "Impartida",
+  released: "Material liberado",
+  cancelled: "Cancelada",
+};
+
+const COLOR_ICON: Record<EventColor, React.ReactNode> = {
+  scheduled: <Circle size={11} />,
+  delivered: <CheckCircle2 size={11} />,
+  released: <Unlock size={11} />,
+  cancelled: <Ban size={11} />,
+};
 
 const fadeUp = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
 const stagger = { show: { transition: { staggerChildren: 0.06 } } };
 
-export function CalendarView({ events }: CalendarViewProps) {
+/* ------------------------------------------------------------------ */
+/* Component                                                           */
+/* ------------------------------------------------------------------ */
+
+export function CalendarView({ events, releasedByCohort }: StudentCalendarProps) {
   const [selected, setSelected] = useState<Date | null>(null);
 
   const today = new Date();
@@ -84,7 +123,6 @@ export function CalendarView({ events }: CalendarViewProps) {
     if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); }
     else setViewMonth((m) => m - 1);
   };
-
   const nextMonth = () => {
     if (viewMonth === 11) { setViewMonth(0); setViewYear((y) => y + 1); }
     else setViewMonth((m) => m + 1);
@@ -94,27 +132,22 @@ export function CalendarView({ events }: CalendarViewProps) {
   const firstDayOffset = getFirstDayOfWeek(viewYear, viewMonth);
   const totalCells = Math.ceil((firstDayOffset + daysInMonth) / 7) * 7;
 
-  function getEventsForDay(day: number): CalendarEvent[] {
+  function getEventsForDay(day: number): SessionEvent[] {
     const date = new Date(viewYear, viewMonth, day);
-    return events.filter((e) =>
-      dateIsInRange(date, new Date(e.startDate), new Date(e.endDate))
-    );
+    return events.filter((e) => {
+      if (!e.scheduledAt) return false;
+      return isSameDay(new Date(e.scheduledAt), date);
+    });
   }
 
   const selectedDayEvents = selected
-    ? events.filter((e) =>
-        dateIsInRange(selected, new Date(e.startDate), new Date(e.endDate))
-      )
+    ? events.filter((e) => e.scheduledAt && isSameDay(new Date(e.scheduledAt), selected))
     : [];
 
-  const upcomingEvents = [...events]
-    .filter((e) => new Date(e.endDate) >= today)
-    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
-    .slice(0, 5);
-
-  const activeCount = events.filter((e) => e.status === "ACTIVE").length;
-  const completedCount = events.filter((e) => e.status === "COMPLETED").length;
-  const cancelledCount = events.filter((e) => e.status === "CANCELLED").length;
+  // Stats
+  const scheduled = events.filter((e) => !e.cancelled && !e.deliveredAt).length;
+  const delivered = events.filter((e) => !!e.deliveredAt).length;
+  const cancelled = events.filter((e) => e.cancelled).length;
 
   return (
     <motion.div
@@ -123,24 +156,23 @@ export function CalendarView({ events }: CalendarViewProps) {
       animate="show"
       className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8"
     >
-      {/* Header */}
       <motion.div variants={fadeUp}>
         <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight font-display mb-1">
-          Calendario
+          Mi Calendario
         </h1>
-        <p className="text-slate-500 text-sm">Fechas de inicio y fin de tus cohortes</p>
+        <p className="text-slate-500 text-sm">Sesiones programadas de tus cohortes</p>
       </motion.div>
 
       {/* Stats */}
       <motion.div variants={fadeUp} className="grid grid-cols-3 gap-3 sm:gap-4">
         {[
-          { label: "Activas", value: activeCount, icon: CalendarCheck, color: "#38bdf8" },
-          { label: "Completadas", value: completedCount, icon: CalendarClock, color: "#34d399" },
-          { label: "Canceladas", value: cancelledCount, icon: CalendarX2, color: "#f87171" },
+          { label: "Programadas", value: scheduled, color: "#60a5fa" },
+          { label: "Impartidas", value: delivered, color: "#34d399" },
+          { label: "Canceladas", value: cancelled, color: "#94a3b8" },
         ].map((s) => (
           <div key={s.label} className="academy-card-dark rounded-xl sm:rounded-2xl p-4 sm:p-5 min-w-0">
             <div className="flex items-center gap-2 mb-2">
-              <s.icon className="w-4 h-4 shrink-0" style={{ color: s.color }} />
+              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
               <span className="text-[10px] sm:text-xs text-slate-500 truncate">{s.label}</span>
             </div>
             <div className="text-xl sm:text-2xl font-black text-white">{s.value}</div>
@@ -214,7 +246,7 @@ export function CalendarView({ events }: CalendarViewProps) {
                         {dayEvents.slice(0, 3).map((e) => (
                           <span
                             key={e.id}
-                            className={cn("w-1.5 h-1.5 rounded-full", DOT_COLOR[e.status] ?? "bg-slate-400")}
+                            className={cn("w-1.5 h-1.5 rounded-full", COLOR_DOT[getEventColor(e, releasedByCohort)])}
                           />
                         ))}
                         {dayEvents.length > 3 && (
@@ -228,36 +260,56 @@ export function CalendarView({ events }: CalendarViewProps) {
             })}
           </div>
 
+          {/* Day detail (below calendar on click) */}
           {selected && (
             <div className="mt-5 border-t border-white/[0.06] pt-4">
               <h3 className="text-sm font-bold text-slate-300 mb-3">
                 {selected.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" })}
               </h3>
               {selectedDayEvents.length === 0 ? (
-                <p className="text-sm text-slate-500">Sin eventos este día.</p>
+                <p className="text-sm text-slate-500">Sin sesiones este día.</p>
               ) : (
                 <div className="space-y-2">
-                  {selectedDayEvents.map((e) => (
-                    <Link
-                      key={e.id}
-                      href={`/academia/student/cohort/${e.id}`}
-                      className={cn(
-                        "flex items-start gap-3 p-3 rounded-xl border hover:border-cyan-500/30 transition-colors block",
-                        STATUS_COLOR[e.status] ?? "bg-slate-700/30 border-slate-600 text-slate-300"
-                      )}
-                    >
-                      <Circle className="w-2 h-2 mt-1.5 shrink-0 fill-current" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate">{e.name}</p>
-                        <p className="text-xs opacity-70 truncate">{e.courseTitle}</p>
-                        <p className="text-xs opacity-60 mt-0.5">
-                          {new Date(e.startDate).toLocaleDateString("es-CO", { day: "numeric", month: "short" })}
-                          {" — "}
-                          {new Date(e.endDate).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
-                        </p>
+                  {selectedDayEvents.map((ev) => {
+                    const color = getEventColor(ev, releasedByCohort);
+                    return (
+                      <div
+                        key={ev.id}
+                        className={cn(
+                          "flex items-start gap-3 p-3 rounded-xl border",
+                          COLOR_BADGE[color]
+                        )}
+                      >
+                        <span className="mt-0.5 shrink-0">{COLOR_ICON[color]}</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold truncate">{ev.title}</p>
+                          <p className="text-xs opacity-70 truncate">{ev.cohortName} · {ev.courseTitle}</p>
+                          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-xs opacity-60">
+                            {ev.startTime && (
+                              <span className="flex items-center gap-1">
+                                <Clock size={10} /> {ev.startTime}
+                              </span>
+                            )}
+                            {ev.lessonTitle && (
+                              <span className="flex items-center gap-1">
+                                <BookOpen size={10} /> {ev.lessonTitle}
+                              </span>
+                            )}
+                          </div>
+                          {color === "delivered" && (
+                            <p className="text-[11px] mt-1 text-emerald-400/60">
+                              Clase impartida el {new Date(ev.deliveredAt!).toLocaleDateString("es-CO", { day: "numeric", month: "short" })}
+                            </p>
+                          )}
+                          {color === "released" && (
+                            <p className="text-[11px] mt-1 text-orange-400/60">
+                              Material disponible
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </Link>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -266,48 +318,46 @@ export function CalendarView({ events }: CalendarViewProps) {
 
         {/* Sidebar */}
         <div className="space-y-4">
+          {/* Upcoming */}
           <motion.div variants={fadeUp} className="academy-card-dark rounded-xl sm:rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <CalendarDays className="w-4 h-4 text-cyan-400" />
-              <h3 className="text-sm font-bold text-white font-display">Próximas Cohortes</h3>
-            </div>
-            {upcomingEvents.length === 0 ? (
-              <p className="text-sm text-slate-500">No hay cohortes próximas.</p>
-            ) : (
-              <div className="space-y-3">
-                {upcomingEvents.map((e) => (
-                  <Link
-                    key={e.id}
-                    href={`/academia/student/cohort/${e.id}`}
-                    className="flex flex-col gap-1 p-3 rounded-xl border border-white/[0.06] hover:border-cyan-500/20 transition-colors block"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-semibold text-white truncate">{e.name}</p>
-                      <span className={cn(
-                        "text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0",
-                        STATUS_COLOR[e.status] ?? "bg-slate-700 border-slate-600 text-slate-300"
-                      )}>
-                        {STATUS_LABEL[e.status] ?? e.status}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-400 truncate">{e.courseTitle}</p>
-                    <p className="text-xs text-slate-500">
-                      {new Date(e.startDate).toLocaleDateString("es-CO", { day: "numeric", month: "short" })}
-                      {" — "}
-                      {new Date(e.endDate).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
-                    </p>
-                  </Link>
-                ))}
-              </div>
-            )}
+            <h3 className="text-sm font-bold text-white font-display mb-4">Próximas sesiones</h3>
+            {(() => {
+              const upcoming = events
+                .filter((e) => !e.cancelled && e.scheduledAt && new Date(e.scheduledAt) >= today)
+                .sort((a, b) => new Date(a.scheduledAt!).getTime() - new Date(b.scheduledAt!).getTime())
+                .slice(0, 5);
+              return upcoming.length === 0 ? (
+                <p className="text-sm text-slate-500">No hay sesiones próximas.</p>
+              ) : (
+                <div className="space-y-3">
+                  {upcoming.map((ev) => {
+                    const color = getEventColor(ev, releasedByCohort);
+                    return (
+                      <div key={ev.id} className="flex flex-col gap-1 p-3 rounded-xl border border-white/[0.06]">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold text-white truncate">{ev.title}</p>
+                          <span className={cn("w-2 h-2 rounded-full shrink-0", COLOR_DOT[color])} />
+                        </div>
+                        <p className="text-xs text-slate-400 truncate">{ev.cohortName}</p>
+                        <p className="text-xs text-slate-500">
+                          {new Date(ev.scheduledAt!).toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" })}
+                          {ev.startTime ? ` · ${ev.startTime}` : ""}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </motion.div>
 
+          {/* Legend */}
           <motion.div variants={fadeUp} className="academy-card-dark rounded-xl sm:rounded-2xl p-4">
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Leyenda</p>
             <div className="space-y-2">
-              {Object.entries(STATUS_LABEL).map(([key, label]) => (
+              {(Object.entries(COLOR_LABEL) as [EventColor, string][]).map(([key, label]) => (
                 <div key={key} className="flex items-center gap-2">
-                  <span className={cn("w-2 h-2 rounded-full shrink-0", DOT_COLOR[key] ?? "bg-slate-400")} />
+                  <span className={cn("w-2 h-2 rounded-full shrink-0", COLOR_DOT[key])} />
                   <span className="text-xs text-slate-400">{label}</span>
                 </div>
               ))}

@@ -1,34 +1,20 @@
 import { getCurrentUser } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { CalendarView } from "@/modules/academia/components/student/CalendarView";
+import { AdminCalendarView } from "@/modules/academia/components/admin/AdminCalendarView";
 
 export default async function AcademiaTeacherCalendarPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login");
 
-  const dbUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { tenantId: true },
-  });
-
-  const tenantId = dbUser?.tenantId ?? "";
-
-  const cohorts = await prisma.academyCohort.findMany({
-    where: { tenantId },
-    include: { course: { select: { id: true, title: true } } },
-    orderBy: { startDate: "desc" },
-  });
-
-  const events = cohorts.map((c) => ({
-    id: c.id,
-    name: c.name,
-    courseId: c.courseId,
-    courseTitle: c.course.title,
-    startDate: c.startDate.toISOString(),
-    endDate: c.endDate.toISOString(),
-    status: c.status,
-  }));
-
-  return <CalendarView events={events} />;
+  return (
+    <div className="space-y-6">
+      <header>
+        <h1 className="text-3xl font-black tracking-tight text-white font-display">Mi Calendario</h1>
+        <p className="text-slate-400 mt-1 text-base">
+          Sesiones programadas de tus cohortes asignados.
+        </p>
+      </header>
+      <AdminCalendarView />
+    </div>
+  );
 }

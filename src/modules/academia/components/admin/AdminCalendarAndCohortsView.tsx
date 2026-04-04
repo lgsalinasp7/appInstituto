@@ -2,27 +2,13 @@
 
 import { useState } from "react";
 import { CalendarDays, Users } from "lucide-react";
-import { CalendarView } from "@/modules/academia/components/student/CalendarView";
+import { AdminCalendarView } from "@/modules/academia/components/admin/AdminCalendarView";
 import { CohortsManagement } from "@/modules/academia/components/admin/CohortsManagement";
 import { cn } from "@/lib/utils";
 
 type TabId = "calendar" | "cohorts";
 
-interface CalendarEvent {
-  id: string;
-  name: string;
-  courseId: string;
-  courseTitle: string;
-  startDate: string;
-  endDate: string;
-  status: string;
-}
-
-interface AdminCalendarAndCohortsViewProps {
-  events: CalendarEvent[];
-}
-
-export function AdminCalendarAndCohortsView({ events }: AdminCalendarAndCohortsViewProps) {
+export function AdminCalendarAndCohortsView() {
   const [tab, setTab] = useState<TabId>("calendar");
 
   const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
@@ -35,7 +21,7 @@ export function AdminCalendarAndCohortsView({ events }: AdminCalendarAndCohortsV
       <header>
         <h1 className="text-3xl font-black tracking-tight text-white font-display">Calendario y cohortes</h1>
         <p className="text-slate-400 mt-1 text-base">
-          Vista de fechas y gestión de cohortes en un solo lugar.
+          Vista de sesiones y gestión de cohortes en un solo lugar.
         </p>
       </header>
 
@@ -58,7 +44,7 @@ export function AdminCalendarAndCohortsView({ events }: AdminCalendarAndCohortsV
         ))}
       </div>
 
-      {tab === "calendar" && <CalendarView events={events} />}
+      {tab === "calendar" && <AdminCalendarView />}
       {tab === "cohorts" && <CohortsManagement />}
     </div>
   );

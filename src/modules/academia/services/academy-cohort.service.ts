@@ -354,6 +354,10 @@ export class AcademyCohortService {
     if (!cohort) return null;
     return prisma.academyCohortEvent.findMany({
       where: { cohortId },
+      include: {
+        lesson: { select: { id: true, title: true } },
+        deliveredBy: { select: { id: true, name: true } },
+      },
       orderBy: [{ sessionOrder: "asc" }, { scheduledAt: "asc" }, { dayOfWeek: "asc" }],
     });
   }
@@ -515,9 +519,257 @@ export class AcademyCohortService {
       where: { id: eventId, cohortId },
     });
     if (!existing) return null;
+    // Al cancelar un evento que tiene constancia, limpiar deliveredAt/deliveredByUserId
+    if (data.cancelled === true && existing.deliveredAt) {
+      data.deliveredAt = null;
+      data.deliveredBy = { disconnect: true };
+    }
     return prisma.academyCohortEvent.update({
       where: { id: eventId },
       data,
     });
+  }
+
+  /**
+   * Marcar o revertir constancia de sesión impartida.
+   * RBAC: ADMIN puede marcar/revertir, TEACHER solo marcar (si asignado).
+   */
+  static async markEventDelivered(
+    eventId: string,
+    cohortId: string,
+    tenantId: string,
+    userId: string,
+    delivered: boolean,
+    userRole: string
+  ) {
+    const cohort = await prisma.academyCohort.findFirst({
+      where: { id: cohortId, tenantId },
+    });
+    if (!cohort) return { error: "Cohorte no encontrado", status: 404 };
+
+    const event = await prisma.academyCohortEvent.findFirst({
+      where: { id: eventId, cohortId },
+    });
+    if (!event) return { error: "Evento no encontrado", status: 404 };
+
+    if (event.cancelled) {
+      return { error: "No se puede marcar un evento cancelado", status: 400 };
+    }
+    if (!event.lessonId) {
+      return { error: "No se puede marcar un evento sin lección vinculada", status: 400 };
+    }
+
+    if (userRole === "ACADEMY_TEACHER") {
+      if (!delivered) {
+        return { error: "El profesor no puede revertir la constancia", status: 400 };
+      }
+      const assigned = await prisma.academyCohortTeacherAssignment.findFirst({
+        where: { cohortId, teacherId: userId },
+      });
+      if (!assigned) {
+        return { error: "No está asignado a este cohorte", status: 400 };
+      }
+    }
+
+    const updated = await prisma.academyCohortEvent.update({
+      where: { id: eventId },
+      data: {
+        deliveredAt: delivered ? new Date() : null,
+        deliveredByUserId: delivered ? userId : null,
+      },
+    });
+    return { data: updated };
+  }
+
+  /**
+   * Expandir un patrón recurrente (dayOfWeek) a eventos individuales con scheduledAt.
+   */
+  static async expandRecurringPattern(
+    cohortId: string,
+    tenantId: string,
+    input: {
+      title: string;
+      type: string;
+      dayOfWeek: number;
+      startTime: string;
+      endTime?: string | null;
+      lessonId?: string | null;
+      rangeStart?: Date;
+      rangeEnd?: Date;
+    }
+  ) {
+    const cohort = await prisma.academyCohort.findFirst({
+      where: { id: cohortId, tenantId },
+      select: { id: true, startDate: true, endDate: true, timezone: true },
+    });
+    if (!cohort) return null;
+
+    const start = input.rangeStart ?? cohort.startDate;
+    const end = input.rangeEnd ?? cohort.endDate;
+    const dates: Date[] = [];
+    const cursor = new Date(start);
+    // Avanzar al primer día que coincida con dayOfWeek
+    while (cursor <= end) {
+      if (cursor.getDay() === input.dayOfWeek) {
+        const [hh, mm] = input.startTime.split(":").map(Number);
+        const dt = new Date(cursor);
+        dt.setHours(hh, mm, 0, 0);
+        dates.push(dt);
+      }
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    if (dates.length === 0) return { count: 0 };
+
+    // Obtener max sessionOrder existente
+    const maxOrder = await prisma.academyCohortEvent.aggregate({
+      where: { cohortId },
+      _max: { sessionOrder: true },
+    });
+    let nextOrder = (maxOrder._max.sessionOrder ?? -1) + 1;
+
+    await prisma.academyCohortEvent.createMany({
+      data: dates.map((d) => ({
+        cohortId,
+        title: input.title,
+        type: input.type,
+        startTime: input.startTime,
+        endTime: input.endTime ?? null,
+        scheduledAt: d,
+        lessonId: input.lessonId ?? null,
+        sessionOrder: nextOrder++,
+      })),
+    });
+
+    return { count: dates.length };
+  }
+
+  /**
+   * Eventos para el calendario admin/teacher.
+   * Filtros opcionales: courseId, cohortId, teacherUserId (auto para teacher).
+   */
+  static async listEventsForCalendar(
+    tenantId: string,
+    filters: { courseId?: string; cohortId?: string; teacherUserId?: string }
+  ) {
+    const cohortWhere: Prisma.AcademyCohortWhereInput = {
+      tenantId,
+      kind: { not: "PROMOTIONAL" },
+    };
+    if (filters.courseId) cohortWhere.courseId = filters.courseId;
+    if (filters.cohortId) cohortWhere.id = filters.cohortId;
+    if (filters.teacherUserId) {
+      cohortWhere.teacherAssignments = {
+        some: { teacherId: filters.teacherUserId },
+      };
+    }
+
+    const cohorts = await prisma.academyCohort.findMany({
+      where: cohortWhere,
+      select: { id: true, name: true, course: { select: { id: true, title: true } } },
+    });
+    if (cohorts.length === 0) return [];
+
+    const cohortIds = cohorts.map((c) => c.id);
+    const cohortMap = new Map(cohorts.map((c) => [c.id, c]));
+
+    const events = await prisma.academyCohortEvent.findMany({
+      where: { cohortId: { in: cohortIds } },
+      include: {
+        lesson: { select: { id: true, title: true } },
+        deliveredBy: { select: { id: true, name: true } },
+      },
+      orderBy: [{ scheduledAt: "asc" }, { sessionOrder: "asc" }],
+    });
+
+    return events.map((e) => {
+      const c = cohortMap.get(e.cohortId);
+      return {
+        id: e.id,
+        cohortId: e.cohortId,
+        cohortName: c?.name ?? "",
+        courseId: c?.course.id ?? "",
+        courseTitle: c?.course.title ?? "",
+        title: e.title,
+        type: e.type,
+        scheduledAt: e.scheduledAt?.toISOString() ?? null,
+        startTime: e.startTime,
+        endTime: e.endTime,
+        lessonId: e.lessonId,
+        lessonTitle: e.lesson?.title ?? null,
+        sessionOrder: e.sessionOrder,
+        cancelled: e.cancelled,
+        deliveredAt: e.deliveredAt?.toISOString() ?? null,
+        deliveredByName: e.deliveredBy?.name ?? null,
+      };
+    });
+  }
+
+  /**
+   * Eventos para el calendario del estudiante.
+   * Solo cohortes con enrollment ACTIVE + kind ACADEMIC.
+   */
+  static async listEventsForStudentCalendar(userId: string, tenantId: string) {
+    const enrollments = await prisma.academyEnrollment.findMany({
+      where: {
+        userId,
+        status: "ACTIVE",
+        cohortId: { not: null },
+        course: { tenantId },
+      },
+      select: { cohortId: true },
+    });
+    const cohortIds = [...new Set(enrollments.map((e) => e.cohortId!))];
+    if (cohortIds.length === 0) return { events: [], releasedByCohort: {} };
+
+    const cohorts = await prisma.academyCohort.findMany({
+      where: { id: { in: cohortIds }, kind: "ACADEMIC" },
+      select: { id: true, name: true, course: { select: { id: true, title: true } } },
+    });
+    const filteredIds = cohorts.map((c) => c.id);
+    if (filteredIds.length === 0) return { events: [], releasedByCohort: {} };
+
+    const cohortMap = new Map(cohorts.map((c) => [c.id, c]));
+
+    const [events, releases] = await Promise.all([
+      prisma.academyCohortEvent.findMany({
+        where: { cohortId: { in: filteredIds } },
+        include: {
+          lesson: { select: { id: true, title: true } },
+        },
+        orderBy: [{ scheduledAt: "asc" }, { sessionOrder: "asc" }],
+      }),
+      prisma.academyCohortLessonRelease.findMany({
+        where: { cohortId: { in: filteredIds } },
+        select: { cohortId: true, lessonId: true },
+      }),
+    ]);
+
+    const releasedByCohort: Record<string, string[]> = {};
+    for (const r of releases) {
+      if (!releasedByCohort[r.cohortId]) releasedByCohort[r.cohortId] = [];
+      releasedByCohort[r.cohortId].push(r.lessonId);
+    }
+
+    return {
+      events: events.map((e) => {
+        const c = cohortMap.get(e.cohortId);
+        return {
+          id: e.id,
+          cohortId: e.cohortId,
+          cohortName: c?.name ?? "",
+          courseTitle: c?.course.title ?? "",
+          title: e.title,
+          type: e.type,
+          scheduledAt: e.scheduledAt?.toISOString() ?? null,
+          startTime: e.startTime,
+          lessonId: e.lessonId,
+          lessonTitle: e.lesson?.title ?? null,
+          cancelled: e.cancelled,
+          deliveredAt: e.deliveredAt?.toISOString() ?? null,
+        };
+      }),
+      releasedByCohort,
+    };
   }
 }

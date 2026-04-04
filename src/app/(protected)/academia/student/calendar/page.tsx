@@ -1,6 +1,7 @@
 import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { AcademyCohortService } from "@/modules/academia";
 import { CalendarView } from "@/modules/academia/components/student/CalendarView";
 
 export default async function AcademiaStudentCalendarPage() {
@@ -11,24 +12,10 @@ export default async function AcademiaStudentCalendarPage() {
     where: { id: user.id },
     select: { tenantId: true },
   });
-
   const tenantId = dbUser?.tenantId ?? "";
 
-  const cohorts = await prisma.academyCohort.findMany({
-    where: { tenantId },
-    include: { course: { select: { id: true, title: true } } },
-    orderBy: { startDate: "desc" },
-  });
+  const { events, releasedByCohort } =
+    await AcademyCohortService.listEventsForStudentCalendar(user.id, tenantId);
 
-  const events = cohorts.map((c) => ({
-    id: c.id,
-    name: c.name,
-    courseId: c.courseId,
-    courseTitle: c.course.title,
-    startDate: c.startDate.toISOString(),
-    endDate: c.endDate.toISOString(),
-    status: c.status,
-  }));
-
-  return <CalendarView events={events} />;
+  return <CalendarView events={events} releasedByCohort={releasedByCohort} />;
 }

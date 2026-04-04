@@ -140,6 +140,7 @@ model User {
   academyCohortAdminAuditsActor   AcademyCohortAdminAudit[] @relation("CohortAuditActor")
   academyInAppNotifications       AcademyInAppNotification[]
   academyCohortLessonReleasesReleased AcademyCohortLessonRelease[] @relation("CohortLessonReleaseActor")
+  cohortEventsDelivered               AcademyCohortEvent[]          @relation("CohortEventDeliveredBy")
 
   // Lavadero Pro
   lavaderoOrdersCreated   LavaderoOrder[]   @relation("LavaderoOrderCreator")
@@ -1644,11 +1645,18 @@ model AcademyCohortEvent {
   cancelled   Boolean      @default(false)
   createdAt   DateTime     @default(now())
 
+  /// Timestamp de cuando se marcó la sesión como impartida.
+  deliveredAt       DateTime?
+  /// Usuario que marcó la sesión como impartida.
+  deliveredByUserId String?
+  deliveredBy       User?    @relation("CohortEventDeliveredBy", fields: [deliveredByUserId], references: [id], onDelete: SetNull)
+
   cohort AcademyCohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
   lesson AcademyLesson? @relation(fields: [lessonId], references: [id], onDelete: SetNull)
 
   @@index([cohortId])
   @@index([lessonId])
+  @@index([deliveredByUserId])
 }
 
 model AcademyAssessment {

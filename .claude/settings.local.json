@@ -55,7 +55,13 @@
       "mcp__chrome-devtools__navigate_page",
       "mcp__chrome-devtools__take_screenshot",
       "mcp__chrome-devtools__click",
-      "mcp__chrome-devtools__take_snapshot"
+      "mcp__chrome-devtools__take_snapshot",
+      "Bash(git -C \"C:\\\\KALEDSOFT\\\\AppInstitutoProvisional\" diff --stat HEAD)",
+      "Bash(git -C \"C:\\\\KALEDSOFT\\\\AppInstitutoProvisional\" status --short -- \"*.ts\" \"*.tsx\" \"*.prisma\" \"*.sql\")",
+      "Bash(npx prisma db execute:*)",
+      "Bash(1 <<'SQL'\nSELECT e.id, e.title, e.type, e.\"lessonId\", e.\"scheduledAt\", e.\"dayOfWeek\", e.cancelled, e.\"deliveredAt\",\n       c.name as cohort_name\nFROM \"AcademyCohortEvent\" e\nJOIN \"AcademyCohort\" c ON c.id = e.\"cohortId\"\nORDER BY c.name, e.\"sessionOrder\"\nLIMIT 50;\nSQL)",
+      "mcp__browser-tools__getConsoleErrors",
+      "Bash(netstat:*)"
     ]
   }
 }
