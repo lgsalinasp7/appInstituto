@@ -33,6 +33,9 @@ interface InvitationData {
   academyRole?: string | null;
   academyCohortName?: string | null;
   isTrialInvitation?: boolean;
+  /** Ya existe usuario con este correo en el mismo instituto: confirmar contraseña, no crear cuenta nueva */
+  existingUserInTenant?: boolean;
+  prefillName?: string | null;
 }
 
 function getTenantLoginUrl(tenantSlug?: string): string {
@@ -78,10 +81,15 @@ export default function AcceptInvitationPage() {
         if (!data.success) {
           setError(data.error || "Invitación inválida");
         } else {
+          const row = data.data;
           setInvitation({
-            ...data.data,
-            isTrialInvitation: Boolean(data.data?.isTrialInvitation),
+            ...row,
+            isTrialInvitation: Boolean(row?.isTrialInvitation),
+            existingUserInTenant: Boolean(row?.existingUserInTenant),
           });
+          if (row?.prefillName?.trim()) {
+            setName(row.prefillName.trim());
+          }
         }
       } catch {
         setError("Error al validar la invitación. Verifica tu conexión e intenta de nuevo.");
@@ -123,7 +131,9 @@ export default function AcceptInvitationPage() {
         toast.error(data.error);
       } else {
         setSuccess(true);
-        toast.success("Cuenta creada exitosamente");
+        toast.success(
+          typeof data.message === "string" ? data.message : "Listo"
+        );
         const loginUrl = getTenantLoginUrl(invitation?.tenantSlug);
         setTimeout(() => {
           window.location.href = loginUrl;
@@ -192,9 +202,9 @@ export default function AcceptInvitationPage() {
         <Card className="relative z-10 w-full max-w-md bg-slate-900/50 backdrop-blur-xl border-slate-800 shadow-cyan-900/10">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <CheckCircle2 className="h-12 w-12 text-emerald-400" />
-            <h2 className="mt-4 text-xl font-semibold text-white">Cuenta Creada</h2>
+            <h2 className="mt-4 text-xl font-semibold text-white">Listo</h2>
             <p className="mt-2 text-center text-slate-400">
-              Tu cuenta ha sido creada exitosamente. Redirigiendo al login...
+              Invitación procesada. Redirigiendo al inicio de sesión...
             </p>
             <Button
               className="mt-6 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white border-0"
@@ -225,7 +235,9 @@ export default function AcceptInvitationPage() {
             Aceptar Invitación
           </CardTitle>
           <CardDescription className="text-center text-slate-400">
-            Completa tu información para crear tu cuenta
+            {invitation?.existingUserInTenant
+              ? "Este correo ya tiene cuenta en este instituto. Confirma tu contraseña para aplicar la invitación (matrícula o acceso)."
+              : "Completa tu información para crear tu cuenta"}
           </CardDescription>
         </CardHeader>
 
@@ -281,7 +293,9 @@ export default function AcceptInvitationPage() {
 
             <div className="space-y-2">
               <Label htmlFor="password" className="text-slate-400 font-semibold text-xs uppercase tracking-wider">
-                Contraseña
+                {invitation?.existingUserInTenant
+                  ? "Contraseña de tu cuenta"
+                  : "Contraseña"}
               </Label>
               <div className="relative">
                 <Input
@@ -333,10 +347,12 @@ export default function AcceptInvitationPage() {
               {submitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creando cuenta...
+                  {invitation?.existingUserInTenant ? "Aplicando invitación..." : "Creando cuenta..."}
                 </>
+              ) : invitation?.existingUserInTenant ? (
+                "Confirmar e ingresar"
               ) : (
-                "Crear Cuenta"
+                "Crear cuenta"
               )}
             </Button>
           </form>

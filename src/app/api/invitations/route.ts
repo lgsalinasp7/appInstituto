@@ -156,10 +156,17 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
         },
       }),
       prisma.invitation.findFirst({
-        where: { email, tenantId, status: "PENDING" },
+        where: {
+          tenantId,
+          status: "PENDING",
+          email: { equals: email.trim(), mode: "insensitive" },
+        },
       }),
-      prisma.user.findUnique({
-        where: { email },
+      prisma.user.findFirst({
+        where: {
+          email: { equals: email.trim(), mode: "insensitive" },
+        },
+        select: { id: true, tenantId: true },
       }),
       roleId
         ? prisma.role.findUnique({ where: { id: roleId } })
@@ -203,9 +210,13 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
       );
     }
 
-    if (existingUser) {
+    if (existingUser && existingUser.tenantId !== tenantId) {
       return NextResponse.json(
-        { success: false, error: "Este email ya está registrado en el sistema" },
+        {
+          success: false,
+          error:
+            "Este email ya está registrado en otro instituto. Usa otro correo o contacta soporte.",
+        },
         { status: 400 }
       );
     }

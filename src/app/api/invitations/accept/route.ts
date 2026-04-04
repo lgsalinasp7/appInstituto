@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from "next/server";
-import type { Prisma } from "@prisma/client";
+import type { PlatformRole, Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { AuthService } from "@/modules/auth/services/auth.service";
 import { courseService } from "@/modules/academy/services/academy.service";
@@ -161,6 +161,14 @@ export async function GET(request: Request) {
       trialNextCohortDate?: Date | null;
     };
 
+    const existingInTenant = await prisma.user.findFirst({
+      where: {
+        tenantId: invitation.tenantId,
+        email: { equals: invitation.email, mode: "insensitive" },
+      },
+      select: { id: true, name: true },
+    });
+
     return NextResponse.json({
       success: true,
       data: {
@@ -177,6 +185,8 @@ export async function GET(request: Request) {
         trialNextCohortDate: inv.trialNextCohortDate?.toISOString() ?? null,
         academyCohortId: invitation.academyCohortId ?? null,
         academyCohortName: invitation.academyCohort?.name ?? null,
+        existingUserInTenant: Boolean(existingInTenant),
+        prefillName: existingInTenant?.name?.trim() || null,
       },
     });
   } catch (error) {
@@ -248,16 +258,41 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if email is already registered
-    const existingUser = await prisma.user.findUnique({
-      where: { email: invitation.email },
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        email: { equals: invitation.email, mode: "insensitive" },
+      },
     });
 
-    if (existingUser) {
+    if (existingUser && existingUser.tenantId !== invitation.tenantId) {
       return NextResponse.json(
-        { success: false, error: "Este email ya está registrado" },
+        {
+          success: false,
+          error:
+            "Este correo pertenece a una cuenta de otro instituto. Inicia sesión con ese contexto o usa otro email.",
+        },
         { status: 400 }
       );
+    }
+
+    if (existingUser) {
+      if (!existingUser.password) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Tu cuenta no tiene contraseña (p. ej. acceso social). Inicia sesión como siempre o restablece la contraseña y vuelve a abrir el enlace de invitación.",
+          },
+          { status: 400 }
+        );
+      }
+      const passwordOk = await AuthService.verifyPassword(password, existingUser.password);
+      if (!passwordOk) {
+        return NextResponse.json(
+          { success: false, error: "Contraseña incorrecta" },
+          { status: 401 }
+        );
+      }
     }
 
     // Determine platformRole from academyRole or lavaderoRole
@@ -285,16 +320,27 @@ export async function POST(request: Request) {
         ? await courseService.getFirstLessonOfModule1(invitation.tenantId)
         : null;
 
-    // Create user with hashed password using transaction
+    const accountWasNew = !existingUser;
+
     const result = await prisma.$transaction(async (tx) => {
-      const user = await AuthService.createUser({
-        email: invitation.email,
-        name,
-        password,
-        roleId: invitation.roleId,
-        tenantId: invitation.tenantId,
-        ...(platformRole && { platformRole }),
-      });
+      const user = existingUser
+        ? await tx.user.update({
+            where: { id: existingUser.id },
+            data: {
+              name: name.trim() || existingUser.name || name,
+              roleId: invitation.roleId,
+              ...(platformRole ? { platformRole: platformRole as PlatformRole } : {}),
+            },
+            include: { role: true },
+          })
+        : await AuthService.createUser({
+            email: invitation.email,
+            name,
+            password,
+            roleId: invitation.roleId,
+            tenantId: invitation.tenantId,
+            ...(platformRole && { platformRole: platformRole as "ACADEMY_STUDENT" | "ACADEMY_TEACHER" | "ACADEMY_ADMIN" }),
+          });
 
       await tx.invitation.update({
         where: { id: invitation.id },
@@ -386,7 +432,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "Cuenta creada exitosamente",
+      message: accountWasNew ? "Cuenta creada exitosamente" : "Invitación aplicada a tu cuenta",
       data: {
         id: result.id,
         email: result.email,
