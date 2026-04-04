@@ -7,6 +7,11 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { isLessonPrecohortMeta } from "@/modules/academia/utils/is-lesson-precohort-meta";
 
+/** Native select dropdowns use OS chrome; without this, Windows often shows white list + inherited white text. */
+const academyNativeSelectClass =
+  "rounded border border-white/10 bg-white/5 text-slate-100 [color-scheme:dark]";
+const academyNativeOptionClass = "bg-slate-900 text-slate-100";
+
 interface LessonRow {
   id: string;
   title: string;
@@ -426,11 +431,16 @@ function EventEditorRow({
         <select
           value={lessonId}
           onChange={(e) => setLessonId(e.target.value)}
-          className="w-full max-w-[200px] rounded bg-white/5 border border-white/10 px-2 py-1 text-xs"
+          className={cn(
+            "w-full max-w-[200px] px-2 py-1 text-xs",
+            academyNativeSelectClass
+          )}
         >
-          <option value="">— Sin lección —</option>
+          <option value="" className={academyNativeOptionClass}>
+            — Sin lección —
+          </option>
           {lessons.map((l) => (
-            <option key={l.id} value={l.id}>
+            <option key={l.id} value={l.id} className={academyNativeOptionClass}>
               M{l.moduleOrder} · {l.title.slice(0, 40)}
             </option>
           ))}
@@ -564,11 +574,17 @@ function NewEventForm({
           <select
             value={type}
             onChange={(e) => setType(e.target.value)}
-            className="w-full rounded bg-white/5 border border-white/10 px-2 py-1.5 text-sm text-white"
+            className={cn("w-full px-2 py-1.5 text-sm", academyNativeSelectClass)}
           >
-            <option value="LIVE">LIVE</option>
-            <option value="HANDS_ON">HANDS_ON</option>
-            <option value="LECTURE">LECTURE</option>
+            <option value="LIVE" className={academyNativeOptionClass}>
+              LIVE
+            </option>
+            <option value="HANDS_ON" className={academyNativeOptionClass}>
+              HANDS_ON
+            </option>
+            <option value="LECTURE" className={academyNativeOptionClass}>
+              LECTURE
+            </option>
           </select>
         </div>
         <div>
@@ -576,11 +592,13 @@ function NewEventForm({
           <select
             value={lessonId}
             onChange={(e) => setLessonId(e.target.value)}
-            className="w-full rounded bg-white/5 border border-white/10 px-2 py-1.5 text-sm text-white"
+            className={cn("w-full px-2 py-1.5 text-sm", academyNativeSelectClass)}
           >
-            <option value="">— Sin lección —</option>
+            <option value="" className={academyNativeOptionClass}>
+              — Sin lección —
+            </option>
             {lessons.map((l) => (
-              <option key={l.id} value={l.id}>
+              <option key={l.id} value={l.id} className={academyNativeOptionClass}>
                 M{l.moduleOrder} · {l.title.slice(0, 40)}
               </option>
             ))}

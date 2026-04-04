@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PlatformRole, PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
@@ -27,7 +27,15 @@ async function main() {
 
   console.log("\n=== USERS CON ROLE ACADEMY ===");
   const users = await prisma.user.findMany({
-    where: { platformRole: { startsWith: "ACADEMY" } },
+    where: {
+      platformRole: {
+        in: [
+          PlatformRole.ACADEMY_STUDENT,
+          PlatformRole.ACADEMY_TEACHER,
+          PlatformRole.ACADEMY_ADMIN,
+        ],
+      },
+    },
     select: { id: true, name: true, email: true, platformRole: true, tenantId: true },
   });
   for (const u of users) {

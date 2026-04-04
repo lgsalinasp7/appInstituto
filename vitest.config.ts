@@ -10,6 +10,8 @@ export default defineConfig({
     include: ["tests/**/*.{test,spec}.{ts,tsx}"],
     exclude: ["node_modules", ".next"],
     globals: true,
+    // Fork workers occasionally hit startup timeouts on Windows; threads are more reliable here.
+    pool: "threads",
   },
   resolve: {
     alias: {
