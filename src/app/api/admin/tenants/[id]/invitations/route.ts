@@ -139,10 +139,17 @@ export const POST = withCSRF(
 
       const [existingInvitation, existingUser, roles] = await Promise.all([
         prisma.invitation.findFirst({
-          where: { email, tenantId: tenant.id, status: "PENDING" },
+          where: {
+            tenantId: tenant.id,
+            status: "PENDING",
+            email: { equals: email.trim(), mode: "insensitive" },
+          },
         }),
-        prisma.user.findUnique({
-          where: { email },
+        prisma.user.findFirst({
+          where: {
+            email: { equals: email.trim(), mode: "insensitive" },
+          },
+          select: { id: true, tenantId: true },
         }),
         prisma.role.findMany({
           where: { tenantId: tenant.id },
@@ -156,9 +163,13 @@ export const POST = withCSRF(
           { status: 400 }
         );
       }
-      if (existingUser) {
+      if (existingUser && existingUser.tenantId !== tenant.id) {
         return NextResponse.json(
-          { success: false, error: "Este email ya est? registrado en el sistema" },
+          {
+            success: false,
+            error:
+              "Este email ya está registrado en otro instituto. Usa otro correo o contacta soporte.",
+          },
           { status: 400 }
         );
       }
