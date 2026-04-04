@@ -3,42 +3,24 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import {
-  Bell,
-  Search,
-  Menu,
-  X,
-  LayoutDashboard,
-  BookOpen,
-  Users,
-  Calendar,
-  Trophy,
-  UserCircle,
-  LogOut,
-  Sparkles,
-  School,
-} from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
+import { Bell, Search, Menu, X, UserCircle, LogOut } from "lucide-react";
 import { performLogout } from "@/lib/logout";
+import { cn } from "@/lib/utils";
 import { KALED_ACADEMY_CONFIG } from "../../config/academy-tenant.config";
+import {
+  ACADEMY_ADMIN_NAV_GROUPS,
+  ACADEMY_ADMIN_MOBILE_QUICK,
+  isAcademyAdminNavItemActive,
+} from "../../config/academy-admin-nav.config";
 
 interface Props {
   userName: string;
   userImage?: string;
 }
 
-const NAV = [
-  { href: "/academia/admin/analytics", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/academia/admin/courses", label: "Cursos", icon: BookOpen },
-  { href: "/academia/admin/cohorts", label: "Cohortes", icon: School },
-  { href: "/academia/admin/calendar", label: "Calendario", icon: Calendar },
-  { href: "/academia/admin/leaderboard", label: "Leaderboard", icon: Trophy },
-  { href: "/academia/admin/users", label: "Usuarios", icon: Users },
-  { href: "/academia/admin/trial-activity", label: "Prueba", icon: Sparkles },
-  { href: "/academia/admin/profile", label: "Mi Perfil", icon: UserCircle },
-];
-
 export function AcademyAdminTopbar({ userName, userImage }: Props) {
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef<HTMLDivElement>(null);
@@ -187,34 +169,65 @@ export function AcademyAdminTopbar({ userName, userImage }: Props) {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-              {NAV.map((item) => (
+            <nav className="flex-1 p-4 overflow-y-auto space-y-5">
+              {ACADEMY_ADMIN_NAV_GROUPS.map((group) => (
+                <div key={group.title} className="space-y-1">
+                  <div className="px-2 pb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">
+                    {group.title}
+                  </div>
+                  {group.items.map((item) => {
+                    const active = isAcademyAdminNavItemActive(pathname, item);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 px-4 py-3 rounded-xl text-[14px] transition-colors",
+                          active
+                            ? "text-white bg-white/[0.08]"
+                            : "text-slate-400 hover:text-white hover:bg-white/[0.05]"
+                        )}
+                      >
+                        <item.icon className="w-5 h-5 shrink-0" />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              ))}
+              <div className="pt-2 border-t border-white/[0.06]">
                 <Link
-                  key={item.href}
-                  href={item.href}
+                  href="/academia/admin/profile"
                   onClick={() => setMobileOpen(false)}
                   className="flex items-center gap-3 px-4 py-3 rounded-xl text-[14px] text-slate-400 hover:text-white hover:bg-white/[0.05] transition-colors"
                 >
-                  <item.icon className="w-5 h-5 shrink-0" />
-                  {item.label}
+                  <UserCircle className="w-5 h-5 shrink-0" />
+                  Mi perfil
                 </Link>
-              ))}
+              </div>
             </nav>
           </div>
         </>
       )}
 
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-[72px] bg-slate-950/95 border-t border-white/[0.06] backdrop-blur-xl flex items-center justify-around px-2 z-40 overflow-x-auto">
-        {NAV.slice(0, 5).map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="flex flex-col items-center gap-1 text-slate-500 hover:text-cyan-400 transition-colors p-2 shrink-0 min-w-[56px]"
-          >
-            <item.icon className="w-6 h-6" />
-            <span className="text-[9px] font-medium text-center leading-tight">{item.label}</span>
-          </Link>
-        ))}
+        {ACADEMY_ADMIN_MOBILE_QUICK.map((item) => {
+          const active = isAcademyAdminNavItemActive(pathname, item);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex flex-col items-center gap-1 transition-colors p-2 shrink-0 min-w-[56px]",
+                active ? "text-cyan-400" : "text-slate-500 hover:text-cyan-400"
+              )}
+            >
+              <item.icon className="w-6 h-6" />
+              <span className="text-[9px] font-medium text-center leading-tight">{item.label}</span>
+            </Link>
+          );
+        })}
       </nav>
     </>
   );

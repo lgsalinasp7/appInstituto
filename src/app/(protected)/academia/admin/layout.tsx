@@ -27,11 +27,7 @@ export default async function AdminLayout({
 
   return (
     <div className="academy-shell-dark w-full h-screen flex font-sans relative overflow-hidden">
-      <AcademyAdminSidebar
-        userName={dbUser.name ?? "Admin"}
-        userEmail={dbUser.email ?? ""}
-        userImage={dbUser.image ?? undefined}
-      />
+      <AcademyAdminSidebar />
 
       <div className="w-full flex flex-col min-w-0 min-h-0 lg:pl-[260px]">
         <AcademyAdminTopbar

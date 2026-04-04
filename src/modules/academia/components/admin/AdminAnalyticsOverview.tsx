@@ -148,7 +148,7 @@ export function AdminAnalyticsOverview() {
           Vista consolidada del tenant. Gestiona cohortes y usuarios desde el menú lateral.
         </p>
         <Link
-          href="/academia/admin/trial-activity"
+          href="/academia/admin/users?tab=trial"
           className="inline-flex items-center gap-2 text-sm font-semibold text-amber-400 hover:text-amber-300 transition-colors"
         >
           <Sparkles className="w-4 h-4" />

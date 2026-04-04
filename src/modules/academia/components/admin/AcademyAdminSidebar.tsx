@@ -6,37 +6,12 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { KALED_ACADEMY_CONFIG } from "../../config/academy-tenant.config";
 import {
-  LayoutDashboard,
-  BookOpen,
-  Users,
-  Calendar,
-  Trophy,
-  LogOut,
-  Sparkles,
-  School,
-} from "lucide-react";
+  ACADEMY_ADMIN_NAV_GROUPS,
+  isAcademyAdminNavItemActive,
+} from "../../config/academy-admin-nav.config";
 
-interface Props {
-  userName: string;
-  userEmail: string;
-  userImage?: string;
-}
-
-const NAV = [
-  { href: "/academia/admin/analytics", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/academia/admin/courses", label: "Cursos", icon: BookOpen },
-  { href: "/academia/admin/cohorts", label: "Cohortes", icon: School },
-  { href: "/academia/admin/calendar", label: "Calendario", icon: Calendar },
-  { href: "/academia/admin/leaderboard", label: "Leaderboard", icon: Trophy },
-  { href: "/academia/admin/users", label: "Usuarios", icon: Users },
-  { href: "/academia/admin/trial-activity", label: "Usuarios de prueba", icon: Sparkles },
-];
-
-export function AcademyAdminSidebar({ userName, userImage }: Props) {
+export function AcademyAdminSidebar() {
   const pathname = usePathname();
-
-  const isActive = (href: string, exact?: boolean) =>
-    exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
 
   return (
     <aside className="hidden lg:flex flex-col w-[260px] shrink-0 academy-sidebar-rail-dark fixed left-0 top-0 z-30 h-screen">
@@ -58,60 +33,38 @@ export function AcademyAdminSidebar({ userName, userImage }: Props) {
         </div>
       </div>
 
-      <nav className="flex-1 px-4 py-5 space-y-0.5 overflow-y-auto scrollbar-hide min-h-0">
-        <div className="px-2.5 mb-4">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-600">
-            Administración
-          </span>
-        </div>
-
-        {NAV.map((item) => {
-          const active = isActive(item.href, item.exact);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "relative flex items-center gap-3 px-3.5 py-3 rounded-xl text-[14px] font-medium transition-all",
-                active
-                  ? "academy-menu-item-active-dark text-white"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"
-              )}
-            >
-              {active && <span className="academy-menu-highlight-dark" />}
-              <item.icon
-                className={cn("w-5 h-5 shrink-0", active ? "text-white" : "text-slate-500")}
-              />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="px-4 pb-5 border-t border-white/[0.05] pt-4 flex items-center gap-3">
-        {userImage ? (
-          <img
-            src={userImage}
-            alt={userName}
-            className="w-10 h-10 rounded-full border border-white/10 shrink-0 object-cover"
-          />
-        ) : (
-          <div className="w-10 h-10 rounded-full border border-cyan-500/30 bg-cyan-500/10 flex items-center justify-center text-cyan-400 text-sm font-bold shrink-0">
-            {userName[0]?.toUpperCase() ?? "A"}
+      <nav className="flex-1 px-4 py-5 overflow-y-auto scrollbar-hide min-h-0 space-y-6">
+        {ACADEMY_ADMIN_NAV_GROUPS.map((group) => (
+          <div key={group.title} className="space-y-0.5">
+            <div className="px-2.5 pb-2">
+              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600/90">
+                {group.title}
+              </span>
+            </div>
+            {group.items.map((item) => {
+              const active = isAcademyAdminNavItemActive(pathname, item);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "relative flex items-center gap-3 px-3.5 py-3 rounded-xl text-[14px] font-medium transition-all",
+                    active
+                      ? "academy-menu-item-active-dark text-white"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"
+                  )}
+                >
+                  {active && <span className="academy-menu-highlight-dark" />}
+                  <item.icon
+                    className={cn("w-5 h-5 shrink-0", active ? "text-white" : "text-slate-500")}
+                  />
+                  {item.label}
+                </Link>
+              );
+            })}
           </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <div className="text-[13px] font-semibold text-white truncate">{userName}</div>
-          <div className="text-[11px] text-slate-500 truncate">Administrador</div>
-        </div>
-        <a
-          href="/auth/logout"
-          className="p-2 rounded-lg text-slate-600 hover:text-slate-300 hover:bg-white/[0.05] transition-colors"
-          title="Cerrar sesión"
-        >
-          <LogOut className="w-4 h-4" />
-        </a>
-      </div>
+        ))}
+      </nav>
     </aside>
   );
 }

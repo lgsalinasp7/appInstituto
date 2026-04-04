@@ -70,6 +70,18 @@ export default async function AdminCohortStudentsPage({ params }: PageProps) {
     },
   });
 
+  const enrollmentIds = enrollments.map((e) => e.id);
+  const snapshots =
+    enrollmentIds.length > 0
+      ? await prisma.academyStudentSnapshot.findMany({
+          where: { enrollmentId: { in: enrollmentIds } },
+          select: { enrollmentId: true, overallProgress: true },
+        })
+      : [];
+  const progressByEnrollment = new Map(
+    snapshots.map((s) => [s.enrollmentId, Number(s.overallProgress)])
+  );
+
   const rows = enrollments.map((e) => ({
     enrollmentId: e.id,
     userId: e.user.id,
@@ -79,6 +91,7 @@ export default async function AdminCohortStudentsPage({ params }: PageProps) {
     isTrial: e.isTrial,
     enrolledAt: e.enrolledAt.toISOString(),
     trialExpiresAt: e.trialExpiresAt?.toISOString() ?? null,
+    overallProgress: progressByEnrollment.get(e.id) ?? null,
   }));
 
   return (
