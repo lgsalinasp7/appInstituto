@@ -58,10 +58,10 @@ export const GET = withPlatformAdmin(
     });
 
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching campaign performance:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Error al obtener rendimiento' },
+      { success: false, error: error instanceof Error ? error.message : 'Error al obtener rendimiento' },
       { status: 500 }
     );
   }

@@ -276,6 +276,9 @@ export class ContentService {
 
     const pendingDeliveries = [];
 
+    // TODO: N+1 query – this loop issues one query per student. Optimize by pre-fetching
+    // all distinct programIds from `students`, querying AcademicContent once with
+    // `where: { programId: { in: programIds } }`, then grouping results by programId in memory.
     for (const student of students) {
       const programContents = await prisma.academicContent.findMany({
         where: { programId: student.programId },

@@ -18,10 +18,13 @@ interface ProviderConfig {
 interface StreamWithFallbackConfig {
   system: string;
   messages: Array<{ role: string; content: string }>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tools?: any;
   maxTokens?: number;
   temperature?: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   stopWhen?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onFinish?: (result: any) => Promise<void>;
 }
 
@@ -115,7 +118,7 @@ export class ModelProviderService {
   static async streamWithFallback(
     config: StreamWithFallbackConfig
   ): Promise<FallbackResult> {
-    const errors: Array<{ provider: string; error: any }> = [];
+    const errors: Array<{ provider: string; error: unknown }> = [];
 
     for (const provider of this.providers) {
       try {
@@ -132,6 +135,7 @@ export class ModelProviderService {
           `[ModelProvider] Using ${provider.name} (${provider.modelId})`
         );
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result = streamText({
           model,
           system: config.system,

@@ -21,7 +21,7 @@ export const updateMasterclassSchema = createMasterclassSchema.partial();
 export const publicLeadCaptureSchema = z.object({
   name: z.string().min(2, 'Nombre requerido'),
   phone: z.string().min(7, 'Teléfono requerido'),
-  email: z.string().email('Email inválido'),
+  email: z.email('Email inválido'),
   city: z.string().trim().min(2, 'Ciudad inválida').nullish(),
   programId: z.string().nullish(),
   masterclassSlug: z.string().nullish(),

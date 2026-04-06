@@ -14,7 +14,7 @@ import { withTenantAuth, withTenantAuthAndCSRF } from "@/lib/api-auth";
 
 // Validation schema for creating invitation
 const createInvitationSchema = z.object({
-  email: z.string().email("Email inválido"),
+  email: z.email("Email inválido"),
   roleId: z.string().min(1, "Rol requerido").optional(),
   inviterId: z.string().min(1, "Invitador requerido"),
   academyRole: z.enum(["ACADEMY_STUDENT", "ACADEMY_TEACHER", "ACADEMY_ADMIN"]).optional(),

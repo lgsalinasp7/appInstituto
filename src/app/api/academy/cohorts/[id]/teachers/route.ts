@@ -59,7 +59,7 @@ export const GET = withAcademyAuth(
 const postSchema = z
   .object({
     teacherUserId: z.string().min(1).optional(),
-    teacherEmail: z.string().email().optional(),
+    teacherEmail: z.email().optional(),
   })
   .refine((d) => Boolean(d.teacherUserId?.trim()) || Boolean(d.teacherEmail?.trim()), {
     message: "Indica el email del profesor o su ID de usuario",

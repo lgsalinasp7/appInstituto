@@ -10,7 +10,7 @@
  */
 
 import { prisma } from '@/lib/prisma';
-import { KaledTriggerType } from '@prisma/client';
+import { KaledTriggerType, type Prisma, type KaledLead, type KaledCampaign } from '@prisma/client';
 
 // ============================================
 // Constantes de Scoring
@@ -42,13 +42,11 @@ export async function triggerSequenceByStage(leadId: string, newStage: string, t
   try {
     console.log(`🔄 Triggering sequences for lead ${leadId} with stage: ${newStage}`);
 
-    const where: any = {
+    const where: Prisma.KaledEmailSequenceWhereInput = {
       triggerType: 'STAGE_BASED' as KaledTriggerType,
       isActive: true,
+      ...(tenantId ? { tenantId } : {}),
     };
-    if (tenantId) {
-      where.tenantId = tenantId;
-    }
 
     // Buscar secuencias activas para este stage
     const sequences = await prisma.kaledEmailSequence.findMany({
@@ -186,8 +184,8 @@ async function executeSequence(leadId: string, sequenceId: string, tenantId?: st
  */
 function renderTemplateVariables(
   content: string,
-  lead: any,
-  campaign: any | null
+  lead: KaledLead,
+  campaign: KaledCampaign | null
 ): string {
   let rendered = content;
 

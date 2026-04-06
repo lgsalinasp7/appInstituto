@@ -126,7 +126,7 @@ export class RAGService {
     const queryEmbedding = await EmbeddingService.embedText(query);
     const vectorStr = `[${queryEmbedding.join(",")}]`;
 
-    const results: any[] = await prisma.$queryRawUnsafe(
+    const results: Array<{ content: string; title: string; category: string; similarity: number }> = await prisma.$queryRawUnsafe(
       `SELECT c.content, d.title, d.category,
               1 - (c.embedding <=> $1::vector) as similarity
        FROM "AiDocumentChunk" c

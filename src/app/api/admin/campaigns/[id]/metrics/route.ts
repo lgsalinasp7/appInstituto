@@ -9,9 +9,9 @@ import { KaledCampaignService } from '@/modules/kaled-crm/services/kaled-campaig
 
 export const GET = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const id = params.id;
 
       if (!id) {
@@ -30,12 +30,12 @@ export const GET = withPlatformAdmin(
         success: true,
         data: metrics,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error getting campaign metrics:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al obtener las métricas de la campaña',
+          error: error instanceof Error ? error.message : 'Error al obtener las métricas de la campaña',
         },
         { status: 500 }
       );

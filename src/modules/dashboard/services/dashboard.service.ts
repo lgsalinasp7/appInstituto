@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 import { getCurrentTenantId } from "@/lib/tenant";
 
 export interface DashboardStats {
@@ -11,6 +12,10 @@ export interface DashboardStats {
   revenueChart?: { name: string; total: number }[];
   methodStats?: { method: string; count: number; amount: number; percentage: number }[];
 }
+
+// Fallback default when SystemConfig key "MONTHLY_GOAL" is not set for the tenant.
+// TODO: Ensure every tenant has a MONTHLY_GOAL row in SystemConfig so this fallback is never used.
+const DEFAULT_MONTHLY_GOAL = 10_000_000; // 10M COP
 
 export class DashboardService {
   static async getDashboardStats(): Promise<DashboardStats> {
@@ -134,7 +139,7 @@ export class DashboardService {
     const todayRevenue = Number(todayPayments._sum.amount) || 0;
     const monthlyRevenue = Number(monthlyPayments._sum.amount) || 0;
     const overdueAmount = Number(overdueCommitments._sum.amount) || 0;
-    const monthlyGoal = configGoal ? Number(configGoal.value) : 10000000; // 10M por defecto
+    const monthlyGoal = configGoal ? Number(configGoal.value) : DEFAULT_MONTHLY_GOAL;
 
     // Process Revenue Chart (Weekly buckets)
     const revenueChart = this.processRevenueChart(paymentsHistory, fourWeeksAgo);
@@ -160,7 +165,7 @@ export class DashboardService {
     };
   }
 
-  private static processRevenueChart(payments: { paymentDate: Date; amount: any }[], startDate: Date) {
+  private static processRevenueChart(payments: { paymentDate: Date; amount: Prisma.Decimal }[], startDate: Date) {
     // Agrupar por semanas (Semana 1, Semana 2, etc, desde start date)
     const weeks: Record<string, number> = {
       "Semana 1": 0,

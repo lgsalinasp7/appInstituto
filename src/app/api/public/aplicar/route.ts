@@ -8,12 +8,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { resolveKaledTenantId } from '@/lib/kaled-tenant';
+import type { Prisma } from '@prisma/client';
 
 const aplicarSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
   age: z.number().positive('La edad debe ser positiva'),
   city: z.string().trim().min(2, 'Ciudad inválida'),
-  email: z.string().email('Email inválido').optional(),
+  email: z.email('Email inválido').optional(),
   phone: z.string().optional(),
   technicalLevel: z.string().optional(),
   motivation: z.string().optional(),
@@ -108,7 +109,7 @@ export async function POST(request: NextRequest) {
           utmCampaign: data.utmCampaign || lead.utmCampaign,
           utmContent: data.utmContent || lead.utmContent,
           observations: `${lead.observations || ''}\n\n${observations}`.trim(),
-          filteringData: filteringData as any,
+          filteringData: filteringData as Prisma.InputJsonValue,
           updatedAt: new Date(),
         },
       });
@@ -127,7 +128,7 @@ export async function POST(request: NextRequest) {
           status: 'NUEVO',
           source: 'APLICAR_COHORTE',
           observations: observations,
-          filteringData: filteringData as any,
+          filteringData: filteringData as Prisma.InputJsonValue,
           utmSource: data.utmSource,
           utmMedium: data.utmMedium,
           utmCampaign: data.utmCampaign,
@@ -141,7 +142,7 @@ export async function POST(request: NextRequest) {
       data: { leadId: lead.id },
       message: 'Solicitud recibida correctamente',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error capturing aplicar lead:', error);
     return NextResponse.json(
       {

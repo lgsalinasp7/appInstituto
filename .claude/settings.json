@@ -1,5 +1,32 @@
 {
   "enabledPlugins": {
     "chrome-devtools-mcp@claude-plugins-official": true
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/check-patterns.sh",
+            "timeout": 10,
+            "statusMessage": "Verificando patrones de codigo..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Recuerda: ejecuta npm run build si hiciste cambios significativos'",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
   }
 }

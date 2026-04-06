@@ -18,7 +18,7 @@ const createDocumentSchema = z.object({
 
 export const GET = withPlatformAdmin(
   ['SUPER_ADMIN'],
-  async (request: NextRequest, user, context?: any) => {
+  async (request: NextRequest, user, _context?: { params: Promise<Record<string, string>> }) => {
     const tenantId = await resolveKaledTenantId(request.nextUrl.searchParams.get('tenantId'));
 
     const documents = await RAGService.listDocuments(tenantId);
@@ -32,7 +32,7 @@ export const GET = withPlatformAdmin(
 
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN'],
-  async (request: NextRequest, user, context?: any) => {
+  async (request: NextRequest, user, _context?: { params: Promise<Record<string, string>> }) => {
     const tenantId = await resolveKaledTenantId(request.nextUrl.searchParams.get('tenantId'));
 
     const body = await request.json();

@@ -94,8 +94,8 @@ export class ChatService {
         id: msg.id,
         role: msg.role as "user" | "assistant" | "system",
         content: msg.content,
-        toolCalls: msg.toolCalls as any,
-        toolResults: msg.toolResults as any,
+        toolCalls: msg.toolCalls as unknown as Message["toolCalls"],
+        toolResults: msg.toolResults as unknown as Message["toolResults"],
         createdAt: msg.createdAt,
       })),
     };
@@ -157,8 +157,8 @@ export class ChatService {
         conversationId: data.conversationId,
         role: data.role,
         content: data.content,
-        toolCalls: (data.toolCalls as any) || undefined,
-        toolResults: (data.toolResults as any) || undefined,
+        toolCalls: (data.toolCalls as object) || undefined,
+        toolResults: (data.toolResults as object) || undefined,
       },
     });
 
@@ -181,8 +181,8 @@ export class ChatService {
       id: message.id,
       role: message.role as "user" | "assistant" | "system",
       content: message.content,
-      toolCalls: message.toolCalls as any,
-      toolResults: message.toolResults as any,
+      toolCalls: message.toolCalls as unknown as Message["toolCalls"],
+      toolResults: message.toolResults as unknown as Message["toolResults"],
       createdAt: message.createdAt,
     };
   }

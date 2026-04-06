@@ -19,9 +19,9 @@ export class CsvParserService {
       columns: true,
       skip_empty_lines: true,
       trim: true,
-    });
+    }) as Record<string, string>[];
 
-    return records.map((row: any, index: number) => {
+    return records.map((row, index) => {
       try {
         return campaignCostRowSchema.parse({
           date: row.date,
@@ -32,8 +32,8 @@ export class CsvParserService {
           impressions: row.impressions ? parseInt(row.impressions) : undefined,
           clicks: row.clicks ? parseInt(row.clicks) : undefined,
         });
-      } catch (error: any) {
-        throw new Error(`Error en fila ${index + 2}: ${error.message}`);
+      } catch (error: unknown) {
+        throw new Error(`Error en fila ${index + 2}: ${error instanceof Error ? error.message : String(error)}`);
       }
     });
   }

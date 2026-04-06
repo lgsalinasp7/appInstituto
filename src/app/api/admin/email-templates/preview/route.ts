@@ -100,12 +100,12 @@ export const POST = withPlatformAdmin(
           html: previewHtml,
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error generating preview:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al generar vista previa',
+          error: error instanceof Error ? error.message : 'Error al generar vista previa',
         },
         { status: 500 }
       );

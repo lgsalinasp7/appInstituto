@@ -23,7 +23,7 @@ const updateProductSchema = z.object({
   darkMode: z.boolean().optional(),
   footerText: z.string().nullable().optional(),
   adminName: z.string().nullable().optional(),
-  adminEmail: z.string().email().nullable().optional(),
+  adminEmail: z.email().nullable().optional(),
   plan: z.string().optional(),
   allowPublicRegistration: z.boolean().optional(),
   isActive: z.boolean().optional(),
@@ -31,9 +31,9 @@ const updateProductSchema = z.object({
 
 export const GET = withPlatformAdmin(
   ['SUPER_ADMIN'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const id = params.id;
 
       const product = await ProductsService.getById(id);
@@ -45,10 +45,10 @@ export const GET = withPlatformAdmin(
       }
 
       return NextResponse.json({ success: true, data: product });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error getting product:', error);
       return NextResponse.json(
-        { success: false, error: error.message || 'Error al obtener producto' },
+        { success: false, error: error instanceof Error ? error.message : 'Error al obtener producto' },
         { status: 500 }
       );
     }
@@ -57,9 +57,9 @@ export const GET = withPlatformAdmin(
 
 export const PUT = withPlatformAdmin(
   ['SUPER_ADMIN'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const id = params.id;
 
       const body = await request.json();
@@ -78,10 +78,10 @@ export const PUT = withPlatformAdmin(
         data: product,
         message: 'Producto actualizado correctamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating product:', error);
       return NextResponse.json(
-        { success: false, error: error.message || 'Error al actualizar producto' },
+        { success: false, error: error instanceof Error ? error.message : 'Error al actualizar producto' },
         { status: 500 }
       );
     }
@@ -90,9 +90,9 @@ export const PUT = withPlatformAdmin(
 
 export const DELETE = withPlatformAdmin(
   ['SUPER_ADMIN'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const id = params.id;
 
       await ProductsService.delete(id);
@@ -100,10 +100,10 @@ export const DELETE = withPlatformAdmin(
         success: true,
         message: 'Producto desactivado correctamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting product:', error);
       return NextResponse.json(
-        { success: false, error: error.message || 'Error al desactivar producto' },
+        { success: false, error: error instanceof Error ? error.message : 'Error al desactivar producto' },
         { status: 500 }
       );
     }

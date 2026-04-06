@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { KaledCampaignStatus } from '@prisma/client';
+import { KaledCampaignStatus, type Prisma } from '@prisma/client';
 import type {
   CreateCampaignData,
   UpdateCampaignData,
@@ -18,7 +18,7 @@ export class KaledCampaignService {
         description: data.description,
         startDate: data.startDate,
         endDate: data.endDate,
-        timeline: data.timeline as any,
+        timeline: data.timeline as unknown as Prisma.InputJsonValue,
         status: 'DRAFT',
         tenantId,
       },
@@ -52,7 +52,7 @@ export class KaledCampaignService {
         },
       },
       orderBy: { createdAt: 'desc' },
-    }) as any;
+    }) as unknown as CampaignWithRelations[];
   }
 
   /**
@@ -89,7 +89,7 @@ export class KaledCampaignService {
           },
         },
       },
-    }) as any;
+    }) as unknown as CampaignWithRelations | null;
   }
 
   /**
@@ -103,7 +103,7 @@ export class KaledCampaignService {
         description: data.description,
         startDate: data.startDate,
         endDate: data.endDate,
-        timeline: data.timeline as any,
+        timeline: data.timeline as unknown as Prisma.InputJsonValue,
         status: data.status,
         updatedAt: new Date(),
       },

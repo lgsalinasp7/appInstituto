@@ -36,12 +36,12 @@ export const GET = withPlatformAdmin(
         success: true,
         data: result,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error getting leads:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al obtener los leads',
+          error: error instanceof Error ? error.message : 'Error al obtener los leads',
         },
         { status: 500 }
       );

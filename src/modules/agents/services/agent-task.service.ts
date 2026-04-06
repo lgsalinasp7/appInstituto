@@ -56,7 +56,7 @@ export class AgentTaskService {
         agentType: data.agentType,
         priority: data.priority,
         prospectId: data.prospectId,
-        metadata: (data.metadata as any) || undefined,
+        metadata: (data.metadata as object) || undefined,
         tenantId: tenantId || undefined,
       },
     });
@@ -77,14 +77,14 @@ export class AgentTaskService {
     },
     tenantId: string | null
   ): Promise<AgentTask> {
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
 
     if (data.title !== undefined) updateData.title = data.title;
     if (data.description !== undefined) updateData.description = data.description;
     if (data.status !== undefined) updateData.status = data.status;
     if (data.priority !== undefined) updateData.priority = data.priority;
     if (data.result !== undefined) updateData.result = data.result;
-    if (data.metadata !== undefined) updateData.metadata = data.metadata as any;
+    if (data.metadata !== undefined) updateData.metadata = data.metadata as object;
 
     // Si cambia a COMPLETADA, guardar completedAt
     if (data.status === 'COMPLETADA') {

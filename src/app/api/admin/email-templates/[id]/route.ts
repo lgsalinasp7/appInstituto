@@ -22,9 +22,9 @@ const updateTemplateSchema = z.object({
 // GET /api/admin/email-templates/[id]
 export const GET = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const id = params.id;
 
       if (!id) {
@@ -53,12 +53,12 @@ export const GET = withPlatformAdmin(
         success: true,
         data: template,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error getting template:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al obtener la plantilla',
+          error: error instanceof Error ? error.message : 'Error al obtener la plantilla',
         },
         { status: 500 }
       );
@@ -69,9 +69,9 @@ export const GET = withPlatformAdmin(
 // PUT /api/admin/email-templates/[id]
 export const PUT = withPlatformAdmin(
   ['SUPER_ADMIN', 'MARKETING'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const id = params.id;
 
       if (!id) {
@@ -108,12 +108,12 @@ export const PUT = withPlatformAdmin(
         data: template,
         message: 'Plantilla actualizada correctamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating template:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al actualizar la plantilla',
+          error: error instanceof Error ? error.message : 'Error al actualizar la plantilla',
         },
         { status: 500 }
       );
@@ -124,9 +124,9 @@ export const PUT = withPlatformAdmin(
 // DELETE /api/admin/email-templates/[id]
 export const DELETE = withPlatformAdmin(
   ['SUPER_ADMIN'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const id = params.id;
 
       if (!id) {
@@ -145,12 +145,12 @@ export const DELETE = withPlatformAdmin(
         success: true,
         message: 'Plantilla eliminada correctamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting template:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al eliminar la plantilla',
+          error: error instanceof Error ? error.message : 'Error al eliminar la plantilla',
         },
         { status: 500 }
       );

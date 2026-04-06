@@ -53,10 +53,10 @@ export const GET = withPlatformAdmin(
     }));
 
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching stagnant leads:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Error al obtener leads estancados' },
+      { success: false, error: error instanceof Error ? error.message : 'Error al obtener leads estancados' },
       { status: 500 }
     );
   }

@@ -9,14 +9,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledLeadService } from '@/modules/masterclass/services/kaled-lead.service';
 import { z } from 'zod';
+import type { KaledLead } from '@prisma/client';
 
 const updateLeadSchema = z.object({
   name: z.string().optional(),
-  email: z.string().email('Email inválido').optional(),
+  email: z.email('Email inválido').optional(),
   phone: z.string().optional(),
   status: z.string().optional(),
   observations: z.string().optional(),
-  filteringData: z.record(z.string(), z.any()).optional(),
+  filteringData: z.record(z.string(), z.unknown()).optional(),
   utmSource: z.string().optional(),
   utmMedium: z.string().optional(),
   utmCampaign: z.string().optional(),
@@ -27,9 +28,9 @@ const updateLeadSchema = z.object({
 // GET /api/admin/kaled-leads/[id]
 export const GET = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const id = params.id;
 
       if (!id) {
@@ -58,12 +59,12 @@ export const GET = withPlatformAdmin(
         success: true,
         data: lead,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error getting lead:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al obtener el lead',
+          error: error instanceof Error ? error.message : 'Error al obtener el lead',
         },
         { status: 500 }
       );
@@ -74,9 +75,9 @@ export const GET = withPlatformAdmin(
 // PUT /api/admin/kaled-leads/[id]
 export const PUT = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const id = params.id;
 
       if (!id) {
@@ -106,7 +107,7 @@ export const PUT = withPlatformAdmin(
       // Actualizar lead
       const lead = await KaledLeadService.updateLead(
         id,
-        validation.data,
+        validation.data as Partial<KaledLead>,
         user.id
       );
 
@@ -115,12 +116,12 @@ export const PUT = withPlatformAdmin(
         data: lead,
         message: 'Lead actualizado correctamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating lead:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al actualizar el lead',
+          error: error instanceof Error ? error.message : 'Error al actualizar el lead',
         },
         { status: 500 }
       );
@@ -131,9 +132,9 @@ export const PUT = withPlatformAdmin(
 // DELETE /api/admin/kaled-leads/[id]
 export const DELETE = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const id = params.id;
 
       if (!id) {
@@ -153,12 +154,12 @@ export const DELETE = withPlatformAdmin(
         success: true,
         message: 'Lead eliminado correctamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting lead:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al eliminar el lead',
+          error: error instanceof Error ? error.message : 'Error al eliminar el lead',
         },
         { status: 500 }
       );

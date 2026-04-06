@@ -68,7 +68,7 @@ export class KaledLeadService {
                     utmCampaign: data.utmCampaign || lead.utmCampaign,
                     utmContent: data.utmContent || lead.utmContent,
                     observations: observations ? `${lead.observations || ''}\n[RE-REGISTRO]: ${observations}`.trim() : lead.observations,
-                    filteringData: filteringData as any,
+                    filteringData: filteringData as object,
                 },
             });
         } else {
@@ -82,7 +82,7 @@ export class KaledLeadService {
                     status: 'NUEVO',
                     source: data.masterclassSlug ? `MASTERCLASS: ${data.masterclassSlug}` : 'LANDING',
                     observations: observations ? `[MASTERCLASS]: ${observations}` : null,
-                    filteringData: filteringData as any,
+                    filteringData: filteringData as object,
                     utmSource: data.utmSource,
                     utmMedium: data.utmMedium,
                     utmCampaign: data.utmCampaign,
@@ -178,7 +178,7 @@ export class KaledLeadService {
         const statusChanged = data.status && data.status !== currentLead.status;
 
         // Convertir null a undefined para campos opcionales
-        const updateData: any = {};
+        const updateData: Record<string, unknown> = {};
         Object.entries(data).forEach(([key, value]) => {
             updateData[key] = value === null ? undefined : value;
         });
@@ -325,7 +325,7 @@ export class KaledLeadService {
             offset = 0,
         } = params;
 
-        const where: any = { tenantId };
+        const where: Record<string, unknown> = { tenantId };
 
         if (!includeDeleted) {
             where.deletedAt = null;

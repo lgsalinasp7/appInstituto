@@ -5,6 +5,7 @@ import { CreditCard, Search, Download, Calendar, Send, Eye, Edit2, X, Printer, A
 import { Pagination } from "./Pagination";
 import { sendReceiptViaWhatsApp } from "../utils/whatsapp";
 import type { PaymentWithRelations, PaymentStats } from "@/modules/payments/types";
+import type { PaymentMethod } from "@prisma/client";
 import { toast } from "sonner";
 
 interface Payment extends PaymentWithRelations { } // Alias for convenience
@@ -623,7 +624,7 @@ function EditPaymentModal({ payment, onClose, onSave }: { payment: Payment, onCl
               <label className="text-xs font-black text-[#1e3a5f] uppercase mb-1.5 block">Método</label>
               <select
                 value={formData.method}
-                onChange={(e) => setFormData({ ...formData, method: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, method: e.target.value as PaymentMethod })}
                 className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-sm"
               >
                 <option value="BANCOLOMBIA">Bancolombia</option>

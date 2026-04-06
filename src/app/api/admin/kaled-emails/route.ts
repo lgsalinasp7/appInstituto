@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
 
 const EMAIL_STATUSES = [
   'PENDING',
@@ -31,7 +32,7 @@ export const GET = withPlatformAdmin(
       const pageSize = Math.min(100, Math.max(1, pageSizeRaw));
       const skip = (page - 1) * pageSize;
 
-      const where: any = {};
+      const where: Prisma.KaledEmailLogWhereInput = {};
 
       if (isEmailStatus(status)) {
         where.status = status;
@@ -101,12 +102,12 @@ export const GET = withPlatformAdmin(
           },
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error getting kaled email logs:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al obtener los correos',
+          error: error instanceof Error ? error.message : 'Error al obtener los correos',
         },
         { status: 500 }
       );

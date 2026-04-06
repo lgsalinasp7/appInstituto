@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
             });
 
             for (const commitment of commitments) {
-                const notifications = (commitment.notificationsSent as any) || {};
+                const notifications = (commitment.notificationsSent as Record<string, boolean | string>) || {};
 
                 // If already sent for this tier, skip
                 if (notifications[tier.key]) continue;

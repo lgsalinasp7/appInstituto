@@ -21,12 +21,12 @@ export const GET = withPlatformAdmin(
         success: true,
         data: metrics,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error getting conversion metrics:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al obtener las métricas de conversión',
+          error: error instanceof Error ? error.message : 'Error al obtener las métricas de conversión',
         },
         { status: 500 }
       );

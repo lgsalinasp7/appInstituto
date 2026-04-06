@@ -23,7 +23,7 @@ export class AgentMemoryService {
         category: data.category,
         content: data.content,
         score: data.score || 50,
-        metadata: (data.metadata as any) || undefined,
+        metadata: (data.metadata as object) || undefined,
         tenantId: tenantId || undefined,
       },
     });
@@ -41,10 +41,10 @@ export class AgentMemoryService {
     },
     tenantId: string | null
   ): Promise<AgentMemory> {
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (data.score !== undefined) updateData.score = data.score;
     if (data.content !== undefined) updateData.content = data.content;
-    if (data.metadata !== undefined) updateData.metadata = data.metadata as any;
+    if (data.metadata !== undefined) updateData.metadata = data.metadata as object;
 
     return prisma.agentMemory.update({
       where: {

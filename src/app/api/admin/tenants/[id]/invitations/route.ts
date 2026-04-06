@@ -56,7 +56,7 @@ export const GET = withPlatformAdmin(
 );
 
 const bodySchema = z.object({
-  email: z.string().email("Email inv?lido"),
+  email: z.email("Email inv?lido"),
   academyRole: z.enum(["ACADEMY_STUDENT", "ACADEMY_TEACHER", "ACADEMY_ADMIN"]).optional(),
   academyCohortId: z.string().min(1).optional(),
   isTrialInvitation: z.boolean().optional(),

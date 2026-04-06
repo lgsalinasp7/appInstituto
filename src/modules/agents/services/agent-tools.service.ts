@@ -42,8 +42,8 @@ export class AgentToolsService {
             taskId: task.id,
             message: 'Tarea creada exitosamente',
           };
-        } catch (error: any) {
-          return { success: false, error: error.message };
+        } catch (error: unknown) {
+          return { success: false, error: error instanceof Error ? error.message : String(error) };
         }
       },
     });
@@ -89,8 +89,8 @@ export class AgentToolsService {
             memoryId: memory.id,
             message: 'Memoria guardada',
           };
-        } catch (error: any) {
-          return { success: false, error: error.message };
+        } catch (error: unknown) {
+          return { success: false, error: error instanceof Error ? error.message : String(error) };
         }
       },
     });

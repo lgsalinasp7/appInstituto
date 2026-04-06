@@ -1,3 +1,4 @@
+// TODO: Evaluate migration to @ai-sdk/react useChat for built-in streaming support
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
