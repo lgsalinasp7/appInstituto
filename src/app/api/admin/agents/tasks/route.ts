@@ -25,10 +25,10 @@ export const GET = withPlatformAdmin(
         success: true,
         data: tasks,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching agent tasks:', error);
       return Response.json(
-        { success: false, error: error.message },
+        { success: false, error: error instanceof Error ? error.message : 'Error al obtener tareas' },
         { status: 500 }
       );
     }
@@ -50,7 +50,7 @@ export const POST = withPlatformAdmin(
         data: task,
         message: 'Tarea creada exitosamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof ZodError) {
         return Response.json(
           { success: false, error: 'Validation error', details: error.issues },
@@ -60,7 +60,7 @@ export const POST = withPlatformAdmin(
 
       console.error('Error creating agent task:', error);
       return Response.json(
-        { success: false, error: error.message },
+        { success: false, error: error instanceof Error ? error.message : 'Error al crear tarea' },
         { status: 500 }
       );
     }

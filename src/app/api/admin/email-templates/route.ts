@@ -31,12 +31,12 @@ export const GET = withPlatformAdmin(
         success: true,
         data: templates,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error getting templates:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al obtener las plantillas',
+          error: error instanceof Error ? error.message : 'Error al obtener las plantillas',
         },
         { status: 500 }
       );
@@ -71,12 +71,12 @@ export const POST = withPlatformAdmin(
         data: template,
         message: 'Plantilla creada correctamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating template:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al crear la plantilla',
+          error: error instanceof Error ? error.message : 'Error al crear la plantilla',
         },
         { status: 500 }
       );

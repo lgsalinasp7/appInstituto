@@ -6,7 +6,7 @@ import { z } from "zod";
 export const createCustomerSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
   phone: z.string().min(7, "Teléfono inválido").max(15),
-  email: z.string().email("Email inválido").optional().or(z.literal("")),
+  email: z.email("Email inválido").optional().or(z.literal("")),
 });
 
 export const updateCustomerSchema = createCustomerSchema.partial();

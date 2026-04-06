@@ -16,9 +16,9 @@ const meetingSchema = z.object({
 
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const id = params.id;
 
       if (!id) {
@@ -61,12 +61,12 @@ export const POST = withPlatformAdmin(
         data: interaction,
         message: 'Reunión registrada correctamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error logging meeting:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al registrar la reunión',
+          error: error instanceof Error ? error.message : 'Error al registrar la reunión',
         },
         { status: 500 }
       );

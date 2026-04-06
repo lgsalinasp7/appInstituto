@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { withTenantAuth } from "@/lib/api-auth";
+import type { Prisma } from "@prisma/client";
 
 export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) => {
   const searchParams = request.nextUrl.searchParams;
@@ -8,7 +9,7 @@ export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) =
   const search = searchParams.get("search");
   const showSuperAdmin = searchParams.get("showSuperAdmin") === "true";
 
-  const where: any = {
+  const where: Prisma.UserWhereInput = {
     isActive: true,
     tenantId, // Filtrar por tenant
   };

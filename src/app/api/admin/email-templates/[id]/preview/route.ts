@@ -14,9 +14,9 @@ const previewSchema = z.object({
 
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const id = params.id;
 
       if (!id) {
@@ -52,12 +52,12 @@ export const POST = withPlatformAdmin(
         success: true,
         data: rendered,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error previewing template:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al previsualizar la plantilla',
+          error: error instanceof Error ? error.message : 'Error al previsualizar la plantilla',
         },
         { status: 500 }
       );

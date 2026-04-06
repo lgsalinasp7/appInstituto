@@ -22,7 +22,7 @@ const createProductSchema = z.object({
   darkMode: z.boolean().optional(),
   footerText: z.string().optional(),
   adminName: z.string().optional(),
-  adminEmail: z.string().email().optional(),
+  adminEmail: z.email().optional(),
   plan: z.string().optional(),
   allowPublicRegistration: z.boolean().optional(),
 });
@@ -33,10 +33,10 @@ export const GET = withPlatformAdmin(
     try {
       const products = await ProductsService.getAll();
       return NextResponse.json({ success: true, data: products });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error getting products:', error);
       return NextResponse.json(
-        { success: false, error: error.message || 'Error al obtener productos' },
+        { success: false, error: error instanceof Error ? error.message : 'Error al obtener productos' },
         { status: 500 }
       );
     }
@@ -62,10 +62,10 @@ export const POST = withPlatformAdmin(
         { success: true, data: product, message: 'Producto creado correctamente' },
         { status: 201 }
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating product:', error);
       return NextResponse.json(
-        { success: false, error: error.message || 'Error al crear producto' },
+        { success: false, error: error instanceof Error ? error.message : 'Error al crear producto' },
         { status: 500 }
       );
     }

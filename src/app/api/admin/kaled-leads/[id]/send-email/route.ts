@@ -18,9 +18,9 @@ const sendEmailSchema = z.object({
 
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const leadId = params.id;
 
       if (!leadId) {
@@ -83,12 +83,12 @@ export const POST = withPlatformAdmin(
         data: emailLog,
         message: 'Email enviado correctamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sending email:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al enviar el email',
+          error: error instanceof Error ? error.message : 'Error al enviar el email',
         },
         { status: 500 }
       );

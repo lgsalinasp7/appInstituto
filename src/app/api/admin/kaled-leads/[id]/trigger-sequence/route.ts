@@ -14,9 +14,9 @@ import { triggerSequenceByStage } from '@/modules/kaled-crm/services/kaled-autom
 
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const leadId = params.id;
 
       if (!leadId) {
@@ -64,12 +64,12 @@ export const POST = withPlatformAdmin(
               : `No hay secuencias activas para el estado "${lead.status}". Revisa que exista una secuencia STAGE_BASED con targetStage="${lead.status}" y isActive=true.`,
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error triggering sequence:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al activar la secuencia',
+          error: error instanceof Error ? error.message : 'Error al activar la secuencia',
         },
         { status: 500 }
       );

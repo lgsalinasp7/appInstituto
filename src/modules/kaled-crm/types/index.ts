@@ -9,6 +9,7 @@ import type {
   KaledInteractionType,
   KaledCampaignStatus,
   KaledTriggerType,
+  Prisma,
   User,
 } from '@prisma/client';
 
@@ -67,7 +68,7 @@ export interface InteractionWithUser extends KaledLeadInteraction {
 export interface CreateInteractionData {
   type: KaledInteractionType;
   content: string;
-  metadata?: Record<string, any>;
+  metadata?: Prisma.InputJsonObject;
   kaledLeadId: string;
   userId?: string;
 }
@@ -199,7 +200,7 @@ export interface CreateSequenceStepData {
   templateId: string;
   orderIndex: number;
   delayHours: number;
-  conditions?: Record<string, any>;
+  conditions?: Prisma.InputJsonObject;
 }
 
 export interface TriggerConfig {
@@ -230,7 +231,7 @@ export interface CreateEmailLogData {
   templateId?: string;
   kaledLeadId?: string;
   requiresApproval?: boolean;
-  metadata?: Record<string, any>;
+  metadata?: Prisma.InputJsonObject;
   tenantId?: string;
 }
 
@@ -339,7 +340,7 @@ export interface LeadFormData {
   phone?: string;
   status?: string;
   observations?: string;
-  filteringData?: Record<string, any>;
+  filteringData?: Prisma.InputJsonObject;
   utmSource?: string;
   utmMedium?: string;
   utmCampaign?: string;
@@ -364,7 +365,7 @@ export interface MeetingFormData {
 
 export interface WhatsAppFormData {
   content: string;
-  metadata?: Record<string, any>;
+  metadata?: Prisma.InputJsonObject;
 }
 
 export interface TaskFormData {

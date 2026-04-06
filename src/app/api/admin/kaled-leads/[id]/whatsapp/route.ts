@@ -7,17 +7,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledInteractionService } from '@/modules/kaled-crm/services/kaled-interaction.service';
 import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
 
 const whatsappSchema = z.object({
   content: z.string().min(1, 'El contenido es requerido'),
-  metadata: z.record(z.string(), z.any()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const id = params.id;
 
       if (!id) {
@@ -51,7 +52,7 @@ export const POST = withPlatformAdmin(
         id,
         user.id,
         content,
-        metadata
+        metadata as Prisma.InputJsonObject | undefined
       );
 
       return NextResponse.json({
@@ -59,12 +60,12 @@ export const POST = withPlatformAdmin(
         data: interaction,
         message: 'Mensaje de WhatsApp registrado correctamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error logging WhatsApp:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al registrar el mensaje de WhatsApp',
+          error: error instanceof Error ? error.message : 'Error al registrar el mensaje de WhatsApp',
         },
         { status: 500 }
       );

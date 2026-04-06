@@ -14,10 +14,10 @@ export const GET = withPlatformAdmin(
         success: true,
         data: board,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching agent board:', error);
       return Response.json(
-        { success: false, error: error.message },
+        { success: false, error: error instanceof Error ? error.message : 'Error al obtener el board' },
         { status: 500 }
       );
     }

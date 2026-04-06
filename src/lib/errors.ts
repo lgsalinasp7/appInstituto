@@ -164,12 +164,12 @@ export function handleApiError(error: unknown): NextResponse<ErrorResponse> {
   }
 
   // Errores de Zod (validación)
-  if ((error as any).name === "ZodError") {
-    const zodError = error as any;
+  if (error instanceof Error && error.name === "ZodError") {
+    const zodError = error as Error & { issues?: Array<{ path: (string | number)[]; message: string }>; errors?: Array<{ path: (string | number)[]; message: string }> };
     const errors: Record<string, string[]> = {};
     const issues = zodError.issues ?? zodError.errors ?? [];
-    
-    issues.forEach((err: any) => {
+
+    issues.forEach((err) => {
       const path = err.path.join(".");
       if (!errors[path]) {
         errors[path] = [];
@@ -187,8 +187,8 @@ export function handleApiError(error: unknown): NextResponse<ErrorResponse> {
   }
 
   // Errores de Prisma
-  if ((error as any).code) {
-    const prismaError = error as any;
+  if (error instanceof Error && "code" in error) {
+    const prismaError = error as Error & { code: string; meta?: { target?: string[] } };
     
     // Unique constraint violation
     if (prismaError.code === "P2002") {
@@ -259,9 +259,9 @@ export function handleApiError(error: unknown): NextResponse<ErrorResponse> {
  * });
  */
 export function asyncHandler<T>(
-  handler: (request: Request, ...args: any[]) => Promise<T>
-): (request: Request, ...args: any[]) => Promise<T | NextResponse<ErrorResponse>> {
-  return async (request: Request, ...args: any[]) => {
+  handler: (request: Request, ...args: unknown[]) => Promise<T>
+): (request: Request, ...args: unknown[]) => Promise<T | NextResponse<ErrorResponse>> {
+  return async (request: Request, ...args: unknown[]) => {
     try {
       return await handler(request, ...args);
     } catch (error) {

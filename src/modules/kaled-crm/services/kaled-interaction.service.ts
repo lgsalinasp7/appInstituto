@@ -1,10 +1,10 @@
 import { prisma } from '@/lib/prisma';
-import { KaledInteractionType } from '@prisma/client';
+import { KaledInteractionType, type Prisma } from '@prisma/client';
 
 export interface CreateInteractionData {
   type: KaledInteractionType;
   content: string;
-  metadata?: Record<string, any>;
+  metadata?: Prisma.InputJsonObject;
   kaledLeadId: string;
   userId?: string;
   tenantId?: string;
@@ -73,7 +73,7 @@ export class KaledInteractionService {
     leadId: string,
     userId: string,
     content: string,
-    metadata?: Record<string, any>
+    metadata?: Prisma.InputJsonObject
   ) {
     return prisma.kaledLeadInteraction.create({
       data: {

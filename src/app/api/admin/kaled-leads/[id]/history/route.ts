@@ -9,9 +9,9 @@ import { KaledLeadService } from '@/modules/masterclass/services/kaled-lead.serv
 
 export const GET = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const id = params.id;
 
       if (!id) {
@@ -31,12 +31,12 @@ export const GET = withPlatformAdmin(
         success: true,
         data: history,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error getting lead history:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al obtener el historial del lead',
+          error: error instanceof Error ? error.message : 'Error al obtener el historial del lead',
         },
         { status: 500 }
       );

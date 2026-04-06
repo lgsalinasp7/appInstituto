@@ -14,9 +14,9 @@ const noteSchema = z.object({
 
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const id = params.id;
 
       if (!id) {
@@ -57,12 +57,12 @@ export const POST = withPlatformAdmin(
         data: interaction,
         message: 'Nota agregada correctamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating note:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al crear la nota',
+          error: error instanceof Error ? error.message : 'Error al crear la nota',
         },
         { status: 500 }
       );

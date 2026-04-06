@@ -24,8 +24,8 @@ export class KaledEmailService {
         variables: data.variables || [],
         category: data.category || 'GENERAL',
         campaignId: data.campaignId,
-        isLibraryTemplate: (data as any).isLibraryTemplate || false,
-        phase: (data as any).phase || null,
+        isLibraryTemplate: (data as CreateTemplateData & { isLibraryTemplate?: boolean; phase?: string }).isLibraryTemplate || false,
+        phase: (data as CreateTemplateData & { isLibraryTemplate?: boolean; phase?: string }).phase || null,
         tenantId,
       },
       include: {
@@ -197,13 +197,13 @@ export class KaledEmailService {
       });
 
       return emailLog;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Marcar como fallido
       await prisma.kaledEmailLog.update({
         where: { id: emailLog.id },
         data: {
           status: 'FAILED',
-          metadata: { error: error.message },
+          metadata: { error: error instanceof Error ? error.message : String(error) },
         },
       });
 
@@ -272,7 +272,7 @@ export class KaledEmailService {
 
     try {
       // Enviar email
-      const htmlContent = (emailLog.metadata as any)?.htmlContent as string;
+      const htmlContent = (emailLog.metadata as Record<string, unknown>)?.htmlContent as string;
       const result = await sendTemplateEmail({
         to: emailLog.to,
         subject: emailLog.subject,
@@ -288,22 +288,22 @@ export class KaledEmailService {
           approvedBy: userId,
           approvedAt: new Date(),
           metadata: {
-            ...(emailLog.metadata as any),
+            ...(emailLog.metadata as Record<string, unknown>),
             result,
           },
         },
       });
 
       return emailLog;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Marcar como fallido
       await prisma.kaledEmailLog.update({
         where: { id: emailLogId },
         data: {
           status: 'FAILED',
           metadata: {
-            ...(emailLog.metadata as any),
-            error: error.message,
+            ...(emailLog.metadata as Record<string, unknown>),
+            error: error instanceof Error ? error.message : String(error),
           },
         },
       });
@@ -360,13 +360,13 @@ export class KaledEmailService {
       });
 
       return emailLog;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Marcar como fallido
       await prisma.kaledEmailLog.update({
         where: { id: emailLog.id },
         data: {
           status: 'FAILED',
-          metadata: { error: error.message },
+          metadata: { error: error instanceof Error ? error.message : String(error) },
         },
       });
 

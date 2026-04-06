@@ -8,7 +8,7 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./tests/setup.ts"],
     include: ["tests/**/*.{test,spec}.{ts,tsx}"],
-    exclude: ["node_modules", ".next"],
+    exclude: ["node_modules", ".next", "tests/e2e/**"],
     globals: true,
     // Fork workers occasionally hit startup timeouts on Windows; threads are more reliable here.
     pool: "threads",

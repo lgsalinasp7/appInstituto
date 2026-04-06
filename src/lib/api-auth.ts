@@ -354,7 +354,7 @@ export function withPlatformAdmin(
  *   return NextResponse.json({ success: true });
  * }));
  */
-export function withCSRF(handler: (request: NextRequest, context?: any) => Promise<Response>) {
+export function withCSRF(handler: (request: NextRequest, context?: { params: Promise<Record<string, string>> }) => Promise<Response>) {
   return async (request: NextRequest, context?: { params: Promise<Record<string, string>> }) => {
     try {
       // Solo validar en mutaciones

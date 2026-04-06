@@ -9,9 +9,9 @@ import { KaledCampaignService } from '@/modules/kaled-crm/services/kaled-campaig
 
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN', 'MARKETING'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const id = params.id;
 
       if (!id) {
@@ -31,12 +31,12 @@ export const POST = withPlatformAdmin(
         data: campaign,
         message: 'Campaña iniciada correctamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error starting campaign:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al iniciar la campaña',
+          error: error instanceof Error ? error.message : 'Error al iniciar la campaña',
         },
         { status: 500 }
       );

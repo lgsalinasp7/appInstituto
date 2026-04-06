@@ -9,13 +9,14 @@ import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledCampaignService } from '@/modules/kaled-crm/services/kaled-campaign.service';
 import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 import { z } from 'zod';
+import type { CampaignTimeline } from '@/modules/kaled-crm/types';
 
 const createCampaignSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
   description: z.string().optional(),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
-  timeline: z.any().optional(),
+  timeline: z.unknown().optional(),
 });
 
 // GET /api/admin/campaigns
@@ -30,12 +31,12 @@ export const GET = withPlatformAdmin(
         success: true,
         data: campaigns,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error getting campaigns:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al obtener las campañas',
+          error: error instanceof Error ? error.message : 'Error al obtener las campañas',
         },
         { status: 500 }
       );
@@ -70,7 +71,7 @@ export const POST = withPlatformAdmin(
         description: data.description,
         startDate: data.startDate ? new Date(data.startDate) : undefined,
         endDate: data.endDate ? new Date(data.endDate) : undefined,
-        timeline: data.timeline,
+        timeline: data.timeline as CampaignTimeline | undefined,
       });
 
       return NextResponse.json({
@@ -78,12 +79,12 @@ export const POST = withPlatformAdmin(
         data: campaign,
         message: 'Campaña creada correctamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating campaign:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al crear la campaña',
+          error: error instanceof Error ? error.message : 'Error al crear la campaña',
         },
         { status: 500 }
       );

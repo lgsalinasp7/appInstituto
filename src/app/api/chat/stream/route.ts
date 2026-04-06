@@ -16,6 +16,7 @@
 import { NextRequest } from "next/server";
 import { tool, stepCountIs } from "ai";
 import { ChatService, AiToolsService } from "@/modules/chat";
+import type { ToolCall, ToolResult } from "@/modules/chat/types";
 import {
   getStudentStatsToolSchema,
   getProgramInfoToolSchema,
@@ -337,8 +338,8 @@ KaledSoft es un sistema integral para gestionar:
             conversationId: currentConversationId,
             role: "assistant",
             content: text,
-            toolCalls: toolCalls as any,
-            toolResults: toolResults as any,
+            toolCalls: toolCalls as ToolCall[],
+            toolResults: toolResults as ToolResult[],
           },
           user.id,
           tenantId

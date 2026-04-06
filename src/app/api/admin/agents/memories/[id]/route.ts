@@ -8,7 +8,7 @@ import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 
 export const PUT = withPlatformAdmin(
   ['SUPER_ADMIN'],
-  async (request: NextRequest, user, context?: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
       const tenantId = await resolveKaledTenantId(request.nextUrl.searchParams.get('tenantId'));
 
@@ -28,7 +28,7 @@ export const PUT = withPlatformAdmin(
         data: memory,
         message: 'Memoria actualizada exitosamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof ZodError) {
         return Response.json(
           { success: false, error: 'Validation error', details: error.issues },
@@ -38,7 +38,7 @@ export const PUT = withPlatformAdmin(
 
       console.error('Error updating agent memory:', error);
       return Response.json(
-        { success: false, error: error.message },
+        { success: false, error: error instanceof Error ? error.message : 'Error al actualizar memoria' },
         { status: 500 }
       );
     }
@@ -47,7 +47,7 @@ export const PUT = withPlatformAdmin(
 
 export const DELETE = withPlatformAdmin(
   ['SUPER_ADMIN'],
-  async (request: NextRequest, user, context?: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
       const tenantId = await resolveKaledTenantId(request.nextUrl.searchParams.get('tenantId'));
 
@@ -66,10 +66,10 @@ export const DELETE = withPlatformAdmin(
         success: true,
         message: 'Memoria eliminada exitosamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting agent memory:', error);
       return Response.json(
-        { success: false, error: error.message },
+        { success: false, error: error instanceof Error ? error.message : 'Error al eliminar memoria' },
         { status: 500 }
       );
     }

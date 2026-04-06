@@ -5,7 +5,7 @@ import { resolveKaledTenantId } from "@/lib/kaled-tenant";
 
 export const GET = withPlatformAdmin(
   ['SUPER_ADMIN'],
-  async (request: NextRequest, user, context?: any) => {
+  async (request: NextRequest, user, _context?: { params: Promise<Record<string, string>> }) => {
     const tenantId = await resolveKaledTenantId(request.nextUrl.searchParams.get('tenantId'));
 
     const config = await prisma.systemConfig.findUnique({
@@ -21,7 +21,7 @@ export const GET = withPlatformAdmin(
 
 export const PUT = withPlatformAdmin(
   ['SUPER_ADMIN'],
-  async (request: NextRequest, user, context?: any) => {
+  async (request: NextRequest, user, _context?: { params: Promise<Record<string, string>> }) => {
     const tenantId = await resolveKaledTenantId(request.nextUrl.searchParams.get('tenantId'));
 
     const body = await request.json();

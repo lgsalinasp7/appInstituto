@@ -54,10 +54,10 @@ export const GET = withPlatformAdmin(
       success: true,
       data: analysis,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error analyzing funnel:', error);
     return Response.json(
-      { success: false, error: error.message },
+      { success: false, error: error instanceof Error ? error.message : 'Error al analizar funnel' },
       { status: 500 }
     );
   }

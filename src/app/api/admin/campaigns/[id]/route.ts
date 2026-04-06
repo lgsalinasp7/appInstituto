@@ -9,22 +9,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledCampaignService } from '@/modules/kaled-crm/services/kaled-campaign.service';
 import { z } from 'zod';
+import type { CampaignTimeline } from '@/modules/kaled-crm/types';
 
 const updateCampaignSchema = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
-  timeline: z.any().optional(),
+  timeline: z.unknown().optional(),
   status: z.enum(['DRAFT', 'ACTIVE', 'PAUSED', 'COMPLETED', 'ARCHIVED']).optional(),
 });
 
 // GET /api/admin/campaigns/[id]
 export const GET = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const id = params.id;
 
       if (!id) {
@@ -53,12 +54,12 @@ export const GET = withPlatformAdmin(
         success: true,
         data: campaign,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error getting campaign:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al obtener la campaña',
+          error: error instanceof Error ? error.message : 'Error al obtener la campaña',
         },
         { status: 500 }
       );
@@ -69,9 +70,9 @@ export const GET = withPlatformAdmin(
 // PUT /api/admin/campaigns/[id]
 export const PUT = withPlatformAdmin(
   ['SUPER_ADMIN', 'MARKETING'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const id = params.id;
 
       if (!id) {
@@ -105,7 +106,7 @@ export const PUT = withPlatformAdmin(
         description: data.description,
         startDate: data.startDate ? new Date(data.startDate) : undefined,
         endDate: data.endDate ? new Date(data.endDate) : undefined,
-        timeline: data.timeline,
+        timeline: data.timeline as CampaignTimeline | undefined,
         status: data.status,
       });
 
@@ -114,12 +115,12 @@ export const PUT = withPlatformAdmin(
         data: campaign,
         message: 'Campaña actualizada correctamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating campaign:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al actualizar la campaña',
+          error: error instanceof Error ? error.message : 'Error al actualizar la campaña',
         },
         { status: 500 }
       );
@@ -130,9 +131,9 @@ export const PUT = withPlatformAdmin(
 // DELETE /api/admin/campaigns/[id]
 export const DELETE = withPlatformAdmin(
   ['SUPER_ADMIN'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const id = params.id;
 
       if (!id) {
@@ -151,12 +152,12 @@ export const DELETE = withPlatformAdmin(
         success: true,
         message: 'Campaña eliminada correctamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting campaign:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al eliminar la campaña',
+          error: error instanceof Error ? error.message : 'Error al eliminar la campaña',
         },
         { status: 500 }
       );

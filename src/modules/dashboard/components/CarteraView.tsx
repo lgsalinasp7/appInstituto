@@ -5,6 +5,9 @@ import { AlertCircle, Calendar, Phone, MessageCircle, CheckCircle2, Clock, Refre
 import { Pagination } from "./Pagination";
 import { toast } from "sonner";
 
+/** Colombia country calling code for WhatsApp links */
+const COUNTRY_CODE_CO = "57";
+
 // Interfaces mapped to API response
 interface Alert {
   id: string; // Not used currently in API stats
@@ -25,6 +28,14 @@ interface CarteraSummary {
   upcoming: { amount: number; count: number };
 }
 
+interface StudentCommitment {
+  id: string;
+  scheduledDate: string;
+  amount: number | string;
+  status: string;
+  comments?: string | null;
+}
+
 interface StudentDebt {
   studentId: string;
   studentName: string;
@@ -36,7 +47,7 @@ interface StudentDebt {
   totalPaid: number;
   remainingBalance: number;
   daysSinceLastPayment: number | null;
-  commitments: any[];
+  commitments: StudentCommitment[];
 }
 
 interface CarteraViewProps {
@@ -261,7 +272,7 @@ export function CarteraView({ advisorId: _advisorId }: CarteraViewProps) {
                               <td className="px-6 py-4">
                                 <div className="flex gap-2">
                                   <a
-                                    href={`https://wa.me/57${debt.phone.replace(/\D/g, "")}`}
+                                    href={`https://wa.me/${COUNTRY_CODE_CO}${debt.phone.replace(/\D/g, "")}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
@@ -353,7 +364,13 @@ export function CarteraView({ advisorId: _advisorId }: CarteraViewProps) {
 // I will include condensed versions mainly for placeholders as implementation of modals logic is next step or user responsibility if complex.
 // But to match previous content I will include meaningful placeholders.
 
-function CommitmentModal({ student, onClose, onSubmit }: any) {
+interface CommitmentModalProps {
+  student: StudentDebt;
+  onClose: () => void;
+  onSubmit: (studentId: string, amount: number, date: Date, comments: string) => void;
+}
+
+function CommitmentModal({ student, onClose, onSubmit }: CommitmentModalProps) {
   // Implementation same as before or simplified
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -369,7 +386,13 @@ function CommitmentModal({ student, onClose, onSubmit }: any) {
   )
 }
 
-function AbonoModal({ student, onClose, onSubmit }: any) {
+interface AbonoModalProps {
+  student: StudentDebt;
+  onClose: () => void;
+  onSubmit: (data: { amount: number; method: string; reference: string; createCommitment: boolean; commitmentDate?: Date }) => void;
+}
+
+function AbonoModal({ student, onClose, onSubmit }: AbonoModalProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="bg-white p-6 rounded-lg max-w-sm w-full">
@@ -377,21 +400,26 @@ function AbonoModal({ student, onClose, onSubmit }: any) {
         <p className="text-gray-500 mb-4">Funcionalidad en desarrollo.</p>
         <div className="flex gap-2 justify-end">
           <button onClick={onClose} className="px-4 py-2 border rounded">Cerrar</button>
-          <button onClick={() => onSubmit({})} className="px-4 py-2 bg-green-600 text-white rounded">Registrar (Simular)</button>
+          <button onClick={() => onSubmit({ amount: 0, method: "", reference: "", createCommitment: false })} className="px-4 py-2 bg-green-600 text-white rounded">Registrar (Simular)</button>
         </div>
       </div>
     </div>
   )
 }
 
-function HistorialCompromisosModal({ student, onClose }: any) {
+interface HistorialCompromisosModalProps {
+  student: StudentDebt;
+  onClose: () => void;
+}
+
+function HistorialCompromisosModal({ student, onClose }: HistorialCompromisosModalProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="bg-white p-6 rounded-lg max-w-sm w-full">
         <h3 className="font-bold mb-4">Historial de {student.studentName}</h3>
         <div className="max-h-60 overflow-y-auto mb-4">
           {student.commitments?.length ? (
-            student.commitments.map((c: any) => (
+            student.commitments.map((c) => (
               <div key={c.id} className="border-b py-2 text-sm">
                 <p>{new Date(c.scheduledDate).toLocaleDateString()}: ${Number(c.amount).toLocaleString()}</p>
                 <span className="text-xs font-bold text-gray-500">{c.status}</span>

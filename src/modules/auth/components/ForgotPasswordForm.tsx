@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/form";
 
 const forgotPasswordSchema = z.object({
-    email: z.string().email("Correo electrónico inválido"),
+    email: z.email("Correo electrónico inválido"),
 });
 
 type ForgotPasswordData = z.infer<typeof forgotPasswordSchema>;

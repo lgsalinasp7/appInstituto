@@ -30,10 +30,10 @@ export const GET = withPlatformAdmin(
         success: true,
         data: task,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching agent task:', error);
       return Response.json(
-        { success: false, error: error.message },
+        { success: false, error: error instanceof Error ? error.message : 'Error al obtener tarea' },
         { status: 500 }
       );
     }
@@ -61,7 +61,7 @@ export const PUT = withPlatformAdmin(
         data: task,
         message: 'Tarea actualizada exitosamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof ZodError) {
         return Response.json(
           { success: false, error: 'Validation error', details: error.issues },
@@ -71,7 +71,7 @@ export const PUT = withPlatformAdmin(
 
       console.error('Error updating agent task:', error);
       return Response.json(
-        { success: false, error: error.message },
+        { success: false, error: error instanceof Error ? error.message : 'Error al actualizar tarea' },
         { status: 500 }
       );
     }
@@ -96,10 +96,10 @@ export const DELETE = withPlatformAdmin(
         success: true,
         message: 'Tarea eliminada exitosamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting agent task:', error);
       return Response.json(
-        { success: false, error: error.message },
+        { success: false, error: error instanceof Error ? error.message : 'Error al eliminar tarea' },
         { status: 500 }
       );
     }

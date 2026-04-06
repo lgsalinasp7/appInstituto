@@ -245,7 +245,7 @@ export class AiAgentService {
 
     const skip = (page - 1) * limit;
 
-    const where: any = {
+    const where: Record<string, unknown> = {
       totalTokens: { not: null },
     };
 
@@ -258,9 +258,10 @@ export class AiAgentService {
     }
 
     if (startDate || endDate) {
-      where.createdAt = {};
-      if (startDate) where.createdAt.gte = startDate;
-      if (endDate) where.createdAt.lte = endDate;
+      const dateFilter: { gte?: Date; lte?: Date } = {};
+      if (startDate) dateFilter.gte = startDate;
+      if (endDate) dateFilter.lte = endDate;
+      where.createdAt = dateFilter;
     }
 
     const [messages, total] = await Promise.all([
@@ -500,7 +501,7 @@ export class AiAgentService {
     if (!model) return;
 
     // Aggregate into AiUsage table
-    const period = this.getPeriodStart(new Date(), model.resetPeriod as any);
+    const period = this.getPeriodStart(new Date(), model.resetPeriod as "DAILY" | "MONTHLY" | "YEARLY");
 
     await prisma.aiUsage.upsert({
       where: {
@@ -549,7 +550,7 @@ export class AiAgentService {
       };
     }
 
-    const period = this.getPeriodStart(new Date(), model.resetPeriod as any);
+    const period = this.getPeriodStart(new Date(), model.resetPeriod as "DAILY" | "MONTHLY" | "YEARLY");
 
     // Get usage for this period
     const normalizedTenantId = tenantId !== undefined ? tenantId : null;
@@ -575,7 +576,7 @@ export class AiAgentService {
       limit,
       percentage,
       remaining,
-      resetDate: this.getNextResetDate(model.resetPeriod as any),
+      resetDate: this.getNextResetDate(model.resetPeriod as "DAILY" | "MONTHLY" | "YEARLY"),
       status,
     };
   }

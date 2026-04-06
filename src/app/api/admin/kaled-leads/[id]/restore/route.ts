@@ -9,9 +9,9 @@ import { KaledLeadService } from '@/modules/masterclass/services/kaled-lead.serv
 
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const id = params.id;
 
       if (!id) {
@@ -32,12 +32,12 @@ export const POST = withPlatformAdmin(
         data: lead,
         message: 'Lead restaurado correctamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error restoring lead:', error);
       return NextResponse.json(
         {
           success: false,
-          error: error.message || 'Error al restaurar el lead',
+          error: error instanceof Error ? error.message : 'Error al restaurar el lead',
         },
         { status: 500 }
       );

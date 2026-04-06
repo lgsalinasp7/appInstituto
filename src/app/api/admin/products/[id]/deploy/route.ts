@@ -13,7 +13,7 @@ const deploySchema = z.object({
   tenantSlug: z.string()
     .min(1, 'El slug es requerido')
     .regex(/^[a-z0-9-]+$/, 'El slug solo puede contener letras minúsculas, números y guiones'),
-  adminEmail: z.string().email('Email inválido'),
+  adminEmail: z.email('Email inválido'),
   adminName: z.string().optional(),
   adminPassword: z.preprocess(
     (val) => (val === '' ? undefined : val),
@@ -25,9 +25,9 @@ const deploySchema = z.object({
 
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN'],
-  async (request: NextRequest, user, context: any) => {
+  async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
     try {
-      const params = await context.params;
+      const params = await context!.params;
       const productId = params.id;
 
       const body = await request.json();
@@ -47,10 +47,10 @@ export const POST = withPlatformAdmin(
         data: result,
         message: `Tenant "${validation.data.tenantName}" desplegado correctamente`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deploying product:', error);
       return NextResponse.json(
-        { success: false, error: error.message || 'Error al desplegar el producto' },
+        { success: false, error: error instanceof Error ? error.message : 'Error al desplegar el producto' },
         { status: 500 }
       );
     }

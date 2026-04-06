@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import type { Prisma, KaledInteractionType } from '@prisma/client';
 import type {
   OverviewMetrics,
   ConversionMetrics,
@@ -219,12 +220,10 @@ export class KaledAnalyticsService {
     });
     const tenantLeadIds = tenantLeads.map((l) => l.id);
 
-    const where: any = {
+    const where: Prisma.KaledLeadInteractionWhereInput = {
       kaledLeadId: { in: tenantLeadIds },
+      ...(userId ? { userId } : {}),
     };
-    if (userId) {
-      where.userId = userId;
-    }
 
     const interactions = await prisma.kaledLeadInteraction.findMany({
       where,
@@ -287,7 +286,7 @@ export class KaledAnalyticsService {
       userId,
       userName: interactions[0]?.user?.name ?? undefined,
       totalInteractions,
-      interactionsByType: interactionsByType as any,
+      interactionsByType: interactionsByType as Record<KaledInteractionType, number>,
       leadsContacted,
       leadsConverted,
       averageResponseTime: Math.round(averageResponseTime * 100) / 100,

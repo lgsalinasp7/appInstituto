@@ -11,8 +11,8 @@ interface Params {
 }
 
 // POST /api/admin/tenants/[id]/suspend
-export const POST = withPlatformAdmin(['SUPER_ADMIN'], async (request: NextRequest, user, context: any) => {
-  const params = await context.params;
+export const POST = withPlatformAdmin(['SUPER_ADMIN'], async (request: NextRequest, user, context) => {
+  const params = await context!.params;
   const id = params.id;
   const tenant = await TenantsService.suspend(id);
 

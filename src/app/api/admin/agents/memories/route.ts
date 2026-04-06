@@ -32,10 +32,10 @@ export const GET = withPlatformAdmin(
         success: true,
         data: memories,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching agent memories:', error);
       return Response.json(
-        { success: false, error: error.message },
+        { success: false, error: error instanceof Error ? error.message : 'Error al obtener memorias' },
         { status: 500 }
       );
     }
@@ -57,7 +57,7 @@ export const POST = withPlatformAdmin(
         data: memory,
         message: 'Memoria creada exitosamente',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof ZodError) {
         return Response.json(
           { success: false, error: 'Validation error', details: error.issues },
@@ -67,7 +67,7 @@ export const POST = withPlatformAdmin(
 
       console.error('Error creating agent memory:', error);
       return Response.json(
-        { success: false, error: error.message },
+        { success: false, error: error instanceof Error ? error.message : 'Error al crear memoria' },
         { status: 500 }
       );
     }
