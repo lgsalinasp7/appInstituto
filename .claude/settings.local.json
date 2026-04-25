@@ -61,7 +61,11 @@
       "Bash(npx prisma db execute:*)",
       "Bash(1 <<'SQL'\nSELECT e.id, e.title, e.type, e.\"lessonId\", e.\"scheduledAt\", e.\"dayOfWeek\", e.cancelled, e.\"deliveredAt\",\n       c.name as cohort_name\nFROM \"AcademyCohortEvent\" e\nJOIN \"AcademyCohort\" c ON c.id = e.\"cohortId\"\nORDER BY c.name, e.\"sessionOrder\"\nLIMIT 50;\nSQL)",
       "mcp__browser-tools__getConsoleErrors",
-      "Bash(netstat:*)"
+      "Bash(netstat:*)",
+      "Read(//c/Users/lgsal/**)",
+      "Bash(claude mcp:*)",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(echo \"EXIT:$?\")"
     ]
   }
 }
