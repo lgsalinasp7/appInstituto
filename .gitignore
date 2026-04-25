@@ -68,4 +68,6 @@ next-env.d.ts
 
 # build log local
 build-out.txt
+build_log.txt
+build_verify_log.txt
 .vercel
