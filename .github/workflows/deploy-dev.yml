@@ -4,9 +4,36 @@ on:
   push:
     branches:
       - develop
+  pull_request:
+    branches:
+      - develop
 
 jobs:
+  quality-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Type check (bloqueante)
+        run: npx tsc --noEmit
+
+      - name: Tests (bloqueante)
+        run: npm run test:run
+
+      - name: Lint (informacional)
+        run: npm run lint
+        continue-on-error: true
+
   migrate-and-deploy:
+    needs: quality-gates
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
