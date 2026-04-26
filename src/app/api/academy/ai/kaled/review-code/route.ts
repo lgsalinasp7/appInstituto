@@ -29,9 +29,21 @@ async function POST_handler(
   if (lessonId) {
     const lesson = await prisma.academyLesson.findUnique({
       where: { id: lessonId },
-      include: { meta: true, module: true },
+      include: {
+        meta: true,
+        module: {
+          include: { course: true },
+        },
+      },
     });
     if (lesson) {
+      // Validar aislamiento multi-tenant: la lección debe pertenecer al mismo tenant del usuario
+      if (lesson.module.course.tenantId !== tenantId) {
+        return NextResponse.json(
+          { success: false, error: "Lección no disponible para tu institución" },
+          { status: 403 }
+        );
+      }
       lessonTitle = lesson.title;
       weekNumber = lesson.meta?.weekNumber ?? 1;
       cralPhase = (lesson.meta?.phaseTarget as string) ?? "CONSTRUIR";
