@@ -80,6 +80,8 @@ model Tenant {
   trialUserActivities     TrialUserActivity[]
   academyInAppNotifications AcademyInAppNotification[]
   academyCohortAdminAudits  AcademyCohortAdminAudit[]
+  academyLessons                AcademyLesson[]
+  academyDeliverableSubmissions AcademyDeliverableSubmission[]
 
   // Lavadero Pro
   lavaderoCustomers LavaderoCustomer[]
@@ -1468,9 +1470,11 @@ model AcademyLesson {
   order       Int
   isActive    Boolean  @default(true)
   moduleId    String
+  tenantId    String
   createdAt   DateTime @default(now())
 
   module         AcademyModule          @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  tenant         Tenant                 @relation(fields: [tenantId], references: [id])
   progress       AcademyStudentProgress[]
   meta           AcademyLessonMeta?
   cralChallenges AcademyCRALChallenge[]
@@ -1482,6 +1486,7 @@ model AcademyLesson {
 
   @@index([moduleId])
   @@index([order])
+  @@index([tenantId])
 }
 
 /// Lessons explicitly released for a cohort (when lessonGatingEnabled is true).
@@ -1888,6 +1893,7 @@ model AcademyDeliverableSubmission {
   id            String           @id @default(cuid())
   userId        String
   deliverableId String
+  tenantId      String
   githubUrl     String?
   deployUrl     String?
   status        DeliverableStatus @default(PENDIENTE)
@@ -1903,12 +1909,14 @@ model AcademyDeliverableSubmission {
   user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   deliverable AcademyDeliverable @relation(fields: [deliverableId], references: [id], onDelete: Cascade)
   reviewedBy  User?              @relation("DeliverableReviewer", fields: [reviewedById], references: [id])
+  tenant      Tenant             @relation(fields: [tenantId], references: [id])
 
   @@unique([userId, deliverableId])
   @@index([userId])
   @@index([deliverableId])
   @@index([status])
   @@index([reviewedById])
+  @@index([tenantId])
 }
 
 model AcademyKaledSession {
