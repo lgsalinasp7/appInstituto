@@ -42,7 +42,7 @@ async function POST_handler(
           checkItems: true,
         },
       },
-      user: { select: { name: true } },
+      user: { select: { name: true, tenantId: true } },
     },
   });
 
@@ -50,8 +50,15 @@ async function POST_handler(
     return NextResponse.json({ error: "Entregable no encontrado" }, { status: 404 });
   }
 
-  if (submission.deliverable.tenantId !== tenantId) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+  // Aislamiento multi-tenant: validar tanto el deliverable como el user
+  if (
+    submission.deliverable.tenantId !== tenantId ||
+    submission.user.tenantId !== tenantId
+  ) {
+    return NextResponse.json(
+      { success: false, error: "Entregable no disponible para tu institución" },
+      { status: 403 }
+    );
   }
 
   const cralPhase = (submission.deliverable.lesson.meta?.phaseTarget as string) ?? "LANZAR";
