@@ -48,7 +48,7 @@ Objetivo: cerrar riesgos de seguridad + sincronizar realidad con docs + commits 
 | 1.4 | Eliminar `nuevaInfraKaledacademy/` (decision Luis 2026-04-25: A) | PO | DONE `cc021cc` |
 | 1.5 | Eliminar `REFACTOR_PROGRESS.md` y `REFACTOR_COMPLETA_DE_APP.md` (decision Luis 2026-04-25: A) | PO | DONE `cc021cc` |
 | 1.6 | **Auditoria aislamiento multi-tenant**: 6 vulnerabilidades P0 confirmadas con rutas de ataque ejecutables. Detalle en `memory/security_multitenant_leaks_2026_04_25.md` | Dev | DONE (sub-agente 2026-04-25) |
-| 1.7a | **P0-Sec QUERIES**: fixes en 6 puntos sin migracion schema (review-code:30, evaluate-deliverable:34, session-guard:19, cron/notifications:50,89, dashboard:87, reports:286+) — ~4-6h | Dev | Pendiente |
+| 1.7a | **P0-Sec QUERIES**: 4 fixes aplicados en `fix/multitenant-leak-p0` merged como `a05a760` (commits 20bdb28, 6c12caf, 6dfc22e, 585d826). Dashboard:87 y reports:286+ ya estaban arreglados. Build PASS. | Dev | DONE |
 | 1.7b | **P0-Sec SCHEMA academia**: agregar `tenantId String` directo a AcademyLesson (23 queries) + AcademyDeliverableSubmission (14) con backfill | Dev | Pendiente |
 | 1.8 | **P0-Sec SCHEMA kaled**: tenantId nullable→String obligatorio en KaledLead (53q), PaymentCommitment (30), KaledEmailLog (30), KaledCampaign (19), KaledEmailTemplate (13), KaledEmailSequence (3). AgentTask permanece nullable (intencional). | Dev | Pendiente |
 
