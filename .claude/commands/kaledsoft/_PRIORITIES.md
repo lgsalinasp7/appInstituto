@@ -42,14 +42,15 @@ Objetivo: cerrar riesgos de seguridad + sincronizar realidad con docs + commits 
 
 | # | Tarea | Agente | Estado |
 |---|---|---|---|
-| 1.1 | Commit 38 archivos sistema agentes + skills kaledacademy + docs | PO | Pendiente |
+| 1.1 | Commit 38 archivos sistema agentes + skills kaledacademy + docs | PO | DONE `e09c9b8` |
 | 1.2 | Mover claves SSH de raiz a `~/.ssh/` (id_github_lgsalinasp, .pub) | Infra | Pendiente |
-| 1.3 | `git rm --cached build_log.txt` | PO/Infra | Pendiente |
-| 1.4 | Decision Luis: `nuevaInfraKaledacademy/` reactivar o eliminar | Luis | Pendiente |
-| 1.5 | Reescribir o eliminar `REFACTOR_PROGRESS.md` y `REFACTOR_COMPLETA_DE_APP.md` con estado real | PO | Pendiente |
-| 1.6 | **Auditoria aislamiento multi-tenant**: verificar 14 modelos academia + AiMessage + LavaderoOrderService que las queries reales filtran via relacion padre | Dev | Pendiente |
-| 1.7 | Tarea P0-Sec: agregar `tenantId` directo o validacion explicita a 14 modelos academia identificados | Dev | Pendiente |
-| 1.8 | Hacer `tenantId` obligatorio (no nullable) en: PaymentCommitment, AgentTask, KaledLead, KaledCampaign, KaledEmailTemplate, KaledEmailSequence, KaledEmailLog | Dev | Pendiente |
+| 1.3 | gitignore + untrack build_log.txt y build_verify_log.txt | PO | DONE `5e14356` + `b88a556` |
+| 1.4 | Eliminar `nuevaInfraKaledacademy/` (decision Luis 2026-04-25: A) | PO | DONE `cc021cc` |
+| 1.5 | Eliminar `REFACTOR_PROGRESS.md` y `REFACTOR_COMPLETA_DE_APP.md` (decision Luis 2026-04-25: A) | PO | DONE `cc021cc` |
+| 1.6 | **Auditoria aislamiento multi-tenant**: 6 vulnerabilidades P0 confirmadas con rutas de ataque ejecutables. Detalle en `memory/security_multitenant_leaks_2026_04_25.md` | Dev | DONE (sub-agente 2026-04-25) |
+| 1.7a | **P0-Sec QUERIES**: fixes en 6 puntos sin migracion schema (review-code:30, evaluate-deliverable:34, session-guard:19, cron/notifications:50,89, dashboard:87, reports:286+) — ~4-6h | Dev | Pendiente |
+| 1.7b | **P0-Sec SCHEMA academia**: agregar `tenantId String` directo a AcademyLesson (23 queries) + AcademyDeliverableSubmission (14) con backfill | Dev | Pendiente |
+| 1.8 | **P0-Sec SCHEMA kaled**: tenantId nullable→String obligatorio en KaledLead (53q), PaymentCommitment (30), KaledEmailLog (30), KaledCampaign (19), KaledEmailTemplate (13), KaledEmailSequence (3). AgentTask permanece nullable (intencional). | Dev | Pendiente |
 
 ### Ola 2 — Calidad y Observabilidad (P1, 2-3 semanas)
 
