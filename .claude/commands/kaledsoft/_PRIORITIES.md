@@ -51,6 +51,7 @@ Objetivo: cerrar riesgos de seguridad + sincronizar realidad con docs + commits 
 | 1.7a | **P0-Sec QUERIES**: 4 fixes aplicados en `fix/multitenant-leak-p0` merged como `a05a760` (commits 20bdb28, 6c12caf, 6dfc22e, 585d826). Dashboard:87 y reports:286+ ya estaban arreglados. Build PASS. | Dev | DONE |
 | 1.7b | **P0-Sec SCHEMA academia**: agregar `tenantId String` directo a AcademyLesson (23 queries) + AcademyDeliverableSubmission (14) con backfill | Dev | Pendiente |
 | 1.8 | **P0-Sec SCHEMA kaled**: tenantId nullable→String obligatorio en KaledLead (53q), PaymentCommitment (30), KaledEmailLog (30), KaledCampaign (19), KaledEmailTemplate (13), KaledEmailSequence (3). AgentTask permanece nullable (intencional). | Dev | Pendiente |
+| 1.9 | **CI quality gates**: tsc + test bloqueantes + lint informacional en deploy-dev y deploy-prod. Trigger ampliado a pull_request. Validado en run 24956222674 (verde). | Infra | DONE `5b13d3f` |
 
 ### Ola 2 — Calidad y Observabilidad (P1, 2-3 semanas)
 
