@@ -71,3 +71,4 @@ build-out.txt
 build_log.txt
 build_verify_log.txt
 .vercel
+.mcp.json
