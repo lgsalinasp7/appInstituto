@@ -274,16 +274,32 @@ export class ContentService {
       },
     });
 
+    // Pre-fetch all program contents in a single query to avoid N+1.
+    // We collect distinct programIds, query AcademicContent once with `programId IN (...)`,
+    // then group results in memory by programId for O(1) lookup per student.
+    const programIds = Array.from(new Set(students.map((s) => s.programId)));
+
+    const allProgramContents = programIds.length
+      ? await prisma.academicContent.findMany({
+          where: { programId: { in: programIds } },
+          orderBy: { orderIndex: "asc" },
+        })
+      : [];
+
+    const contentsByProgram = new Map<string, typeof allProgramContents>();
+    for (const content of allProgramContents) {
+      const list = contentsByProgram.get(content.programId);
+      if (list) {
+        list.push(content);
+      } else {
+        contentsByProgram.set(content.programId, [content]);
+      }
+    }
+
     const pendingDeliveries = [];
 
-    // TODO: N+1 query – this loop issues one query per student. Optimize by pre-fetching
-    // all distinct programIds from `students`, querying AcademicContent once with
-    // `where: { programId: { in: programIds } }`, then grouping results by programId in memory.
     for (const student of students) {
-      const programContents = await prisma.academicContent.findMany({
-        where: { programId: student.programId },
-        orderBy: { orderIndex: "asc" },
-      });
+      const programContents = contentsByProgram.get(student.programId) ?? [];
 
       const availableCount = Math.min(student.payments.length, programContents.length);
       const availableContents = programContents.slice(0, availableCount);

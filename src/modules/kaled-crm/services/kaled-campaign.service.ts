@@ -254,8 +254,12 @@ export class KaledCampaignService {
       },
     });
 
-    const emailsSent = emailLogs.filter((e) => e.status === 'SENT').length;
-    const emailsOpened = 0; // TODO: Implementar tracking de aperturas
+    // Count any email that left our system (SENT or further down the funnel:
+    // DELIVERED / OPENED / CLICKED). Resend webhook upgrades status as events arrive.
+    const sentStatuses = new Set(['SENT', 'DELIVERED', 'OPENED', 'CLICKED']);
+    const emailsSent = emailLogs.filter((e) => sentStatuses.has(e.status)).length;
+    // Resend webhook fills openedAt the first time the recipient opens the email.
+    const emailsOpened = emailLogs.filter((e) => e.openedAt !== null).length;
     const emailOpenRate = emailsSent > 0 ? (emailsOpened / emailsSent) * 100 : 0;
 
     return {
