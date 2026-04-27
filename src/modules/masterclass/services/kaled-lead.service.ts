@@ -9,26 +9,47 @@ import { KaledInteractionService } from '@/modules/kaled-crm/services/kaled-inte
 import type { KaledLead } from '@prisma/client';
 import { triggerSequenceByStage } from '@/modules/kaled-crm/services/kaled-automation.service';
 
+const KALED_FALLBACK_SLUG = 'kaledsoft';
+
+/**
+ * Resuelve tenantId para captura de leads. Si el caller no pasa uno válido,
+ * cae a 'kaledsoft' (decisión Luis 2026-04-27 — Opción A: nunca perder leads).
+ * Loggea cuando se aplica el fallback para detectar mal uso aguas arriba.
+ */
+async function resolveCaptureTenantId(input?: string): Promise<string> {
+    if (input) return input;
+
+    const fallback = await prisma.tenant.findUnique({
+        where: { slug: KALED_FALLBACK_SLUG },
+        select: { id: true },
+    });
+
+    if (!fallback) {
+        throw new Error(
+            `No se pudo resolver tenant fallback '${KALED_FALLBACK_SLUG}' para captura de lead.`
+        );
+    }
+
+    console.warn(
+        `[KaledLeadService] tenantId no provisto en captureLead — aplicando fallback a '${KALED_FALLBACK_SLUG}' (${fallback.id})`
+    );
+
+    return fallback.id;
+}
+
 export class KaledLeadService {
     /**
-     * Capturar lead directo de KaledSoft
-     * tenantId es OPCIONAL para proteger la campaña activa de Facebook Ads.
-     * Si falla la resolución del tenant, el lead se captura igual con tenantId=undefined.
+     * Capturar lead directo de KaledSoft.
+     * tenantId puede ser undefined si el caller no logró resolverlo; en ese caso
+     * se usa fallback duro a 'kaledsoft' para no perder el lead.
      */
     static async captureLead(data: LeadRegistration, tenantId?: string): Promise<{ leadId: string }> {
-        // Buscar lead existente por email + tenantId (composite unique)
-        let lead: KaledLead | null = null;
+        const resolvedTenantId = await resolveCaptureTenantId(tenantId);
 
-        if (tenantId) {
-            lead = await prisma.kaledLead.findUnique({
-                where: { email_tenantId: { email: data.email, tenantId } },
-            });
-        } else {
-            // Fallback: buscar por email sin tenantId (registros legacy)
-            lead = await prisma.kaledLead.findFirst({
-                where: { email: data.email, tenantId: null },
-            });
-        }
+        // Buscar lead existente por email + tenantId (composite unique)
+        let lead: KaledLead | null = await prisma.kaledLead.findUnique({
+            where: { email_tenantId: { email: data.email, tenantId: resolvedTenantId } },
+        });
 
         const filteringData = {
             city: data.city,
@@ -87,13 +108,13 @@ export class KaledLeadService {
                     utmMedium: data.utmMedium,
                     utmCampaign: data.utmCampaign,
                     utmContent: data.utmContent,
-                    tenantId: tenantId || null,
+                    tenantId: resolvedTenantId,
                 },
             });
 
             // Dispara secuencias para el estado inicial del funnel.
             try {
-                await triggerSequenceByStage(lead.id, lead.status, tenantId);
+                await triggerSequenceByStage(lead.id, lead.status, resolvedTenantId);
             } catch (sequenceError) {
                 console.error('Error triggering initial lead sequence:', sequenceError);
             }
@@ -201,7 +222,7 @@ export class KaledLeadService {
             );
 
             try {
-                await triggerSequenceByStage(id, data.status, currentLead.tenantId || undefined);
+                await triggerSequenceByStage(id, data.status, currentLead.tenantId);
             } catch (sequenceError) {
                 console.error('Error triggering sequence on status change:', sequenceError);
             }

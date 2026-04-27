@@ -1,7 +1,33 @@
-# Instrucciones para Claude Code
+# Instrucciones para Claude Code — Kaledsoft
 
 > Este archivo se carga automáticamente en CADA conversación. Mantenerlo conciso.
 > Documentación detallada del proyecto en `docs/CLAUDE.md`
+
+## Memoria central (obligatoria al iniciar)
+
+1. **`C:\memory\GLOBAL.md`** — Identidad de Luis Salinas + reglas transversales
+2. **`C:\memory\rules\`** — Detalle de cada regla transversal (git-flow, no-emojis, briefs-tecnicos, skills-sobre-lineas, mcp-cli-fallback)
+3. **`C:\memory\kaledsoft\MEMORY.md`** — Memoria especifica de Kaledsoft (tenants, modulos, decisiones, sesiones)
+4. **`C:\memory\kaledsoft\*.md`** — Archivos individuales referenciados desde MEMORY.md
+
+## Sistema de agentes
+
+Activado 2026-04-25. Agentes disponibles:
+
+- `/kaledsoft:po` — Product Owner (audita modulos, mantiene `_PRIORITIES.md`)
+- `/kaledsoft:dev` — Full Stack Dev (corrige bugs, escribe tests, branches por fix)
+- `/kaledsoft:qa` — QA sistematico (DB, APIs, UI, formularios, E2E)
+- `/kaledsoft:certy` — Certificacion 5 quality gates antes de produccion
+- `/kaledsoft:infra` — Infra y Seguridad (CI/CD, vulnerabilidades, optimizacion)
+- `/kaledsoft:project` — PM + Scrum + Legal + Contador (backlog cliente, contratos, cotizaciones COP, DIAN)
+- `/kaledsoft:content-creator` — Contenido bootcamp kaledacademy (orquesta `kaledacademy-narrator/seed-writer/html-builder/ai-bug-injector`)
+
+Configuracion de agentes en `.claude/commands/kaledsoft/`:
+- `_CONTEXT.md` — info del proyecto
+- `_PRIORITIES.md` — fuente de verdad scope (PO actualiza)
+- `_RULES_COMMON.md` — reglas transversales
+- `_NOTION-CONFIG.md` — IDs de Notion
+- `_LEGAL_COLOMBIA_2026.md` — referencia tributaria Colombia
 
 ## Stack
 

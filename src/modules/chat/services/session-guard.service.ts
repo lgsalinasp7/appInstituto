@@ -15,11 +15,12 @@ export class SessionGuardService {
     conversationId: string,
     tenantId: string
   ): Promise<SessionLimitResult> {
-    // Check conversation message count
+    // Check conversation message count (scoped a tenant para evitar leak)
     const conversationCount = await prisma.aiMessage.count({
       where: {
         conversationId,
         role: "user",
+        conversation: { tenantId },
       },
     });
 

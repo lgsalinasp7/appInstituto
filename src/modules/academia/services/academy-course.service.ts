@@ -72,10 +72,17 @@ export class AcademyCourseService {
     return prisma.academyModule.create({ data });
   }
 
-  static async createLesson(data: CreateLessonInput) {
+  static async createLesson(tenantId: string, data: CreateLessonInput) {
+    // Validar que el module pertenezca al tenant antes de crear la lesson
+    const moduleRow = await prisma.academyModule.findFirst({
+      where: { id: data.moduleId, course: { tenantId } },
+      select: { id: true },
+    });
+    if (!moduleRow) throw new Error("Módulo no encontrado");
     return prisma.academyLesson.create({
       data: {
         ...data,
+        tenantId,
         videoUrl: data.videoUrl || undefined,
       },
     });

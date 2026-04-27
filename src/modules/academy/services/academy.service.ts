@@ -691,6 +691,7 @@ export const deliverableService = {
   async submit(
     userId: string,
     deliverableId: string,
+    tenantId: string,
     data: { githubUrl?: string; deployUrl?: string; checkedItems: string[] }
   ) {
     const deliverable = await prisma.academyDeliverable.findUnique({
@@ -704,6 +705,7 @@ export const deliverableService = {
       create: {
         userId,
         deliverableId,
+        tenantId,
         githubUrl: data.githubUrl,
         deployUrl: data.deployUrl,
         checkedItems: data.checkedItems,

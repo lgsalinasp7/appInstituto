@@ -857,10 +857,20 @@ const emailTemplates = [
 async function seedEmailTemplates() {
   console.log('🌱 Seeding email templates...\n');
 
+  // Tras 1.8 las plantillas de plataforma viven en el tenant 'kaledsoft'.
+  const platformTenant = await prisma.tenant.findUnique({
+    where: { slug: 'kaledsoft' },
+    select: { id: true },
+  });
+  if (!platformTenant) {
+    throw new Error("Tenant 'kaledsoft' no encontrado. Ejecuta el seed base primero.");
+  }
+  const tenantId = platformTenant.id;
+
   for (const template of emailTemplates) {
     try {
       const existing = await prisma.kaledEmailTemplate.findFirst({
-        where: { name: template.name },
+        where: { name: template.name, tenantId },
       });
       if (existing) {
         await prisma.kaledEmailTemplate.update({
@@ -869,7 +879,7 @@ async function seedEmailTemplates() {
         });
       } else {
         await prisma.kaledEmailTemplate.create({
-          data: template,
+          data: { ...template, tenantId },
         });
       }
       console.log(`✅ Created/Updated: ${template.name}`);

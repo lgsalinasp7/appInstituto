@@ -80,6 +80,8 @@ model Tenant {
   trialUserActivities     TrialUserActivity[]
   academyInAppNotifications AcademyInAppNotification[]
   academyCohortAdminAudits  AcademyCohortAdminAudit[]
+  academyLessons                AcademyLesson[]
+  academyDeliverableSubmissions AcademyDeliverableSubmission[]
 
   // Lavadero Pro
   lavaderoCustomers LavaderoCustomer[]
@@ -347,9 +349,9 @@ model PaymentCommitment {
   studentId         String
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
-  tenantId          String?
+  tenantId          String
   student           Student          @relation(fields: [studentId], references: [id])
-  tenant            Tenant?          @relation(fields: [tenantId], references: [id])
+  tenant            Tenant           @relation(fields: [tenantId], references: [id])
 
   @@index([studentId])
   @@index([status])
@@ -1163,8 +1165,8 @@ model KaledLead {
   source          String   @default("MASTERCLASS")
 
   // Tenant isolation
-  tenantId        String?
-  tenant          Tenant?  @relation(fields: [tenantId], references: [id])
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
 
   // Datos específicos de la masterclass o interés
   observations    String?  @db.Text
@@ -1264,8 +1266,8 @@ model KaledCampaign {
   timeline    Json?                     // Configuración flexible de fases
 
   // Tenant isolation
-  tenantId    String?
-  tenant      Tenant?                   @relation(fields: [tenantId], references: [id])
+  tenantId    String
+  tenant      Tenant                    @relation(fields: [tenantId], references: [id])
 
   // Enlaces de la campaña
   eventUrl          String?  // Zoom/Google Meet URL
@@ -1312,11 +1314,11 @@ model KaledEmailTemplate {
   isLibraryTemplate Boolean             @default(false) // Plantillas pre-diseñadas de la librería
   phase       String?                   // FASE_1, FASE_2, FASE_3, NO_SHOW
   campaignId  String?
-  tenantId    String?
+  tenantId    String
   createdAt   DateTime                  @default(now())
 
   campaign    KaledCampaign?            @relation(fields: [campaignId], references: [id])
-  tenant      Tenant?                   @relation(fields: [tenantId], references: [id])
+  tenant      Tenant                    @relation(fields: [tenantId], references: [id])
   emailLogs   KaledEmailLog[]
   sequenceSteps KaledEmailSequenceStep[]
 
@@ -1338,11 +1340,11 @@ model KaledEmailSequence {
   triggerConfig Json                      // { status: "NUEVO", delayHours: 0 }
   isActive      Boolean                   @default(true)
   campaignId    String?
-  tenantId      String?
+  tenantId      String
   createdAt     DateTime                  @default(now())
 
   campaign      KaledCampaign?            @relation(fields: [campaignId], references: [id])
-  tenant        Tenant?                   @relation(fields: [tenantId], references: [id])
+  tenant        Tenant                    @relation(fields: [tenantId], references: [id])
   steps         KaledEmailSequenceStep[]
 
   @@unique([name, tenantId])
@@ -1383,7 +1385,7 @@ model KaledEmailLog {
   subject         String
   templateId      String?
   kaledLeadId     String?
-  tenantId        String?
+  tenantId        String
   status          String                    @default("PENDING") // PENDING, SENT, FAILED, DELIVERED, OPENED, CLICKED, BOUNCED
   resendId        String?
   requiresApproval Boolean                  @default(false)
@@ -1402,7 +1404,7 @@ model KaledEmailLog {
 
   template        KaledEmailTemplate?       @relation(fields: [templateId], references: [id])
   kaledLead       KaledLead?                @relation(fields: [kaledLeadId], references: [id])
-  tenant          Tenant?                   @relation(fields: [tenantId], references: [id])
+  tenant          Tenant                    @relation(fields: [tenantId], references: [id])
 
   @@index([kaledLeadId])
   @@index([status])
@@ -1468,9 +1470,11 @@ model AcademyLesson {
   order       Int
   isActive    Boolean  @default(true)
   moduleId    String
+  tenantId    String
   createdAt   DateTime @default(now())
 
   module         AcademyModule          @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  tenant         Tenant                 @relation(fields: [tenantId], references: [id])
   progress       AcademyStudentProgress[]
   meta           AcademyLessonMeta?
   cralChallenges AcademyCRALChallenge[]
@@ -1482,6 +1486,7 @@ model AcademyLesson {
 
   @@index([moduleId])
   @@index([order])
+  @@index([tenantId])
 }
 
 /// Lessons explicitly released for a cohort (when lessonGatingEnabled is true).
@@ -1888,6 +1893,7 @@ model AcademyDeliverableSubmission {
   id            String           @id @default(cuid())
   userId        String
   deliverableId String
+  tenantId      String
   githubUrl     String?
   deployUrl     String?
   status        DeliverableStatus @default(PENDIENTE)
@@ -1903,12 +1909,14 @@ model AcademyDeliverableSubmission {
   user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   deliverable AcademyDeliverable @relation(fields: [deliverableId], references: [id], onDelete: Cascade)
   reviewedBy  User?              @relation("DeliverableReviewer", fields: [reviewedById], references: [id])
+  tenant      Tenant             @relation(fields: [tenantId], references: [id])
 
   @@unique([userId, deliverableId])
   @@index([userId])
   @@index([deliverableId])
   @@index([status])
   @@index([reviewedById])
+  @@index([tenantId])
 }
 
 model AcademyKaledSession {

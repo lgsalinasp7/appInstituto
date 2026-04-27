@@ -216,6 +216,7 @@ async function crearSesion(
       order: s.orden,
       isActive: true,
       moduleId,
+      tenantId,
     },
   });
 

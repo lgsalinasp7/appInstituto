@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
+import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 import type { Prisma } from '@prisma/client';
 
 const EMAIL_STATUSES = [
@@ -32,7 +33,10 @@ export const GET = withPlatformAdmin(
       const pageSize = Math.min(100, Math.max(1, pageSizeRaw));
       const skip = (page - 1) * pageSize;
 
-      const where: Prisma.KaledEmailLogWhereInput = {};
+      // Tenant isolation: filtrar por tenantId resuelto (query param o tenant base 'kaledsoft')
+      const tenantId = await resolveKaledTenantId(searchParams.get('tenantId'));
+
+      const where: Prisma.KaledEmailLogWhereInput = { tenantId };
 
       if (isEmailStatus(status)) {
         where.status = status;

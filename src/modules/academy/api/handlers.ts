@@ -288,6 +288,7 @@ export async function POST_submitDeliverable(
     const submission = await deliverableService.submit(
       user.id,
       deliverableId,
+      tenantId,
       body.data
     );
     const newBadges = await badgeService.checkAndAward(user.id, tenantId);

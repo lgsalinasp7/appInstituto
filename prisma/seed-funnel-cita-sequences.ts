@@ -2,10 +2,20 @@ import { PrismaClient, KaledTriggerType } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const PLATFORM_TENANT_ID = null; // Secuencias de plataforma (tenantId null)
+// Tras 1.8 las secuencias y plantillas de plataforma viven en el tenant 'kaledsoft'.
+let PLATFORM_TENANT_ID = '';
 
 async function seedFunnelCitaSequences() {
   console.log("Seeding funnel cita sequences...");
+
+  const platformTenant = await prisma.tenant.findUnique({
+    where: { slug: 'kaledsoft' },
+    select: { id: true },
+  });
+  if (!platformTenant) {
+    throw new Error("Tenant 'kaledsoft' no encontrado. Ejecuta el seed base primero.");
+  }
+  PLATFORM_TENANT_ID = platformTenant.id;
 
   const templates = await prisma.kaledEmailTemplate.findMany({
     where: { isLibraryTemplate: true, tenantId: PLATFORM_TENANT_ID },
