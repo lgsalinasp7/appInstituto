@@ -21,6 +21,7 @@ import {
   deleteCustomer,
   getCustomerById,
   listCustomers,
+  updateCustomer,
 } from "@/modules/lavadero/services/lavadero-customer.service";
 
 const TENANT_A = "tenant-a";
@@ -77,6 +78,36 @@ describe("LavaderoCustomerService", () => {
 
     const call = (prisma.lavaderoCustomer.findFirst as MockedFn).mock.calls[0][0];
     expect(call.where).toEqual({ id: "c1", tenantId: TENANT_B });
+  });
+
+  it("updateCustomer rechaza si el cliente pertenece a otro tenant (no aplica update)", async () => {
+    (prisma.lavaderoCustomer.findFirst as MockedFn).mockResolvedValue(null);
+
+    await expect(
+      updateCustomer("c1", { name: "Nuevo" }, TENANT_B)
+    ).rejects.toThrow("Cliente no encontrado");
+
+    expect(prisma.lavaderoCustomer.update).not.toHaveBeenCalled();
+  });
+
+  it("updateCustomer aplica update cuando el cliente pertenece al tenant", async () => {
+    (prisma.lavaderoCustomer.findFirst as MockedFn).mockResolvedValue({
+      id: "c1",
+      tenantId: TENANT_A,
+      name: "Viejo",
+    });
+    (prisma.lavaderoCustomer.update as MockedFn).mockResolvedValue({
+      id: "c1",
+      tenantId: TENANT_A,
+      name: "Nuevo",
+    });
+
+    const result = await updateCustomer("c1", { name: "Nuevo" }, TENANT_A);
+
+    const findCall = (prisma.lavaderoCustomer.findFirst as MockedFn).mock.calls[0][0];
+    expect(findCall.where).toEqual({ id: "c1", tenantId: TENANT_A });
+    expect(prisma.lavaderoCustomer.update).toHaveBeenCalled();
+    expect((result as { name: string }).name).toBe("Nuevo");
   });
 
   it("deleteCustomer rechaza si el cliente pertenece a otro tenant", async () => {
