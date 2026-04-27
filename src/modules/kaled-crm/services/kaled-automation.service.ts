@@ -38,14 +38,14 @@ const INTEREST_LEVELS = {
 /**
  * Activa secuencias automáticas cuando un lead cambia de estado
  */
-export async function triggerSequenceByStage(leadId: string, newStage: string, tenantId?: string) {
+export async function triggerSequenceByStage(leadId: string, newStage: string, tenantId: string) {
   try {
     console.log(`🔄 Triggering sequences for lead ${leadId} with stage: ${newStage}`);
 
     const where: Prisma.KaledEmailSequenceWhereInput = {
       triggerType: 'STAGE_BASED' as KaledTriggerType,
       isActive: true,
-      ...(tenantId ? { tenantId } : {}),
+      tenantId,
     };
 
     // Buscar secuencias activas para este stage
@@ -91,7 +91,7 @@ export async function triggerSequenceByStage(leadId: string, newStage: string, t
 /**
  * Ejecuta una secuencia de emails para un lead
  */
-async function executeSequence(leadId: string, sequenceId: string, tenantId?: string) {
+async function executeSequence(leadId: string, sequenceId: string, tenantId: string) {
   try {
     const sequence = await prisma.kaledEmailSequence.findUnique({
       where: { id: sequenceId },
@@ -151,7 +151,7 @@ async function executeSequence(leadId: string, sequenceId: string, tenantId?: st
             scheduledFor: scheduledFor.toISOString(),
             htmlContent: renderedContent,
           },
-          tenantId: tenantId || lead.tenantId || null,
+          tenantId,
         },
       });
 

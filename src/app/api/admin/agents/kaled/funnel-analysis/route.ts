@@ -1,18 +1,23 @@
 import { NextRequest } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
+import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 
 export const GET = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
-  async (_req: NextRequest) => {
+  async (req: NextRequest) => {
   try {
+    // Tenant isolation: filtrar por tenantId resuelto (query param o tenant base 'kaledsoft')
+    const tenantId = await resolveKaledTenantId(req.nextUrl.searchParams.get('tenantId'));
+
     const [statusBuckets, campaignBuckets] = await Promise.all([
       prisma.kaledLead.groupBy({
         by: ['status'],
-        where: { deletedAt: null },
+        where: { deletedAt: null, tenantId },
         _count: true,
       }),
       prisma.kaledCampaign.findMany({
+        where: { tenantId },
         select: {
           id: true,
           name: true,

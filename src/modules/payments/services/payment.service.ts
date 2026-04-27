@@ -212,6 +212,7 @@ export class PaymentService {
               scheduledDate: firstDate,
               moduleNumber: 1,
               status: "PENDIENTE",
+              tenantId: data.tenantId,
             }
           });
         }
@@ -291,7 +292,8 @@ export class PaymentService {
                         amount: moduleValue,
                         scheduledDate: nextDate,
                         moduleNumber: nextModNum,
-                        status: "PENDIENTE"
+                        status: "PENDIENTE",
+                        tenantId: data.tenantId,
                       }
                     });
                   }
@@ -355,7 +357,8 @@ export class PaymentService {
                 scheduledDate: new Date(),
                 moduleNumber: nextMod,
                 status: status,
-                comments: status === "PAGADO" ? "Pagado inmediatamente" : "Abono inicial"
+                comments: status === "PAGADO" ? "Pagado inmediatamente" : "Abono inicial",
+                tenantId: data.tenantId,
               }
             });
 

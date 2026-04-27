@@ -174,7 +174,7 @@ export class KaledEmailService {
         kaledLeadId: leadId,
         status: 'PENDING',
         requiresApproval: false,
-        tenantId: tenantId || lead.tenantId || null,
+        tenantId: tenantId || lead.tenantId,
       },
     });
 
@@ -243,7 +243,7 @@ export class KaledEmailService {
         metadata: {
           htmlContent: rendered.htmlContent,
         },
-        tenantId: tenantId || lead.tenantId || null,
+        tenantId: tenantId || lead.tenantId,
       },
     });
 
@@ -337,7 +337,7 @@ export class KaledEmailService {
         kaledLeadId: leadId,
         status: 'PENDING',
         requiresApproval: false,
-        tenantId: tenantId || lead.tenantId || null,
+        tenantId: tenantId || lead.tenantId,
       },
     });
 

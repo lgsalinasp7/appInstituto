@@ -46,12 +46,16 @@ export async function POST(request: NextRequest) {
 
     const data = validation.data;
 
-    // Resolver tenantId de forma segura (no debe bloquear la captura)
-    let tenantId: string | undefined;
+    // Resolver tenantId (tenant base 'kaledsoft' por defecto). Tras 1.8 es obligatorio.
+    let tenantId: string;
     try {
       tenantId = await resolveKaledTenantId();
     } catch (e) {
       console.error('Error resolviendo tenant para lead aplicar:', e);
+      return NextResponse.json(
+        { success: false, error: 'No se pudo resolver el tenant base. Contacte soporte.' },
+        { status: 500 }
+      );
     }
 
     // Preparar observaciones con la información del formulario
@@ -84,15 +88,9 @@ export async function POST(request: NextRequest) {
     // Verificar si ya existe el lead por email (si se proporciona)
     let lead = null;
     if (data.email) {
-      if (tenantId) {
-        lead = await prisma.kaledLead.findUnique({
-          where: { email_tenantId: { email: data.email, tenantId } },
-        });
-      } else {
-        lead = await prisma.kaledLead.findFirst({
-          where: { email: data.email, tenantId: null },
-        });
-      }
+      lead = await prisma.kaledLead.findUnique({
+        where: { email_tenantId: { email: data.email, tenantId } },
+      });
     }
 
     if (lead) {
@@ -103,7 +101,7 @@ export async function POST(request: NextRequest) {
           name: data.name || lead.name,
           phone: data.phone || lead.phone,
           city: data.city || lead.city,
-          tenantId: tenantId || null,
+          tenantId,
           utmSource: data.utmSource || lead.utmSource,
           utmMedium: data.utmMedium || lead.utmMedium,
           utmCampaign: data.utmCampaign || lead.utmCampaign,
@@ -124,7 +122,7 @@ export async function POST(request: NextRequest) {
           email: email,
           phone: data.phone,
           city: data.city,
-          tenantId: tenantId || null,
+          tenantId,
           status: 'NUEVO',
           source: 'APLICAR_COHORTE',
           observations: observations,

@@ -37,22 +37,13 @@ export const POST = withPlatformAdmin(
         );
       }
 
+      // Tras 1.8 lead.tenantId es NOT NULL: dispara solo secuencias del tenant del lead.
       const result = await triggerSequenceByStage(
         lead.id,
         lead.status,
-        lead.tenantId ?? undefined
+        lead.tenantId
       );
-
-      // Si el lead tiene tenantId y no se activó nada, intentar con secuencias de plataforma (tenantId null)
-      let triggered = result.triggered;
-      if (triggered === 0 && lead.tenantId) {
-        const platformResult = await triggerSequenceByStage(
-          lead.id,
-          lead.status,
-          undefined
-        );
-        triggered = platformResult.triggered;
-      }
+      const triggered = result.triggered;
 
       return NextResponse.json({
         success: true,
