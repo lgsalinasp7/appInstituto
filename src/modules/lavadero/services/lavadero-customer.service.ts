@@ -47,13 +47,13 @@ export async function createCustomer(data: CreateCustomerInput, tenantId: string
 }
 
 export async function updateCustomer(id: string, data: UpdateCustomerInput, tenantId: string) {
+  const customer = await prisma.lavaderoCustomer.findFirst({ where: { id, tenantId } });
+  if (!customer) throw new Error("Cliente no encontrado");
+
   return prisma.lavaderoCustomer.update({
     where: { id },
     data,
-  }).then(async (updated) => {
-    // Verify tenant
-    if (updated.tenantId !== tenantId) throw new Error("No tiene acceso");
-    return updated;
+    include: { vehicles: true },
   });
 }
 
