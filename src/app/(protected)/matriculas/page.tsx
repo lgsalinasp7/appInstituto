@@ -7,6 +7,7 @@ import { useAdvisorFilter } from "@/lib/auth-context";
 import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
 import { StudentForm, DeleteConfirmationModal, ReceiptConfirmationModal } from "@/modules/students/components";
 import type { StudentWithRelations, CreateStudentResult, MatriculaReceiptData } from "@/modules/students/types";
+import { tenantFetch } from "@/lib/tenant-fetch";
 import { toast } from "sonner";
 
 export default function MatriculasPage() {
@@ -32,7 +33,7 @@ export default function MatriculasPage() {
                 : "/api/students";
             const url = appendToUrl(baseUrl);
 
-            const response = await fetch(url);
+            const response = await tenantFetch(url);
             const data = await response.json();
             if (data.success) {
                 setStudents(data.data.students);
@@ -72,7 +73,7 @@ export default function MatriculasPage() {
 
         setIsDeletingLoading(true);
         try {
-            const response = await fetch(`/api/students/${deletingStudent.id}`, {
+            const response = await tenantFetch(`/api/students/${deletingStudent.id}`, {
                 method: "DELETE",
             });
             const data = await response.json();
@@ -95,7 +96,7 @@ export default function MatriculasPage() {
     const handleViewReceipt = async (studentId: string) => {
         setIsLoadingReceipt(true);
         try {
-            const response = await fetch(`/api/students/${studentId}/receipt`);
+            const response = await tenantFetch(`/api/students/${studentId}/receipt`);
             const data = await response.json();
 
             if (data.success) {

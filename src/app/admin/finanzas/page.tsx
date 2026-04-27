@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { tenantFetch } from "@/lib/tenant-fetch";
 
 type FinanceTab = "saas" | "academia";
 type SaveAction = "sale" | "schedule" | "cohort-cost" | null;
@@ -150,11 +151,11 @@ export default function AdminFinanzasPage() {
     setLoading(true);
     try {
       const [executiveRes, saasRes, schedulesRes, cohortsRes, cohortCostsRes] = await Promise.all([
-        fetch("/api/admin/finance/executive"),
-        fetch("/api/admin/finance/saas"),
-        fetch("/api/admin/finance/schedules"),
-        fetch("/api/admin/finance/cohorts"),
-        fetch("/api/admin/finance/cohort-costs"),
+        tenantFetch("/api/admin/finance/executive"),
+        tenantFetch("/api/admin/finance/saas"),
+        tenantFetch("/api/admin/finance/schedules"),
+        tenantFetch("/api/admin/finance/cohorts"),
+        tenantFetch("/api/admin/finance/cohort-costs"),
       ]);
 
       const [executiveJson, saasJson, schedulesJson, cohortsJson, cohortCostsJson] = await Promise.all([
@@ -223,7 +224,7 @@ export default function AdminFinanzasPage() {
     event.preventDefault();
     setSavingAction("sale");
     try {
-      const response = await fetch("/api/admin/finance/saas", {
+      const response = await tenantFetch("/api/admin/finance/saas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -262,7 +263,7 @@ export default function AdminFinanzasPage() {
     event.preventDefault();
     setSavingAction("schedule");
     try {
-      const response = await fetch("/api/admin/finance/schedules", {
+      const response = await tenantFetch("/api/admin/finance/schedules", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -295,7 +296,7 @@ export default function AdminFinanzasPage() {
     event.preventDefault();
     setSavingAction("cohort-cost");
     try {
-      const response = await fetch("/api/admin/finance/cohort-costs", {
+      const response = await tenantFetch("/api/admin/finance/cohort-costs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -337,7 +338,7 @@ export default function AdminFinanzasPage() {
 
     setDeletingAction("sale");
     try {
-      const response = await fetch(`/api/admin/finance/saas?saleId=${encodeURIComponent(saleId)}`, {
+      const response = await tenantFetch(`/api/admin/finance/saas?saleId=${encodeURIComponent(saleId)}`, {
         method: "DELETE",
       });
       const result = await response.json();
@@ -360,7 +361,7 @@ export default function AdminFinanzasPage() {
 
     setDeletingAction("cohort-cost");
     try {
-      const response = await fetch(
+      const response = await tenantFetch(
         `/api/admin/finance/cohort-costs?allocationId=${encodeURIComponent(allocationId)}`,
         { method: "DELETE" }
       );
@@ -384,7 +385,7 @@ export default function AdminFinanzasPage() {
 
     setDeletingAction("schedule");
     try {
-      const response = await fetch(
+      const response = await tenantFetch(
         `/api/admin/finance/schedules?scheduleId=${encodeURIComponent(scheduleId)}`,
         { method: "DELETE" }
       );
