@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useEffect } from "react";
 import { captureAttributionFromCurrentUrl, getAttribution } from "@/lib/attribution";
 import { trackLeadSubmit } from "@/lib/funnel-events";
+import { tenantFetch } from "@/lib/tenant-fetch";
 
 export default function AplicarPage() {
     const [isSubmitted, setIsSubmitted] = useState(false);
@@ -46,7 +47,7 @@ export default function AplicarPage() {
         };
 
         try {
-            const response = await fetch('/api/public/aplicar', {
+            const response = await tenantFetch('/api/public/aplicar', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

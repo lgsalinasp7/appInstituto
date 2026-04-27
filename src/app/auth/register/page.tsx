@@ -8,13 +8,14 @@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { RegisterForm, type RegisterFormData } from "@/modules/auth";
+import { tenantFetch } from "@/lib/tenant-fetch";
 
 export default function RegisterPage() {
   const router = useRouter();
 
   async function handleRegister(data: RegisterFormData) {
     try {
-      const response = await fetch("/api/auth/register", {
+      const response = await tenantFetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

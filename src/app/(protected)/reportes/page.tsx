@@ -9,6 +9,7 @@ import {
     AlertCircle
 } from "lucide-react";
 import { DashboardHeader } from "@/modules/dashboard/components/DashboardHeader";
+import { tenantFetch } from "@/lib/tenant-fetch";
 import dynamic from "next/dynamic";
 
 // Lazy-load recharts (~200KB) - solo se carga cuando el tab lo necesita
@@ -99,15 +100,15 @@ export default function ReportesPage() {
         setLoading(true);
         try {
             if (activeTab === "financiero") {
-                const res = await fetch("/api/reports/financial");
+                const res = await tenantFetch("/api/reports/financial");
                 const data = await res.json();
                 if (data.success) setFinancialData(data.data);
             } else if (activeTab === "cartera") {
-                const res = await fetch("/api/reports/portfolio-aging");
+                const res = await tenantFetch("/api/reports/portfolio-aging");
                 const data = await res.json();
                 if (data.success) setAgingData(data.data);
             } else if (activeTab === "asesores") {
-                const res = await fetch("/api/reports/advisors");
+                const res = await tenantFetch("/api/reports/advisors");
                 const data = await res.json();
                 if (data.success) setAdvisorsData(data.data);
             }

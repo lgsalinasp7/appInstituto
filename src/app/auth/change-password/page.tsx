@@ -20,6 +20,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { toast } from "sonner";
+import { tenantFetch } from "@/lib/tenant-fetch";
 
 const changePasswordSchema = z
   .object({
@@ -54,7 +55,7 @@ export default function ChangePasswordPage() {
   async function handleSubmit(data: ChangePasswordFormData) {
     setIsLoading(true);
     try {
-      const res = await fetch("/api/auth/change-password", {
+      const res = await tenantFetch("/api/auth/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

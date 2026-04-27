@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { Loader2, CheckCircle2, XCircle, Eye, EyeOff } from "lucide-react";
 import { getAcademyRoleLabel } from "@/lib/academy-role-labels";
+import { tenantFetch } from "@/lib/tenant-fetch";
 
 interface InvitationData {
   email: string;
@@ -70,7 +71,7 @@ export default function AcceptInvitationPage() {
   useEffect(() => {
     async function validateToken() {
       try {
-        const response = await fetch(`/api/invitations/accept?token=${token}`);
+        const response = await tenantFetch(`/api/invitations/accept?token=${token}`);
         const data = await response.json().catch(() => null);
 
         if (!data) {
@@ -119,7 +120,7 @@ export default function AcceptInvitationPage() {
     setSubmitting(true);
 
     try {
-      const response = await fetch("/api/invitations/accept", {
+      const response = await tenantFetch("/api/invitations/accept", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, name, password }),

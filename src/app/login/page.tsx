@@ -13,6 +13,7 @@ import { LoginForm, type LoginFormData } from "@/modules/auth";
 import { loginAction } from "@/modules/auth/actions";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { BrandingProvider } from "@/components/providers/BrandingContext";
+import { tenantFetch } from "@/lib/tenant-fetch";
 import Image from "next/image";
 
 export default function AdminLoginPage() {
@@ -21,7 +22,7 @@ export default function AdminLoginPage() {
 
   // Limpiar cookie inválida al cargar (cuando se redirige desde AdminLayoutWrapper con sesión expirada)
   useEffect(() => {
-    fetch("/api/auth/me", { credentials: "include" }).then((res) => {
+    tenantFetch("/api/auth/me", { credentials: "include" }).then((res) => {
       if (res.ok) {
         res.json().then((data) => {
           // Solo personal de plataforma (sin tenant) entra al panel admin.
