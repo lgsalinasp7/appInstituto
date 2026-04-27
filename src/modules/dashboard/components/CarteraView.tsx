@@ -111,18 +111,29 @@ export function CarteraView({ advisorId: _advisorId }: CarteraViewProps) {
   }, [fetchData]);
 
 
-  const handleCreateCommitment = (studentId: string, amount: number, date: Date, comments: string) => {
-    console.log("Creating commitment:", { studentId, amount, date, comments });
-    // TODO: Call API
-    toast.info("Funcionalidad de crear compromiso pendiente de conectar");
+  // NOTE: Commitment / Abono creation requires a real modal form (date picker, amount,
+  // payment method, reference) and a dedicated API endpoint (no /api/payment-commitments
+  // route exists yet). Tracked as a separate feature, not a TODO. The modal stubs below
+  // intentionally do not POST anything — they only inform the user.
+  const handleCreateCommitment = (
+    _studentId: string,
+    _amount: number,
+    _date: Date,
+    _comments: string,
+  ) => {
+    toast.info("Funcionalidad de crear compromiso pendiente de implementar");
     setShowCommitmentModal(false);
     setSelectedStudent(null);
   };
 
-  const handleRegisterAbono = (data: { amount: number; method: string; reference: string; createCommitment: boolean; commitmentDate?: Date }) => {
-    console.log("Registering abono:", data);
-    // TODO: Call API
-    toast.info("Funcionalidad de registrar abono pendiente de conectar");
+  const handleRegisterAbono = (_data: {
+    amount: number;
+    method: string;
+    reference: string;
+    createCommitment: boolean;
+    commitmentDate?: Date;
+  }) => {
+    toast.info("Funcionalidad de registrar abono pendiente de implementar");
     setShowAbonoModal(false);
     setSelectedStudent(null);
   };

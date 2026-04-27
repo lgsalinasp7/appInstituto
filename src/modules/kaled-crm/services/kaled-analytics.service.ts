@@ -22,6 +22,7 @@ export class KaledAnalyticsService {
       convertedLeads,
       lostLeads,
       emailsSentThisMonth,
+      emailsOpenedThisMonth,
     ] = await Promise.all([
       prisma.kaledLead.count({ where: { deletedAt: null, tenantId } }),
       prisma.kaledLead.count({
@@ -44,14 +45,29 @@ export class KaledAnalyticsService {
       prisma.kaledLead.count({
         where: { deletedAt: null, tenantId, status: 'PERDIDO' },
       }),
+      // Total emails sent this month: include SENT, DELIVERED, OPENED, CLICKED
+      // because Resend webhook upgrades status as the funnel progresses.
       prisma.kaledEmailLog.count({
         where: {
-          status: 'SENT',
+          status: { in: ['SENT', 'DELIVERED', 'OPENED', 'CLICKED'] },
           tenantId,
           sentAt: { gte: firstDayOfMonth },
         },
       }),
+      // Emails actually opened (Resend webhook fills openedAt).
+      prisma.kaledEmailLog.count({
+        where: {
+          tenantId,
+          sentAt: { gte: firstDayOfMonth },
+          openedAt: { not: null },
+        },
+      }),
     ]);
+
+    const emailOpenRate =
+      emailsSentThisMonth > 0
+        ? (emailsOpenedThisMonth / emailsSentThisMonth) * 100
+        : 0;
 
     // Calcular tasa de conversión
     const conversionRate =
@@ -116,7 +132,7 @@ export class KaledAnalyticsService {
       convertedLeads,
       lostLeads,
       emailsSentThisMonth,
-      emailOpenRate: 0, // TODO: Implementar tracking de aperturas
+      emailOpenRate: Math.round(emailOpenRate * 100) / 100,
     };
   }
 
