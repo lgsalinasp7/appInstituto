@@ -43,7 +43,7 @@ Objetivo: cerrar riesgos de seguridad + sincronizar realidad con docs + commits 
 | # | Tarea | Agente | Estado |
 |---|---|---|---|
 | 1.1 | Commit 38 archivos sistema agentes + skills kaledacademy + docs | PO | DONE `e09c9b8` |
-| 1.2 | Mover claves SSH de raiz a `~/.ssh/` (id_github_lgsalinasp, .pub) | Infra | Pendiente |
+| 1.2 | Mover claves SSH de raiz a `~/.ssh/` (id_github_lgsalinasp, .pub) | Infra | DONE 2026-04-27 — archivadas en `~/.ssh/archive/id_github_lgsalinasp_repo_2026_04_27[.pub]`. NOTA: eran un par DISTINTO al activo en `~/.ssh/` (mismo nombre, fingerprints diferentes), nunca se usaron para git push. |
 | 1.3 | gitignore + untrack build_log.txt y build_verify_log.txt | PO | DONE `5e14356` + `b88a556` |
 | 1.4 | Eliminar `nuevaInfraKaledacademy/` (decision Luis 2026-04-25: A) | PO | DONE `cc021cc` |
 | 1.5 | Eliminar `REFACTOR_PROGRESS.md` y `REFACTOR_COMPLETA_DE_APP.md` (decision Luis 2026-04-25: A) | PO | DONE `cc021cc` |
