@@ -11,6 +11,7 @@ import { sendInvitationEmail, sendTrialInvitationEmail, TENANT_EMAIL_DEFAULTS } 
 import { getAcademyRoleLabel } from "@/lib/academy-role-labels";
 import { z } from "zod";
 import { withTenantAuth, withTenantAuthAndCSRF } from "@/lib/api-auth";
+import { logApiStart, logApiSuccess, logApiError } from "@/lib/api-logger";
 
 // Validation schema for creating invitation
 const createInvitationSchema = z.object({
@@ -106,6 +107,8 @@ export const GET = withTenantAuth(async (request: NextRequest, user, tenantId) =
  * Create a new invitation and send email
  */
 export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, tenantId) => {
+  const ctx = logApiStart(request, "invitations_create", undefined, { userId: user.id, tenantId });
+  const startedAt = Date.now();
   try {
     const body = await request.json();
 
@@ -425,20 +428,21 @@ export const POST = withTenantAuthAndCSRF(async (request: NextRequest, user, ten
         where: { id: invitation.id },
       });
 
-      console.error("Error sending invitation email:", emailError);
+      logApiError(ctx, "invitations_create", { error: emailError, context: { stage: "sendEmail" } });
       return NextResponse.json(
         { success: false, error: "Error al enviar el email de invitación" },
         { status: 500 }
       );
     }
 
+    logApiSuccess(ctx, "invitations_create", { duration: Date.now() - startedAt, resultId: invitation.id });
     return NextResponse.json({
       success: true,
       data: invitation,
       message: "Invitación enviada exitosamente",
     });
   } catch (error) {
-    console.error("Error creating invitation:", error);
+    logApiError(ctx, "invitations_create", { error });
     return NextResponse.json(
       { success: false, error: "Error al crear invitación" },
       { status: 500 }

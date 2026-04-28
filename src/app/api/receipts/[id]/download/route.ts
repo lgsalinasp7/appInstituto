@@ -4,9 +4,12 @@ import { renderToStream } from "@react-pdf/renderer";
 import React from "react";
 import ReceiptPDF from "@/modules/receipts/components/ReceiptPDF";
 import { withTenantAuth } from "@/lib/api-auth";
+import { logApiStart, logApiSuccess, logApiError } from "@/lib/api-logger";
 
 export const GET = withTenantAuth(async (request, user, tenantId, context) => {
   const { id } = await context!.params;
+  const ctx = logApiStart(request, "receipts_download", undefined, { userId: user.id, tenantId });
+  const startedAt = Date.now();
 
   try {
     // Search by id OR receiptNumber to support both
@@ -76,6 +79,7 @@ export const GET = withTenantAuth(async (request, user, tenantId, context) => {
       React.createElement(ReceiptPDF, { data: pdfData }) as any
     );
 
+    logApiSuccess(ctx, "receipts_download", { duration: Date.now() - startedAt, resultId: payment.id });
     // Return as PDF response
     return new NextResponse(stream as unknown as ReadableStream, {
       headers: {
@@ -84,7 +88,7 @@ export const GET = withTenantAuth(async (request, user, tenantId, context) => {
       },
     });
   } catch (error) {
-    console.error("Error generating PDF:", error);
+    logApiError(ctx, "receipts_download", { error });
     return NextResponse.json(
       { success: false, error: "Error al generar el PDF" },
       { status: 500 }

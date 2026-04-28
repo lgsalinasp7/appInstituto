@@ -10,6 +10,7 @@ import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledLeadService } from '@/modules/masterclass/services/kaled-lead.service';
 import { z } from 'zod';
 import type { KaledLead } from '@prisma/client';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 const updateLeadSchema = z.object({
   name: z.string().optional(),
@@ -29,6 +30,8 @@ const updateLeadSchema = z.object({
 export const GET = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
   async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(request, "admin_kaled_lead_get", undefined, { userId: user.id });
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const id = params.id;
@@ -55,12 +58,13 @@ export const GET = withPlatformAdmin(
         );
       }
 
+      logApiSuccess(ctx, "admin_kaled_lead_get", { duration: Date.now() - startedAt, resultId: id });
       return NextResponse.json({
         success: true,
         data: lead,
       });
     } catch (error: unknown) {
-      console.error('Error getting lead:', error);
+      logApiError(ctx, "admin_kaled_lead_get", { error });
       return NextResponse.json(
         {
           success: false,
@@ -76,6 +80,8 @@ export const GET = withPlatformAdmin(
 export const PUT = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
   async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(request, "admin_kaled_lead_update", undefined, { userId: user.id });
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const id = params.id;
@@ -111,13 +117,14 @@ export const PUT = withPlatformAdmin(
         user.id
       );
 
+      logApiSuccess(ctx, "admin_kaled_lead_update", { duration: Date.now() - startedAt, resultId: id });
       return NextResponse.json({
         success: true,
         data: lead,
         message: 'Lead actualizado correctamente',
       });
     } catch (error: unknown) {
-      console.error('Error updating lead:', error);
+      logApiError(ctx, "admin_kaled_lead_update", { error });
       return NextResponse.json(
         {
           success: false,
@@ -133,6 +140,8 @@ export const PUT = withPlatformAdmin(
 export const DELETE = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
   async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(request, "admin_kaled_lead_delete", undefined, { userId: user.id });
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const id = params.id;
@@ -150,12 +159,13 @@ export const DELETE = withPlatformAdmin(
       // Soft delete lead
       await KaledLeadService.deleteLead(id, user.id);
 
+      logApiSuccess(ctx, "admin_kaled_lead_delete", { duration: Date.now() - startedAt, resultId: id });
       return NextResponse.json({
         success: true,
         message: 'Lead eliminado correctamente',
       });
     } catch (error: unknown) {
-      console.error('Error deleting lead:', error);
+      logApiError(ctx, "admin_kaled_lead_delete", { error });
       return NextResponse.json(
         {
           success: false,

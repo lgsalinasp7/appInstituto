@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledEmailService } from '@/modules/kaled-crm/services/kaled-email.service';
 import { z } from 'zod';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 const updateTemplateSchema = z.object({
   name: z.string().optional(),
@@ -23,6 +24,8 @@ const updateTemplateSchema = z.object({
 export const GET = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
   async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(request, "admin_email_template_get", undefined, { userId: user.id });
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const id = params.id;
@@ -49,12 +52,13 @@ export const GET = withPlatformAdmin(
         );
       }
 
+      logApiSuccess(ctx, "admin_email_template_get", { duration: Date.now() - startedAt, resultId: id });
       return NextResponse.json({
         success: true,
         data: template,
       });
     } catch (error: unknown) {
-      console.error('Error getting template:', error);
+      logApiError(ctx, "admin_email_template_get", { error });
       return NextResponse.json(
         {
           success: false,
@@ -70,6 +74,8 @@ export const GET = withPlatformAdmin(
 export const PUT = withPlatformAdmin(
   ['SUPER_ADMIN', 'MARKETING'],
   async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(request, "admin_email_template_update", undefined, { userId: user.id });
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const id = params.id;
@@ -103,13 +109,14 @@ export const PUT = withPlatformAdmin(
         validation.data
       );
 
+      logApiSuccess(ctx, "admin_email_template_update", { duration: Date.now() - startedAt, resultId: id });
       return NextResponse.json({
         success: true,
         data: template,
         message: 'Plantilla actualizada correctamente',
       });
     } catch (error: unknown) {
-      console.error('Error updating template:', error);
+      logApiError(ctx, "admin_email_template_update", { error });
       return NextResponse.json(
         {
           success: false,
@@ -125,6 +132,8 @@ export const PUT = withPlatformAdmin(
 export const DELETE = withPlatformAdmin(
   ['SUPER_ADMIN'],
   async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(request, "admin_email_template_delete", undefined, { userId: user.id });
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const id = params.id;
@@ -141,12 +150,13 @@ export const DELETE = withPlatformAdmin(
 
       await KaledEmailService.deleteTemplate(id);
 
+      logApiSuccess(ctx, "admin_email_template_delete", { duration: Date.now() - startedAt, resultId: id });
       return NextResponse.json({
         success: true,
         message: 'Plantilla eliminada correctamente',
       });
     } catch (error: unknown) {
-      console.error('Error deleting template:', error);
+      logApiError(ctx, "admin_email_template_delete", { error });
       return NextResponse.json(
         {
           success: false,

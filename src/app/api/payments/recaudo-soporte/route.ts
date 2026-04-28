@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { withTenantAuth } from "@/lib/api-auth";
+import { logApiStart, logApiSuccess, logApiError } from "@/lib/api-logger";
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_TYPES = [
@@ -11,6 +12,8 @@ const ALLOWED_TYPES = [
 ];
 
 export const POST = withTenantAuth(async (request: NextRequest, _user, tenantId) => {
+  const ctx = logApiStart(request, "payments_recaudo_soporte", undefined, { userId: _user.id, tenantId });
+  const startedAt = Date.now();
   try {
     const formData = await request.formData();
     const file = formData.get("soporte") as File | null;
@@ -55,9 +58,10 @@ export const POST = withTenantAuth(async (request: NextRequest, _user, tenantId)
       }
     );
 
+    logApiSuccess(ctx, "payments_recaudo_soporte", { duration: Date.now() - startedAt });
     return NextResponse.json({ success: true, url: blob.url });
   } catch (error) {
-    console.error("Error al subir soporte de recaudo:", error);
+    logApiError(ctx, "payments_recaudo_soporte", { error });
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }
