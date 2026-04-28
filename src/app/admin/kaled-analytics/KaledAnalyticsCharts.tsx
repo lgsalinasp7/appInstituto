@@ -156,6 +156,7 @@ export default function KaledAnalyticsCharts({
               cx="50%"
               cy="50%"
               outerRadius={100}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any -- recharts PieLabel doesn't expose custom payload
               label={(entry: any) => `${entry.name}: ${entry.count}`}
             >
               {campaignData.map((entry, index) => (

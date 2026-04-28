@@ -24,6 +24,7 @@ const PieChart = dynamic(
                 fill="#8884d8"
                 paddingAngle={5}
                 dataKey="tokens"
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- recharts PieLabelRenderProps doesn't expose custom payload
                 label={(entry: any) => `${entry.percentage.toFixed(1)}%`}
               >
                 {data.map((entry, index) => (
@@ -37,6 +38,7 @@ const PieChart = dynamic(
                   borderRadius: "12px",
                   color: "#e2e8f0",
                 }}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- recharts Tooltip Formatter union types don't match custom payload shape
                 formatter={(value: any, name: any, props: any) => {
                   if (name === "tokens") {
                     return [
@@ -50,6 +52,7 @@ const PieChart = dynamic(
               <Legend
                 verticalAlign="bottom"
                 height={36}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- recharts Legend formatter doesn't expose payload typing
                 formatter={(value, entry: any) => (
                   <span className="text-sm text-slate-300">{entry.payload.modelName}</span>
                 )}
