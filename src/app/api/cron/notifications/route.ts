@@ -1,150 +1,110 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { WhatsAppService } from "@/modules/whatsapp/services/whatsapp.service";
 import { generatePaymentReminderMessage } from "@/modules/dashboard/utils/whatsapp";
 import { addDays, startOfDay } from "date-fns";
-import { logApiStart, logApiSuccess, logApiError } from "@/lib/api-logger";
+import { withCronAuth } from "@/lib/cron-auth";
+import { logApiOperation } from "@/lib/api-logger";
 
 /**
  * Cron Job: Payment Notifications
- * Protección: Requiere header Authorization: Bearer ${CRON_SECRET}
- * Este endpoint NO usa autenticación de usuario, sino validación por token secreto.
+ * Proteccion: Requiere header Authorization: Bearer ${CRON_SECRET} via withCronAuth.
  *
  * Aislamiento multi-tenant: itera tenants activos y ejecuta queries scoped por tenantId.
  */
-export async function GET(request: NextRequest) {
-    const ctx = logApiStart(request, "cron.notifications");
+export const GET = withCronAuth("cron.notifications", async (_request, ctx) => {
+    const today = startOfDay(new Date());
 
-    // CRITICAL: Validar CRON_SECRET siempre
-    const authHeader = request.headers.get("authorization");
-    const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
+    // Frequencies: 7 days before, 3 days before, 1 day before
+    const tiers = [
+        { days: 7, key: "7d" },
+        { days: 3, key: "3d" },
+        { days: 1, key: "1d" },
+    ];
 
-    if (!process.env.CRON_SECRET) {
-        logApiError(ctx, "cron.notifications", {
-            error: new Error("CRON_SECRET no está configurado"),
-        });
-        return NextResponse.json(
-            { success: false, error: "Servicio no configurado" },
-            { status: 503 }
-        );
-    }
+    // Iterar tenants activos para mantener aislamiento multi-tenant en cada query
+    const activeTenants = await prisma.tenant.findMany({
+        where: { status: "ACTIVO" },
+        select: { id: true, slug: true },
+    });
 
-    if (authHeader !== expectedAuth) {
-        logApiError(ctx, "cron.notifications", {
-            error: new Error("Intento de acceso no autorizado al cron"),
-        });
-        return NextResponse.json(
-            { success: false, error: "No autorizado" },
-            { status: 401 }
-        );
-    }
+    const results: { tenantId: string; student: string; tier: string }[] = [];
 
-    const startedAt = Date.now();
+    for (const tenant of activeTenants) {
+        const tenantId = tenant.id;
 
-    try {
-        const today = startOfDay(new Date());
+        for (const tier of tiers) {
+            const targetDate = addDays(today, tier.days);
+            const nextDay = addDays(targetDate, 1);
 
-        // Frequencies: 7 days before, 3 days before, 1 day before
-        const tiers = [
-            { days: 7, key: "7d" },
-            { days: 3, key: "3d" },
-            { days: 1, key: "1d" },
-        ];
-
-        // Iterar tenants activos para mantener aislamiento multi-tenant en cada query
-        const activeTenants = await prisma.tenant.findMany({
-            where: { status: "ACTIVO" },
-            select: { id: true, slug: true },
-        });
-
-        const results: { tenantId: string; student: string; tier: string }[] = [];
-
-        for (const tenant of activeTenants) {
-            const tenantId = tenant.id;
-
-            for (const tier of tiers) {
-                const targetDate = addDays(today, tier.days);
-                const nextDay = addDays(targetDate, 1);
-
-                // Find commitments for this target date tier (scoped por tenantId)
-                const commitments = await prisma.paymentCommitment.findMany({
-                    where: {
-                        tenantId,
-                        status: "PENDIENTE",
-                        scheduledDate: {
-                            gte: targetDate,
-                            lt: nextDay,
+            // Find commitments for this target date tier (scoped por tenantId)
+            const commitments = await prisma.paymentCommitment.findMany({
+                where: {
+                    tenantId,
+                    status: "PENDIENTE",
+                    scheduledDate: {
+                        gte: targetDate,
+                        lt: nextDay,
+                    },
+                },
+                include: {
+                    student: {
+                        select: {
+                            fullName: true,
+                            phone: true,
                         },
                     },
-                    include: {
-                        student: {
-                            select: {
-                                fullName: true,
-                                phone: true,
-                            },
-                        },
-                    },
+                },
+            });
+
+            for (const commitment of commitments) {
+                const notifications =
+                    (commitment.notificationsSent as Record<string, boolean | string>) || {};
+
+                if (notifications[tier.key]) continue;
+
+                const message = generatePaymentReminderMessage({
+                    studentName: commitment.student.fullName,
+                    amount: Number(commitment.amount),
+                    dueDate: commitment.scheduledDate.toISOString(),
                 });
 
-                for (const commitment of commitments) {
-                    const notifications =
-                        (commitment.notificationsSent as Record<string, boolean | string>) || {};
+                const success = await WhatsAppService.sendMessage({
+                    to: commitment.student.phone,
+                    message,
+                });
 
-                    // If already sent for this tier, skip
-                    if (notifications[tier.key]) continue;
-
-                    // Generate message
-                    const message = generatePaymentReminderMessage({
-                        studentName: commitment.student.fullName,
-                        amount: Number(commitment.amount),
-                        dueDate: commitment.scheduledDate.toISOString(),
-                    });
-
-                    // Send WhatsApp
-                    const success = await WhatsAppService.sendMessage({
-                        to: commitment.student.phone,
-                        message,
-                    });
-
-                    if (success) {
-                        // Defense-in-depth: updateMany con tenantId filter (no hay unique compuesto)
-                        await prisma.paymentCommitment.updateMany({
-                            where: { id: commitment.id, tenantId },
-                            data: {
-                                notificationsSent: {
-                                    ...notifications,
-                                    [tier.key]: true,
-                                    lastSent: new Date().toISOString(),
-                                },
+                if (success) {
+                    // Defense-in-depth: updateMany con tenantId filter (no hay unique compuesto)
+                    await prisma.paymentCommitment.updateMany({
+                        where: { id: commitment.id, tenantId },
+                        data: {
+                            notificationsSent: {
+                                ...notifications,
+                                [tier.key]: true,
+                                lastSent: new Date().toISOString(),
                             },
-                        });
-                        results.push({
-                            tenantId,
-                            student: commitment.student.fullName,
-                            tier: tier.key,
-                        });
-                    }
+                        },
+                    });
+                    results.push({
+                        tenantId,
+                        student: commitment.student.fullName,
+                        tier: tier.key,
+                    });
                 }
             }
         }
-
-        logApiSuccess(ctx, "cron.notifications", {
-            duration: Date.now() - startedAt,
-            recordCount: results.length,
-            metadata: { tenantsProcessed: activeTenants.length },
-        });
-
-        return NextResponse.json({
-            success: true,
-            processed: results.length,
-            tenantsProcessed: activeTenants.length,
-            details: results,
-        });
-    } catch (error) {
-        logApiError(ctx, "cron.notifications", { error });
-        return NextResponse.json(
-            { success: false, error: "Error interno en el cron" },
-            { status: 500 }
-        );
     }
-}
+
+    logApiOperation(ctx, "cron.notifications", "procesamiento de notificaciones completado", {
+        tenantsProcessed: activeTenants.length,
+        notificationsSent: results.length,
+    });
+
+    return NextResponse.json({
+        success: true,
+        processed: results.length,
+        tenantsProcessed: activeTenants.length,
+        details: results,
+    });
+});

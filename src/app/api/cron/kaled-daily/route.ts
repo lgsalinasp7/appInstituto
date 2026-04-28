@@ -1,17 +1,14 @@
 // app/api/cron/kaled-daily/route.ts
-// Cron diario unificado: métricas de cohorte + motor de alertas (L/M/V)
+// Cron diario unificado: metricas de cohorte + motor de alertas (L/M/V)
 // Vercel Hobby: 1 cron diario, max 60s
+
+import { NextResponse } from "next/server";
+import { withCronAuth } from "@/lib/cron-auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-export async function GET(req: Request) {
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  try {
+export const GET = withCronAuth("cron.kaled-daily", async () => {
   const { prisma } = await import("@/lib/prisma");
 
   const tenant = await prisma.tenant.findFirst({
@@ -20,22 +17,22 @@ export async function GET(req: Request) {
   });
 
   if (!tenant) {
-    return Response.json({ ok: false, reason: "no_tenant" });
+    return NextResponse.json({ success: true, ok: false, reason: "no_tenant" });
   }
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const dayOfWeek = today.getDay(); // 0=domingo, 1=lunes, 3=miércoles, 5=viernes
+  const dayOfWeek = today.getDay(); // 0=domingo, 1=lunes, 3=miercoles, 5=viernes
 
   let alertsCreated = 0;
 
-  // Lunes(1), Martes(2), Miércoles(3), Jueves(4), Viernes(5): ejecutar motor de alertas
+  // Lunes(1), Martes(2), Miercoles(3), Jueves(4), Viernes(5): ejecutar motor de alertas
   if (dayOfWeek >= 1 && dayOfWeek <= 5) {
     const { runAlertEngine } = await import("@/lib/academia/kaled-alert-engine");
     alertsCreated = await runAlertEngine(tenant.id);
   }
 
-  // Todos los días: snapshot de métricas de cohorte
+  // Todos los dias: snapshot de metricas de cohorte
   const cohort = await prisma.academyCohort.findFirst({
     where: { tenantId: tenant.id, status: "ACTIVE" },
     select: { id: true },
@@ -111,25 +108,11 @@ export async function GET(req: Request) {
     });
   }
 
-  return Response.json({
-    ok: true,
+  return NextResponse.json({
+    success: true,
     alertsCreated,
     snapshotDate: today.toISOString(),
     dayOfWeek,
     timestamp: new Date().toISOString(),
   });
-  } catch (error: unknown) {
-    const err = error as { code?: string; meta?: unknown; message?: string; stack?: string };
-    const msg = err.message ?? String(error);
-    console.error("[kaled-daily]", err.code, msg);
-    return Response.json(
-      {
-        error: "kaled-daily failed",
-        code: err.code,
-        message: msg.slice(0, 500),
-        meta: err.meta,
-      },
-      { status: 500 }
-    );
-  }
-}
+});
