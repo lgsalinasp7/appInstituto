@@ -114,7 +114,7 @@ export function CampaignCostImporter() {
             {result.success ? (
               <div className="flex items-center gap-2">
                 <span className="text-lg">✓</span>
-                <span>{result.data.imported} registros importados exitosamente</span>
+                <span>{result.data?.imported ?? 0} registros importados exitosamente</span>
               </div>
             ) : (
               <div className="flex items-center gap-2">
