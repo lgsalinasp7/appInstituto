@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { WhatsAppService } from '@/modules/whatsapp/services/whatsapp.service';
+import { logApiStart, logApiSuccess, logApiError, logApiOperation } from '@/lib/api-logger';
 
 /**
  * GET - Verificación del webhook de Meta
  * Meta envía: hub.mode, hub.verify_token, hub.challenge
  */
 export async function GET(request: NextRequest) {
+    const ctx = logApiStart(request, "whatsapp_webhook_verify");
     const searchParams = request.nextUrl.searchParams;
     const mode = searchParams.get('hub.mode');
     const token = searchParams.get('hub.verify_token');
@@ -14,7 +16,7 @@ export async function GET(request: NextRequest) {
     const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN || '1234567890';
 
     if (mode === 'subscribe' && token === verifyToken) {
-        console.log('Webhook verified successfully');
+        logApiOperation(ctx, "whatsapp_webhook_verify", "Webhook verified successfully");
         return new NextResponse(challenge, { status: 200 });
     }
 
@@ -25,6 +27,8 @@ export async function GET(request: NextRequest) {
  * POST - Mensajes entrantes y actualizaciones de estado
  */
 export async function POST(request: NextRequest) {
+    const ctx = logApiStart(request, "whatsapp_webhook");
+    const startedAt = Date.now();
     try {
         const body = await request.text();
         const signature = request.headers.get('x-hub-signature-256') || '';
@@ -33,11 +37,14 @@ export async function POST(request: NextRequest) {
         if (process.env.NODE_ENV === 'production') {
             const isValid = WhatsAppService.verifyWebhookSignature(body, signature);
             if (!isValid) {
-                console.error('Invalid webhook signature');
+                logApiError(ctx, "whatsapp_webhook", {
+                    error: new Error("Invalid webhook signature"),
+                });
                 return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
             }
         }
 
+        logApiSuccess(ctx, "whatsapp_webhook", { duration: Date.now() - startedAt });
         return NextResponse.json(
             {
                 success: true,
@@ -48,7 +55,7 @@ export async function POST(request: NextRequest) {
             { status: 200 }
         );
     } catch (error) {
-        console.error('Error processing WhatsApp webhook:', error);
+        logApiError(ctx, "whatsapp_webhook", { error });
         return NextResponse.json(
             { error: 'Internal server error' },
             { status: 500 }

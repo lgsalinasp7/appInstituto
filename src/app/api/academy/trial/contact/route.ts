@@ -3,12 +3,15 @@
  * Registra CLICK_CONTACT y notifica al asesor
  */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { logTrialActivity, notifyAdvisorOnContactClick, TRIAL_ACTIONS } from "@/lib/trial-activity";
 import { prisma } from "@/lib/prisma";
+import { logApiStart, logApiSuccess, logApiError } from "@/lib/api-logger";
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const ctx = logApiStart(request, "academy_trial_contact");
+  const startedAt = Date.now();
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -60,9 +63,13 @@ export async function POST() {
       dbUser.name
     );
 
+    logApiSuccess(ctx, "academy_trial_contact", {
+      duration: Date.now() - startedAt,
+      resultId: dbUser.id,
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error logging trial contact click:", error);
+    logApiError(ctx, "academy_trial_contact", { error });
     return NextResponse.json(
       { success: false, error: "Error al registrar" },
       { status: 500 }

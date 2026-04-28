@@ -7,10 +7,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledLeadService } from '@/modules/masterclass/services/kaled-lead.service';
 import { resolveKaledTenantId } from '@/lib/kaled-tenant';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 export const GET = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
-  async (request: NextRequest) => {
+  async (request: NextRequest, user) => {
+    const ctx = logApiStart(request, "admin_kaled_leads_list", undefined, { userId: user.id });
+    const startedAt = Date.now();
     try {
       const searchParams = request.nextUrl.searchParams;
 
@@ -32,12 +35,15 @@ export const GET = withPlatformAdmin(
         offset,
       });
 
+      logApiSuccess(ctx, "admin_kaled_leads_list", {
+        duration: Date.now() - startedAt,
+      });
       return NextResponse.json({
         success: true,
         data: result,
       });
     } catch (error: unknown) {
-      console.error('Error getting leads:', error);
+      logApiError(ctx, "admin_kaled_leads_list", { error });
       return NextResponse.json(
         {
           success: false,

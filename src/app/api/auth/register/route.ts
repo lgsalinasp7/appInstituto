@@ -3,8 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { AuthService } from "@/modules/auth/services/auth.service";
 import { registerSchema } from "@/modules/auth/schemas";
 import { checkRateLimit, RATE_LIMIT_CONFIGS, RateLimitError } from "@/lib/rate-limit";
+import { logApiStart, logApiSuccess, logApiError, logApiOperation } from "@/lib/api-logger";
 
 export async function POST(request: NextRequest) {
+  const ctx = logApiStart(request, "auth_register");
+  const startedAt = Date.now();
   try {
     const tenantSlug = request.headers.get("x-tenant-slug");
     if (tenantSlug === "kaledacademy") {
@@ -89,7 +92,9 @@ export async function POST(request: NextRequest) {
 
     // Last resort callback
     if (!role) {
-      console.error("No default role found (ESTUDIANTE/STUDENT/USER)");
+      logApiError(ctx, "auth_register", {
+        error: new Error("No default role found (ESTUDIANTE/STUDENT/USER)"),
+      });
       return NextResponse.json(
         { success: false, error: "Error de configuración: Rol de estudiante no encontrado" },
         { status: 500 }
@@ -118,6 +123,11 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    logApiSuccess(ctx, "auth_register", {
+      duration: Date.now() - startedAt,
+      resultId: newUser.id,
+    });
+
     return NextResponse.json({
       success: true,
       data: newUser,
@@ -125,7 +135,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Registration error:", error);
+    logApiError(ctx, "auth_register", { error });
     return NextResponse.json(
       { success: false, error: "Error interno del servidor" },
       { status: 500 }

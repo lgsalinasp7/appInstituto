@@ -3,13 +3,14 @@
  * Accept an invitation and create user account
  */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import type { PlatformRole, Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { AuthService } from "@/modules/auth/services/auth.service";
 import { courseService } from "@/modules/academy/services/academy.service";
 import { z } from "zod";
 import { addYears } from "date-fns";
+import { logApiStart, logApiSuccess, logApiError } from "@/lib/api-logger";
 
 async function enrollStudentFromInvitation(
   tx: Prisma.TransactionClient,
@@ -84,7 +85,9 @@ const acceptInvitationSchema = z.object({
  * GET /api/invitations/accept?token=xxx
  * Validate token and get invitation details
  */
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const ctx = logApiStart(request, "invitations_accept_validate");
+  const startedAt = Date.now();
   try {
     const { searchParams } = new URL(request.url);
     const token = searchParams.get("token");
@@ -169,6 +172,7 @@ export async function GET(request: Request) {
       select: { id: true, name: true },
     });
 
+    logApiSuccess(ctx, "invitations_accept_validate", { duration: Date.now() - startedAt, resultId: invitation.id });
     return NextResponse.json({
       success: true,
       data: {
@@ -190,7 +194,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Error validating invitation:", error);
+    logApiError(ctx, "invitations_accept_validate", { error });
     return NextResponse.json(
       { success: false, error: "Error al validar invitación" },
       { status: 500 }
@@ -202,7 +206,9 @@ export async function GET(request: Request) {
  * POST /api/invitations/accept
  * Accept invitation and create user account
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const ctx = logApiStart(request, "invitations_accept");
+  const startedAt = Date.now();
   try {
     const body = await request.json();
 
@@ -430,6 +436,7 @@ export async function POST(request: Request) {
       return user;
     });
 
+    logApiSuccess(ctx, "invitations_accept", { duration: Date.now() - startedAt, resultId: result.id });
     return NextResponse.json({
       success: true,
       message: accountWasNew ? "Cuenta creada exitosamente" : "Invitación aplicada a tu cuenta",
@@ -441,7 +448,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Error accepting invitation:", error);
+    logApiError(ctx, "invitations_accept", { error });
     return NextResponse.json(
       { success: false, error: "Error al crear cuenta" },
       { status: 500 }
