@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: [
@@ -37,4 +38,23 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Sentry: solo activar wrapper si hay DSN configurado. Mantiene Turbopack
+// funcionando en desarrollo sin requerir setup de Sentry.
+const sentryEnabled = Boolean(process.env.SENTRY_DSN);
+
+export default sentryEnabled
+  ? withSentryConfig(nextConfig, {
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      // Silenciar logs en local; mostrar solo en CI.
+      silent: !process.env.CI,
+      // Source maps upload se configurara en una iteracion posterior.
+      sourcemaps: {
+        disable: true,
+      },
+      // No inyectar el tunnel route en el cliente por defecto.
+      tunnelRoute: undefined,
+      disableLogger: true,
+    })
+  : nextConfig;
