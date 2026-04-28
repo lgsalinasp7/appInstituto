@@ -109,14 +109,15 @@ export function SalesAgentChat({ prospectId }: SalesAgentChatProps) {
           );
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error en chat:', error);
+      const errMsg = error instanceof Error ? error.message : String(error);
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantId
             ? {
                 ...m,
-                content: `Lo siento, ocurrió un error al procesar tu mensaje. ${error.message}`,
+                content: `Lo siento, ocurrió un error al procesar tu mensaje. ${errMsg}`,
               }
             : m
         )

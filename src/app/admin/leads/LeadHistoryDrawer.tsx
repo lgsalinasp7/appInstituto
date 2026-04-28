@@ -416,10 +416,10 @@ function TimelineItem({ interaction }: { interaction: InteractionWithUser }) {
         {interaction.metadata && typeof interaction.metadata === 'object' && (
           <div className="mt-2 text-xs text-slate-500">
             {interaction.type === 'LLAMADA' && 'duration' in interaction.metadata && (
-              <span>Duración: {(interaction.metadata as any).duration} min</span>
+              <span>Duración: {(interaction.metadata as { duration?: number }).duration} min</span>
             )}
             {interaction.type === 'REUNION' && 'duration' in interaction.metadata && (
-              <span>Duración: {(interaction.metadata as any).duration} min</span>
+              <span>Duración: {(interaction.metadata as { duration?: number }).duration} min</span>
             )}
           </div>
         )}

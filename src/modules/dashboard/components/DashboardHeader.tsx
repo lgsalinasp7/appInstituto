@@ -43,8 +43,8 @@ const routeNames: Record<string, string> = {
 export function DashboardHeader({ title, titleHighlight, subtitle, onFilterChange, children }: DashboardHeaderProps) {
   const branding = useBranding();
   const isDark = branding.darkMode !== false;
-  const [advisors, setAdvisors] = useState<any[]>([]);
-  const [programs, setPrograms] = useState<any[]>([]);
+  const [advisors, setAdvisors] = useState<Array<{ id: string; name: string }>>([]);
+  const [programs, setPrograms] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedAdvisor, setSelectedAdvisor] = useState("all");
   const [selectedProgram, setSelectedProgram] = useState("all");
 

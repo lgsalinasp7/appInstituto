@@ -43,7 +43,7 @@ export function LogCallModal({
 
     setLoading(true);
     try {
-      const body: any = { content: content.trim() };
+      const body: { content: string; duration?: number } = { content: content.trim() };
       if (duration && parseInt(duration) > 0) {
         body.duration = parseInt(duration);
       }

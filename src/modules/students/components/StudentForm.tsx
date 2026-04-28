@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X, User, Phone, Mail, MapPin, GraduationCap, Calendar, DollarSign, UserCheck, CreditCard, Paperclip, Loader2, FileCheck } from "lucide-react";
+import { StudentStatus, PaymentMethod, PaymentFrequency } from "@prisma/client";
 import { createStudentSchema, PAYMENT_METHODS, type CreateStudentInput } from "../schemas";
 import type { StudentWithRelations, CreateStudentResult } from "../types";
 import { formatCurrency, parseCurrency } from "@/lib/utils";
@@ -69,7 +70,7 @@ export function StudentForm({ isOpen, onClose, onSuccess, onSuccessWithData, cur
       totalProgramValue: 0,
       paymentFrequency: "MENSUAL",
       firstCommitmentDate: formatDateForInput(defaultFirstCommitment) as unknown as Date,
-      paymentMethod: "EFECTIVO" as any,
+      paymentMethod: PaymentMethod.EFECTIVO,
       paymentReference: "",
       paymentSupportUrl: "",
     },
@@ -107,13 +108,13 @@ export function StudentForm({ isOpen, onClose, onSuccess, onSuccessWithData, cur
           enrollmentDate: formatDateForInput(new Date(student.enrollmentDate)) as unknown as Date,
           initialPayment: student.initialPayment,
           totalProgramValue: student.totalProgramValue,
-          status: student.status as any,
+          status: student.status as StudentStatus,
           programId: student.programId,
           advisorId: student.advisorId,
-          paymentFrequency: student.paymentFrequency as any,
+          paymentFrequency: student.paymentFrequency as PaymentFrequency,
           firstCommitmentDate: formatDateForInput(student.firstCommitmentDate ? new Date(student.firstCommitmentDate) : new Date()) as unknown as Date,
           // En edición no se muestra esta sección, pero el schema de formulario la exige.
-          paymentMethod: "EFECTIVO" as any,
+          paymentMethod: PaymentMethod.EFECTIVO,
           paymentReference: "",
           paymentSupportUrl: "",
         });
@@ -150,7 +151,7 @@ export function StudentForm({ isOpen, onClose, onSuccess, onSuccessWithData, cur
           paymentFrequency: "MENSUAL",
           firstCommitmentDate: formatDateForInput(firstCommitment) as unknown as Date,
           // Pago de matrícula - defaults
-          paymentMethod: "EFECTIVO" as any,
+          paymentMethod: PaymentMethod.EFECTIVO,
           paymentReference: "",
           paymentSupportUrl: "",
         });

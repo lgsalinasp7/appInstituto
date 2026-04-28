@@ -20,9 +20,10 @@ export class TelegramBotService {
 
     try {
       await this.bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sending Telegram message:', error);
-      throw new Error(`Failed to send Telegram message: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to send Telegram message: ${message}`);
     }
   }
 

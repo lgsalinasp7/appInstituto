@@ -115,10 +115,10 @@ export default function MessagesTab() {
       setItems(payload.data.items ?? []);
       setTotal(payload.data.pagination?.total ?? 0);
       setTotalPages(payload.data.pagination?.totalPages ?? 1);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setItems([]);
       setTotal(0);
-      setError(err.message || 'Error al cargar mensajes');
+      setError(err instanceof Error ? err.message : 'Error al cargar mensajes');
     } finally {
       setLoading(false);
     }

@@ -54,8 +54,9 @@ export function TelegramConfig() {
       } else {
         setResult({ success: false, message: data.error || 'Error al guardar' });
       }
-    } catch (error: any) {
-      setResult({ success: false, message: error.message || 'Error de conexión' });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Error de conexión';
+      setResult({ success: false, message });
     } finally {
       setSaving(false);
     }
@@ -83,8 +84,9 @@ export function TelegramConfig() {
       } else {
         setResult({ success: false, message: data.error || 'Error al enviar' });
       }
-    } catch (error: any) {
-      setResult({ success: false, message: error.message || 'Error de conexión' });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Error de conexión';
+      setResult({ success: false, message });
     } finally {
       setSaving(false);
     }

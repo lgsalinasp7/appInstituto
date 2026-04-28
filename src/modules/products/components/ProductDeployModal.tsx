@@ -53,8 +53,9 @@ export function ProductDeployModal({ product, onClose, onSuccess }: ProductDeplo
 
       setResult(data.data);
       toast.success(`Tenant "${form.tenantName}" desplegado exitosamente`);
-    } catch (error: any) {
-      toast.error(error.message || 'Error al desplegar el producto');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Error al desplegar el producto';
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

@@ -152,7 +152,7 @@ export function withRateLimit<T>(
     
     // Si la respuesta es de Next.js, agregar headers
     if (response && typeof response === "object" && "headers" in response) {
-      const nextResponse = response as any;
+      const nextResponse = response as { headers: { set: (key: string, value: string) => void } };
       nextResponse.headers.set("X-RateLimit-Limit", config.maxRequests.toString());
       nextResponse.headers.set("X-RateLimit-Remaining", remaining.toString());
       nextResponse.headers.set("X-RateLimit-Reset", resetAt.toString());

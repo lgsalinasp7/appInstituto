@@ -44,7 +44,7 @@ export function LogMeetingModal({
 
     setLoading(true);
     try {
-      const body: any = {
+      const body: { content: string; date: string; duration?: number } = {
         content: content.trim(),
         date: new Date(date).toISOString(),
       };

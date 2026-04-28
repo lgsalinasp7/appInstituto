@@ -40,6 +40,7 @@ const AreaChart = dynamic(
                   const date = new Date(value as string);
                   return date.toLocaleDateString("es-CO");
                 }}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- recharts Tooltip Formatter signature uses union types
                 formatter={(value: any, name: any) => {
                   if (name === "tokens") return [value.toLocaleString("es-CO"), "Tokens"];
                   if (name === "messages") return [value.toLocaleString("es-CO"), "Mensajes"];

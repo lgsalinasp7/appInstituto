@@ -50,7 +50,7 @@ export function useChat() {
       if (data.success) {
         setActiveConversationId(id);
         setMessages(
-          data.data.messages.map((msg: any) => ({
+          data.data.messages.map((msg: { id: string; role: string; content: string; createdAt: string }) => ({
             id: msg.id,
             role: msg.role,
             content: msg.content,
@@ -164,8 +164,8 @@ export function useChat() {
             );
           }
         }
-      } catch (err: any) {
-        if (err.name !== "AbortError") {
+      } catch (err: unknown) {
+        if (!(err instanceof Error) || err.name !== "AbortError") {
           console.error("Error en chat:", err);
           setError(err instanceof Error ? err : new Error(String(err)));
           setMessages((prev) => prev.filter((m) => m.id !== assistantId));

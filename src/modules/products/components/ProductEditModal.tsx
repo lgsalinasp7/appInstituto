@@ -50,14 +50,15 @@ export function ProductEditModal({ product, onClose, onSuccess }: ProductEditMod
 
       toast.success('Producto actualizado correctamente');
       onSuccess();
-    } catch (error: any) {
-      toast.error(error.message || 'Error al actualizar el producto');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Error al actualizar el producto';
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const updateField = (field: string, value: any) => {
+  const updateField = (field: string, value: unknown) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
