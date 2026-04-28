@@ -9,6 +9,7 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 import type { Prisma } from '@prisma/client';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 const aplicarSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
@@ -29,6 +30,8 @@ const aplicarSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  const ctx = logApiStart(request, "public_aplicar");
+  const startedAt = Date.now();
   try {
     const body = await request.json();
 
@@ -51,7 +54,7 @@ export async function POST(request: NextRequest) {
     try {
       tenantId = await resolveKaledTenantId();
     } catch (e) {
-      console.error('Error resolviendo tenant para lead aplicar:', e);
+      logApiError(ctx, "public_aplicar", { error: e, context: { stage: "resolveTenant" } });
       return NextResponse.json(
         { success: false, error: 'No se pudo resolver el tenant base. Contacte soporte.' },
         { status: 500 }
@@ -135,13 +138,18 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    logApiSuccess(ctx, "public_aplicar", {
+      duration: Date.now() - startedAt,
+      resultId: lead.id,
+    });
+
     return NextResponse.json({
       success: true,
       data: { leadId: lead.id },
       message: 'Solicitud recibida correctamente',
     });
   } catch (error: unknown) {
-    console.error('Error capturing aplicar lead:', error);
+    logApiError(ctx, "public_aplicar", { error });
     return NextResponse.json(
       {
         success: false,

@@ -22,19 +22,36 @@ import {
   handleEmailDelivered,
   handleEmailBounced,
 } from '@/modules/kaled-crm/services/kaled-automation.service';
+import {
+  logApiStart,
+  logApiSuccess,
+  logApiError,
+  logApiOperation,
+} from '@/lib/api-logger';
+import type { ApiContext } from '@/lib/api-context';
 
 // Verificar firma de Resend (opcional pero recomendado)
-function verifyWebhookSignature(request: NextRequest, body: string): boolean {
+function verifyWebhookSignature(
+  request: NextRequest,
+  _body: string,
+  ctx: ApiContext
+): boolean {
   const signature = request.headers.get('resend-signature');
   const secret = process.env.RESEND_WEBHOOK_SECRET;
 
   if (!secret) {
-    console.warn('⚠️ RESEND_WEBHOOK_SECRET not configured - skipping verification');
+    logApiOperation(
+      ctx,
+      'webhooks_resend',
+      'RESEND_WEBHOOK_SECRET no configurado - skip verification'
+    );
     return true; // Permitir en desarrollo sin secret
   }
 
   if (!signature) {
-    console.error('❌ Missing resend-signature header');
+    logApiError(ctx, 'webhooks_resend', {
+      error: new Error('Missing resend-signature header'),
+    });
     return false;
   }
 
@@ -44,11 +61,13 @@ function verifyWebhookSignature(request: NextRequest, body: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
+  const ctx = logApiStart(request, 'webhooks_resend');
+  const startedAt = Date.now();
   try {
     const body = await request.text();
 
     // Verificar firma
-    if (!verifyWebhookSignature(request, body)) {
+    if (!verifyWebhookSignature(request, body, ctx)) {
       return NextResponse.json(
         { error: 'Invalid signature' },
         { status: 401 }
@@ -57,11 +76,13 @@ export async function POST(request: NextRequest) {
 
     const event = JSON.parse(body);
 
-    console.log(`📬 Resend webhook received: ${event.type}`);
+    logApiOperation(ctx, 'webhooks_resend', `Resend webhook received: ${event.type}`, {
+      eventType: event.type,
+    });
 
     // Extraer datos del evento
     const { type, data } = event;
-    const { email_id, email } = data || {};
+    const { email_id } = data || {};
 
     // Buscar el email log por resendId
     const emailLog = await prisma.kaledEmailLog.findFirst({
@@ -72,14 +93,23 @@ export async function POST(request: NextRequest) {
     });
 
     if (!emailLog) {
-      console.warn(`⚠️ Email log not found for resendId: ${email_id}`);
+      logApiOperation(
+        ctx,
+        'webhooks_resend',
+        `Email log not found for resendId: ${email_id}`,
+        { email_id }
+      );
+      logApiSuccess(ctx, 'webhooks_resend', {
+        duration: Date.now() - startedAt,
+        metadata: { matched: false },
+      });
       return NextResponse.json({ received: true });
     }
 
     // Procesar según el tipo de evento
     switch (type) {
       case 'email.sent':
-        console.log(`📤 Email sent: ${email_id}`);
+        logApiOperation(ctx, 'webhooks_resend', `Email sent: ${email_id}`);
         // El email ya está marcado como SENT al crearse
         break;
 
@@ -104,12 +134,23 @@ export async function POST(request: NextRequest) {
         break;
 
       default:
-        console.log(`ℹ️ Unhandled event type: ${type}`);
+        logApiOperation(
+          ctx,
+          'webhooks_resend',
+          `Unhandled event type: ${type}`,
+          { type }
+        );
     }
+
+    logApiSuccess(ctx, 'webhooks_resend', {
+      duration: Date.now() - startedAt,
+      resultId: emailLog.id,
+      metadata: { eventType: type },
+    });
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error('❌ Error processing Resend webhook:', error);
+    logApiError(ctx, 'webhooks_resend', { error });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

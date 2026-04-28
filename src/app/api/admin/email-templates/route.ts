@@ -9,6 +9,7 @@ import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledEmailService } from '@/modules/kaled-crm/services/kaled-email.service';
 import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 import { z } from 'zod';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 const createTemplateSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
@@ -22,17 +23,20 @@ const createTemplateSchema = z.object({
 // GET /api/admin/email-templates
 export const GET = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
-  async (request: NextRequest) => {
+  async (request: NextRequest, user) => {
+    const ctx = logApiStart(request, "admin_email_templates_list", undefined, { userId: user.id });
+    const startedAt = Date.now();
     try {
       const tenantId = await resolveKaledTenantId(request.nextUrl.searchParams.get('tenantId'));
       const templates = await KaledEmailService.getAllTemplates(tenantId);
 
+      logApiSuccess(ctx, "admin_email_templates_list", { duration: Date.now() - startedAt });
       return NextResponse.json({
         success: true,
         data: templates,
       });
     } catch (error: unknown) {
-      console.error('Error getting templates:', error);
+      logApiError(ctx, "admin_email_templates_list", { error });
       return NextResponse.json(
         {
           success: false,
@@ -47,7 +51,9 @@ export const GET = withPlatformAdmin(
 // POST /api/admin/email-templates
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN', 'MARKETING'],
-  async (request: NextRequest) => {
+  async (request: NextRequest, user) => {
+    const ctx = logApiStart(request, "admin_email_templates_create", undefined, { userId: user.id });
+    const startedAt = Date.now();
     try {
       const body = await request.json();
 
@@ -66,13 +72,14 @@ export const POST = withPlatformAdmin(
       const tenantId = await resolveKaledTenantId(request.nextUrl.searchParams.get('tenantId'));
       const template = await KaledEmailService.createTemplate(tenantId, validation.data);
 
+      logApiSuccess(ctx, "admin_email_templates_create", { duration: Date.now() - startedAt, resultId: template.id });
       return NextResponse.json({
         success: true,
         data: template,
         message: 'Plantilla creada correctamente',
       });
     } catch (error: unknown) {
-      console.error('Error creating template:', error);
+      logApiError(ctx, "admin_email_templates_create", { error });
       return NextResponse.json(
         {
           success: false,

@@ -4,8 +4,11 @@ import { loginSchema } from "@/modules/auth/schemas";
 import { createSession } from "@/lib/auth";
 import { checkRateLimitByEmail, resetRateLimitByEmail, RATE_LIMIT_CONFIGS } from "@/lib/rate-limit";
 import { getCurrentTenantId } from "@/lib/tenant";
+import { logApiStart, logApiSuccess, logApiError } from "@/lib/api-logger";
 
 export async function POST(request: NextRequest) {
+  const ctx = logApiStart(request, "auth_login");
+  const startedAt = Date.now();
   try {
     const body = await request.json();
 
@@ -85,6 +88,11 @@ export async function POST(request: NextRequest) {
 
     const authUser = AuthService.mapToAuthUser(user);
 
+    logApiSuccess(ctx, "auth_login", {
+      duration: Date.now() - startedAt,
+      resultId: user.id,
+    });
+
     return NextResponse.json({
       success: true,
       data: {
@@ -96,7 +104,7 @@ export async function POST(request: NextRequest) {
       message: "Inicio de sesion exitoso",
     });
   } catch (error) {
-    console.error("Login API error:", error);
+    logApiError(ctx, "auth_login", { error });
     return NextResponse.json(
       { success: false, error: "Error interno del servidor" },
       { status: 500 }

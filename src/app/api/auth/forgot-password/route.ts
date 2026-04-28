@@ -4,8 +4,11 @@ import { randomUUID } from "crypto";
 import { addHours } from "date-fns";
 import { sendPasswordResetEmail } from "@/lib/email";
 import { checkRateLimitByEmail, RATE_LIMIT_CONFIGS } from "@/lib/rate-limit";
+import { logApiStart, logApiSuccess, logApiError } from "@/lib/api-logger";
 
 export async function POST(request: NextRequest) {
+    const ctx = logApiStart(request, "auth_forgot_password");
+    const startedAt = Date.now();
     try {
         const { email } = await request.json();
 
@@ -45,6 +48,10 @@ export async function POST(request: NextRequest) {
 
         // For security reasons, we use a generic response if the user doesn't exist
         if (!user) {
+            logApiSuccess(ctx, "auth_forgot_password", {
+                duration: Date.now() - startedAt,
+                metadata: { userExists: false },
+            });
             return NextResponse.json({
                 success: true,
                 message: "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.",
@@ -69,12 +76,17 @@ export async function POST(request: NextRequest) {
             tenantSlug: user.tenant?.slug || undefined,
         });
 
+        logApiSuccess(ctx, "auth_forgot_password", {
+            duration: Date.now() - startedAt,
+            resultId: user.id,
+        });
+
         return NextResponse.json({
             success: true,
             message: "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.",
         });
     } catch (error) {
-        console.error("Forgot password error:", error);
+        logApiError(ctx, "auth_forgot_password", { error });
         return NextResponse.json(
             { success: false, error: "Error interno del servidor" },
             { status: 500 }
