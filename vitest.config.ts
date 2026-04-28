@@ -19,6 +19,8 @@ export default defineConfig({
       // Fix "No such built-in module: node:*" in Vercel/CI (deps may use node: prefix)
       "node:crypto": "crypto",
       "node:buffer": "buffer",
+      // "server-only" is provided by Next.js bundler at build time; stub for tests
+      "server-only": path.resolve(__dirname, "./tests/stubs/server-only.ts"),
     },
   },
 });

@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { AlertCircle, Calendar, Phone, MessageCircle, CheckCircle2, Clock, RefreshCw, DollarSign, X, History, Search } from "lucide-react";
+import { useState, useEffect, useCallback, type FormEvent } from "react";
+import { AlertCircle, Calendar, MessageCircle, CheckCircle2, Clock, RefreshCw, DollarSign, History, Search, Trash2 } from "lucide-react";
 import { Pagination } from "./Pagination";
 import { toast } from "sonner";
+import {
+  useCreateCommitment,
+  useCancelCommitment,
+} from "@/modules/cartera/hooks/usePaymentCommitments";
 
 /** Colombia country calling code for WhatsApp links */
 const COUNTRY_CODE_CO = "57";
@@ -111,19 +115,29 @@ export function CarteraView({ advisorId: _advisorId }: CarteraViewProps) {
   }, [fetchData]);
 
 
-  // NOTE: Commitment / Abono creation requires a real modal form (date picker, amount,
-  // payment method, reference) and a dedicated API endpoint (no /api/payment-commitments
-  // route exists yet). Tracked as a separate feature, not a TODO. The modal stubs below
-  // intentionally do not POST anything — they only inform the user.
-  const handleCreateCommitment = (
-    _studentId: string,
-    _amount: number,
-    _date: Date,
-    _comments: string,
+  const { create: createCommitmentApi } = useCreateCommitment();
+
+  const handleCreateCommitment = async (
+    studentId: string,
+    amount: number,
+    date: Date,
+    comments: string,
   ) => {
-    toast.info("Funcionalidad de crear compromiso pendiente de implementar");
-    setShowCommitmentModal(false);
-    setSelectedStudent(null);
+    try {
+      await createCommitmentApi({
+        studentId,
+        amount,
+        scheduledDate: date,
+        comments: comments || undefined,
+      });
+      toast.success("Compromiso creado correctamente");
+      setShowCommitmentModal(false);
+      setSelectedStudent(null);
+      fetchData();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al crear compromiso";
+      toast.error(message);
+    }
   };
 
   const handleRegisterAbono = (_data: {
@@ -378,23 +392,102 @@ export function CarteraView({ advisorId: _advisorId }: CarteraViewProps) {
 interface CommitmentModalProps {
   student: StudentDebt;
   onClose: () => void;
-  onSubmit: (studentId: string, amount: number, date: Date, comments: string) => void;
+  onSubmit: (studentId: string, amount: number, date: Date, comments: string) => void | Promise<void>;
 }
 
 function CommitmentModal({ student, onClose, onSubmit }: CommitmentModalProps) {
-  // Implementation same as before or simplified
+  const today = new Date();
+  const todayStr = today.toISOString().split("T")[0];
+  const defaultAmount = Math.min(student.remainingBalance, 500000);
+
+  const [amount, setAmount] = useState<string>(String(defaultAmount));
+  const [date, setDate] = useState<string>(todayStr);
+  const [comments, setComments] = useState<string>("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    const amt = Number(amount);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      toast.error("El monto debe ser mayor a 0");
+      return;
+    }
+    if (amt > student.remainingBalance) {
+      toast.error(`El monto excede el saldo pendiente ($${student.remainingBalance.toLocaleString()})`);
+      return;
+    }
+    const parsedDate = new Date(date);
+    if (Number.isNaN(parsedDate.getTime())) {
+      toast.error("Fecha inválida");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await onSubmit(student.studentId, amt, parsedDate, comments);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white p-6 rounded-lg max-w-sm w-full">
-        <h3 className="font-bold mb-4">Crear Compromiso para {student.studentName}</h3>
-        <p className="text-gray-500 mb-4">Funcionalidad en desarrollo.</p>
-        <div className="flex gap-2 justify-end">
-          <button onClick={onClose} className="px-4 py-2 border rounded">Cerrar</button>
-          <button onClick={() => onSubmit(student.studentId, 0, new Date(), "")} className="px-4 py-2 bg-primary text-white rounded">Crear (Simular)</button>
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg max-w-md w-full space-y-4">
+        <div>
+          <h3 className="font-bold text-lg">Crear Compromiso de Pago</h3>
+          <p className="text-sm text-gray-500">{student.studentName} — {student.documentNumber}</p>
+          <p className="text-xs text-gray-400 mt-1">
+            Saldo pendiente: <span className="font-bold text-red-600">${student.remainingBalance.toLocaleString()}</span>
+          </p>
         </div>
-      </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Fecha del compromiso</label>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            min={todayStr}
+            required
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Monto (COP)</label>
+          <input
+            type="number"
+            min={1}
+            step={1000}
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            required
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Notas (opcional)</label>
+          <textarea
+            value={comments}
+            onChange={(e) => setComments(e.target.value)}
+            rows={3}
+            maxLength={1000}
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+            placeholder="Ej: Compromiso confirmado por WhatsApp"
+          />
+        </div>
+
+        <div className="flex gap-2 justify-end pt-2">
+          <button type="button" onClick={onClose} disabled={submitting} className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50">
+            Cancelar
+          </button>
+          <button type="submit" disabled={submitting} className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50">
+            {submitting ? "Creando..." : "Crear compromiso"}
+          </button>
+        </div>
+      </form>
     </div>
-  )
+  );
 }
 
 interface AbonoModalProps {
@@ -424,22 +517,65 @@ interface HistorialCompromisosModalProps {
 }
 
 function HistorialCompromisosModal({ student, onClose }: HistorialCompromisosModalProps) {
+  const [items, setItems] = useState<StudentCommitment[]>(student.commitments ?? []);
+  const { cancel, loading: canceling } = useCancelCommitment();
+
+  const handleCancel = async (id: string) => {
+    if (!confirm("¿Cancelar este compromiso? Esta acción no se puede deshacer.")) return;
+    try {
+      await cancel(id);
+      setItems((prev) => prev.filter((c) => c.id !== id));
+      toast.success("Compromiso cancelado");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al cancelar";
+      toast.error(message);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white p-6 rounded-lg max-w-sm w-full">
-        <h3 className="font-bold mb-4">Historial de {student.studentName}</h3>
-        <div className="max-h-60 overflow-y-auto mb-4">
-          {student.commitments?.length ? (
-            student.commitments.map((c) => (
-              <div key={c.id} className="border-b py-2 text-sm">
-                <p>{new Date(c.scheduledDate).toLocaleDateString()}: ${Number(c.amount).toLocaleString()}</p>
-                <span className="text-xs font-bold text-gray-500">{c.status}</span>
+      <div className="bg-white p-6 rounded-lg max-w-md w-full">
+        <h3 className="font-bold text-lg mb-1">Historial de Compromisos</h3>
+        <p className="text-sm text-gray-500 mb-4">{student.studentName}</p>
+        <div className="max-h-72 overflow-y-auto mb-4 divide-y">
+          {items.length ? (
+            items.map((c) => (
+              <div key={c.id} className="py-3 flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium">
+                    {new Date(c.scheduledDate).toLocaleDateString("es-CO")} — ${Number(c.amount).toLocaleString()}
+                  </p>
+                  <span className={`inline-block mt-1 text-xs font-bold px-2 py-0.5 rounded-full ${
+                    c.status === "PAGADO"
+                      ? "bg-green-100 text-green-700"
+                      : c.status === "EN_COMPROMISO"
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-yellow-100 text-yellow-700"
+                  }`}>
+                    {c.status}
+                  </span>
+                  {c.comments && <p className="text-xs text-gray-500 mt-1 truncate">{c.comments}</p>}
+                </div>
+                {c.status !== "PAGADO" && (
+                  <button
+                    onClick={() => handleCancel(c.id)}
+                    disabled={canceling}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                    title="Cancelar compromiso"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
             ))
-          ) : <p>No hay compromisos.</p>}
+          ) : (
+            <p className="text-sm text-gray-500 text-center py-6">No hay compromisos registrados.</p>
+          )}
         </div>
-        <button onClick={onClose} className="w-full px-4 py-2 border rounded">Cerrar</button>
+        <button onClick={onClose} className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50">
+          Cerrar
+        </button>
       </div>
     </div>
-  )
+  );
 }
