@@ -135,10 +135,10 @@ export class ModelProviderService {
           `[ModelProvider] Using ${provider.name} (${provider.modelId})`
         );
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result = streamText({
           model,
           system: config.system,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- AI SDK v6 message union types don't compose with our generic ChatMessage[]
           messages: config.messages as any,
           tools: config.tools,
           maxOutputTokens: config.maxTokens,

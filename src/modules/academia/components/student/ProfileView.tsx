@@ -307,8 +307,8 @@ export function ProfileView({ data }: { data: ProfileData }) {
       if (!res.ok) throw new Error(json.error ?? "Error al subir imagen");
       setAvatarUrl(json.imageUrl);
       router.refresh();
-    } catch (err: any) {
-      setAvatarError(err.message);
+    } catch (err: unknown) {
+      setAvatarError(err instanceof Error ? err.message : String(err));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -343,8 +343,8 @@ export function ProfileView({ data }: { data: ProfileData }) {
       setNewPassword("");
       setConfirmPassword("");
       setTimeout(() => setShowPasswordForm(false), 2000);
-    } catch (err: any) {
-      setPasswordMsg({ type: "error", text: err.message });
+    } catch (err: unknown) {
+      setPasswordMsg({ type: "error", text: err instanceof Error ? err.message : String(err) });
     } finally {
       setPasswordLoading(false);
     }

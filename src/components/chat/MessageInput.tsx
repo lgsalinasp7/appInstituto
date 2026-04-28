@@ -41,7 +41,7 @@ export function MessageInput({
       if (input.trim() && !isLoading) {
         const form = e.currentTarget.form;
         if (form) {
-          handleSubmit(new Event("submit") as any);
+          handleSubmit(new Event("submit") as unknown as React.FormEvent<HTMLFormElement>);
         }
       }
     }

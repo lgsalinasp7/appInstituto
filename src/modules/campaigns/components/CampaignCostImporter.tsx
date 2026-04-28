@@ -8,7 +8,7 @@ import { tenantFetch } from '@/lib/tenant-fetch';
 export function CampaignCostImporter() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<{ success?: boolean; error?: string; data?: { imported?: number; updated?: number; errors?: string[] } } | null>(null);
 
   const handleUpload = async () => {
     if (!file) return;
@@ -34,10 +34,11 @@ export function CampaignCostImporter() {
         const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Error al importar archivo';
       setResult({
         success: false,
-        error: error.message || 'Error al importar archivo',
+        error: message,
       });
     } finally {
       setLoading(false);
