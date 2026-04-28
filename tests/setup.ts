@@ -4,6 +4,9 @@ import { vi } from "vitest";
 // Ensure React development build for tests (act, etc.) - required for Vercel/CI
 process.env.NODE_ENV = "test";
 
+// Mock "server-only" — only resolved by Next.js bundler at build time, no-op in tests
+vi.mock("server-only", () => ({}));
+
 // Mock next/headers for server components and auth
 vi.mock("next/headers", () => ({
   cookies: vi.fn().mockResolvedValue({
