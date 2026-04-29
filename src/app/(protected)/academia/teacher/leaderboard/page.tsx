@@ -1,7 +1,7 @@
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { cohortService } from "@/modules/academy/services/academy.service";
+import { cohortService } from "@/modules/academia/services/academy.service";
 import { LeaderboardView } from "@/modules/academia/components/student/LeaderboardView";
 
 export default async function AcademiaTeacherLeaderboardPage() {

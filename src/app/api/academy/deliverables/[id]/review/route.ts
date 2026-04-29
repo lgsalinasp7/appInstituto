@@ -1,6 +1,6 @@
 import { withAcademyAuth } from "@/lib/api-auth";
-import { POST_reviewDeliverable } from "@/modules/academy/api/handlers";
-import { INSTRUCTOR_ROLES } from "@/modules/academy/config/roles";
+import { POST_reviewDeliverable } from "@/modules/academia/api/handlers";
+import { INSTRUCTOR_ROLES } from "@/modules/academia/config/academy-platform-roles.config";
 
 export const POST = withAcademyAuth(
   INSTRUCTOR_ROLES,

@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { withAcademyAuth } from "@/lib/api-auth";
 import { AcademyCourseService } from "@/modules/academia";
 import { createLessonSchema } from "@/modules/academia/schemas";
-import { GET_lesson } from "@/modules/academy/api/handlers";
-import { ACADEMY_ROLES } from "@/modules/academy/config/roles";
+import { GET_lesson } from "@/modules/academia/api/handlers";
+import { ACADEMY_ROLES } from "@/modules/academia/config/academy-platform-roles.config";
 
 export const GET = withAcademyAuth(
   ACADEMY_ROLES,
@@ -30,7 +30,7 @@ export const PATCH = withAcademyAuth(
       const lesson = await AcademyCourseService.updateLesson(id, tenantId, parsed.data);
       return NextResponse.json({ success: true, data: lesson });
     } catch (e) {
-      if (e instanceof Error && e.message === "Lección no encontrada") {
+      if (e instanceof Error && e.message === "LecciÃ³n no encontrada") {
         return NextResponse.json({ success: false, error: e.message }, { status: 404 });
       }
       throw e;
@@ -50,7 +50,7 @@ export const DELETE = withAcademyAuth(
       await AcademyCourseService.deleteLesson(id, tenantId);
       return NextResponse.json({ success: true });
     } catch (e) {
-      if (e instanceof Error && e.message === "Lección no encontrada") {
+      if (e instanceof Error && e.message === "LecciÃ³n no encontrada") {
         return NextResponse.json({ success: false, error: e.message }, { status: 404 });
       }
       throw e;

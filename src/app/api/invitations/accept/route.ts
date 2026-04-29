@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { PlatformRole, Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { AuthService } from "@/modules/auth/services/auth.service";
-import { courseService } from "@/modules/academy/services/academy.service";
+import { courseService } from "@/modules/academia/services/academy.service";
 import { z } from "zod";
 import { addYears } from "date-fns";
 import { logApiStart, logApiSuccess, logApiError } from "@/lib/api-logger";
@@ -35,7 +35,7 @@ async function enrollStudentFromInvitation(
     where: { userId: opts.userId, courseId: cohort.courseId },
   });
   if (dup) {
-    throw new Error("El estudiante ya tiene matrícula en este curso");
+    throw new Error("El estudiante ya tiene matrÃ­cula en este curso");
   }
 
   const enrollment = await tx.academyEnrollment.create({
@@ -78,7 +78,7 @@ async function enrollStudentFromInvitation(
 const acceptInvitationSchema = z.object({
   token: z.string().min(1, "Token requerido"),
   name: z.string().min(2, "Nombre debe tener al menos 2 caracteres"),
-  password: z.string().min(6, "Contraseña debe tener al menos 6 caracteres"),
+  password: z.string().min(6, "ContraseÃ±a debe tener al menos 6 caracteres"),
 });
 
 /**
@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
 
     if (!invitation) {
       return NextResponse.json(
-        { success: false, error: "Invitación no encontrada" },
+        { success: false, error: "InvitaciÃ³n no encontrada" },
         { status: 404 }
       );
     }
@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
     // Check if already accepted
     if (invitation.status === "ACCEPTED") {
       return NextResponse.json(
-        { success: false, error: "Esta invitación ya fue aceptada" },
+        { success: false, error: "Esta invitaciÃ³n ya fue aceptada" },
         { status: 400 }
       );
     }
@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
       }
 
       return NextResponse.json(
-        { success: false, error: "Esta invitación ha expirado" },
+        { success: false, error: "Esta invitaciÃ³n ha expirado" },
         { status: 400 }
       );
     }
@@ -196,7 +196,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logApiError(ctx, "invitations_accept_validate", { error });
     return NextResponse.json(
-      { success: false, error: "Error al validar invitación" },
+      { success: false, error: "Error al validar invitaciÃ³n" },
       { status: 500 }
     );
   }
@@ -218,7 +218,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: "Datos inválidos",
+          error: "Datos invÃ¡lidos",
           details: validation.error.issues,
         },
         { status: 400 }
@@ -238,7 +238,7 @@ export async function POST(request: NextRequest) {
 
     if (!invitation) {
       return NextResponse.json(
-        { success: false, error: "Invitación no encontrada" },
+        { success: false, error: "InvitaciÃ³n no encontrada" },
         { status: 404 }
       );
     }
@@ -246,7 +246,7 @@ export async function POST(request: NextRequest) {
     // Check if already accepted
     if (invitation.status === "ACCEPTED") {
       return NextResponse.json(
-        { success: false, error: "Esta invitación ya fue aceptada" },
+        { success: false, error: "Esta invitaciÃ³n ya fue aceptada" },
         { status: 400 }
       );
     }
@@ -259,7 +259,7 @@ export async function POST(request: NextRequest) {
       });
 
       return NextResponse.json(
-        { success: false, error: "Esta invitación ha expirado" },
+        { success: false, error: "Esta invitaciÃ³n ha expirado" },
         { status: 400 }
       );
     }
@@ -275,7 +275,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error:
-            "Este correo pertenece a una cuenta de otro instituto. Inicia sesión con ese contexto o usa otro email.",
+            "Este correo pertenece a una cuenta de otro instituto. Inicia sesiÃ³n con ese contexto o usa otro email.",
         },
         { status: 400 }
       );
@@ -287,7 +287,7 @@ export async function POST(request: NextRequest) {
           {
             success: false,
             error:
-              "Tu cuenta no tiene contraseña (p. ej. acceso social). Inicia sesión como siempre o restablece la contraseña y vuelve a abrir el enlace de invitación.",
+              "Tu cuenta no tiene contraseÃ±a (p. ej. acceso social). Inicia sesiÃ³n como siempre o restablece la contraseÃ±a y vuelve a abrir el enlace de invitaciÃ³n.",
           },
           { status: 400 }
         );
@@ -295,7 +295,7 @@ export async function POST(request: NextRequest) {
       const passwordOk = await AuthService.verifyPassword(password, existingUser.password);
       if (!passwordOk) {
         return NextResponse.json(
-          { success: false, error: "Contraseña incorrecta" },
+          { success: false, error: "ContraseÃ±a incorrecta" },
           { status: 401 }
         );
       }
@@ -358,7 +358,7 @@ export async function POST(request: NextRequest) {
         const trialExpiresAt = inv.trialExpiresAt ?? new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
 
         if (!firstLessonIdForTrial) {
-          throw new Error("No se encontró la primera lección del Módulo 1 para el acceso de prueba");
+          throw new Error("No se encontrÃ³ la primera lecciÃ³n del MÃ³dulo 1 para el acceso de prueba");
         }
 
         if (cohortIdOnInvite) {
@@ -378,7 +378,7 @@ export async function POST(request: NextRequest) {
             where: { tenantId, isActive: true },
           });
           if (!course) {
-            throw new Error("No se encontró el curso principal de Kaled Academy");
+            throw new Error("No se encontrÃ³ el curso principal de Kaled Academy");
           }
 
           let cohort = await tx.academyCohort.findFirst({
@@ -439,7 +439,7 @@ export async function POST(request: NextRequest) {
     logApiSuccess(ctx, "invitations_accept", { duration: Date.now() - startedAt, resultId: result.id });
     return NextResponse.json({
       success: true,
-      message: accountWasNew ? "Cuenta creada exitosamente" : "Invitación aplicada a tu cuenta",
+      message: accountWasNew ? "Cuenta creada exitosamente" : "InvitaciÃ³n aplicada a tu cuenta",
       data: {
         id: result.id,
         email: result.email,

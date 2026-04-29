@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAcademyAuth } from "@/lib/api-auth";
-import { INSTRUCTOR_ROLES } from "@/modules/academy/config/roles";
+import { INSTRUCTOR_ROLES } from "@/modules/academia/config/academy-platform-roles.config";
 import { prisma } from "@/lib/prisma";
 
 async function GET_handler(
