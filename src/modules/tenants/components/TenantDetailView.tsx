@@ -5,7 +5,7 @@
  * Displays full tenant details with tabs
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1057,7 +1057,7 @@ function InvitationsTab({
     status: string;
   } | null>(null);
 
-  const fetchInvitations = useCallback(async () => {
+  const fetchInvitations = async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/tenants/${tenantSlug}/invitations`);
@@ -1068,11 +1068,12 @@ function InvitationsTab({
     } finally {
       setLoading(false);
     }
-  }, [tenantSlug]);
+  };
 
   useEffect(() => {
     fetchInvitations();
-  }, [fetchInvitations]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tenantSlug]);
 
   const runInvitationDelete = async () => {
     if (!inviteToDelete) return;

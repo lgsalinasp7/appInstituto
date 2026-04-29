@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Users, Loader2 } from "lucide-react";
 import { useBranding } from "@/components/providers/BrandingContext";
 import { cn } from "@/lib/utils";
@@ -32,7 +32,7 @@ export function AdvisorPerformanceTable() {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>("month");
 
-  const fetchData = useCallback(async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/reports/advisors?period=${period}`);
@@ -45,11 +45,12 @@ export function AdvisorPerformanceTable() {
     } finally {
       setLoading(false);
     }
-  }, [period]);
+  };
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [period]);
 
   const maxRevenue = Math.max(...advisors.map((a) => a.revenueThisMonth), 1);
   const maxStudents = Math.max(...advisors.map((a) => a.studentsThisMonth), 1);
