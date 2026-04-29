@@ -41,9 +41,9 @@ export default async function proxy(req: NextRequest) {
 
     // CONTEXTO: ADMIN
     if (context === 'admin') {
-        // Compatibilidad: esta vista ahora vive en /admin/campanas
-        if (pathname === '/campanas') {
-            return NextResponse.redirect(new URL('/admin/campanas', req.url));
+        // Compatibilidad: esta vista ahora vive en /admin/campaigns
+        if (pathname === '/campanas' || pathname === '/admin/campanas') {
+            return NextResponse.redirect(new URL('/admin/campaigns', req.url));
         }
         // Compatibilidad: esta vista ahora vive en /admin/agentes-comerciales
         if (pathname === '/agentes-comerciales') {
