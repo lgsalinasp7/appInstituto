@@ -72,10 +72,7 @@ export function EmailAnalyticsClient({ analyticsData, globalStats }: EmailAnalyt
   const [sortBy, setSortBy] = useState<SortKey>('sent');
   const [filterPhase, setFilterPhase] = useState<string | null>('ALL');
 
-  const phases = useMemo(
-    () => ['ALL', ...new Set(analyticsData.map((template) => template.phase).filter(Boolean) as string[])],
-    [analyticsData]
-  );
+  const phases = ['ALL', ...new Set(analyticsData.map((template) => template.phase).filter(Boolean) as string[])];
 
   const sortedData = useMemo(() => {
     const filteredData = analyticsData.filter(

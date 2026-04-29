@@ -1,7 +1,7 @@
 "use client";
 
 import { MessageCircle } from "lucide-react";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { captureAttributionFromCurrentUrl, getAttribution } from "@/lib/attribution";
 import { trackThankYouView, trackWhatsAppClick } from "@/lib/funnel-events";
 
@@ -14,7 +14,7 @@ export function MasterclassThankYouActions({
 }: MasterclassThankYouActionsProps) {
   const [countdown, setCountdown] = useState(5);
 
-  const handleWhatsAppRedirect = useCallback((method: "auto" | "manual") => {
+  const handleWhatsAppRedirect = (method: "auto" | "manual") => {
     const attribution = getAttribution();
     trackWhatsAppClick({
       funnel: "masterclass_ia",
@@ -29,7 +29,7 @@ export function MasterclassThankYouActions({
       ttclid: attribution.ttclid || undefined,
     });
     window.location.href = whatsappGroupUrl;
-  }, [whatsappGroupUrl]);
+  };
 
   useEffect(() => {
     captureAttributionFromCurrentUrl();
@@ -55,7 +55,8 @@ export function MasterclassThankYouActions({
 
     const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
     return () => clearTimeout(timer);
-  }, [countdown, handleWhatsAppRedirect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countdown]);
 
   return (
     <div className="space-y-6">

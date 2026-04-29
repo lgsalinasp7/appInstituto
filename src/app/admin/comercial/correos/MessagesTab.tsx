@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Mail, RefreshCw, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -94,14 +94,12 @@ export default function MessagesTab() {
   const [totalPages, setTotalPages] = useState(1);
   const pageSize = 6;
 
-  const query = useMemo(() => {
-    const params = new URLSearchParams();
-    params.set('page', String(page));
-    params.set('pageSize', String(pageSize));
-    if (search.trim()) params.set('search', search.trim());
-    if (status !== 'ALL') params.set('status', status);
-    return params.toString();
-  }, [search, status, page]);
+  const params = new URLSearchParams();
+  params.set('page', String(page));
+  params.set('pageSize', String(pageSize));
+  if (search.trim()) params.set('search', search.trim());
+  if (status !== 'ALL') params.set('status', status);
+  const query = params.toString();
 
   const loadMessages = async () => {
     setLoading(true);

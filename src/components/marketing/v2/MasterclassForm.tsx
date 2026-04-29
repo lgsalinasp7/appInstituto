@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Send, Loader2, ShieldCheck, Zap, CheckCircle2 } from "lucide-react";
 import { captureMasterclassLead } from "@/app/actions/masterclass";
@@ -159,18 +159,17 @@ export function MasterclassForm() {
 function FloatingMobileCTA({ formRef }: { formRef: React.RefObject<HTMLDivElement | null> }) {
     const [isFormVisible, setIsFormVisible] = useState(false);
 
-    const handleIntersection = useCallback((entries: IntersectionObserverEntry[]) => {
-        setIsFormVisible(entries[0]?.isIntersecting ?? false);
-    }, []);
-
     useEffect(() => {
         const el = formRef.current;
         if (!el) return;
 
-        const observer = new IntersectionObserver(handleIntersection, { threshold: 0.1 });
+        const observer = new IntersectionObserver(
+            (entries) => setIsFormVisible(entries[0]?.isIntersecting ?? false),
+            { threshold: 0.1 }
+        );
         observer.observe(el);
         return () => observer.disconnect();
-    }, [formRef, handleIntersection]);
+    }, [formRef]);
 
     if (isFormVisible) return null;
 

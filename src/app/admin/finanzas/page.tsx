@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { BarChart3, BriefcaseBusiness, GraduationCap, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -147,7 +147,7 @@ export default function AdminFinanzasPage() {
     notes: "",
   });
 
-  const refreshFinanceData = useCallback(async () => {
+  const refreshFinanceData = async () => {
     setLoading(true);
     try {
       const [executiveRes, saasRes, schedulesRes, cohortsRes, cohortCostsRes] = await Promise.all([
@@ -177,48 +177,46 @@ export default function AdminFinanzasPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
     void refreshFinanceData();
-  }, [refreshFinanceData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const saleOptions = useMemo(() => {
-    if (!saas) return [];
-    return saas.sales.map((sale) => ({
-      id: sale.id,
-      label: `${sale.customerName} - ${sale.productName}`,
-    }));
-  }, [saas]);
+  const saleOptions = saas
+    ? saas.sales.map((sale) => ({
+        id: sale.id,
+        label: `${sale.customerName} - ${sale.productName}`,
+      }))
+    : [];
 
-  const cohortOptions = useMemo(() => {
-    if (!cohorts) return [];
-    return cohorts.cohorts.map((cohort) => ({
-      id: cohort.cohortId,
-      label: `${cohort.cohortName} - ${cohort.courseTitle}`,
-    }));
-  }, [cohorts]);
+  const cohortOptions = cohorts
+    ? cohorts.cohorts.map((cohort) => ({
+        id: cohort.cohortId,
+        label: `${cohort.cohortName} - ${cohort.courseTitle}`,
+      }))
+    : [];
 
-  const kpiCards = useMemo(() => {
-    if (!executive) return [];
-    return [
-      {
-        label: "Ingresos Totales",
-        value: formatMoney(executive.totalRevenue),
-        tone: "bg-emerald-500/10 border-emerald-500/20 text-emerald-200",
-      },
-      {
-        label: "Costo Total",
-        value: formatMoney(executive.totalCost),
-        tone: "bg-amber-500/10 border-amber-500/20 text-amber-200",
-      },
-      {
-        label: "Margen Bruto",
-        value: `${formatMoney(executive.grossMargin)} (${formatPercent(executive.grossMarginPct)})`,
-        tone: "bg-cyan-500/10 border-cyan-500/20 text-cyan-200",
-      },
-    ];
-  }, [executive]);
+  const kpiCards = executive
+    ? [
+        {
+          label: "Ingresos Totales",
+          value: formatMoney(executive.totalRevenue),
+          tone: "bg-emerald-500/10 border-emerald-500/20 text-emerald-200",
+        },
+        {
+          label: "Costo Total",
+          value: formatMoney(executive.totalCost),
+          tone: "bg-amber-500/10 border-amber-500/20 text-amber-200",
+        },
+        {
+          label: "Margen Bruto",
+          value: `${formatMoney(executive.grossMargin)} (${formatPercent(executive.grossMarginPct)})`,
+          tone: "bg-cyan-500/10 border-cyan-500/20 text-cyan-200",
+        },
+      ]
+    : [];
 
   const handleCreateSale = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

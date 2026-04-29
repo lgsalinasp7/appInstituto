@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -51,8 +51,7 @@ export function TenantUserEditModal({
     }
   };
 
-  const performSubmit = useCallback(
-    async (withTempPassword: boolean) => {
+  const performSubmit = async (withTempPassword: boolean) => {
       if (isSubmittingRef.current) return;
       isSubmittingRef.current = true;
       setLoading(true);
@@ -153,9 +152,7 @@ export function TenantUserEditModal({
         setLoading(false);
         setShowTempPasswordConfirm(false);
       }
-    },
-    [tenantId, tenantSlug, user.id, user.name, user.email, name, email, onSuccess, onClose]
-  );
+    };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
