@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAcademyAuth } from "@/lib/api-auth";
-import { INSTRUCTOR_ROLES } from "@/modules/academy/config/roles";
+import { INSTRUCTOR_ROLES } from "@/modules/academia/config/academy-platform-roles.config";
 import { prisma } from "@/lib/prisma";
 import { generateText, gateway } from "ai";
 import { z } from "zod";
@@ -11,10 +11,10 @@ const bodySchema = z.object({
 
 function getCRITERIA(phase: string): string {
   const criteria: Record<string, string> = {
-    CONSTRUIR: "¿Funciona? ¿El estudiante lo entiende? ¿Puede explicarlo?",
-    ROMPER: "¿Identificó los fallos? ¿Aprendió del error? ¿Puede prevenirlo?",
-    AUDITAR: "¿Es seguro? ¿Escala? ¿Es legible? ¿Sigue buenas prácticas?",
-    LANZAR: "¿Está desplegado? ¿Tiene URL real? ¿Está documentado? ¿Puede defenderlo?",
+    CONSTRUIR: "Â¿Funciona? Â¿El estudiante lo entiende? Â¿Puede explicarlo?",
+    ROMPER: "Â¿IdentificÃ³ los fallos? Â¿AprendiÃ³ del error? Â¿Puede prevenirlo?",
+    AUDITAR: "Â¿Es seguro? Â¿Escala? Â¿Es legible? Â¿Sigue buenas prÃ¡cticas?",
+    LANZAR: "Â¿EstÃ¡ desplegado? Â¿Tiene URL real? Â¿EstÃ¡ documentado? Â¿Puede defenderlo?",
   };
   return criteria[phase] ?? criteria.LANZAR;
 }
@@ -56,7 +56,7 @@ async function POST_handler(
     submission.user.tenantId !== tenantId
   ) {
     return NextResponse.json(
-      { success: false, error: "Entregable no disponible para tu institución" },
+      { success: false, error: "Entregable no disponible para tu instituciÃ³n" },
       { status: 403 }
     );
   }
@@ -66,27 +66,27 @@ async function POST_handler(
   const totalItems = submission.deliverable.checkItems.length;
   const studentName = submission.user.name ?? "Estudiante";
 
-  const prompt = `Eres Kaled, tutor de KaledAcademy. Evalúa cualitativamente este entregable.
+  const prompt = `Eres Kaled, tutor de KaledAcademy. EvalÃºa cualitativamente este entregable.
 
 ENTREGABLE: ${submission.deliverable.title}
 SEMANA: ${submission.deliverable.weekNumber}
 FASE CRAL: ${cralPhase}
 ESTUDIANTE: ${studentName}
 
-CHECKLIST COMPLETADO: ${checkedCount}/${totalItems} ítems marcados
+CHECKLIST COMPLETADO: ${checkedCount}/${totalItems} Ã­tems marcados
 GITHUB: ${submission.githubUrl ?? "No proporcionado"}
 DEPLOY: ${submission.deployUrl ?? "No proporcionado"}
 
-CRITERIOS SEGÚN FASE ${cralPhase}:
+CRITERIOS SEGÃšN FASE ${cralPhase}:
 ${getCRITERIA(cralPhase)}
 
-Genera evaluación cualitativa en JSON:
+Genera evaluaciÃ³n cualitativa en JSON:
 {
-  "feedbackConstruir": "evaluación de si construyó y entiende",
-  "feedbackRomper": "evaluación de experimentación",
-  "feedbackAuditar": "evaluación de criterio técnico",
-  "feedbackLanzar": "evaluación de si está desplegado",
-  "overallFeedback": "retroalimentación principal motivadora (2 párrafos)",
+  "feedbackConstruir": "evaluaciÃ³n de si construyÃ³ y entiende",
+  "feedbackRomper": "evaluaciÃ³n de experimentaciÃ³n",
+  "feedbackAuditar": "evaluaciÃ³n de criterio tÃ©cnico",
+  "feedbackLanzar": "evaluaciÃ³n de si estÃ¡ desplegado",
+  "overallFeedback": "retroalimentaciÃ³n principal motivadora (2 pÃ¡rrafos)",
   "strengths": ["fortaleza 1", "fortaleza 2"],
   "improvements": ["mejora 1", "mejora 2"],
   "socraticQuestions": ["pregunta para reflexionar 1", "pregunta 2"],

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAcademyAuth } from "@/lib/api-auth";
 import { AcademyCourseService } from "@/modules/academia";
-import { adminReplaceDeliverablesSchema } from "@/modules/academy/schemas/admin-lesson";
+import { adminReplaceDeliverablesSchema } from "@/modules/academia/schemas/admin-lesson";
 
 export const PUT = withAcademyAuth(["ACADEMY_ADMIN"], async (request, _user, tenantId, context) => {
   const params = await context?.params;
@@ -13,7 +13,7 @@ export const PUT = withAcademyAuth(["ACADEMY_ADMIN"], async (request, _user, ten
   const parsed = adminReplaceDeliverablesSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { success: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos" },
+      { success: false, error: parsed.error.issues[0]?.message ?? "Datos invÃ¡lidos" },
       { status: 400 }
     );
   }
@@ -21,7 +21,7 @@ export const PUT = withAcademyAuth(["ACADEMY_ADMIN"], async (request, _user, ten
     await AcademyCourseService.replaceLessonDeliverables(id, tenantId, parsed.data.deliverables);
     return NextResponse.json({ success: true });
   } catch (e) {
-    if (e instanceof Error && e.message === "Lección no encontrada") {
+    if (e instanceof Error && e.message === "LecciÃ³n no encontrada") {
       return NextResponse.json({ success: false, error: e.message }, { status: 404 });
     }
     throw e;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAcademyAuth } from "@/lib/api-auth";
-import { INSTRUCTOR_ROLES } from "@/modules/academy/config/roles";
+import { INSTRUCTOR_ROLES } from "@/modules/academia/config/academy-platform-roles.config";
 import { prisma } from "@/lib/prisma";
 
 const PRIORITY_ORDER = { HIGH: 0, MEDIUM: 1, LOW: 2 };

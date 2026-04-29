@@ -1,6 +1,6 @@
 import { withAcademyAuth } from "@/lib/api-auth";
-import { GET_cohortAnalytics } from "@/modules/academy/api/handlers";
-import { INSTRUCTOR_ROLES } from "@/modules/academy/config/roles";
+import { GET_cohortAnalytics } from "@/modules/academia/api/handlers";
+import { INSTRUCTOR_ROLES } from "@/modules/academia/config/academy-platform-roles.config";
 
 export const GET = withAcademyAuth(
   INSTRUCTOR_ROLES,

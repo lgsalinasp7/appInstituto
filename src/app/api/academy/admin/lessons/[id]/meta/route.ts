@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAcademyAuth } from "@/lib/api-auth";
 import { AcademyCourseService } from "@/modules/academia";
-import { adminLessonMetaPatchSchema } from "@/modules/academy/schemas/admin-lesson";
+import { adminLessonMetaPatchSchema } from "@/modules/academia/schemas/admin-lesson";
 
 export const PATCH = withAcademyAuth(["ACADEMY_ADMIN"], async (request, _user, tenantId, context) => {
   const params = await context?.params;
@@ -13,7 +13,7 @@ export const PATCH = withAcademyAuth(["ACADEMY_ADMIN"], async (request, _user, t
   const parsed = adminLessonMetaPatchSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { success: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos" },
+      { success: false, error: parsed.error.issues[0]?.message ?? "Datos invÃ¡lidos" },
       { status: 400 }
     );
   }
@@ -30,10 +30,10 @@ export const PATCH = withAcademyAuth(["ACADEMY_ADMIN"], async (request, _user, t
     return NextResponse.json({ success: true, data: meta });
   } catch (e) {
     if (e instanceof Error) {
-      if (e.message === "Lección no encontrada") {
+      if (e.message === "LecciÃ³n no encontrada") {
         return NextResponse.json({ success: false, error: e.message }, { status: 404 });
       }
-      if (e.message === "Animación no válida") {
+      if (e.message === "AnimaciÃ³n no vÃ¡lida") {
         return NextResponse.json({ success: false, error: e.message }, { status: 400 });
       }
     }

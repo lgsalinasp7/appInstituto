@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAcademyAuth } from "@/lib/api-auth";
-import { ACADEMY_ROLES } from "@/modules/academy/config/roles";
+import { ACADEMY_ROLES } from "@/modules/academia/config/academy-platform-roles.config";
 import { reviewCodeWithCRAL } from "@/lib/academia/kaled-code-reviewer";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
@@ -23,7 +23,7 @@ async function POST_handler(
   const { code, lessonId } = body.data;
 
   let cralPhase = "CONSTRUIR";
-  let lessonTitle = "Sesión general";
+  let lessonTitle = "SesiÃ³n general";
   let weekNumber = 1;
 
   if (lessonId) {
@@ -37,10 +37,10 @@ async function POST_handler(
       },
     });
     if (lesson) {
-      // Validar aislamiento multi-tenant: la lección debe pertenecer al mismo tenant del usuario
+      // Validar aislamiento multi-tenant: la lecciÃ³n debe pertenecer al mismo tenant del usuario
       if (lesson.module.course.tenantId !== tenantId) {
         return NextResponse.json(
-          { success: false, error: "Lección no disponible para tu institución" },
+          { success: false, error: "LecciÃ³n no disponible para tu instituciÃ³n" },
           { status: 403 }
         );
       }
