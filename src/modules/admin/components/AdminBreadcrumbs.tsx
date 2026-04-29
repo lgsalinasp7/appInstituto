@@ -17,7 +17,7 @@ const routeNames: Record<string, string> = {
   '/admin/empresas': 'Empresas',
   '/admin/suscripciones': 'Suscripciones',
   '/admin/leads': 'Leads',
-  '/admin/campanas': 'Campañas',
+  '/admin/campaigns': 'Campañas',
   '/admin/email-templates': 'Email',
   '/admin/email-templates/new': 'Nueva Plantilla',
   '/admin/email-templates/[id]': 'Editar Plantilla',
