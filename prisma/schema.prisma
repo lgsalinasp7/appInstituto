@@ -801,6 +801,8 @@ enum CommitmentStatus {
   PAGADO
   PENDIENTE
   EN_COMPROMISO
+  CANCELADO
+  VENCIDO
 }
 
 enum ProspectStatus {

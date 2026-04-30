@@ -1,4 +1,9 @@
-export type CommitmentStatus = "PAGADO" | "PENDIENTE" | "EN_COMPROMISO";
+export type CommitmentStatus =
+  | "PAGADO"
+  | "PENDIENTE"
+  | "EN_COMPROMISO"
+  | "CANCELADO"
+  | "VENCIDO";
 
 export interface PaymentCommitmentData {
   id: string;
