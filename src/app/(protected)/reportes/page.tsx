@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
     PieChart,
     Users,
@@ -96,32 +96,31 @@ export default function ReportesPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const ADVISORS_PER_PAGE = 10;
 
-    const fetchData = useCallback(async () => {
-        setLoading(true);
-        try {
-            if (activeTab === "financiero") {
-                const res = await tenantFetch("/api/reports/financial");
-                const data = await res.json();
-                if (data.success) setFinancialData(data.data);
-            } else if (activeTab === "cartera") {
-                const res = await tenantFetch("/api/reports/portfolio-aging");
-                const data = await res.json();
-                if (data.success) setAgingData(data.data);
-            } else if (activeTab === "asesores") {
-                const res = await tenantFetch("/api/reports/advisors");
-                const data = await res.json();
-                if (data.success) setAdvisorsData(data.data);
-            }
-        } catch (error) {
-            console.error("Error fetching reports:", error);
-        } finally {
-            setLoading(false);
-        }
-    }, [activeTab]);
-
     useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                if (activeTab === "financiero") {
+                    const res = await tenantFetch("/api/reports/financial");
+                    const data = await res.json();
+                    if (data.success) setFinancialData(data.data);
+                } else if (activeTab === "cartera") {
+                    const res = await tenantFetch("/api/reports/portfolio-aging");
+                    const data = await res.json();
+                    if (data.success) setAgingData(data.data);
+                } else if (activeTab === "asesores") {
+                    const res = await tenantFetch("/api/reports/advisors");
+                    const data = await res.json();
+                    if (data.success) setAdvisorsData(data.data);
+                }
+            } catch (error) {
+                console.error("Error fetching reports:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
         fetchData();
-    }, [fetchData]);
+    }, [activeTab]);
 
     return (
         <div className="space-y-4 sm:space-y-6">
