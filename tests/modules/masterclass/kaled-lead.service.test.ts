@@ -18,6 +18,8 @@ vi.mock("@/lib/prisma", () => ({
     },
     kaledEmailLog: {
       count: vi.fn(),
+      findFirst: vi.fn(),
+      update: vi.fn(),
     },
   },
   default: {},
@@ -257,5 +259,213 @@ describe("KaledLeadService.deleteLead / restoreLead", () => {
     await expect(KaledLeadService.restoreLead("lead-1")).rejects.toThrow(
       "no está eliminado"
     );
+  });
+});
+
+describe("KaledLeadService.captureLead — campos opcionales (UTM/attribution)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("incluye attribution (fbclid/gclid/ttclid) en filteringData del nuevo lead", async () => {
+    (prisma.kaledLead.findUnique as MockedFn).mockResolvedValue(null);
+    (prisma.kaledLead.create as MockedFn).mockResolvedValue({
+      id: "lead-attr",
+      status: "NUEVO",
+      tenantId: TENANT_A,
+    });
+
+    await KaledLeadService.captureLead(
+      {
+        ...baseLead,
+        fbclid: "fb-123",
+        gclid: "gc-456",
+        ttclid: "tt-789",
+        utmSource: "facebook",
+        utmCampaign: "masterclass-2026",
+      },
+      TENANT_A
+    );
+
+    const arg = (prisma.kaledLead.create as MockedFn).mock.calls[0][0];
+    expect(arg.data.utmSource).toBe("facebook");
+    expect(arg.data.utmCampaign).toBe("masterclass-2026");
+    expect(arg.data.filteringData).toMatchObject({
+      attribution: { fbclid: "fb-123", gclid: "gc-456", ttclid: "tt-789" },
+    });
+  });
+
+  it("source LANDING cuando no se pasa masterclassSlug", async () => {
+    (prisma.kaledLead.findUnique as MockedFn).mockResolvedValue(null);
+    (prisma.kaledLead.create as MockedFn).mockResolvedValue({
+      id: "lead-1",
+      status: "NUEVO",
+      tenantId: TENANT_A,
+    });
+
+    await KaledLeadService.captureLead(baseLead, TENANT_A);
+
+    const arg = (prisma.kaledLead.create as MockedFn).mock.calls[0][0];
+    expect(arg.data.source).toBe("LANDING");
+  });
+
+  it("source MASTERCLASS:<slug> cuando se proporciona masterclassSlug", async () => {
+    (prisma.kaledLead.findUnique as MockedFn).mockResolvedValue(null);
+    (prisma.kaledLead.create as MockedFn).mockResolvedValue({
+      id: "lead-1",
+      status: "NUEVO",
+      tenantId: TENANT_A,
+    });
+
+    await KaledLeadService.captureLead(
+      { ...baseLead, masterclassSlug: "ia-aplicada" },
+      TENANT_A
+    );
+
+    const arg = (prisma.kaledLead.create as MockedFn).mock.calls[0][0];
+    expect(arg.data.source).toBe("MASTERCLASS: ia-aplicada");
+  });
+});
+
+describe("KaledLeadService.updateLead — cambio de status dispara secuencia", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("dispara triggerSequenceByStage cuando cambia el status", async () => {
+    (prisma.kaledLead.findUnique as MockedFn).mockResolvedValue({
+      id: "lead-1",
+      status: "NUEVO",
+      tenantId: TENANT_A,
+    });
+    (prisma.kaledLead.update as MockedFn).mockResolvedValue({
+      id: "lead-1",
+      status: "CONTACTADO",
+    });
+
+    await KaledLeadService.updateLead(
+      "lead-1",
+      { status: "CONTACTADO" },
+      "user-1"
+    );
+
+    expect(triggerSequenceByStage).toHaveBeenCalledWith(
+      "lead-1",
+      "CONTACTADO",
+      TENANT_A
+    );
+  });
+
+  it("NO dispara secuencia si el status no cambia", async () => {
+    (prisma.kaledLead.findUnique as MockedFn).mockResolvedValue({
+      id: "lead-1",
+      status: "NUEVO",
+      tenantId: TENANT_A,
+    });
+    (prisma.kaledLead.update as MockedFn).mockResolvedValue({
+      id: "lead-1",
+      status: "NUEVO",
+    });
+
+    await KaledLeadService.updateLead("lead-1", { name: "Nuevo nombre" });
+
+    expect(triggerSequenceByStage).not.toHaveBeenCalled();
+  });
+
+  it("lanza error si el lead no existe", async () => {
+    (prisma.kaledLead.findUnique as MockedFn).mockResolvedValue(null);
+
+    await expect(
+      KaledLeadService.updateLead("no-existe", { status: "CONTACTADO" })
+    ).rejects.toThrow("Lead no encontrado");
+
+    expect(prisma.kaledLead.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("KaledLeadService.getLeadMetrics — agregaciones", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("calcula daysActive + counts de interacciones y emails", async () => {
+    const createdAt = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000); // 5 días
+    (prisma.kaledLead.findUnique as MockedFn).mockResolvedValue({
+      id: "lead-1",
+      name: "Juan",
+      email: "juan@test.com",
+      status: "CONTACTADO",
+      createdAt,
+      updatedAt: new Date(),
+    });
+    (prisma.kaledLeadInteraction.count as MockedFn).mockResolvedValue(7);
+    (prisma.kaledEmailLog.count as MockedFn).mockResolvedValue(3);
+
+    const result = await KaledLeadService.getLeadMetrics("lead-1");
+
+    expect(result.totalInteractions).toBe(7);
+    expect(result.emailsSent).toBe(3);
+    expect(result.daysActive).toBeGreaterThanOrEqual(4);
+    expect(result.daysActive).toBeLessThanOrEqual(6);
+
+    // Solo cuenta emails con status SENT
+    const emailCall = (prisma.kaledEmailLog.count as MockedFn).mock.calls[0][0];
+    expect(emailCall.where).toMatchObject({
+      kaledLeadId: "lead-1",
+      status: "SENT",
+    });
+  });
+
+  it("lanza error si el lead no existe", async () => {
+    (prisma.kaledLead.findUnique as MockedFn).mockResolvedValue(null);
+    (prisma.kaledLeadInteraction.count as MockedFn).mockResolvedValue(0);
+    (prisma.kaledEmailLog.count as MockedFn).mockResolvedValue(0);
+
+    await expect(
+      KaledLeadService.getLeadMetrics("no-existe")
+    ).rejects.toThrow("Lead no encontrado");
+  });
+});
+
+describe("KaledLeadService.searchLeads — filtros adicionales", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("aplica filtro por campaignId", async () => {
+    (prisma.kaledLead.findMany as MockedFn).mockResolvedValue([]);
+    (prisma.kaledLead.count as MockedFn).mockResolvedValue(0);
+
+    await KaledLeadService.searchLeads(TENANT_A, {
+      campaignId: "campaign-99",
+    });
+
+    const call = (prisma.kaledLead.findMany as MockedFn).mock.calls[0][0];
+    expect(call.where.campaignId).toBe("campaign-99");
+    expect(call.where.tenantId).toBe(TENANT_A);
+  });
+
+  it("hasMore=true cuando offset+limit < total", async () => {
+    (prisma.kaledLead.findMany as MockedFn).mockResolvedValue([]);
+    (prisma.kaledLead.count as MockedFn).mockResolvedValue(150);
+
+    const result = await KaledLeadService.searchLeads(TENANT_A, {
+      limit: 50,
+      offset: 0,
+    });
+
+    expect(result.total).toBe(150);
+    expect(result.hasMore).toBe(true);
+  });
+
+  it("aislamiento: filtra siempre por tenantId aun con búsqueda", async () => {
+    (prisma.kaledLead.findMany as MockedFn).mockResolvedValue([]);
+    (prisma.kaledLead.count as MockedFn).mockResolvedValue(0);
+
+    await KaledLeadService.searchLeads(TENANT_B, { search: "juan" });
+
+    const call = (prisma.kaledLead.findMany as MockedFn).mock.calls[0][0];
+    expect(call.where.tenantId).toBe(TENANT_B);
+    expect(call.where.OR).toBeDefined();
   });
 });
