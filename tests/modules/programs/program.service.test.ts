@@ -18,6 +18,7 @@ const mockProgram = {
   createdAt: new Date(),
   updatedAt: new Date(),
   _count: { students: 5, prospects: 3 },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mock fixture matches Prisma include shape
 } as any;
 
 vi.mock("@/lib/prisma", () => ({
@@ -47,7 +48,7 @@ describe("ProgramService", () => {
   describe("getPrograms", () => {
     it("lanza error cuando tenantId es inválido", async () => {
       await expect(
-        ProgramService.getPrograms(false, "" as any)
+        ProgramService.getPrograms(false, "" as unknown as string)
       ).rejects.toThrow(/Contexto de tenant requerido/);
     });
 

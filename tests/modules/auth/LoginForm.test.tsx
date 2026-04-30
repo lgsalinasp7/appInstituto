@@ -5,14 +5,14 @@ import { LoginForm } from "@/modules/auth/components/LoginForm";
 import { BrandingProvider } from "@/components/providers/BrandingContext";
 
 vi.mock("next/link", () => ({
-  default: ({ children, href }: any) => <a href={href}>{children}</a>,
+  default: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>,
 }));
 
 vi.mock("next/image", () => ({
-  default: ({ alt, src }: any) => <img src={src} alt={alt} />,
+  default: ({ alt, src }: { alt: string; src: string }) => <img src={src} alt={alt} />,
 }));
 
-function renderLoginForm(props?: { onSubmit?: (data: any) => Promise<void> }) {
+function renderLoginForm(props?: { onSubmit?: (data: { email: string; password: string }) => Promise<void> }) {
   return render(
     <BrandingProvider branding={{ tenantName: "Test Tenant", darkMode: false }}>
       <LoginForm {...props} />

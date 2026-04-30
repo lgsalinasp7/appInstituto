@@ -66,7 +66,7 @@ describe("handleApiError", () => {
     });
     const result = schema.safeParse({ email: "invalid", password: "123" });
     expect(result.success).toBe(false);
-    const response = handleApiError((result as any).error);
+    const response = handleApiError((result as { success: false; error: unknown }).error);
     const json = await response.json();
 
     expect(response.status).toBe(422);

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- dev seed script with dynamic JSON content shapes */
 // ============================================================
 // SEED INCREMENTAL — KaledAcademy v2
 // Modo: Solo actualizar contenido de lecciones existentes

@@ -65,7 +65,7 @@ describe("validateCSRF", () => {
 
 describe("cleanExpiredSessions", () => {
   beforeEach(() => {
-    vi.mocked(prisma.session.deleteMany).mockResolvedValue({ count: 3 } as any);
+    vi.mocked(prisma.session.deleteMany).mockResolvedValue({ count: 3 } as Awaited<ReturnType<typeof prisma.session.deleteMany>>);
   });
 
   it("retorna count de sesiones eliminadas", async () => {

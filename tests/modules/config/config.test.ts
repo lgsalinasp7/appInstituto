@@ -6,7 +6,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/lib/api-auth", () => ({
-  withTenantAuthAndCSRF: (handler: (req: Request, user: any, tenantId: string) => Promise<Response>) =>
+  withTenantAuthAndCSRF: (handler: (req: Request, user: { id: string }, tenantId: string) => Promise<Response>) =>
     async (req: Request) => handler(req, { id: "u1" }, "tenant-1"),
 }));
 
@@ -44,7 +44,7 @@ describe("Config API", () => {
       body: JSON.stringify({}),
     });
 
-    const response = await (POST as any)(request);
+    const response = await (POST as (r: Request) => Promise<Response>)(request);
     const json = await response.json();
 
     expect(response.status).toBe(400);
@@ -60,7 +60,7 @@ describe("Config API", () => {
       body: JSON.stringify({ key: "MONTHLY_GOAL", value: "10000000" }),
     });
 
-    const response = await (POST as any)(request);
+    const response = await (POST as (r: Request) => Promise<Response>)(request);
     const json = await response.json();
 
     expect(response.status).toBe(200);

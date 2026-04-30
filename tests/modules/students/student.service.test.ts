@@ -18,6 +18,7 @@ const mockStudent = {
   advisor: { id: "a1", name: "Asesor", email: "asesor@test.com" },
   createdAt: new Date(),
   updatedAt: new Date(),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mock fixture matches Prisma include shape
 } as any;
 
 vi.mock("@/lib/prisma", () => ({

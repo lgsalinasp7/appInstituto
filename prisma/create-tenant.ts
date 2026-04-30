@@ -17,8 +17,8 @@ async function createTenant(name: string, slug: string) {
         console.log(`ID: ${tenant.id}`);
         console.log(`URL: http://${slug}.localhost:3000 (Local)`);
         console.log(`URL: https://${slug}.kaledsoft.tech (Production)`);
-    } catch (error: any) {
-        if (error.code === 'P2002') {
+    } catch (error: unknown) {
+        if (error && typeof error === 'object' && 'code' in error && (error as { code?: string }).code === 'P2002') {
             console.error(`Error: The slug "${slug}" is already in use.`);
         } else {
             console.error(`Error creating tenant:`, error);
