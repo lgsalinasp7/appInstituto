@@ -6,10 +6,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledLeadService } from '@/modules/masterclass/services/kaled-lead.service';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN'],
   async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(request, "admin_kaled_lead_restore", undefined, { userId: user.id });
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const id = params.id;
@@ -27,13 +30,14 @@ export const POST = withPlatformAdmin(
       // Restaurar lead
       const lead = await KaledLeadService.restoreLead(id);
 
+      logApiSuccess(ctx, "admin_kaled_lead_restore", { duration: Date.now() - startedAt, resultId: id });
       return NextResponse.json({
         success: true,
         data: lead,
         message: 'Lead restaurado correctamente',
       });
     } catch (error: unknown) {
-      console.error('Error restoring lead:', error);
+      logApiError(ctx, "admin_kaled_lead_restore", { error });
       return NextResponse.json(
         {
           success: false,

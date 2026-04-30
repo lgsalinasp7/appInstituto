@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withTenantAuth } from "@/lib/api-auth";
+import { logApiStart, logApiSuccess, logApiError } from "@/lib/api-logger";
 
 export const GET = withTenantAuth(async (request, user, tenantId, context) => {
   const { id } = await context!.params;
+  const ctx = logApiStart(request, "student_payment_info", { params: { id } }, { userId: user.id, tenantId });
+  const startedAt = Date.now();
 
   try {
     const student = await prisma.student.findUnique({
@@ -70,6 +73,7 @@ export const GET = withTenantAuth(async (request, user, tenantId, context) => {
     );
     const remainingBalance = Number(program.totalValue) - totalPaid;
 
+    logApiSuccess(ctx, "student_payment_info", { duration: Date.now() - startedAt, resultId: student.id });
     return NextResponse.json({
       success: true,
       data: {
@@ -100,7 +104,7 @@ export const GET = withTenantAuth(async (request, user, tenantId, context) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching student payment info:", error);
+    logApiError(ctx, "student_payment_info", { error });
     return NextResponse.json(
       { success: false, error: "Error al obtener informacion de pagos" },
       { status: 500 }

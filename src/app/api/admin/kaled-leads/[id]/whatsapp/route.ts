@@ -8,6 +8,7 @@ import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledInteractionService } from '@/modules/kaled-crm/services/kaled-interaction.service';
 import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 const whatsappSchema = z.object({
   content: z.string().min(1, 'El contenido es requerido'),
@@ -17,6 +18,8 @@ const whatsappSchema = z.object({
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
   async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(request, "admin_kaled_lead_whatsapp", undefined, { userId: user.id });
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const id = params.id;
@@ -55,13 +58,14 @@ export const POST = withPlatformAdmin(
         metadata as Prisma.InputJsonObject | undefined
       );
 
+      logApiSuccess(ctx, "admin_kaled_lead_whatsapp", { duration: Date.now() - startedAt, resultId: id });
       return NextResponse.json({
         success: true,
         data: interaction,
         message: 'Mensaje de WhatsApp registrado correctamente',
       });
     } catch (error: unknown) {
-      console.error('Error logging WhatsApp:', error);
+      logApiError(ctx, "admin_kaled_lead_whatsapp", { error });
       return NextResponse.json(
         {
           success: false,

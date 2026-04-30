@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledInteractionService } from '@/modules/kaled-crm/services/kaled-interaction.service';
 import { z } from 'zod';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 const noteSchema = z.object({
   content: z.string().min(1, 'El contenido es requerido'),
@@ -15,6 +16,8 @@ const noteSchema = z.object({
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
   async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(request, "admin_kaled_lead_note", undefined, { userId: user.id });
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const id = params.id;
@@ -52,13 +55,14 @@ export const POST = withPlatformAdmin(
         content
       );
 
+      logApiSuccess(ctx, "admin_kaled_lead_note", { duration: Date.now() - startedAt, resultId: id });
       return NextResponse.json({
         success: true,
         data: interaction,
         message: 'Nota agregada correctamente',
       });
     } catch (error: unknown) {
-      console.error('Error creating note:', error);
+      logApiError(ctx, "admin_kaled_lead_note", { error });
       return NextResponse.json(
         {
           success: false,
