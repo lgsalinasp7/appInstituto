@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- Prisma aggregate/groupBy mocks return narrow shapes that don't satisfy full Prisma types */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { DashboardService } from "@/modules/dashboard/services/dashboard.service";
 

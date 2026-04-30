@@ -30,6 +30,7 @@ if (!process.env.DATABASE_URL) {
 console.log("DATABASE_URL found, connecting...");
 
 const prisma = new PrismaClient();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- seed script accesses dynamic Prisma model names
 const prismaAny = prisma as any;
 
 /** Protección: este seed BORRA TODOS los datos (tenants, usuarios, etc.).

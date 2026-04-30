@@ -85,7 +85,7 @@ describe("AuthService", () => {
           name: "Test Tenant",
           slug: "test",
         },
-      } as any;
+      } as Parameters<typeof AuthService.mapToAuthUser>[0];
 
       const authUser = AuthService.mapToAuthUser(dbUser);
 
@@ -124,7 +124,7 @@ describe("AuthService", () => {
         invitationLimit: 0,
         role: null,
         tenant: null,
-      } as any;
+      } as Parameters<typeof AuthService.mapToAuthUser>[0];
 
       const authUser = AuthService.mapToAuthUser(dbUser);
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- dev seed script with dynamic JSON content shapes */
 // ============================================================
 // SEED V3 — KaledAcademy
 // Versión: 3.0 — Contenido pedagógico real y progresivo

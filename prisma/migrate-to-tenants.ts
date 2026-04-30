@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// Legacy one-shot migration script. The `as any` casts are required because
+// the WhereInput types no longer expose the pre-multi-tenant shape.
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();

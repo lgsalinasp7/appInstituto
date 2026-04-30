@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- Prisma mock fixtures don't satisfy full include shapes */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { TenantsService } from "@/modules/tenants/services/tenants.service";
 
