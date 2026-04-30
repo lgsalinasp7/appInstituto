@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withTenantAuthAndCSRF } from "@/lib/api-auth";
+import { logApiStart, logApiSuccess, logApiError, logApiOperation } from "@/lib/api-logger";
 
 const WHATSAPP_API_URL = process.env.WHATSAPP_API_URL || "https://graph.facebook.com/v24.0";
 const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
 const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
 
 export const POST = withTenantAuthAndCSRF(async (request, user, tenantId) => {
+  const ctx = logApiStart(request, "whatsapp_send_receipt", undefined, { userId: user.id, tenantId });
+  const startedAt = Date.now();
   try {
     const { phone, message, imageUrl } = await request.json();
 
@@ -45,7 +48,9 @@ export const POST = withTenantAuthAndCSRF(async (request, user, tenantId) => {
           mediaId = uploadData.id;
         }
       } catch (error) {
-        console.error("Error subiendo imagen:", error);
+        logApiOperation(ctx, "whatsapp_send_receipt_upload_image", "Error subiendo imagen (no crítico)", {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
 
@@ -94,12 +99,17 @@ export const POST = withTenantAuthAndCSRF(async (request, user, tenantId) => {
 
     const data = await response.json();
 
+    logApiSuccess(ctx, "whatsapp_send_receipt", {
+      duration: Date.now() - startedAt,
+      resultId: data.messages?.[0]?.id,
+      metadata: { hasImage: !!mediaId },
+    });
     return NextResponse.json({
       success: true,
       messageId: data.messages?.[0]?.id,
     });
   } catch (error) {
-    console.error("Error en WhatsApp API:", error);
+    logApiError(ctx, "whatsapp_send_receipt", { error });
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Error desconocido" },
       { status: 500 }

@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledInteractionService } from '@/modules/kaled-crm/services/kaled-interaction.service';
 import { z } from 'zod';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 const meetingSchema = z.object({
   content: z.string().min(1, 'El contenido es requerido'),
@@ -17,6 +18,8 @@ const meetingSchema = z.object({
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
   async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(request, "admin_kaled_lead_meeting", undefined, { userId: user.id });
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const id = params.id;
@@ -56,13 +59,14 @@ export const POST = withPlatformAdmin(
         duration
       );
 
+      logApiSuccess(ctx, "admin_kaled_lead_meeting", { duration: Date.now() - startedAt, resultId: id });
       return NextResponse.json({
         success: true,
         data: interaction,
         message: 'Reunión registrada correctamente',
       });
     } catch (error: unknown) {
-      console.error('Error logging meeting:', error);
+      logApiError(ctx, "admin_kaled_lead_meeting", { error });
       return NextResponse.json(
         {
           success: false,

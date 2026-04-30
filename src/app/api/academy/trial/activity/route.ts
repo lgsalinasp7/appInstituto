@@ -7,10 +7,13 @@ import { NextResponse } from "next/server";
 import { withAcademyAuth } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 import { ACADEMY_ROLES } from "@/modules/academia/config/academy-platform-roles.config";
+import { logApiStart, logApiSuccess, logApiError } from "@/lib/api-logger";
 
 export const GET = withAcademyAuth(
   ["ACADEMY_ADMIN", "ACADEMY_TEACHER"],
-  async (_req, _user, tenantId) => {
+  async (req, user, tenantId) => {
+    const ctx = logApiStart(req, "academy_trial_activity_list", undefined, { userId: user.id, tenantId });
+    const startedAt = Date.now();
     try {
       const [trialUsers, activities] = await Promise.all([
         prisma.user.findMany({
@@ -44,6 +47,11 @@ export const GET = withAcademyAuth(
         }),
       ]);
 
+      logApiSuccess(ctx, "academy_trial_activity_list", {
+        duration: Date.now() - startedAt,
+        recordCount: trialUsers.length,
+        metadata: { activitiesCount: activities.length },
+      });
       return NextResponse.json({
         success: true,
         data: {
@@ -67,7 +75,7 @@ export const GET = withAcademyAuth(
         },
       });
     } catch (error) {
-      console.error("Error fetching trial activity:", error);
+      logApiError(ctx, "academy_trial_activity_list", { error });
       return NextResponse.json(
         { success: false, error: "Error al cargar actividad" },
         { status: 500 }

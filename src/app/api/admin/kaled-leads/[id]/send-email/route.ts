@@ -8,6 +8,7 @@ import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledEmailService } from '@/modules/kaled-crm/services/kaled-email.service';
 import { KaledInteractionService } from '@/modules/kaled-crm/services/kaled-interaction.service';
 import { z } from 'zod';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 const sendEmailSchema = z.object({
   templateId: z.string().optional(),
@@ -19,6 +20,8 @@ const sendEmailSchema = z.object({
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
   async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(request, "admin_kaled_lead_send_email", undefined, { userId: user.id });
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const leadId = params.id;
@@ -78,13 +81,18 @@ export const POST = withPlatformAdmin(
       // Registrar interacción
       await KaledInteractionService.logEmail(leadId, user.id, emailLog.id);
 
+      logApiSuccess(ctx, "admin_kaled_lead_send_email", {
+        duration: Date.now() - startedAt,
+        resultId: emailLog.id,
+        metadata: { manual: !!manual },
+      });
       return NextResponse.json({
         success: true,
         data: emailLog,
         message: 'Email enviado correctamente',
       });
     } catch (error: unknown) {
-      console.error('Error sending email:', error);
+      logApiError(ctx, "admin_kaled_lead_send_email", { error });
       return NextResponse.json(
         {
           success: false,
