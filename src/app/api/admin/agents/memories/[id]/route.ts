@@ -5,10 +5,13 @@ import { updateAgentMemorySchema } from '@/modules/agents/schemas';
 import { ZodError } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { resolveKaledTenantId } from '@/lib/kaled-tenant';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 export const PUT = withPlatformAdmin(
   ['SUPER_ADMIN'],
   async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(request, 'admin_agents_memories_update');
+    const startedAt = Date.now();
     try {
       const tenantId = await resolveKaledTenantId(request.nextUrl.searchParams.get('tenantId'));
 
@@ -23,6 +26,10 @@ export const PUT = withPlatformAdmin(
 
       const memory = await AgentMemoryService.update(memoryId, validated, tenantId);
 
+      logApiSuccess(ctx, 'admin_agents_memories_update', {
+        duration: Date.now() - startedAt,
+        resultId: memoryId,
+      });
       return Response.json({
         success: true,
         data: memory,
@@ -36,7 +43,7 @@ export const PUT = withPlatformAdmin(
         );
       }
 
-      console.error('Error updating agent memory:', error);
+      logApiError(ctx, 'admin_agents_memories_update', { error });
       return Response.json(
         { success: false, error: error instanceof Error ? error.message : 'Error al actualizar memoria' },
         { status: 500 }
@@ -48,6 +55,8 @@ export const PUT = withPlatformAdmin(
 export const DELETE = withPlatformAdmin(
   ['SUPER_ADMIN'],
   async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(request, 'admin_agents_memories_delete');
+    const startedAt = Date.now();
     try {
       const tenantId = await resolveKaledTenantId(request.nextUrl.searchParams.get('tenantId'));
 
@@ -62,12 +71,16 @@ export const DELETE = withPlatformAdmin(
         where: { id: memoryId, tenantId },
       });
 
+      logApiSuccess(ctx, 'admin_agents_memories_delete', {
+        duration: Date.now() - startedAt,
+        resultId: memoryId,
+      });
       return Response.json({
         success: true,
         message: 'Memoria eliminada exitosamente',
       });
     } catch (error: unknown) {
-      console.error('Error deleting agent memory:', error);
+      logApiError(ctx, 'admin_agents_memories_delete', { error });
       return Response.json(
         { success: false, error: error instanceof Error ? error.message : 'Error al eliminar memoria' },
         { status: 500 }

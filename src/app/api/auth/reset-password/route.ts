@@ -3,8 +3,11 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { isAfter } from "date-fns";
 import { checkRateLimit, RATE_LIMIT_CONFIGS } from "@/lib/rate-limit";
+import { logApiStart, logApiSuccess, logApiError } from "@/lib/api-logger";
 
 export async function POST(request: NextRequest) {
+    const ctx = logApiStart(request, "auth_reset_password");
+    const startedAt = Date.now();
     try {
         // Aplicar rate limiting
         const rateLimit = checkRateLimit(request, RATE_LIMIT_CONFIGS.RESET_PASSWORD, "reset-password");
@@ -78,12 +81,16 @@ export async function POST(request: NextRequest) {
             where: { token },
         });
 
+        logApiSuccess(ctx, "auth_reset_password", {
+            duration: Date.now() - startedAt,
+            resultId: user.id,
+        });
         return NextResponse.json({
             success: true,
             message: "Tu contraseña ha sido restablecida exitosamente",
         });
     } catch (error) {
-        console.error("Reset password error:", error);
+        logApiError(ctx, "auth_reset_password", { error });
         return NextResponse.json(
             { success: false, error: "Error interno del servidor" },
             { status: 500 }

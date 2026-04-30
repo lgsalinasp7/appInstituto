@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { sanitizeEmailPreviewHtml } from '@/lib/sanitize-email-preview-html';
 import { z } from 'zod';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 const previewSchema = z.object({
   htmlContent: z.string(),
@@ -58,6 +59,8 @@ const normalizeLegacyPreviewStyles = (html: string) => {
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
   async (request: NextRequest) => {
+    const ctx = logApiStart(request, 'admin_email_templates_preview');
+    const startedAt = Date.now();
     try {
       const body = await request.json();
 
@@ -94,6 +97,9 @@ export const POST = withPlatformAdmin(
       previewHtml = normalizeLegacyPreviewStyles(previewHtml);
       previewHtml = sanitizeEmailPreviewHtml(previewHtml);
 
+      logApiSuccess(ctx, 'admin_email_templates_preview', {
+        duration: Date.now() - startedAt,
+      });
       return NextResponse.json({
         success: true,
         data: {
@@ -101,7 +107,7 @@ export const POST = withPlatformAdmin(
         },
       });
     } catch (error: unknown) {
-      console.error('Error generating preview:', error);
+      logApiError(ctx, 'admin_email_templates_preview', { error });
       return NextResponse.json(
         {
           success: false,

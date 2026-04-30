@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { put, del } from "@vercel/blob";
+import { logApiStart, logApiSuccess, logApiError } from "@/lib/api-logger";
 
 const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export async function POST(request: NextRequest) {
+  const ctx = logApiStart(request, "auth_avatar_upload");
+  const startedAt = Date.now();
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -58,9 +61,13 @@ export async function POST(request: NextRequest) {
       data: { image: blob.url },
     });
 
+    logApiSuccess(ctx, "auth_avatar_upload", {
+      duration: Date.now() - startedAt,
+      resultId: user.id,
+    });
     return NextResponse.json({ success: true, imageUrl: blob.url });
   } catch (error) {
-    console.error("Error al subir avatar:", error);
+    logApiError(ctx, "auth_avatar_upload", { error });
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }

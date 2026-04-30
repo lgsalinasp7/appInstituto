@@ -10,6 +10,7 @@ import { KaledCampaignService } from '@/modules/kaled-crm/services/kaled-campaig
 import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 import { z } from 'zod';
 import type { CampaignTimeline } from '@/modules/kaled-crm/types';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 const createCampaignSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
@@ -23,16 +24,22 @@ const createCampaignSchema = z.object({
 export const GET = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
   async (request: NextRequest) => {
+    const ctx = logApiStart(request, 'admin_campaigns_list');
+    const startedAt = Date.now();
     try {
       const tenantId = await resolveKaledTenantId(request.nextUrl.searchParams.get('tenantId'));
       const campaigns = await KaledCampaignService.getAllCampaigns(tenantId);
 
+      logApiSuccess(ctx, 'admin_campaigns_list', {
+        duration: Date.now() - startedAt,
+        recordCount: campaigns.length,
+      });
       return NextResponse.json({
         success: true,
         data: campaigns,
       });
     } catch (error: unknown) {
-      console.error('Error getting campaigns:', error);
+      logApiError(ctx, 'admin_campaigns_list', { error });
       return NextResponse.json(
         {
           success: false,
@@ -48,6 +55,8 @@ export const GET = withPlatformAdmin(
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN', 'MARKETING'],
   async (request: NextRequest) => {
+    const ctx = logApiStart(request, 'admin_campaigns_create');
+    const startedAt = Date.now();
     try {
       const body = await request.json();
 
@@ -74,13 +83,17 @@ export const POST = withPlatformAdmin(
         timeline: data.timeline as CampaignTimeline | undefined,
       });
 
+      logApiSuccess(ctx, 'admin_campaigns_create', {
+        duration: Date.now() - startedAt,
+        resultId: campaign.id,
+      });
       return NextResponse.json({
         success: true,
         data: campaign,
         message: 'Campaña creada correctamente',
       });
     } catch (error: unknown) {
-      console.error('Error creating campaign:', error);
+      logApiError(ctx, 'admin_campaigns_create', { error });
       return NextResponse.json(
         {
           success: false,

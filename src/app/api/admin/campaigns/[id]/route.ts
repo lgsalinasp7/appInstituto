@@ -10,6 +10,7 @@ import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledCampaignService } from '@/modules/kaled-crm/services/kaled-campaign.service';
 import { z } from 'zod';
 import type { CampaignTimeline } from '@/modules/kaled-crm/types';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 const updateCampaignSchema = z.object({
   name: z.string().optional(),
@@ -24,6 +25,8 @@ const updateCampaignSchema = z.object({
 export const GET = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
   async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(request, 'admin_campaigns_get');
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const id = params.id;
@@ -50,12 +53,16 @@ export const GET = withPlatformAdmin(
         );
       }
 
+      logApiSuccess(ctx, 'admin_campaigns_get', {
+        duration: Date.now() - startedAt,
+        resultId: id,
+      });
       return NextResponse.json({
         success: true,
         data: campaign,
       });
     } catch (error: unknown) {
-      console.error('Error getting campaign:', error);
+      logApiError(ctx, 'admin_campaigns_get', { error });
       return NextResponse.json(
         {
           success: false,
@@ -71,6 +78,8 @@ export const GET = withPlatformAdmin(
 export const PUT = withPlatformAdmin(
   ['SUPER_ADMIN', 'MARKETING'],
   async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(request, 'admin_campaigns_update');
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const id = params.id;
@@ -110,13 +119,17 @@ export const PUT = withPlatformAdmin(
         status: data.status,
       });
 
+      logApiSuccess(ctx, 'admin_campaigns_update', {
+        duration: Date.now() - startedAt,
+        resultId: id,
+      });
       return NextResponse.json({
         success: true,
         data: campaign,
         message: 'Campaña actualizada correctamente',
       });
     } catch (error: unknown) {
-      console.error('Error updating campaign:', error);
+      logApiError(ctx, 'admin_campaigns_update', { error });
       return NextResponse.json(
         {
           success: false,
@@ -132,6 +145,8 @@ export const PUT = withPlatformAdmin(
 export const DELETE = withPlatformAdmin(
   ['SUPER_ADMIN'],
   async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(request, 'admin_campaigns_delete');
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const id = params.id;
@@ -148,12 +163,16 @@ export const DELETE = withPlatformAdmin(
 
       await KaledCampaignService.deleteCampaign(id);
 
+      logApiSuccess(ctx, 'admin_campaigns_delete', {
+        duration: Date.now() - startedAt,
+        resultId: id,
+      });
       return NextResponse.json({
         success: true,
         message: 'Campaña eliminada correctamente',
       });
     } catch (error: unknown) {
-      console.error('Error deleting campaign:', error);
+      logApiError(ctx, 'admin_campaigns_delete', { error });
       return NextResponse.json(
         {
           success: false,

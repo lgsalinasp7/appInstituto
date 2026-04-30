@@ -4,10 +4,13 @@ import { AgentMemoryService } from '@/modules/agents/services/agent-memory.servi
 import { createAgentMemorySchema } from '@/modules/agents/schemas';
 import { ZodError } from 'zod';
 import { PlatformRole } from '@prisma/client';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 export const GET = withPlatformAdmin(
   [PlatformRole.SUPER_ADMIN, PlatformRole.MARKETING],
   async (req: NextRequest, user) => {
+    const ctx = logApiStart(req, 'admin_agents_memories_list');
+    const startedAt = Date.now();
     try {
       const { searchParams } = new URL(req.url);
       const agentType = searchParams.get('agentType') as 'MARGY' | 'KALED' | null;
@@ -28,12 +31,16 @@ export const GET = withPlatformAdmin(
         memories = await AgentMemoryService.getByAgent(agentType, null);
       }
 
+      logApiSuccess(ctx, 'admin_agents_memories_list', {
+        duration: Date.now() - startedAt,
+        recordCount: memories.length,
+      });
       return Response.json({
         success: true,
         data: memories,
       });
     } catch (error: unknown) {
-      console.error('Error fetching agent memories:', error);
+      logApiError(ctx, 'admin_agents_memories_list', { error });
       return Response.json(
         { success: false, error: error instanceof Error ? error.message : 'Error al obtener memorias' },
         { status: 500 }
@@ -45,6 +52,8 @@ export const GET = withPlatformAdmin(
 export const POST = withPlatformAdmin(
   [PlatformRole.SUPER_ADMIN, PlatformRole.MARKETING],
   async (req: NextRequest, user) => {
+    const ctx = logApiStart(req, 'admin_agents_memories_create');
+    const startedAt = Date.now();
     try {
       const body = await req.json();
       const validated = createAgentMemorySchema.parse(body);
@@ -52,6 +61,10 @@ export const POST = withPlatformAdmin(
       // Para agentes de plataforma, tenantId es null
       const memory = await AgentMemoryService.create(validated, null);
 
+      logApiSuccess(ctx, 'admin_agents_memories_create', {
+        duration: Date.now() - startedAt,
+        resultId: memory.id,
+      });
       return Response.json({
         success: true,
         data: memory,
@@ -65,7 +78,7 @@ export const POST = withPlatformAdmin(
         );
       }
 
-      console.error('Error creating agent memory:', error);
+      logApiError(ctx, 'admin_agents_memories_create', { error });
       return Response.json(
         { success: false, error: error instanceof Error ? error.message : 'Error al crear memoria' },
         { status: 500 }

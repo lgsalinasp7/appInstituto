@@ -4,10 +4,13 @@ import { AgentTaskService } from '@/modules/agents/services/agent-task.service';
 import { updateAgentTaskSchema } from '@/modules/agents/schemas';
 import { ZodError } from 'zod';
 import { PlatformRole } from '@prisma/client';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 export const GET = withPlatformAdmin(
   [PlatformRole.SUPER_ADMIN, PlatformRole.MARKETING],
   async (req: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(req, 'admin_agents_tasks_get');
+    const startedAt = Date.now();
     try {
       if (!context) {
         return Response.json({ success: false, error: 'Invalid context' }, { status: 500 });
@@ -26,12 +29,16 @@ export const GET = withPlatformAdmin(
         );
       }
 
+      logApiSuccess(ctx, 'admin_agents_tasks_get', {
+        duration: Date.now() - startedAt,
+        resultId: taskId,
+      });
       return Response.json({
         success: true,
         data: task,
       });
     } catch (error: unknown) {
-      console.error('Error fetching agent task:', error);
+      logApiError(ctx, 'admin_agents_tasks_get', { error });
       return Response.json(
         { success: false, error: error instanceof Error ? error.message : 'Error al obtener tarea' },
         { status: 500 }
@@ -43,6 +50,8 @@ export const GET = withPlatformAdmin(
 export const PUT = withPlatformAdmin(
   [PlatformRole.SUPER_ADMIN, PlatformRole.MARKETING],
   async (req: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(req, 'admin_agents_tasks_update');
+    const startedAt = Date.now();
     try {
       if (!context) {
         return Response.json({ success: false, error: 'Invalid context' }, { status: 500 });
@@ -56,6 +65,10 @@ export const PUT = withPlatformAdmin(
       // Para agentes de plataforma, tenantId es null
       const task = await AgentTaskService.updateTask(taskId, validated, null);
 
+      logApiSuccess(ctx, 'admin_agents_tasks_update', {
+        duration: Date.now() - startedAt,
+        resultId: taskId,
+      });
       return Response.json({
         success: true,
         data: task,
@@ -69,7 +82,7 @@ export const PUT = withPlatformAdmin(
         );
       }
 
-      console.error('Error updating agent task:', error);
+      logApiError(ctx, 'admin_agents_tasks_update', { error });
       return Response.json(
         { success: false, error: error instanceof Error ? error.message : 'Error al actualizar tarea' },
         { status: 500 }
@@ -81,6 +94,8 @@ export const PUT = withPlatformAdmin(
 export const DELETE = withPlatformAdmin(
   [PlatformRole.SUPER_ADMIN, PlatformRole.MARKETING],
   async (req: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(req, 'admin_agents_tasks_delete');
+    const startedAt = Date.now();
     try {
       if (!context) {
         return Response.json({ success: false, error: 'Invalid context' }, { status: 500 });
@@ -92,12 +107,16 @@ export const DELETE = withPlatformAdmin(
       // Para agentes de plataforma, tenantId es null
       await AgentTaskService.deleteTask(taskId, null);
 
+      logApiSuccess(ctx, 'admin_agents_tasks_delete', {
+        duration: Date.now() - startedAt,
+        resultId: taskId,
+      });
       return Response.json({
         success: true,
         message: 'Tarea eliminada exitosamente',
       });
     } catch (error: unknown) {
-      console.error('Error deleting agent task:', error);
+      logApiError(ctx, 'admin_agents_tasks_delete', { error });
       return Response.json(
         { success: false, error: error instanceof Error ? error.message : 'Error al eliminar tarea' },
         { status: 500 }

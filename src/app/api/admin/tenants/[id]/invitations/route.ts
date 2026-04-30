@@ -15,6 +15,7 @@ import { getAcademyRoleLabel } from "@/lib/academy-role-labels";
 import { z } from "zod";
 import { withCSRF, withPlatformAdmin } from "@/lib/api-auth";
 import { handleApiError } from "@/lib/errors";
+import { logApiOperation } from "@/lib/api-logger";
 
 export const GET = withPlatformAdmin(
   ["SUPER_ADMIN"],
@@ -322,7 +323,22 @@ export const POST = withCSRF(
       // Log detallado para debugging de errores Prisma
       const prismaErr = error as { code?: string; message?: string; meta?: unknown };
       if (prismaErr?.code) {
-        console.error("[invitations POST] Prisma error:", prismaErr.code, prismaErr.message, prismaErr.meta);
+        // Reusamos contexto minimal — handleApiError maneja la respuesta;
+        // este log adicional ayuda al diagnostico Prisma.
+        const fakeCtx = {
+          requestId: "n/a",
+          method: request.method,
+          endpoint: request.nextUrl.pathname,
+          userId: user?.id,
+          tenantId: undefined,
+          ip: undefined,
+          timestamp: new Date().toISOString(),
+        } as Parameters<typeof logApiOperation>[0];
+        logApiOperation(fakeCtx, "invitations_post_prisma_error", "Prisma error en invitations POST", {
+          code: prismaErr.code,
+          message: prismaErr.message,
+          meta: prismaErr.meta,
+        });
       }
       return handleApiError(error);
     }

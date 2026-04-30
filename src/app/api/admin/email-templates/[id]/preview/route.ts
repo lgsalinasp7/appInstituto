@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledEmailService } from '@/modules/kaled-crm/services/kaled-email.service';
 import { z } from 'zod';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 const previewSchema = z.object({
   variables: z.record(z.string(), z.string()),
@@ -15,6 +16,8 @@ const previewSchema = z.object({
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
   async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(request, 'admin_email_templates_id_preview');
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const id = params.id;
@@ -48,12 +51,16 @@ export const POST = withPlatformAdmin(
         validation.data.variables
       );
 
+      logApiSuccess(ctx, 'admin_email_templates_id_preview', {
+        duration: Date.now() - startedAt,
+        resultId: id,
+      });
       return NextResponse.json({
         success: true,
         data: rendered,
       });
     } catch (error: unknown) {
-      console.error('Error previewing template:', error);
+      logApiError(ctx, 'admin_email_templates_id_preview', { error });
       return NextResponse.json(
         {
           success: false,
