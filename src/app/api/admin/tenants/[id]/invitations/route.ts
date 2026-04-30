@@ -332,8 +332,9 @@ export const POST = withCSRF(
           userId: user?.id,
           tenantId: undefined,
           ip: undefined,
+          userAgent: undefined,
           timestamp: new Date().toISOString(),
-        } as Parameters<typeof logApiOperation>[0];
+        } as unknown as Parameters<typeof logApiOperation>[0];
         logApiOperation(fakeCtx, "invitations_post_prisma_error", "Prisma error en invitations POST", {
           code: prismaErr.code,
           message: prismaErr.message,
