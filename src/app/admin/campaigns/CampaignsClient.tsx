@@ -38,8 +38,16 @@ import { useConfirmModal } from '@/components/modals/use-confirm-modal';
 import { useTablePagination } from '@/hooks/use-table-pagination';
 import { TablePagination } from '@/components/ui/table-pagination';
 
+export interface CampaignWithCount extends KaledCampaign {
+  _count?: {
+    leads?: number;
+    templates?: number;
+    sequences?: number;
+  };
+}
+
 interface CampaignsClientProps {
-  initialCampaigns: any[];
+  initialCampaigns: CampaignWithCount[];
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -60,8 +68,8 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function CampaignsClient({ initialCampaigns }: CampaignsClientProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [campaigns, setCampaigns] = useState(initialCampaigns);
-  const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
+  const [campaigns, setCampaigns] = useState<CampaignWithCount[]>(initialCampaigns);
+  const [selectedCampaign, setSelectedCampaign] = useState<CampaignWithCount | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const { confirm, confirmModal } = useConfirmModal();
@@ -81,7 +89,7 @@ export default function CampaignsClient({ initialCampaigns }: CampaignsClientPro
     }
   };
 
-  const handleStartCampaign = async (campaign: any) => {
+  const handleStartCampaign = async (campaign: CampaignWithCount) => {
     try {
       const res = await fetch(`/api/admin/campaigns/${campaign.id}/start`, {
         method: 'POST',
@@ -101,7 +109,7 @@ export default function CampaignsClient({ initialCampaigns }: CampaignsClientPro
     }
   };
 
-  const handlePauseCampaign = async (campaign: any) => {
+  const handlePauseCampaign = async (campaign: CampaignWithCount) => {
     try {
       const res = await fetch(`/api/admin/campaigns/${campaign.id}/pause`, {
         method: 'POST',
@@ -121,7 +129,7 @@ export default function CampaignsClient({ initialCampaigns }: CampaignsClientPro
     }
   };
 
-  const handleCompleteCampaign = async (campaign: any) => {
+  const handleCompleteCampaign = async (campaign: CampaignWithCount) => {
     const isConfirmed = await confirm({
       title: 'Completar campaña',
       description: '¿Estás seguro de completar esta campaña?',
@@ -152,12 +160,12 @@ export default function CampaignsClient({ initialCampaigns }: CampaignsClientPro
     }
   };
 
-  const handleEdit = (campaign: any) => {
+  const handleEdit = (campaign: CampaignWithCount) => {
     setSelectedCampaign(campaign);
     setShowForm(true);
   };
 
-  const handleDelete = async (campaign: any) => {
+  const handleDelete = async (campaign: CampaignWithCount) => {
     const isConfirmed = await confirm({
       title: 'Eliminar campaña',
       description:

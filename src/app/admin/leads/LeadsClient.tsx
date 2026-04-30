@@ -30,7 +30,7 @@ import { useTablePagination } from "@/hooks/use-table-pagination";
 import { TablePagination } from "@/components/ui/table-pagination";
 
 interface LeadsClientProps {
-    initialLeads: any[];
+    initialLeads: KaledLead[];
 }
 
 const STAGE_COLORS: Record<string, string> = {
@@ -145,7 +145,7 @@ export default function LeadsClient({ initialLeads }: LeadsClientProps) {
         { title: "Convertidos", value: leads.filter(l => l.status === 'CONVERTIDO').length, icon: ExternalLink, color: "text-green-400", bg: "bg-green-500/10" },
     ];
 
-    const getLeadCity = (lead: any): string | null => {
+    const getLeadCity = (lead: KaledLead): string | null => {
         if (typeof lead?.city === "string" && lead.city.trim().length > 0) {
             return lead.city;
         }

@@ -6,6 +6,7 @@
 import { Suspense } from "react";
 import prisma from "@/lib/prisma";
 import { TenantsService } from "@/modules/tenants";
+import type { TenantStatus } from "@/modules/tenants/types";
 import { ProductsService } from "@/modules/products";
 import { AdminService } from "@/modules/admin/services/admin.service";
 import { EmpresasPageClient } from "@/modules/products/components/EmpresasPageClient";
@@ -23,7 +24,7 @@ export default async function EmpresasPage({
     TenantsService.getStats(),
     TenantsService.getAll({
       search: params.search,
-      status: params.status as any,
+      status: params.status as TenantStatus | undefined,
       plan: params.plan,
       page: parseInt(params.page || "1"),
       limit: 6,
