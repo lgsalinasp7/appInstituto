@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import {
   useCreateCommitment,
   useCancelCommitment,
+  useCreatePayment,
 } from "@/modules/cartera/hooks/usePaymentCommitments";
 
 /** Colombia country calling code for WhatsApp links */
@@ -140,16 +141,29 @@ export function CarteraView({ advisorId: _advisorId }: CarteraViewProps) {
     }
   };
 
-  const handleRegisterAbono = (_data: {
+  const { createPayment: createPaymentApi } = useCreatePayment();
+
+  const handleRegisterAbono = async (data: {
+    commitmentId: string;
     amount: number;
-    method: string;
-    reference: string;
-    createCommitment: boolean;
-    commitmentDate?: Date;
+    method: "BANCOLOMBIA" | "NEQUI" | "DAVIPLATA" | "EFECTIVO" | "OTRO";
+    reference?: string;
   }) => {
-    toast.info("Funcionalidad de registrar abono pendiente de implementar");
-    setShowAbonoModal(false);
-    setSelectedStudent(null);
+    try {
+      await createPaymentApi({
+        commitmentId: data.commitmentId,
+        amount: data.amount,
+        method: data.method,
+        reference: data.reference || undefined,
+      });
+      toast.success("Abono registrado y compromiso marcado como PAGADO");
+      setShowAbonoModal(false);
+      setSelectedStudent(null);
+      fetchData();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al registrar abono";
+      toast.error(message);
+    }
   };
 
   return (
@@ -490,25 +504,141 @@ function CommitmentModal({ student, onClose, onSubmit }: CommitmentModalProps) {
   );
 }
 
+type AbonoMethod = "BANCOLOMBIA" | "NEQUI" | "DAVIPLATA" | "EFECTIVO" | "OTRO";
+
 interface AbonoModalProps {
   student: StudentDebt;
   onClose: () => void;
-  onSubmit: (data: { amount: number; method: string; reference: string; createCommitment: boolean; commitmentDate?: Date }) => void;
+  onSubmit: (data: {
+    commitmentId: string;
+    amount: number;
+    method: AbonoMethod;
+    reference?: string;
+  }) => void | Promise<void>;
 }
 
 function AbonoModal({ student, onClose, onSubmit }: AbonoModalProps) {
+  const pendingCommitments = (student.commitments ?? []).filter(
+    (c) => c.status === "PENDIENTE" || c.status === "EN_COMPROMISO" || c.status === "VENCIDO"
+  );
+
+  const [commitmentId, setCommitmentId] = useState<string>(pendingCommitments[0]?.id ?? "");
+  const selected = pendingCommitments.find((c) => c.id === commitmentId);
+  const expectedAmount = selected ? Number(selected.amount) : 0;
+
+  const [amount, setAmount] = useState<string>(String(expectedAmount || ""));
+  const [method, setMethod] = useState<AbonoMethod>("EFECTIVO");
+  const [reference, setReference] = useState<string>("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (selected) setAmount(String(Number(selected.amount)));
+  }, [selected]);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!commitmentId) {
+      toast.error("Seleccione un compromiso");
+      return;
+    }
+    const amt = Number(amount);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      toast.error("El monto debe ser mayor a 0");
+      return;
+    }
+    if (amt !== expectedAmount) {
+      toast.error(
+        `El monto debe ser exactamente $${expectedAmount.toLocaleString()} (pagos parciales no permitidos)`
+      );
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await onSubmit({ commitmentId, amount: amt, method, reference: reference || undefined });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white p-6 rounded-lg max-w-sm w-full">
-        <h3 className="font-bold mb-4">Registrar Abono para {student.studentName}</h3>
-        <p className="text-gray-500 mb-4">Funcionalidad en desarrollo.</p>
-        <div className="flex gap-2 justify-end">
-          <button onClick={onClose} className="px-4 py-2 border rounded">Cerrar</button>
-          <button onClick={() => onSubmit({ amount: 0, method: "", reference: "", createCommitment: false })} className="px-4 py-2 bg-green-600 text-white rounded">Registrar (Simular)</button>
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg max-w-md w-full space-y-4">
+        <div>
+          <h3 className="font-bold text-lg">Registrar Abono</h3>
+          <p className="text-sm text-gray-500">{student.studentName} — {student.documentNumber}</p>
         </div>
-      </div>
+        {pendingCommitments.length === 0 ? (
+          <p className="text-sm text-gray-600 py-4">Este estudiante no tiene compromisos pendientes.</p>
+        ) : (
+          <>
+            <div>
+              <label className="block text-sm font-medium mb-1">Compromiso</label>
+              <select
+                value={commitmentId}
+                onChange={(e) => setCommitmentId(e.target.value)}
+                required
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                {pendingCommitments.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {new Date(c.scheduledDate).toLocaleDateString("es-CO")} — ${Number(c.amount).toLocaleString()} ({c.status})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Monto (debe ser exacto)</label>
+              <input
+                type="number"
+                min={1}
+                step={1000}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+              <p className="text-xs text-gray-400 mt-1">Esperado: ${expectedAmount.toLocaleString()}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Método</label>
+              <select
+                value={method}
+                onChange={(e) => setMethod(e.target.value as AbonoMethod)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="EFECTIVO">Efectivo</option>
+                <option value="BANCOLOMBIA">Bancolombia</option>
+                <option value="NEQUI">Nequi</option>
+                <option value="DAVIPLATA">Daviplata</option>
+                <option value="OTRO">Otro</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Referencia (opcional)</label>
+              <input
+                type="text"
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                maxLength={200}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                placeholder="Ej: Transacción #12345"
+              />
+            </div>
+          </>
+        )}
+        <div className="flex gap-2 justify-end pt-2">
+          <button type="button" onClick={onClose} disabled={submitting} className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50">
+            Cancelar
+          </button>
+          {pendingCommitments.length > 0 && (
+            <button type="submit" disabled={submitting} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50">
+              {submitting ? "Registrando..." : "Registrar abono"}
+            </button>
+          )}
+        </div>
+      </form>
     </div>
-  )
+  );
 }
 
 interface HistorialCompromisosModalProps {

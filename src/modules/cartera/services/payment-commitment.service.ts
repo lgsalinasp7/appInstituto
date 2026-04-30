@@ -141,21 +141,108 @@ export async function updatePaymentCommitment(
 }
 
 /**
- * "Cancela" un compromiso. Como el enum CommitmentStatus no tiene CANCELADO,
- * implementamos cancelación como hard-delete (auditable vía logs API).
- * Verifica pertenencia al tenant antes de borrar.
+ * "Cancela" un compromiso vía SOFT-DELETE: cambia status a CANCELADO en
+ * lugar de borrar el registro. Mantiene historial auditable.
  */
 export async function cancelPaymentCommitment(id: string, tenantId: string) {
   assertTenantContext(tenantId);
 
   const existing = await prisma.paymentCommitment.findFirst({
     where: { id, tenantId },
-    select: { id: true },
+    select: { id: true, status: true },
   });
   if (!existing) {
     throw new Error("Compromiso no encontrado o no pertenece a este tenant");
   }
+  if (existing.status === "PAGADO") {
+    throw new Error("No se puede cancelar un compromiso ya pagado");
+  }
 
-  await prisma.paymentCommitment.delete({ where: { id } });
-  return { id };
+  const updated = await prisma.paymentCommitment.update({
+    where: { id },
+    data: { status: "CANCELADO" satisfies CommitmentStatus },
+    select: { id: true, status: true },
+  });
+  return updated;
+}
+
+/**
+ * Registra un abono (Payment) vinculado lógicamente a un PaymentCommitment.
+ * Reglas:
+ *  - Tenant guard.
+ *  - El monto debe ser exactamente igual al del compromiso.
+ *  - Crea Payment + actualiza commitment.status a PAGADO en una transacción.
+ */
+export async function recordPaymentForCommitment(
+  input: {
+    commitmentId: string;
+    amount: number;
+    method: "BANCOLOMBIA" | "NEQUI" | "DAVIPLATA" | "EFECTIVO" | "OTRO";
+    reference?: string;
+    paidAt?: Date;
+  },
+  tenantId: string,
+  registeredById: string
+) {
+  assertTenantContext(tenantId);
+
+  const commitment = await prisma.paymentCommitment.findFirst({
+    where: { id: input.commitmentId, tenantId },
+    select: {
+      id: true,
+      amount: true,
+      status: true,
+      studentId: true,
+      moduleNumber: true,
+    },
+  });
+  if (!commitment) {
+    throw new Error("Compromiso no encontrado o no pertenece a este tenant");
+  }
+  if (commitment.status === "PAGADO") {
+    throw new Error("El compromiso ya está pagado");
+  }
+  if (commitment.status === "CANCELADO") {
+    throw new Error("No se puede pagar un compromiso cancelado");
+  }
+
+  const commitmentAmount = new Prisma.Decimal(commitment.amount);
+  const paymentAmount = new Prisma.Decimal(input.amount);
+
+  if (!commitmentAmount.equals(paymentAmount)) {
+    throw new Error(
+      `El monto del abono ($${paymentAmount.toString()}) debe ser exactamente igual al monto del compromiso ($${commitmentAmount.toString()}). Pagos parciales no permitidos.`
+    );
+  }
+
+  const receiptNumber = `REC-${Date.now()}-${Math.floor(Math.random() * 10000)
+    .toString()
+    .padStart(4, "0")}`;
+
+  const result = await prisma.$transaction(async (tx) => {
+    const payment = await tx.payment.create({
+      data: {
+        amount: paymentAmount,
+        paymentDate: input.paidAt ?? new Date(),
+        method: input.method,
+        reference: input.reference ?? null,
+        receiptNumber,
+        paymentType: "MODULO",
+        moduleNumber: commitment.moduleNumber,
+        student: { connect: { id: commitment.studentId } },
+        registeredBy: { connect: { id: registeredById } },
+        tenant: { connect: { id: tenantId } },
+      },
+    });
+
+    const updated = await tx.paymentCommitment.update({
+      where: { id: commitment.id },
+      data: { status: "PAGADO" satisfies CommitmentStatus },
+      include: studentInclude,
+    });
+
+    return { payment, commitment: updated };
+  });
+
+  return result;
 }

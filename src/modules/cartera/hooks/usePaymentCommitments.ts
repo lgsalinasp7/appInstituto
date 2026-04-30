@@ -160,6 +160,58 @@ export function useUpdateCommitment() {
   return { update, loading, error };
 }
 
+export interface CreatePaymentPayload {
+  commitmentId: string;
+  amount: number;
+  method?: "BANCOLOMBIA" | "NEQUI" | "DAVIPLATA" | "EFECTIVO" | "OTRO";
+  reference?: string;
+  paidAt?: Date | string;
+}
+
+/**
+ * Hook para registrar un abono (Payment) sobre un PaymentCommitment via
+ * POST /api/payments. Reemplaza el stub del AbonoModal en CarteraView.
+ */
+export function useCreatePayment() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const createPayment = useCallback(async (payload: CreatePaymentPayload) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await tenantFetch("/api/payments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          commitmentId: payload.commitmentId,
+          amount: payload.amount,
+          method: payload.method ?? "EFECTIVO",
+          reference: payload.reference,
+          paidAt: payload.paidAt,
+        }),
+      });
+      const json: ApiResponse<unknown> = await res.json();
+      if (!json.success) {
+        const msg =
+          typeof json.error === "string"
+            ? json.error
+            : "Error al registrar abono";
+        throw new Error(msg);
+      }
+      return json.data;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error";
+      setError(message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { createPayment, loading, error };
+}
+
 export function useCancelCommitment() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
