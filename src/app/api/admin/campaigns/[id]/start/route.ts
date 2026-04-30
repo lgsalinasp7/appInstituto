@@ -6,10 +6,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledCampaignService } from '@/modules/kaled-crm/services/kaled-campaign.service';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN', 'MARKETING'],
   async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(request, 'admin_campaigns_start');
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const id = params.id;
@@ -26,13 +29,17 @@ export const POST = withPlatformAdmin(
 
       const campaign = await KaledCampaignService.startCampaign(id);
 
+      logApiSuccess(ctx, 'admin_campaigns_start', {
+        duration: Date.now() - startedAt,
+        resultId: id,
+      });
       return NextResponse.json({
         success: true,
         data: campaign,
         message: 'Campaña iniciada correctamente',
       });
     } catch (error: unknown) {
-      console.error('Error starting campaign:', error);
+      logApiError(ctx, 'admin_campaigns_start', { error });
       return NextResponse.json(
         {
           success: false,

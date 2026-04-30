@@ -3,6 +3,7 @@ import { withPlatformAdmin } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
 import { resolveKaledTenantId } from '@/lib/kaled-tenant';
 import type { Prisma } from '@prisma/client';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 const EMAIL_STATUSES = [
   'PENDING',
@@ -24,6 +25,8 @@ function isEmailStatus(value: string | null): value is EmailStatus {
 export const GET = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
   async (request: NextRequest) => {
+    const ctx = logApiStart(request, 'admin_kaled_emails_list');
+    const startedAt = Date.now();
     try {
       const searchParams = request.nextUrl.searchParams;
       const search = searchParams.get('search')?.trim();
@@ -94,6 +97,11 @@ export const GET = withPlatformAdmin(
         prisma.kaledEmailLog.count({ where }),
       ]);
 
+      logApiSuccess(ctx, 'admin_kaled_emails_list', {
+        duration: Date.now() - startedAt,
+        recordCount: items.length,
+        metadata: { total },
+      });
       return NextResponse.json({
         success: true,
         data: {
@@ -107,7 +115,7 @@ export const GET = withPlatformAdmin(
         },
       });
     } catch (error: unknown) {
-      console.error('Error getting kaled email logs:', error);
+      logApiError(ctx, 'admin_kaled_emails_list', { error });
       return NextResponse.json(
         {
           success: false,

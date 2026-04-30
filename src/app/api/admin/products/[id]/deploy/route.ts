@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { ProductsService } from '@/modules/products';
 import { z } from 'zod';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 const deploySchema = z.object({
   tenantName: z.string().min(1, 'El nombre del tenant es requerido'),
@@ -26,6 +27,8 @@ const deploySchema = z.object({
 export const POST = withPlatformAdmin(
   ['SUPER_ADMIN'],
   async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(request, 'admin_products_deploy');
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const productId = params.id;
@@ -42,13 +45,17 @@ export const POST = withPlatformAdmin(
 
       const result = await ProductsService.deploy(productId, validation.data);
 
+      logApiSuccess(ctx, 'admin_products_deploy', {
+        duration: Date.now() - startedAt,
+        resultId: productId,
+      });
       return NextResponse.json({
         success: true,
         data: result,
         message: `Tenant "${validation.data.tenantName}" desplegado correctamente`,
       });
     } catch (error: unknown) {
-      console.error('Error deploying product:', error);
+      logApiError(ctx, 'admin_products_deploy', { error });
       return NextResponse.json(
         { success: false, error: error instanceof Error ? error.message : 'Error al desplegar el producto' },
         { status: 500 }

@@ -6,10 +6,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { KaledCampaignService } from '@/modules/kaled-crm/services/kaled-campaign.service';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 export const GET = withPlatformAdmin(
   ['SUPER_ADMIN', 'ASESOR_COMERCIAL', 'MARKETING'],
   async (request: NextRequest, user, context?: { params: Promise<Record<string, string>> }) => {
+    const ctx = logApiStart(request, 'admin_campaigns_metrics');
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const id = params.id;
@@ -26,12 +29,16 @@ export const GET = withPlatformAdmin(
 
       const metrics = await KaledCampaignService.getCampaignMetrics(id);
 
+      logApiSuccess(ctx, 'admin_campaigns_metrics', {
+        duration: Date.now() - startedAt,
+        resultId: id,
+      });
       return NextResponse.json({
         success: true,
         data: metrics,
       });
     } catch (error: unknown) {
-      console.error('Error getting campaign metrics:', error);
+      logApiError(ctx, 'admin_campaigns_metrics', { error });
       return NextResponse.json(
         {
           success: false,

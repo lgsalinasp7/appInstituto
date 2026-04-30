@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ProgramService } from "@/modules/programs";
 import { z } from "zod";
 import { withTenantAuth, withTenantAuthAndCSRF } from "@/lib/api-auth";
+import { logApiStart, logApiSuccess, logApiError } from "@/lib/api-logger";
 
 const updateProgramSchema = z.object({
   name: z.string().min(2).optional(),
@@ -13,6 +14,8 @@ const updateProgramSchema = z.object({
 });
 
 export const GET = withTenantAuth(async (request, user, tenantId, context) => {
+  const ctx = logApiStart(request, "programs_get");
+  const startedAt = Date.now();
   const { id } = await context!.params;
 
   try {
@@ -25,12 +28,16 @@ export const GET = withTenantAuth(async (request, user, tenantId, context) => {
       );
     }
 
+    logApiSuccess(ctx, "programs_get", {
+      duration: Date.now() - startedAt,
+      resultId: id,
+    });
     return NextResponse.json({
       success: true,
       data: program,
     });
   } catch (error) {
-    console.error("Error fetching program:", error);
+    logApiError(ctx, "programs_get", { error });
     return NextResponse.json(
       { success: false, error: "Error al obtener programa" },
       { status: 500 }
@@ -39,6 +46,8 @@ export const GET = withTenantAuth(async (request, user, tenantId, context) => {
 });
 
 export const PUT = withTenantAuthAndCSRF(async (request, user, tenantId, context) => {
+  const ctx = logApiStart(request, "programs_update");
+  const startedAt = Date.now();
   const { id } = await context!.params;
 
   try {
@@ -59,13 +68,17 @@ export const PUT = withTenantAuthAndCSRF(async (request, user, tenantId, context
 
     const program = await ProgramService.updateProgram(id, validationResult.data, tenantId);
 
+    logApiSuccess(ctx, "programs_update", {
+      duration: Date.now() - startedAt,
+      resultId: id,
+    });
     return NextResponse.json({
       success: true,
       data: program,
       message: "Programa actualizado exitosamente",
     });
   } catch (error) {
-    console.error("Error updating program:", error);
+    logApiError(ctx, "programs_update", { error });
     return NextResponse.json(
       { success: false, error: "Error al actualizar programa" },
       { status: 500 }
@@ -74,11 +87,17 @@ export const PUT = withTenantAuthAndCSRF(async (request, user, tenantId, context
 });
 
 export const DELETE = withTenantAuthAndCSRF(async (request, user, tenantId, context) => {
+  const ctx = logApiStart(request, "programs_delete");
+  const startedAt = Date.now();
   const { id } = await context!.params;
 
   try {
     await ProgramService.deleteProgram(id, tenantId);
 
+    logApiSuccess(ctx, "programs_delete", {
+      duration: Date.now() - startedAt,
+      resultId: id,
+    });
     return NextResponse.json({
       success: true,
       message: "Programa eliminado exitosamente",
@@ -93,7 +112,7 @@ export const DELETE = withTenantAuthAndCSRF(async (request, user, tenantId, cont
       );
     }
 
-    console.error("Error deleting program:", error);
+    logApiError(ctx, "programs_delete", { error });
     return NextResponse.json(
       { success: false, error: message },
       { status: 500 }

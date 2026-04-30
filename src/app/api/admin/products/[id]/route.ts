@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withPlatformAdmin } from '@/lib/api-auth';
 import { ProductsService } from '@/modules/products';
 import { z } from 'zod';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/api-logger';
 
 const updateProductSchema = z.object({
   name: z.string().min(1).optional(),
@@ -32,6 +33,8 @@ const updateProductSchema = z.object({
 export const GET = withPlatformAdmin(
   ['SUPER_ADMIN'],
   async (request: NextRequest, user, context) => {
+    const ctx = logApiStart(request, 'admin_products_get');
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const id = params.id;
@@ -44,9 +47,13 @@ export const GET = withPlatformAdmin(
         );
       }
 
+      logApiSuccess(ctx, 'admin_products_get', {
+        duration: Date.now() - startedAt,
+        resultId: id,
+      });
       return NextResponse.json({ success: true, data: product });
     } catch (error: unknown) {
-      console.error('Error getting product:', error);
+      logApiError(ctx, 'admin_products_get', { error });
       return NextResponse.json(
         { success: false, error: error instanceof Error ? error.message : 'Error al obtener producto' },
         { status: 500 }
@@ -58,6 +65,8 @@ export const GET = withPlatformAdmin(
 export const PUT = withPlatformAdmin(
   ['SUPER_ADMIN'],
   async (request: NextRequest, user, context) => {
+    const ctx = logApiStart(request, 'admin_products_update');
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const id = params.id;
@@ -73,13 +82,17 @@ export const PUT = withPlatformAdmin(
       }
 
       const product = await ProductsService.update(id, validation.data);
+      logApiSuccess(ctx, 'admin_products_update', {
+        duration: Date.now() - startedAt,
+        resultId: id,
+      });
       return NextResponse.json({
         success: true,
         data: product,
         message: 'Producto actualizado correctamente',
       });
     } catch (error: unknown) {
-      console.error('Error updating product:', error);
+      logApiError(ctx, 'admin_products_update', { error });
       return NextResponse.json(
         { success: false, error: error instanceof Error ? error.message : 'Error al actualizar producto' },
         { status: 500 }
@@ -91,17 +104,23 @@ export const PUT = withPlatformAdmin(
 export const DELETE = withPlatformAdmin(
   ['SUPER_ADMIN'],
   async (request: NextRequest, user, context) => {
+    const ctx = logApiStart(request, 'admin_products_delete');
+    const startedAt = Date.now();
     try {
       const params = await context!.params;
       const id = params.id;
 
       await ProductsService.delete(id);
+      logApiSuccess(ctx, 'admin_products_delete', {
+        duration: Date.now() - startedAt,
+        resultId: id,
+      });
       return NextResponse.json({
         success: true,
         message: 'Producto desactivado correctamente',
       });
     } catch (error: unknown) {
-      console.error('Error deleting product:', error);
+      logApiError(ctx, 'admin_products_delete', { error });
       return NextResponse.json(
         { success: false, error: error instanceof Error ? error.message : 'Error al desactivar producto' },
         { status: 500 }
