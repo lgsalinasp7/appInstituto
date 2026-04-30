@@ -81,17 +81,20 @@ Objetivo: reducir superficie de codigo, eliminar dead code, simplificar arquitec
 | # | Tarea | Agente | Estado |
 |---|---|---|---|
 | 3.1 | Eliminar modulos vacios | PO | NO-OP — modulos ya estaban eliminados (auditoria desactualizada). Verificado en PR `#46`. |
-| 3.2 | Migrar 3 leaderboards de `academy/` a `academia/` y eliminar `academy/` | Dev | Pendiente |
+| 3.2 | Migrar `academy/` completo a `academia/` y eliminar `academy/` | Dev | DONE PR `#50` merged — 33 archivos consumidores actualizados (auditoria subestimo: eran 33, no 3). Modulo `academy/` eliminado. |
+| 3.2b | **Hallazgo**: 2 versiones divergentes de leaderboard (tenant-entero vs cohorte). Las 3 paginas usan version cohorte. **Decision PO**: cual es fuente de verdad? | Dev | Pendiente — surge de 3.2 |
+| 3.2c | **Hallazgo**: colision `ACADEMY_ROLES` (mutable[] vs readonly tuple). Preservados ambos vía rename. **Decision PO**: consolidar? | Dev | Pendiente — surge de 3.2 |
 | 3.3 | Consolidar dominio financiero (decision producto) | Dev | Pendiente — requiere input Luis |
 | 3.4 | Eliminar `admin/campanas/` y `admin/roles/` (redirects) | PO | DONE PR `#47` merged — campanas + roles eliminados, proxy.ts y AdminBreadcrumbs actualizados (evita doble-hop). |
 | 3.5 | Dividir `admin/finanzas/page.tsx` (1007 lineas) | Dev | Pendiente — requiere especificacion UX |
 | 3.6 | Estandarizar barrel exports | PO | DONE PR `#45` merged — 7 modulos con index.ts (academy, campaigns, commitments, config, kaled-crm, telegram, whatsapp). Patron "minimal safe barrel": types/schemas/components client, NO services. |
 | 3.7 | Mover scripts sueltos de raiz a `scripts/` | PO | DONE PR `#46` merged — 5 scripts movidos (check-tenants, fix-any-types, test-stream, verify-email-automation, update-edutec-branding). Configs framework intactos. |
 | 3.8 | Eliminar 3 versiones duplicadas de `update-edutec-branding` | PO | DONE PR `#46` merged — conservada `update-edutec-branding-final.ts` (renombrada a `scripts/update-edutec-branding.ts`). 2 eliminadas. |
-| 3.9 | Auditar 10 rutas potencialmente huerfanas y eliminar las realmente sin uso | Dev | Pendiente |
+| 3.9 | Auditar 10 rutas potencialmente huerfanas y eliminar las realmente sin uso | Dev | DONE PR `#49` merged — 18 auditadas, 9 eliminadas (huerfanas reales), 3 reportadas con swagger pero sin consumidor (`/api/payments/today`, `/api/reports/programs`, `/api/admin/tenants/stats`). |
+| 3.9b | **Hallazgo**: 3 rutas en swagger sin consumidor real (payments/today, reports/programs, admin/tenants/stats). **Decision PO**: quitar swagger+ruta o reactivar consumo. | Dev | Pendiente — surge de 3.9 |
 | 3.10 | Reactivar Mintlify docs en deployment o eliminar `mintlify-docs/` | Infra | Pendiente |
 | 3.11 | Resolver `/login` vs `/auth/login` duplicados | Dev | NO_APPLICABLE PR `#47` — investigado: NO son duplicados. `/login` es portal admin (kaledsoft.tech, valida `platformRole`). `/auth/login` es login tenants (mustChangePassword, bifurca academia/dashboard). Mantener separacion. |
-| 3.12 | Refactor o eliminar 46 archivos con useMemo/useCallback residuales (React 19) | Dev | Pendiente |
+| 3.12 | Refactor 46 archivos con useMemo/useCallback residuales (React 19) | Dev | PARCIAL PR `#51` merged — 8 archivos limpiados (admin/finanzas, comercial/correos, marketing v2, dashboard, tenants, email-templates). 38 descartados con razon (academia, lavadero, cartera, hooks custom, auth-context). Resto requiere analisis caso por caso. |
 
 ### Bootcamp KaledAcademy (paralelo, P3)
 
