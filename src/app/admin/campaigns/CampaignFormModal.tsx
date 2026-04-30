@@ -15,12 +15,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import type { KaledCampaign } from '@prisma/client';
 
 interface CampaignFormModalProps {
-  campaign: any;
+  campaign: KaledCampaign | null;
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+}
+
+interface CampaignBody {
+  name: string;
+  description: string | null;
+  startDate?: string;
+  endDate?: string;
 }
 
 export function CampaignFormModal({
@@ -69,7 +77,7 @@ export function CampaignFormModal({
 
     setLoading(true);
     try {
-      const body: any = {
+      const body: CampaignBody = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
       };

@@ -24,9 +24,17 @@ import {
 import { Label } from "@/components/ui/label";
 import { InviteTrialModal } from "@/modules/academia/components/InviteTrialModal";
 
+interface InvitationListItem {
+    id: string;
+    email: string;
+    status: string;
+    createdAt: string | Date;
+    role?: { name: string } | null;
+}
+
 interface UsersClientProps {
     initialUsers: User[];
-    initialInvitations: any[]; // Using any for now to match structure, can be typed strictly
+    initialInvitations: InvitationListItem[];
 }
 
 export default function UsersClient({ initialUsers, initialInvitations }: UsersClientProps) {

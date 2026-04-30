@@ -5,6 +5,22 @@ import { useEffect, useRef, useState } from 'react';
 const SWAGGER_UI_VERSION = '5.31.0';
 const CDN_BASE = `https://unpkg.com/swagger-ui-dist@${SWAGGER_UI_VERSION}`;
 
+interface SwaggerRequest {
+  credentials?: RequestCredentials;
+  [key: string]: unknown;
+}
+
+type SwaggerUIBundleFn = ((opts: Record<string, unknown>) => unknown) & {
+  presets: { apis: unknown };
+  SwaggerUIStandalonePreset: unknown;
+};
+
+declare global {
+  interface Window {
+    SwaggerUIBundle?: SwaggerUIBundleFn;
+  }
+}
+
 export default function SwaggerUIClient() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -56,7 +72,7 @@ export default function SwaggerUIClient() {
     document.head.appendChild(script);
 
     function initSwaggerUI() {
-      const SwaggerUIBundle = (window as any).SwaggerUIBundle;
+      const SwaggerUIBundle = window.SwaggerUIBundle;
       if (!SwaggerUIBundle) {
         setErrorMsg('SwaggerUIBundle no disponible después de cargar el script.');
         setStatus('error');
@@ -81,7 +97,7 @@ export default function SwaggerUIClient() {
           showExtensions: true,
           showCommonExtensions: true,
           supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
-          requestInterceptor: (request: any) => {
+          requestInterceptor: (request: SwaggerRequest) => {
             if (request) {
               request.credentials = 'include';
             }
@@ -93,7 +109,7 @@ export default function SwaggerUIClient() {
               console.log('Swagger UI cargado correctamente');
             }
           },
-          onFailure: (err: any) => {
+          onFailure: (err: unknown) => {
             if (!cancelled) {
               console.error('Swagger UI falló al cargar:', err);
               setErrorMsg('Error al inicializar Swagger UI. Revisa la consola para más detalles.');
