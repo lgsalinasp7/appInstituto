@@ -27,9 +27,8 @@ jobs:
       - name: Tests (bloqueante)
         run: npm run test:run
 
-      - name: Lint (informacional)
+      - name: Lint (bloqueante)
         run: npm run lint
-        continue-on-error: true
 
   migrate-and-deploy:
     needs: quality-gates
