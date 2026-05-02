@@ -26,6 +26,7 @@ export function AdminOperationsClient() {
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration guard reading from localStorage on mount
     if (stored) setCohortId(stored);
     setHydrated(true);
   }, []);
@@ -37,6 +38,7 @@ export function AdminOperationsClient() {
 
   useEffect(() => {
     if (!cohortId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset state when cohortId is null
       setCohortMeta(null);
       setStats(null);
       return;

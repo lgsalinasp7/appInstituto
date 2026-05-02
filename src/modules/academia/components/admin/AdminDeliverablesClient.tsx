@@ -12,6 +12,7 @@ export function AdminDeliverablesClient() {
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration guard reading from localStorage on mount
     if (stored) setCohortId(stored);
     setHydrated(true);
   }, []);

@@ -80,6 +80,7 @@ function CohortsManagementInner() {
 
   useEffect(() => {
     if (!pickCourseOpen) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch triggered by dialog open; loading flag is intentional
     setCoursesLoading(true);
     fetch("/api/academy/courses")
       .then((r) => r.json())

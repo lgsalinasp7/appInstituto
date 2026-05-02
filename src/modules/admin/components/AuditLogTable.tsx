@@ -45,6 +45,7 @@ export function AuditLogTable({ logs }: AuditLogTableProps) {
   } = useTablePagination(logs, 6);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- mount guard for SSR hydration
     setMounted(true);
   }, []);
 
