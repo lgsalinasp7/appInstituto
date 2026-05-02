@@ -24,7 +24,7 @@ export default function TerminosPage() {
                         <section className="space-y-4">
                             <h2 className="text-2xl font-bold text-white">1. Aceptación del Acuerdo</h2>
                             <p>
-                                Al acceder y utilizar el sitio web kaledsoft.tech y sus servicios relacionados (la "Plataforma"), usted acepta estar vinculado por estos términos y condiciones, así como por nuestra Política de Privacidad. Si no está de acuerdo con alguna parte de estos términos, no deberá utilizar nuestros servicios.
+                                Al acceder y utilizar el sitio web kaledsoft.tech y sus servicios relacionados (la &quot;Plataforma&quot;), usted acepta estar vinculado por estos términos y condiciones, así como por nuestra Política de Privacidad. Si no está de acuerdo con alguna parte de estos términos, no deberá utilizar nuestros servicios.
                             </p>
                         </section>
 

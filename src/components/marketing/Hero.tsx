@@ -81,7 +81,7 @@ export function Hero() {
                             </div>
                             <div className="space-y-3 font-mono text-sm">
                                 <div className="text-purple-400">const <span className="text-yellow-300">future</span> = await <span className="text-blue-400">KaledSoft</span>.build();</div>
-                                <div className="text-gray-500">// Implementando IA avanzada…</div>
+                                <div className="text-gray-500">{"// Implementando IA avanzada…"}</div>
                                 <div className="h-2 w-3/4 bg-white/10 rounded animate-pulse" />
                                 <div className="h-2 w-1/2 bg-white/10 rounded animate-pulse delay-75" />
                                 <div className="h-2 w-2/3 bg-white/10 rounded animate-pulse delay-150" />

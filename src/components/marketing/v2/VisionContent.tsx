@@ -79,7 +79,7 @@ export function VisionContent() {
                     <div className="relative z-10 max-w-3xl mx-auto space-y-8 px-6">
                         <h2 className="text-3xl md:text-5xl font-black text-white font-display">Soberanía Técnica para Latam.</h2>
                         <p className="text-xl text-slate-300 italic leading-relaxed">
-                            "El control de la tecnología es el control del destino. KaledSoft busca que Latinoamérica no solo consuma IA, sino que la diseñe, la implemente y la posea."
+                            &quot;El control de la tecnología es el control del destino. KaledSoft busca que Latinoamérica no solo consuma IA, sino que la diseñe, la implemente y la posea.&quot;
                         </p>
                         <div className="pt-8">
                             <div className="text-white font-bold text-lg">KaledSoft Lab</div>

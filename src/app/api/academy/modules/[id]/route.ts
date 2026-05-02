@@ -19,8 +19,8 @@ export const PATCH = withAcademyAuth(
         { status: 400 }
       );
     }
-    const module = await AcademyCourseService.updateModule(id, parsed.data);
-    return NextResponse.json({ success: true, data: module });
+    const academyModule = await AcademyCourseService.updateModule(id, parsed.data);
+    return NextResponse.json({ success: true, data: academyModule });
   }
 );
 

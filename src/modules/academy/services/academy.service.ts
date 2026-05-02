@@ -149,7 +149,7 @@ export const courseService = {
 
   /** Obtiene el ID de la primera lección del Módulo 1 (para acceso trial) */
   async getFirstLessonOfModule1(tenantId: string): Promise<string | null> {
-    const module = await prisma.academyModule.findFirst({
+    const academyModule = await prisma.academyModule.findFirst({
       where: {
         course: { tenantId, isActive: true },
         isActive: true,
@@ -164,7 +164,7 @@ export const courseService = {
         },
       },
     });
-    return module?.lessons[0]?.id ?? null;
+    return academyModule?.lessons[0]?.id ?? null;
   },
 
   async getLessonWithProgress(

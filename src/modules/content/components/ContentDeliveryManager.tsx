@@ -170,7 +170,7 @@ export function ContentDeliveryManager() {
                 <AlertCircle className="text-amber-500 flex-shrink-0 mt-0.5" size={18} />
                 <div className="text-xs text-amber-800 space-y-1">
                     <p className="font-bold uppercase tracking-wider">Lógica de Disponibilidad</p>
-                    <p>Un contenido se marca como "disponible para entrega" automáticamente cuando el estudiante registra su pago correspondiente (ej. Pago 1 libera Módulo 1). El sistema valida el historial de pagos contra el orden de los módulos.</p>
+                    <p>Un contenido se marca como &quot;disponible para entrega&quot; automáticamente cuando el estudiante registra su pago correspondiente (ej. Pago 1 libera Módulo 1). El sistema valida el historial de pagos contra el orden de los módulos.</p>
                 </div>
             </div>
         </div>

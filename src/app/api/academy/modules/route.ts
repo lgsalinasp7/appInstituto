@@ -14,7 +14,7 @@ export const POST = withAcademyAuth(
         { status: 400 }
       );
     }
-    const module = await AcademyCourseService.createModule(parsed.data);
-    return NextResponse.json({ success: true, data: module });
+    const academyModule = await AcademyCourseService.createModule(parsed.data);
+    return NextResponse.json({ success: true, data: academyModule });
   }
 );
