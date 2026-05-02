@@ -10,6 +10,7 @@ export function CookieConsent() {
     // Check if user has already accepted cookies
     const consent = localStorage.getItem("cookie-consent");
     if (!consent) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- mount guard: localStorage solo accesible en cliente, banner debe mostrarse post-hidratacion
       setShowBanner(true);
     }
   }, []);

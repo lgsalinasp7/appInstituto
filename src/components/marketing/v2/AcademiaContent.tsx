@@ -169,7 +169,7 @@ export function AcademiaContent() {
                     </div>
                     <div className="flex flex-col justify-center space-y-6 lg:border-l lg:border-white/10 lg:pl-16">
                         <p className="text-xl text-slate-300 leading-relaxed italic">
-                            "Aquí no vienes a aprender React. Vienes a construir un SaaS real desde cero."
+                            &quot;Aquí no vienes a aprender React. Vienes a construir un SaaS real desde cero.&quot;
                         </p>
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-1 w-20 bg-cyan-600 rounded-full" />
@@ -315,7 +315,7 @@ export function AcademiaContent() {
                 <section className="text-center pb-20">
                     <h2 className="text-4xl md:text-6xl font-black text-white mb-8">¿Estás listo para el reto?</h2>
                     <p className="text-slate-400 mb-12 max-w-2xl mx-auto text-xl font-medium italic">
-                        "No dependerás de la IA. La usarás estratégicamente."
+                        &quot;No dependerás de la IA. La usarás estratégicamente.&quot;
                     </p>
                     <Link
                         href="/aplicar"

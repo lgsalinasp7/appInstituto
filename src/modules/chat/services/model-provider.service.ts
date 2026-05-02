@@ -6,6 +6,7 @@
 import { streamText, generateText, type LanguageModel } from "ai";
 import { groq } from "@ai-sdk/groq";
 import { google } from "@ai-sdk/google";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { AiAgentService } from "./ai-agent.service";
 
 interface ProviderConfig {
@@ -63,16 +64,10 @@ export class ModelProviderService {
       name: "OpenRouter",
       modelId: "meta-llama/llama-3.3-70b-instruct",
       getModel: () => {
-        // Dynamic import to avoid error if package not installed
-        try {
-          const { createOpenRouter } = require("@openrouter/ai-sdk-provider");
-          const openrouter = createOpenRouter({
-            apiKey: process.env.OPENROUTER_API_KEY,
-          });
-          return openrouter("meta-llama/llama-3.3-70b-instruct");
-        } catch {
-          throw new Error("OpenRouter SDK not available");
-        }
+        const openrouter = createOpenRouter({
+          apiKey: process.env.OPENROUTER_API_KEY,
+        });
+        return openrouter("meta-llama/llama-3.3-70b-instruct");
       },
       isAvailable: async () => {
         return !!process.env.OPENROUTER_API_KEY;

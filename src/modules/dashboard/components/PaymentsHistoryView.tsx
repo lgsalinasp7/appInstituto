@@ -8,7 +8,7 @@ import type { PaymentWithRelations, PaymentStats } from "@/modules/payments/type
 import type { PaymentMethod } from "@prisma/client";
 import { toast } from "sonner";
 
-interface Payment extends PaymentWithRelations { } // Alias for convenience
+type Payment = PaymentWithRelations; // Alias for convenience
 
 interface PaymentsHistoryViewProps {
   advisorId?: string;
