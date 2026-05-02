@@ -21,7 +21,7 @@ async function main() {
     process.exit(1);
   }
 
-  let user = await prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { email },
   });
 
