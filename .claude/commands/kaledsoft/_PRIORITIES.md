@@ -72,6 +72,7 @@ Objetivo: codigo confiable, debuggeable en produccion, con red de seguridad de t
 | 2.8 | Limpiar violaciones `no-explicit-any` | Dev | DONE PRs `#43` + `#58` + `#60` — **144 → 0 violaciones (-100%)**. Patrones: type Prisma helpers, interface extends, eslint-disable file-level con razón en seeds/tests con mocks complejos, type guards. |
 | 2.9 | Estandarizar auth de cron (todas a `CRON_SECRET`) | Infra | DONE PR `#37` merged — 5 routes estandarizadas + helper `withCronAuth`. **Security gap fixed**: `process-kaled-emails` era publico cuando `CRON_SECRET` faltaba. `process-subscriptions` migrada a JSON envelope. |
 | 2.10 | Configurar CI/CD: lint + type-check + test obligatorios pre-merge | Infra | DONE — `deploy-dev.yml` y `deploy-prod.yml` ahora con lint **bloqueante** (PO direct fix tras cierre 2.8). Total bloqueantes: tsc + test + lint. |
+| 2.10b | **Cierre real lint bloqueante**: 49 errores → 0. PR `#65` (3 sub-agentes Dev paralelos: mecanico/scripts/react-hooks + 2 residuales PO) merged a develop, PR `#66` merged a main `da7b62b`. Vercel auto-deploy. Sin overlap de archivos entre tandas, validacion tsc/tests/lint/build verde. | PO + Dev | DONE 2026-05-02 |
 | 2.11 | Configurar Sentry/observabilidad para errores 5xx | Infra | DONE PR `#38` merged — Sentry config (server/client/edge), filtros 4xx/extensiones, Turbopack compat. **Pendiente Luis**: crear proyecto en sentry.io + poblar `SENTRY_DSN` en Vercel. |
 
 ### Ola 3 — Consolidacion Estructural (P2, continuo)
