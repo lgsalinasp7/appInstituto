@@ -103,6 +103,7 @@ export function StudentsManagement({ embedded = false }: { embedded?: boolean })
   }, [isTeacher, cohortFilter]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- triggers async fetch; setState lives inside fetchStudents intentionally
     fetchStudents();
   }, [fetchStudents]);
 

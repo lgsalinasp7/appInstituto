@@ -39,6 +39,7 @@ export function MasterclassCountdown({ scheduledAt }: MasterclassCountdownProps)
     };
 
     // Calcular inmediatamente
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- countdown timer requires initial setState + interval
     setTimeLeft(calculateTimeLeft());
 
     // Actualizar cada segundo

@@ -52,9 +52,8 @@ export function AdminAnalyticsOverview() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // initial useState values (loading=true, error=null) cover the pre-fetch state
     let cancelled = false;
-    setLoading(true);
-    setError(null);
     fetch("/api/academy/admin/analytics/overview", { credentials: "include" })
       .then((r) => r.json())
       .then((res) => {
