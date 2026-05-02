@@ -144,8 +144,8 @@ export function AdminCourseManageView({ courseId }: { courseId: string }) {
   const handleCreateLesson = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
-    const module = course?.modules.find((m) => m.id === lessonCreateModal.moduleId);
-    const order = module?.lessons.length ?? 0;
+    const courseModule = course?.modules.find((m) => m.id === lessonCreateModal.moduleId);
+    const order = courseModule?.lessons.length ?? 0;
     try {
       const res = await fetch("/api/academy/lessons", {
         method: "POST",

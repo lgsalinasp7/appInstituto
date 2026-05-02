@@ -1,4 +1,3 @@
-// @ts-nocheck - AI SDK v6 has type inference limitations with tool() helper
 import { tool } from 'ai';
 import { z } from 'zod';
 import { AgentTaskService } from './agent-task.service';
@@ -11,7 +10,6 @@ export class AgentToolsService {
    * Nota: el dominio de leads tenant fue removido por política de separación.
    */
   static createAgentTaskTool(tenantId: string, agentType: AgentType) {
-    // @ts-ignore - AI SDK v6 type inference limitation
     return tool({
       description: 'Crea una tarea interna en el tablero del agente',
       inputSchema: z.object({
@@ -53,7 +51,6 @@ export class AgentToolsService {
    * Herramienta permitida: memoria del agente.
    */
   static logMemoryTool(tenantId: string, agentType: AgentType) {
-    // @ts-ignore - AI SDK v6 type inference limitation
     return tool({
       description:
         'Guarda una memoria, estrategia o lección aprendida para mejorar en el futuro',

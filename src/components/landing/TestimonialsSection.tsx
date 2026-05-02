@@ -41,7 +41,7 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
 
               {/* Quote */}
               <p className="text-gray-700 mb-6 leading-relaxed italic">
-                "{testimonial.quote}"
+                &quot;{testimonial.quote}&quot;
               </p>
 
               {/* Author */}

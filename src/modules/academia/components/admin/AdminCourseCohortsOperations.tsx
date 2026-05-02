@@ -127,7 +127,7 @@ export function AdminCourseCohortsOperations({ courseId }: { courseId: string })
       (form.elements.namedItem("promoPreset") as HTMLSelectElement)?.value || undefined;
     const campaignLabel =
       (form.elements.namedItem("campaignLabel") as HTMLInputElement)?.value || undefined;
-    let startDate = (form.elements.namedItem("startDate") as HTMLInputElement).value;
+    const startDate = (form.elements.namedItem("startDate") as HTMLInputElement).value;
     let endDate = (form.elements.namedItem("endDate") as HTMLInputElement).value;
     if (kind === "PROMOTIONAL" && promoPreset && promoPreset !== "CUSTOM" && startDate) {
       const start = new Date(startDate + "T12:00:00");

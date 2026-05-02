@@ -189,7 +189,7 @@ export class PaymentService {
     return await prisma.$transaction(async (tx) => {
       let paymentType: "MATRICULA" | "MODULO" = "MODULO";
       let moduleNumber: number | null = null;
-      let nextModuleNumber: number | null = null;
+      const nextModuleNumber: number | null = null;
 
       // 2. Determinar tipo de pago y validaciones
       if (!student.matriculaPaid) {
