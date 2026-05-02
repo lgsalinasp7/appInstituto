@@ -19,15 +19,16 @@ declare global {
 }
 
 export function MetaPixel({ pixelId }: MetaPixelProps) {
-  // Si no hay pixel ID configurado, no renderizar nada
-  if (!pixelId) return null;
-
   useEffect(() => {
     // Track PageView cuando el componente se monta
+    if (!pixelId) return;
     if (typeof window !== 'undefined' && window.fbq) {
       window.fbq('track', 'PageView');
     }
-  }, []);
+  }, [pixelId]);
+
+  // Si no hay pixel ID configurado, no renderizar nada
+  if (!pixelId) return null;
 
   return (
     <>

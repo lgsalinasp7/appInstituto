@@ -57,6 +57,7 @@ export function DashboardHeader({ title, titleHighlight, subtitle, onFilterChang
   // Sync selected advisor when user is loaded (for VENTAS)
   useEffect(() => {
     if (isVentas && user?.id && selectedAdvisor === "all") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync con user del store async post-hidratacion (no calculable en render porque user llega despues)
       setSelectedAdvisor(user.id);
     }
   }, [isVentas, user?.id, selectedAdvisor]);

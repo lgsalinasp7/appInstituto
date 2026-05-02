@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { AdminService } from "@/modules/admin/services/admin.service";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { RecentTenantsTable } from "./RecentTenantsTable";
 import {
   DollarSign,
@@ -125,12 +126,12 @@ export default async function AdminDashboardPage() {
         <div className="lg:col-span-2 glass-card rounded-[2rem] p-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-white">Empresas Recientes</h3>
-            <a
+            <Link
               href="/admin/empresas"
               className="text-cyan-400 text-sm font-bold flex items-center gap-1 hover:gap-2 transition-all"
             >
               Ver todas <ArrowRight className="w-4 h-4" />
-            </a>
+            </Link>
           </div>
 
           <RecentTenantsTable tenants={stats.recentTenants} />

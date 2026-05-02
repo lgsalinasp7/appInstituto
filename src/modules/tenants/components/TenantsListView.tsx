@@ -72,6 +72,7 @@ export function TenantsListView({
   const { confirm, confirmModal } = useConfirmModal();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- mount guard for SSR hydration
     setMounted(true);
   }, []);
 

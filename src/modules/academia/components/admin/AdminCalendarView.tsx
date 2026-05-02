@@ -159,6 +159,7 @@ export function AdminCalendarView() {
   }, [courseId, cohortId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- triggers async data load; setState is inside loadEvents intentionally
     void loadEvents();
   }, [loadEvents]);
 

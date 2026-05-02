@@ -13,6 +13,15 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  // Scripts legacy CommonJS (.js en /scripts): permitir require()
+  // No son codigo de produccion; corren con `node` directo. package.json
+  // no define "type": "module", por lo que .js es CommonJS por diseno.
+  {
+    files: ["scripts/**/*.js"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

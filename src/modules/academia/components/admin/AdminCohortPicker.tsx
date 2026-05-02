@@ -25,7 +25,9 @@ export function AdminCohortPicker({
   const [cohorts, setCohorts] = useState<AdminCohortOption[]>([]);
   const [loading, setLoading] = useState(true);
   const valueRef = useRef(value);
-  valueRef.current = value;
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   useEffect(() => {
     let cancelled = false;

@@ -1249,7 +1249,7 @@ export function LessonView({
 
               {enforceQuizMastery && (
                 <p className="mt-4 text-[11px] text-slate-500">
-                  Debes aprobar el quiz para habilitar "Sesión completada".
+                  Debes aprobar el quiz para habilitar &quot;Sesión completada&quot;.
                 </p>
               )}
             </div>
